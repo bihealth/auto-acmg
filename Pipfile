@@ -8,6 +8,9 @@ black = "*"
 isort = "*"
 flake8 = "*"
 mypy = "*"
+aiohttp = "*"
+pydantic = "*"
+pydantic-settings = "*"
 
 [dev-packages]
 

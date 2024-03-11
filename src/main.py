@@ -1,32 +1,13 @@
 """Main entry point for the autopvs1 CLI."""
 
 import argparse
+import asyncio
 import logging
 import sys
-from enum import Enum, auto
 from typing import Optional
 
-
-class GenomeRelease(Enum):
-    """Enumeration for allowed genome release values."""
-
-    hg19 = auto()
-    hg38 = auto()
-    GRCh37 = auto()
-    GRCh38 = auto()
-
-    @staticmethod
-    def from_string(value: str):
-        """Converts string to enum member if possible, otherwise returns None."""
-        for member in GenomeRelease:
-            if member.name == value:
-                return member
-        return None
-
-    @staticmethod
-    def list():
-        """Returns list of enum member names."""
-        return list(map(lambda c: c.name, GenomeRelease))
+from src.genome_builds import GenomeRelease
+from src.seqvar import SeqVar, SeqVarResolver
 
 
 class GenomeReleaseAction(argparse.Action):
@@ -58,7 +39,7 @@ def create_parser():
     return parser
 
 
-def main(args: Optional[list[str]] = None):
+async def main(args: Optional[list[str]] = None):
     """Entry point for the CLI."""
     if args is None:
         args = sys.argv[1:]
@@ -75,6 +56,15 @@ def main(args: Optional[list[str]] = None):
     else:
         logging.info("No valid genome release specified or no genome release provided.")
 
+    try:
+        seqvar_resolver = SeqVarResolver()
+        # TODO: Resolve the variant using the genome release
+        seqvar: SeqVar = await seqvar_resolver.resolve_seqvar(parsed_args.variant)
+        logging.info(f"Resolved variant: {seqvar}. Dictionary representation: {seqvar.__dict__}")
+    except Exception as e:
+        logging.error(e)
+
 
 if __name__ == "__main__":
-    main()
+    # Run the main function
+    asyncio.run(main())
