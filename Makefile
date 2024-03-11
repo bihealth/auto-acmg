@@ -1,4 +1,4 @@
-DIRS_PYTHON := src
+DIRS_PYTHON := src tests
 
 .PHONY: help
 help:
@@ -63,28 +63,23 @@ lint-mypy:
 example_run:
 	pipenv run python -m src.main 13-113803407-G-A --genome_release hg19
 
-# .PHONY: test
-# test:
-# 	pipenv run pytest \
-# 		-n auto \
-# 		--cov-report term-missing \
-# 		--cov-report lcov \
-# 		--cov=app \
-# 		tests/
+.PHONY: test
+test:
+	pipenv run pytest tests/
 
-# .PHONY: test-ci
-# test-ci:
-# 	pipenv run pytest \
-# 		--cov-report term-missing \
-# 		--cov-report lcov \
-# 		--cov=app \
-# 		tests/
+.PHONY: test-ci
+test-ci:
+	pipenv run pytest \
+		--cov-report term-missing \
+		--cov-report lcov \
+		--cov=src \
+		tests/
 
-# .PHONY: ci
-# ci: \
-# 	deps \
-# 	lint \
-# 	test-ci
+.PHONY: ci
+ci: \
+	deps \
+	lint \
+	test-ci
 
 # .PHONY: docs
 # docs:
