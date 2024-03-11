@@ -3,7 +3,7 @@
 from enum import Enum, auto
 from typing import Literal
 
-from src.exceptions import MappingError
+from src.core.exceptions import MappingError
 
 #: Type for genome release
 GRChAssemblyType = Literal["GRCh37", "GRCh38"]
