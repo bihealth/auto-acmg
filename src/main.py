@@ -58,8 +58,9 @@ async def main(args: Optional[list[str]] = None):
 
     try:
         seqvar_resolver = SeqVarResolver()
-        # TODO: Resolve the variant using the genome release
-        seqvar: SeqVar = await seqvar_resolver.resolve_seqvar(parsed_args.variant)
+        seqvar: SeqVar = await seqvar_resolver.resolve_seqvar(
+            parsed_args.variant, parsed_args.genome_release
+        )
         logging.info(f"Resolved variant: {seqvar}. Dictionary representation: {seqvar.__dict__}")
     except Exception as e:
         logging.error(e)

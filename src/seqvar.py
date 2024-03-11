@@ -67,7 +67,6 @@ class SeqVar:
         return self.user_representation
 
 
-# TODO: Add resolving method, which uses genome release to resolve the variant
 class SeqVarResolver:
 
     def __init__(self):
@@ -91,7 +90,7 @@ class SeqVarResolver:
         return value.lower().replace("chr", "").replace("m", "mt").upper()
 
     def _parse_separated_seqvar(
-        self, value: str, default_genome_build: GenomeRelease = GenomeRelease.GRCh37
+        self, value: str, default_genome_build: GenomeRelease = GenomeRelease.GRCh38
     ) -> SeqVar:
         match = REGEX_GNOMAD_VARIANT.match(value) or REGEX_RELAXED_SPDI.match(value)
         if not match:
@@ -145,9 +144,9 @@ class SeqVarResolver:
         )
         return self._validate_seqvar(variant)
 
-    async def resolve_seqvar(self, value: str) -> SeqVar:
+    async def resolve_seqvar(self, value: str, genome_release: GenomeRelease) -> SeqVar:
         try:
-            return self._parse_separated_seqvar(value)
+            return self._parse_separated_seqvar(value, default_genome_build=genome_release)
         except ParseError:
             pass
 
@@ -158,7 +157,12 @@ class SeqVarResolver:
 
         try:
             dotty_client = DottyClient()
-            spdi = await dotty_client.to_spdi(value)
+            if genome_release is None:
+                spdi = await dotty_client.to_spdi(value)
+            else:
+                spdi = await dotty_client.to_spdi(
+                    value, assembly=genome_release.to_standardized_value()
+                )
             if spdi is not None and spdi["success"]:
                 return SeqVar(
                     genome_release=GenomeRelease[spdi["value"]["assembly"]],
