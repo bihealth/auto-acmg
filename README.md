@@ -1,6 +1,8 @@
 # autopvs1
 An automatic tool for the classification of PVS1 variants.
 
+[![CI](https://github.com/bihealth/autopvs1/actions/workflows/main-ci.yml/badge.svg)](https://github.com/bihealth/autopvs1/actions/workflows/main-ci.yml)
+
 Inspirational repo (AutoPVS1): https://github.com/JiguangPeng/autopvs1
 
 Before the real documentation appears, please refer to the above information.
