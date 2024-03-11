@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     # === API settings ===
 
     #: Base URL for reev
-    API_REEV_URL: str
+    API_REEV_URL: str = ""
 
 
 settings = Settings(_env_file=".env", _env_file_encoding="utf-8")  # type: ignore[call-arg]
