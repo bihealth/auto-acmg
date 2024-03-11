@@ -13,6 +13,9 @@ pydantic = "*"
 pydantic-settings = "*"
 
 [dev-packages]
+pytest = "*"
+aioresponses = "*"
+pytest-asyncio = "*"
 
 [requires]
 python_version = "3.12"
