@@ -26,11 +26,11 @@ make deps
 Currently we provide CLI for the usage of the tool. You can use the following command to see the help message:
 
 ```bash
-pipenv run python src/main.py 13-113803407-G-A --genome_release hg19
+pipenv run python -m src.main 13-113803407-G-A --genome_release hg19
 ```
 
 For more information, you can use the following command:
 
 ```bash
-pipenv run python src/main.py --help
+pipenv run python -m src.main.py --help
 ```

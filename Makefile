@@ -9,6 +9,7 @@ help:
 	@echo "  deps    Install all dependencies"
 	@echo "  format  Format source code"
 	@echo "  lint    Run lint checks"
+	@echo "  example_run    Run example"
 	@echo "  test    Run tests"
 	@echo "  ci      Install dependencies, run lints and tests"
 	@echo "  docs    Generate the documentation"
@@ -57,6 +58,10 @@ flake8:
 .PHONY: lint-mypy
 lint-mypy:
 	MYPYPATH=$(PWD)/stubs pipenv run mypy $(DIRS_PYTHON)
+
+.PHONY: example_run
+example_run:
+	pipenv run python -m src.main 13-113803407-G-A --genome_release hg19
 
 # .PHONY: test
 # test:
