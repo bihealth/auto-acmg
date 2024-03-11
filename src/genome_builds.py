@@ -1,9 +1,20 @@
 """Genome build information and operations."""
 
-import logging
 from enum import Enum, auto
+from typing import Literal
 
 from src.exceptions import MappingError
+
+#: Type for genome release
+GRChAssemblyType = Literal["GRCh37", "GRCh38"]
+
+#: Mapping from genome release to standardized value
+GENOME_RELEASES_MAPPING: dict[str, GRChAssemblyType] = {
+    "hg19": "GRCh37",
+    "hg38": "GRCh38",
+    "GRCh37": "GRCh37",
+    "GRCh38": "GRCh38",
+}
 
 
 class GenomeRelease(Enum):
@@ -26,6 +37,10 @@ class GenomeRelease(Enum):
     def list():
         """Returns list of enum member names."""
         return list(map(lambda c: c.name, GenomeRelease))
+
+    def to_standardized_value(self) -> GRChAssemblyType:
+        """Converts enum member to its standardized genome release value."""
+        return GENOME_RELEASES_MAPPING[self.name]
 
 
 CHROM_REFSEQ_37: dict[str, str] = {
