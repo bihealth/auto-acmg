@@ -2,6 +2,7 @@ import pytest
 from aioresponses import aioresponses
 
 from src.api.dotty import DottyClient
+from src.genome_builds import GenomeRelease
 
 
 @pytest.mark.asyncio
@@ -16,7 +17,7 @@ async def test_to_spdi_success():
         )
 
         client = DottyClient(api_base_url="https://example.com/dotty")
-        response = await client.to_spdi("test_query", "GRCh38")
+        response = await client.to_spdi("test_query", GenomeRelease.GRCh38)
 
         assert response == mock_response
 
@@ -28,7 +29,7 @@ async def test_to_spdi_failure():
         m.get("https://example.com/dotty/api/v1/to-spdi?q=test_query&assembly=GRCh38", status=404)
 
         client = DottyClient(api_base_url="https://example.com/dotty")
-        response = await client.to_spdi("test_query", "GRCh38")
+        response = await client.to_spdi("test_query", GenomeRelease.GRCh38)
 
         assert response is None
 
@@ -45,6 +46,6 @@ async def test_to_spdi_grch37_assembly():
         )
 
         client = DottyClient(api_base_url="https://example.com/dotty")
-        response = await client.to_spdi("test_query", "GRCh37")
+        response = await client.to_spdi("test_query", GenomeRelease.GRCh37)
 
         assert response == mock_response
