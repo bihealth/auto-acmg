@@ -13,7 +13,7 @@ from src.seqvar import SeqVar, SeqVarResolver
 class GenomeReleaseAction(argparse.Action):
     """Custom action to convert genome release string to enum member."""
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, _parser, namespace, values, _option_string=None):
         genome_release = GenomeRelease.from_string(values)
         if genome_release is None:
             logging.warning(
@@ -25,7 +25,7 @@ class GenomeReleaseAction(argparse.Action):
 
 
 def create_parser():
-    """Creates and returns the argparse parser with all the defined arguments."""
+    """Helper function for creating the argparse parser with all the defined arguments."""
     parser = argparse.ArgumentParser(description="Entry point for the autopvs1 CLI.")
     parser.add_argument(
         "variant", type=str, help='Variant to be classified, e.g., "NM_000038.3:c.797G>A".'

@@ -73,6 +73,15 @@ class SeqVarResolver:
         pass
 
     def _validate_seqvar(self, variant: SeqVar) -> SeqVar:
+        """
+        Validate the sequence variant position.
+
+        :param variant: Sequence variant
+        :type variant: SeqVar
+        :return: Sequence variant
+        :rtype: SeqVar
+        :raises InvalidPos: If the position is invalid
+        """
         if variant.pos < 1:
             raise InvalidPos(f"Invalid position: {variant.pos}")
 
@@ -87,11 +96,23 @@ class SeqVarResolver:
         return variant
 
     def _normalize_chrom(self, value: str) -> str:
+        """Normalize the chromosome name: replace 'chr' with '' and 'm' with 'mt'."""
         return value.lower().replace("chr", "").replace("m", "mt").upper()
 
     def _parse_separated_seqvar(
         self, value: str, default_genome_build: GenomeRelease = GenomeRelease.GRCh38
     ) -> SeqVar:
+        """
+        Parse a colon/hyphen separated sequence variant representation.
+
+        :param value: Sequence variant representation
+        :type value: str
+        :param default_genome_build: Default genome build
+        :type default_genome_build: GenomeRelease
+        :return: Sequence variant
+        :rtype: SeqVar
+        :raises ParseError: If the variant representation is invalid
+        """
         match = REGEX_GNOMAD_VARIANT.match(value) or REGEX_RELAXED_SPDI.match(value)
         if not match:
             raise ParseError(f"Unable to parse colon/hyphen separated seqvar: {value}")
@@ -116,6 +137,15 @@ class SeqVarResolver:
         return self._validate_seqvar(variant)
 
     def _parse_canonical_spdi_seqvar(self, value: str) -> SeqVar:
+        """
+        Parse a canonical SPDI sequence variant representation.
+
+        :param value: Sequence variant representation
+        :type value: str
+        :return: Sequence variant
+        :rtype: SeqVar
+        :raises ParseError: If the variant representation is invalid
+        """
         match = REGEX_CANONICAL_SPDI.match(value)
         if not match:
             raise ParseError(f"Unable to parse canonical SPDI variant: {value}")
@@ -145,6 +175,18 @@ class SeqVarResolver:
         return self._validate_seqvar(variant)
 
     async def resolve_seqvar(self, value: str, genome_release: GenomeRelease) -> SeqVar:
+        """
+        Resolve a sequence variant. Supports gnomAD-style, SPDI and dbSNP representations.
+        ClinVar IDs are not supported at the moment.
+
+        :param value: Sequence variant representation
+        :type value: str
+        :param genome_release: Genome release
+        :type genome_release: GenomeRelease
+        :return: Sequence variant
+        :rtype: SeqVar
+        :raises ParseError: If the variant representation is invalid
+        """
         try:
             return self._parse_separated_seqvar(value, default_genome_build=genome_release)
         except ParseError:

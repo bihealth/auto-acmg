@@ -17,6 +17,7 @@ GENOME_RELEASES_MAPPING: dict[str, GRChAssemblyType] = {
 }
 
 
+#: GenomeRelease enume
 class GenomeRelease(Enum):
     """Enumeration for allowed genome release values."""
 
@@ -43,6 +44,7 @@ class GenomeRelease(Enum):
         return GENOME_RELEASES_MAPPING[self.name]
 
 
+#: Mapping from chromosome number to RefSeq accession (GRCh37)
 CHROM_REFSEQ_37: dict[str, str] = {
     "1": "NC_000001.10",
     "2": "NC_000002.11",
@@ -71,8 +73,10 @@ CHROM_REFSEQ_37: dict[str, str] = {
     "MT": "NC_012920.1",
 }
 
+#: Mapping from RefSeq accession to chromosome number (GRCh37)
 REFSEQ_CHROM_37: dict[str, str] = {v: k for k, v in CHROM_REFSEQ_37.items()}
 
+#: Mapping from chromosome number to chromosome length (GRCh37)
 CHROM_LENGTHS_37: dict[str, int] = {
     "1": 249250621,
     "2": 243199373,
@@ -101,6 +105,7 @@ CHROM_LENGTHS_37: dict[str, int] = {
     "MT": 16569,
 }
 
+#: Mapping from chromosome number to RefSeq accession (GRCh38)
 CHROM_REFSEQ_38: dict[str, str] = {
     "1": "NC_000001.11",
     "2": "NC_000002.12",
@@ -129,8 +134,10 @@ CHROM_REFSEQ_38: dict[str, str] = {
     "MT": "NC_012920.1",
 }
 
+#: Mapping from RefSeq accession to chromosome number (GRCh38)
 REFSEQ_CHROM_38: dict[str, str] = {v: k for k, v in CHROM_REFSEQ_38.items()}
 
+#: Mapping from chromosome number to chromosome length (GRCh38)
 CHROM_LENGTHS_38: dict[str, int] = {
     "1": 248956422,
     "2": 242193529,
@@ -161,7 +168,15 @@ CHROM_LENGTHS_38: dict[str, int] = {
 
 
 def refseq_to_genome_build(refseq_acc: str) -> GenomeRelease:
-    """Determines the genome build based on RefSeq accession."""
+    """
+    Determines the genome build based on RefSeq accession.
+
+    :param refseq_acc: RefSeq accession
+    :type refseq_acc: str
+    :return: Genome build
+    :rtype: GenomeRelease
+    :raises MappingError: If RefSeq accession is unknown
+    """
     refseq_acc_upper = refseq_acc.upper()
     if refseq_acc_upper in CHROM_REFSEQ_37.values():
         return GenomeRelease.GRCh37

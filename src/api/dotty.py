@@ -14,6 +14,16 @@ class DottyClient:
         self.api_base_url = api_base_url
 
     async def to_spdi(self, query: str, assembly: GRChAssemblyType = "GRCh38") -> dict | None:
+        """
+        Converts a variant to SPDI format.
+
+        :param query: Variant query
+        :type query: str
+        :param assembly: Genome assembly
+        :type assembly: GRChAssemblyType
+        :return: SPDI format
+        :rtype: dict | None
+        """
         url = f"{self.api_base_url}/api/v1/to-spdi?q={query}&assembly={assembly}"
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:

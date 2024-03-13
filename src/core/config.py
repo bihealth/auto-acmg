@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     # === API settings ===
 
-    #: Base URL for reev
+    #: Base URL to reev
     API_REEV_URL: str = ""
 
 
