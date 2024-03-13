@@ -202,9 +202,7 @@ class SeqVarResolver:
             if genome_release is None:
                 spdi = await dotty_client.to_spdi(value)
             else:
-                spdi = await dotty_client.to_spdi(
-                    value, assembly=genome_release.to_standardized_value()
-                )
+                spdi = await dotty_client.to_spdi(value, assembly=genome_release)
             if spdi is not None and spdi["success"]:
                 return SeqVar(
                     genome_release=GenomeRelease[spdi["value"]["assembly"]],
