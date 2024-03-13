@@ -5,32 +5,21 @@ from typing import Literal
 
 from src.core.exceptions import MappingError
 
-#: Type for genome release
-GRChAssemblyType = Literal["GRCh37", "GRCh38"]
-
-#: Mapping from genome release to standardized value
-GENOME_RELEASES_MAPPING: dict[str, GRChAssemblyType] = {
-    "hg19": "GRCh37",
-    "hg38": "GRCh38",
-    "GRCh37": "GRCh37",
-    "GRCh38": "GRCh38",
-}
-
 
 #: GenomeRelease enume
 class GenomeRelease(Enum):
     """Enumeration for allowed genome release values."""
 
-    hg19 = auto()
-    hg38 = auto()
     GRCh37 = auto()
     GRCh38 = auto()
 
     @staticmethod
     def from_string(value: str):
         """Converts string to enum member if possible, otherwise returns None."""
+        genome_mapping = {"hg19": "GRCh37", "hg38": "GRCh38"}
+        value_mapped = genome_mapping.get(value, value)
         for member in GenomeRelease:
-            if member.name == value:
+            if member.name == value_mapped:
                 return member
         return None
 
@@ -38,10 +27,6 @@ class GenomeRelease(Enum):
     def list():
         """Returns list of enum member names."""
         return list(map(lambda c: c.name, GenomeRelease))
-
-    def to_standardized_value(self) -> GRChAssemblyType:
-        """Converts enum member to its standardized genome release value."""
-        return GENOME_RELEASES_MAPPING[self.name]
 
 
 #: Mapping from chromosome number to RefSeq accession (GRCh37)
