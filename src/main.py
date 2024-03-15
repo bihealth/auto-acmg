@@ -6,9 +6,9 @@ import logging
 import sys
 from typing import Optional
 
+from src.core.config import settings
 from src.genome_builds import GenomeRelease
 from src.pvs1 import AutoPVS1
-from src.seqvar import SeqVar, SeqVarResolver
 
 
 class GenomeReleaseAction(argparse.Action):
@@ -46,7 +46,8 @@ async def main(args: Optional[list[str]] = None):
         args = sys.argv[1:]
 
     # Setup logging
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+    logging_level = logging.DEBUG if settings.DEBUG else logging.INFO
+    logging.basicConfig(level=logging_level, format="%(asctime)s - %(levelname)s - %(message)s")
     logger = logging.getLogger(__name__)
 
     parser = create_parser()
@@ -59,13 +60,8 @@ async def main(args: Optional[list[str]] = None):
         logger.info("No valid genome release specified or no genome release provided.")
 
     try:
-        seqvar_resolver = SeqVarResolver()
-        seqvar: SeqVar = await seqvar_resolver.resolve_seqvar(
-            parsed_args.variant, parsed_args.genome_release
-        )
-        logger.info(f"Resolved variant: {seqvar}. Dictionary representation: {seqvar.__dict__}")
-        auto_pvs1 = AutoPVS1(seqvar)
-        await auto_pvs1.run()
+        auto_pvs1 = AutoPVS1(parsed_args.variant, parsed_args.genome_release)
+        await auto_pvs1.predict()
     except Exception as e:
         logger.error(e)
 

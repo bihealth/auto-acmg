@@ -1,30 +1,48 @@
 """Implementations of the PVS1 algorithm."""
 
-import asyncio
 import logging
-import random
 import re
-import string
+from enum import Enum, auto
+from typing import Dict, List
 
 from src.api.mehari import MehariClient
+from src.core.config import settings
+from src.genome_builds import GenomeRelease
 from src.seqvar import SeqVar, SeqVarResolver
 
-logging.basicConfig(level=logging.INFO)
+logging_level = logging.DEBUG if settings.DEBUG else logging.INFO
+logging.basicConfig(level=logging_level)
 logger = logging.getLogger(__name__)
 
 
+class SeqVarConsequence(Enum):
+    """Consequence of a sequence variant."""
+
+    NonsenseFrameshift = auto()
+    SpliceSites = auto()
+    InitiationCodon = auto()
+
+
+class PVS1Prediction(Enum):
+    """PVS1 prediction."""
+
+    PVS1 = auto()
+    PVS1_Strong = auto()
+    PVS1_Moderate = auto()
+    PVS1_Supporting = auto()
+    NotPVS1 = auto()
+
+
 class AutoPVS1:
-    """AutoPVS1 algorithm implementation."""
+    """AutoPVS1 algorithm for PVS1 criteria prediction."""
 
-    def __init__(self, seqvar: SeqVar):
-        self.seqvar = seqvar
-        self.HGVSs: list[str] = []
-        self.seqvar_transcripts = None
-        self.gene_transcripts = None
-        self.gene_hgnc_id = None
+    def __init__(self, variant_name: str, genome_release: GenomeRelease = GenomeRelease.GRCh38):
+        self.variant_name = variant_name
+        self.genome_release = genome_release
 
-    async def _get_transcripts(self):
+    async def _get_transcripts_seqvar(self):
         """Get all transcripts for the given sequence variant."""
+        assert self.seqvar is not None
         try:
             mehari_client = MehariClient()
             response = await mehari_client.get_seqvar_transcripts(self.seqvar)
@@ -54,46 +72,101 @@ class AutoPVS1:
             )
             logger.error(e)
 
-    async def run(self):
+    async def resolve_variant(self) -> SeqVar | None:
+        """
+        Resolve the variant.
+
+        :return: Sequence variant
+        :rtype: SeqVar | None
+        """
+        # TODO: Add resolve for Structure variants
+        try:
+            # Try to resolve as Sequence variant
+            seqvar_resolver = SeqVarResolver()
+            seqvar: SeqVar = await seqvar_resolver.resolve_seqvar(
+                self.variant_name, self.genome_release
+            )
+            logger.debug(f"Resolved variant: {seqvar}.")
+            return seqvar
+        except Exception as e:
+            logger.error(e)
+            return None
+
+    async def predict(self):
         """Run the AutoPVS1 algorithm."""
-        logger.info(f"Running AutoPVS1 for variant {self.seqvar.user_representation}.")
-        logger.info(f"Retrieving transcripts.")
-        await self._get_transcripts()
-        logger.info(f"Analyzing transcripts.")
-        if self.HGVSs:
-            for hgvs in self.HGVSs:
-                logger.info(f"Analyzing transcript {hgvs}.")
-                # Choose transcripts
-                seqvar_t = None
-                gene_t = None
-                for transcript_info in self.seqvar_transcripts:
-                    if transcript_info["feature_id"] == hgvs:
-                        seqvar_t = transcript_info
-                        break
-                for transcript_info in self.gene_transcripts:
-                    if transcript_info["id"] == hgvs:
-                        gene_t = transcript_info
-                        break
+        logger.info(f"Running AutoPVS1 for variant {self.variant_name}.")
+        variant = await self.resolve_variant()
+        if isinstance(variant, SeqVar):
+            self.seqvar = variant
+            self.HGVSs: List[str] = []
+            self.seqvar_transcripts = None
+            self.gene_transcripts = None
+            self.gene_hgnc_id = None
+            self.predictions: Dict[str, PVS1Prediction] = {}
 
-                if seqvar_t and gene_t:
-                    pvs1 = PVS1(self.seqvar, seqvar_t, gene_t)
-                    pvs1.run()
-                    logger.info(f"NMD for transcript {hgvs}: {pvs1.nmd}")
+            logger.debug(f"Retrieving transcripts.")
+            await self._get_transcripts_seqvar()
+            if self.HGVSs:
+                for hgvs in self.HGVSs:
+                    logger.info(f"Analyzing transcript {hgvs}.")
+                    # Choose transcripts
+                    seqvar_t = None
+                    gene_t = None
+                    for transcript_info in self.seqvar_transcripts:
+                        if transcript_info["feature_id"] == hgvs:
+                            seqvar_t = transcript_info
+                            break
+                    for transcript_info in self.gene_transcripts:
+                        if transcript_info["id"] == hgvs:
+                            gene_t = transcript_info
+                            break
+
+                    if seqvar_t and gene_t:
+                        # TODO: Add support for SpliceSites and InitiationCodon consequences
+                        pvs1 = SeqVarPVS1(self.seqvar, seqvar_t, gene_t)
+                        pvs1.verify_PVS1()
+                        self.predictions[hgvs] = pvs1.prediction
+                        logger.debug(f"PVS1 prediction for {hgvs}: {pvs1.prediction.name}")
+
+            else:
+                logger.debug("No transcripts found for the variant.")
+        elif isinstance(variant, str):
+            # TODO: Add Structure variants
+            pass
+        else:
+            logger.error(f"Failed to resolve variant {self.variant_name}.")
+            return
 
 
-class PVS1:
+class SeqVarPVS1:
     """PVS1 criteria for transcript."""
 
-    def __init__(self, seqvar: SeqVar, seqvar_transcripts: dict, gene_transcripts: dict):
+    def __init__(
+        self,
+        seqvar: SeqVar,
+        seqvar_transcripts: Dict,
+        gene_transcripts: Dict,
+        consequence: SeqVarConsequence = SeqVarConsequence.NonsenseFrameshift,
+    ):
         self.seqvar = seqvar
+        self.consequence = consequence
         self.seqvar_transcripts = seqvar_transcripts
         self.gene_transcripts = gene_transcripts
-        self.id = self.id_generator()
         self.HGVS: str = ""
         self.pHGVS: str = ""
         self.tHGVS: str = ""
         self.gene_hgnc_id: str = ""
+        self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
         self._initialize()
+
+        # Frameshift/Nonsense attributes
+        self.undergo_nmd: bool = False
+        self.in_relevant_transcript: bool = False
+        self.critical4protein: bool = False
+        self.is_frequent_in_population: bool = False
+        self.remove_much_of_protein: bool = False
+
+        # self.id = self.id_generator()
         # self.vep_input = f"/tmp/vep.{self.id}.vcf"
         # self.vep_output = f"/tmp/vep.{self.id}.tab"
 
@@ -109,11 +182,6 @@ class PVS1:
         # self.vep_exon = "na"
         # self.vep_intron = "na"
 
-    @staticmethod
-    def id_generator(size: int = 6, chars: str = string.ascii_uppercase + string.digits) -> str:
-        """Generates a unique identifier for the VEP."""
-        return "".join(random.choice(chars) for _ in range(size))
-
     def _initialize(self):
         """Setup the PVS1 class."""
         self.HGVS = self.gene_transcripts["id"]
@@ -121,15 +189,46 @@ class PVS1:
         self.tHGVS = self.HGVS + ":" + self.seqvar_transcripts["hgvs_t"]
         self.gene_hgnc_id = self.seqvar_transcripts["gene_id"]
 
+    def verify_PVS1(self):
+        """Make the PVS1 prediction."""
+        if self.consequence == SeqVarConsequence.NonsenseFrameshift:
+            self.undergo_nmd = self._undergo_nmd()
+            if self.undergo_nmd:
+                self.in_relevant_transcript = self._in_biologically_relevant_transcript()
+                if self.in_relevant_transcript:
+                    self.prediction = PVS1Prediction.PVS1
+                else:
+                    self.prediction = PVS1Prediction.NotPVS1
+            else:
+                self.critical4protein = self._critical4protein_function()
+                if self.critical4protein:
+                    self.prediction = PVS1Prediction.PVS1_Strong
+                else:
+                    self.is_frequent_in_population = self._lof_is_frequent_in_population()
+                    if self.is_frequent_in_population:
+                        self.prediction = PVS1Prediction.NotPVS1
+                    else:
+                        self.remove_much_of_protein = self._remove_more_then_10_percent_of_protein()
+                        if self.remove_much_of_protein:
+                            self.prediction = PVS1Prediction.PVS1_Strong
+                        else:
+                            self.prediction = PVS1Prediction.PVS1_Moderate
+
+    # @staticmethod
+    # def id_generator(size: int = 6, chars: str = string.ascii_uppercase + string.digits) -> str:
+    #     """Generates a unique identifier for the VEP."""
+    #     return "".join(random.choice(chars) for _ in range(size))
+
     @staticmethod
     def _get_pHGVS_termination(pHGVS: str) -> int:
         """
-        Get termination position from pHGVS. If the position is not found, return -1.
+        Get termination position from pHGVS.
+        **Note:** If the position is not found, return -1.
         Examples:
-        # NM_031475.2:p.Gln98*
-        # NM_031475.2:p.Ala586Glyfs*73
-        # NP_000305.3:p.Arg378SerfsTer5
-        # p.Arg97Glyfs*26 (alternatively p.Arg97GlyfsTer26, or short p.Arg97fs)
+        - NM_031475.2:p.Gln98*
+        - NM_031475.2:p.Ala586Glyfs*73
+        - NP_000305.3:p.Arg378SerfsTer5
+        - p.Arg97Glyfs*26 (alternatively p.Arg97GlyfsTer26, or short p.Arg97fs)
 
         :param pHGVS: Protein HGVS
         :type pHGVS: str
@@ -160,15 +259,15 @@ class PVS1:
             termination = -1
         return termination
 
-    def _is_nmd_target(self) -> bool:
+    def _undergo_nmd(self) -> bool:
         """
         Nonsense-mediated decay (NMD) classification. Return if the variant
         undergoes NMD prediction.
+        **Rule:** If the variant is located in the last exon or in the last 50 nucleotides
+        of the penultimate exon, it is NOT predicted to undergo NMD.
         See more at https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6185798/#:~:text=Generally%2C%20NMD%20is%20not%20predicted%20to%20occur%20if%20the%20premature%20termination%20codon%20occurs%20in%20the%203%E2%80%99%20most%20exon%20or%20within%20the%203%E2%80%99%2Dmost%2050%20nucleotides%20of%20the%20penultimate%20exon
 
-        Rule: If the variant is located in the last exon or in the last 50 nucleotides
-        of the penultimate exon, it is NOT predicted to undergo NMD.
-        :return: NMD prediction
+        :return: Variant undergoes NMD
         :rtype: bool
         """
         assert self.gene_transcripts is not None
@@ -185,7 +284,39 @@ class PVS1:
             nmd_cutoff = sum(cds_sizes[:-1]) - min(50, cds_sizes[-2])
             return new_stop_codon * 3 <= nmd_cutoff
 
-    def run(self):
-        """Make the PVS1 prediction."""
-        self.nmd = self._is_nmd_target()
-        # self.vep
+    def _in_biologically_relevant_transcript(self) -> bool:
+        """
+        Check if the exon is in a biologically relevant transcript.
+
+        :return: Variant's exon in biologically relevant transcript(s)
+        :rtype: bool
+        """
+        return "ManeSelect" in self.seqvar_transcripts["feature_tag"]
+
+    def _critical4protein_function(self) -> bool:
+        """
+        Check if the truncated/altered region is critical for the protein function.
+
+        :return: Variant is critical for protein function
+        :rtype: bool
+        """
+        # TODO: Implement this method
+        return False
+
+    def _lof_is_frequent_in_population(self) -> bool:
+        """
+        Check if the LoF variants in the exon are frequent in the general population.
+
+        :return: LoF variants are frequent
+        :rtype: bool
+        """
+        return False
+
+    def _remove_more_then_10_percent_of_protein(self) -> bool:
+        """
+        Check if the protein is 10% of the normal length.
+
+        :return: Protein is 10% of the normal length
+        :rtype: bool
+        """
+        return False
