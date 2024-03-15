@@ -10,6 +10,7 @@ from src.pvs1_types import PVS1Prediction
 from src.seqvar import SeqVar, SeqVarResolver
 from src.seqvar_pvs1 import SeqVarPVS1
 
+# Setup logging
 logging_level = logging.DEBUG if settings.DEBUG else logging.INFO
 logging.basicConfig(level=logging_level)
 logger = logging.getLogger(__name__)
@@ -21,38 +22,6 @@ class AutoPVS1:
     def __init__(self, variant_name: str, genome_release: GenomeRelease = GenomeRelease.GRCh38):
         self.variant_name = variant_name
         self.genome_release = genome_release
-
-    async def _get_transcripts_seqvar(self):
-        """Get all transcripts for the given sequence variant."""
-        assert self.seqvar is not None
-        try:
-            mehari_client = MehariClient()
-            response = await mehari_client.get_seqvar_transcripts(self.seqvar)
-            if response["result"]:
-                self.seqvar_transcripts = response["result"]
-            else:
-                self.seqvar_transcripts = None
-
-            if self.seqvar_transcripts and len(self.seqvar_transcripts) > 0:
-                self.gene_hgnc_id = self.seqvar_transcripts[0]["gene_id"]
-
-                for transcript in self.seqvar_transcripts:
-                    self.HGVSs.append(transcript["feature_id"])
-
-                result = await mehari_client.get_gene_transcripts(
-                    self.gene_hgnc_id, self.seqvar.genome_release
-                )
-
-                if result["transcripts"]:
-                    self.gene_transcripts = result["transcripts"]
-                else:
-                    self.gene_transcripts = None
-
-        except Exception as e:
-            logger.error(
-                f"Failed to get transcripts for variant {self.seqvar.user_representation}."
-            )
-            logger.error(e)
 
     async def resolve_variant(self) -> SeqVar | None:
         """
@@ -113,8 +82,44 @@ class AutoPVS1:
             else:
                 logger.debug("No transcripts found for the variant.")
         elif isinstance(variant, str):
-            # TODO: Add Structure variants
+            # TODO: Add Structure variants PVS1 prediction
             pass
         else:
             logger.error(f"Failed to resolve variant {self.variant_name}.")
             return
+
+    async def _get_transcripts_seqvar(self):
+        """Get all transcripts for the given sequence variant."""
+        if not self.seqvar:
+            logger.error(
+                "No sequence variant specified. Assure that the variant is resolved before fetching transcripts."
+            )
+            return
+        try:
+            mehari_client = MehariClient()
+            response = await mehari_client.get_seqvar_transcripts(self.seqvar)
+            if response["result"]:
+                self.seqvar_transcripts = response["result"]
+            else:
+                self.seqvar_transcripts = None
+
+            if self.seqvar_transcripts and len(self.seqvar_transcripts) > 0:
+                self.gene_hgnc_id = self.seqvar_transcripts[0]["gene_id"]
+
+                for transcript in self.seqvar_transcripts:
+                    self.HGVSs.append(transcript["feature_id"])
+
+                result = await mehari_client.get_gene_transcripts(
+                    self.gene_hgnc_id, self.seqvar.genome_release
+                )
+
+                if result["transcripts"]:
+                    self.gene_transcripts = result["transcripts"]
+                else:
+                    self.gene_transcripts = None
+
+        except Exception as e:
+            logger.error(
+                f"Failed to get transcripts for variant {self.seqvar.user_representation}."
+            )
+            logger.error(e)

@@ -3,6 +3,7 @@
 from enum import Enum, auto
 
 
+#: Enumeration for sequence variant consequence
 class SeqVarConsequence(Enum):
     """Consequence of a sequence variant."""
 
@@ -11,6 +12,7 @@ class SeqVarConsequence(Enum):
     InitiationCodon = auto()
 
 
+#: Enumeration for PVS1 prediction status
 class PVS1Prediction(Enum):
     """PVS1 prediction."""
 
