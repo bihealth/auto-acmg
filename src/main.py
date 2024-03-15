@@ -6,9 +6,9 @@ import logging
 import sys
 from typing import Optional
 
+from src.autoPVS1 import AutoPVS1
 from src.core.config import settings
 from src.genome_builds import GenomeRelease
-from src.pvs1 import AutoPVS1
 
 
 class GenomeReleaseAction(argparse.Action):
