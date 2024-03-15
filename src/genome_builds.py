@@ -1,12 +1,11 @@
 """Genome build information and operations."""
 
 from enum import Enum, auto
-from typing import Literal
 
 from src.core.exceptions import MappingError
 
 
-#: GenomeRelease enume
+#: Enumeration for genome release
 class GenomeRelease(Enum):
     """Enumeration for allowed genome release values."""
 

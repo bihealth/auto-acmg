@@ -4,16 +4,8 @@ import re
 from enum import Enum, auto
 from typing import Dict
 
-from src.pvs1_types import PVS1Prediction
+from src.pvs1_types import PVS1Prediction, SeqVarConsequence
 from src.seqvar import SeqVar
-
-
-class SeqVarConsequence(Enum):
-    """Consequence of a sequence variant."""
-
-    NonsenseFrameshift = auto()
-    SpliceSites = auto()
-    InitiationCodon = auto()
 
 
 class SeqVarPVS1:
