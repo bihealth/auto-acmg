@@ -7,7 +7,7 @@ import sys
 from typing import Optional
 
 from src.genome_builds import GenomeRelease
-from src.pvs1 import PVS1
+from src.pvs1 import AutoPVS1
 from src.seqvar import SeqVar, SeqVarResolver
 
 
@@ -64,9 +64,8 @@ async def main(args: Optional[list[str]] = None):
             parsed_args.variant, parsed_args.genome_release
         )
         logger.info(f"Resolved variant: {seqvar}. Dictionary representation: {seqvar.__dict__}")
-        pvs1 = PVS1(seqvar)
-        await pvs1.run()
-        logger.info(f"PVS1 transcripts: {pvs1.seqvar_transcripts}\n\n\n{pvs1.gene_transcripts}")
+        auto_pvs1 = AutoPVS1(seqvar)
+        await auto_pvs1.run()
     except Exception as e:
         logger.error(e)
 
