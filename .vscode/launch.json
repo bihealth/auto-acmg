@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+      {
+          "name": "Python: Launch",
+          "type": "debugpy",
+          "request": "launch",
+          "module": "src.main",
+          "args": ["13-113803407-G-A", "--genome_release", "hg19"],
+          "console": "integratedTerminal"
+      }
+  ]
+}
