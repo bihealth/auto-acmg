@@ -5,7 +5,7 @@ An automatic tool for the classification of PVS1 variants.
 
 Inspirational repo (AutoPVS1): https://github.com/JiguangPeng/autopvs1
 
-Before the real documentation appears, please refer to the above information.
+Before the real documentation appears, please refer to the following information:
 
 ## Installation
 
