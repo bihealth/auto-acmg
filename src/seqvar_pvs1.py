@@ -4,8 +4,8 @@ import re
 from enum import Enum, auto
 from typing import Dict
 
-from src.pvs1_types import PVS1Prediction, SeqVarConsequence
 from src.seqvar import SeqVar
+from src.types import PVS1Prediction, SeqVarConsequence
 
 
 class SeqVarPVS1:
@@ -14,14 +14,14 @@ class SeqVarPVS1:
     def __init__(
         self,
         seqvar: SeqVar,
-        seqvar_transcripts: Dict,
-        gene_transcripts: Dict,
+        seqvar_transcript: Dict,
+        gene_transcript: Dict,
         consequence: SeqVarConsequence = SeqVarConsequence.NonsenseFrameshift,
     ):
         self.seqvar = seqvar
         self.consequence = consequence
-        self.seqvar_transcripts = seqvar_transcripts
-        self.gene_transcripts = gene_transcripts
+        self.seqvar_transcripts = seqvar_transcript
+        self.gene_transcripts = gene_transcript
         self.HGVS: str = ""
         self.pHGVS: str = ""
         self.tHGVS: str = ""
