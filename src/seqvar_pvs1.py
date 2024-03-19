@@ -141,6 +141,7 @@ class SeqVarPVS1:
         """
         # Ensure that necessary data is available
         assert self.cds_sizes is not None
+        assert self.pHGVS is not None
 
         new_stop_codon = self._get_pHGVS_termination(self.pHGVS)
         if self.gene_hgnc_id == "HGNC:4284":  # Hearing Loss Guidelines GJB2
@@ -167,7 +168,7 @@ class SeqVarPVS1:
         return False
 
     @staticmethod
-    async def _lof_is_frequent_in_population(seqvar) -> bool:
+    async def _lof_is_frequent_in_population(seqvar: SeqVar) -> bool:
         """
         Check if the LoF variants in the exon are frequent in the general population.
         **Rule:** If the LoF variants in the exon > 0.1% in the general population, it is
