@@ -102,7 +102,7 @@ class AutoPVS1:
                     pvs1 = SeqVarPVS1(
                         self.seqvar, self.seqvar_transcript, self.gene_transcript, self.consequence
                     )
-                    pvs1.verify_PVS1()
+                    await pvs1.verify_PVS1()
                     self.prediction = pvs1.prediction
                     logger.info(
                         f"PVS1 prediction for {pvs1.seqvar.user_representation}: {pvs1.prediction}"

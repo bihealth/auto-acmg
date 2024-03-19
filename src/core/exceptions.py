@@ -23,3 +23,9 @@ class MappingError(Exception):
     """Exception for errors in mapping chromosomes or genome builds."""
 
     pass
+
+
+class InvalidAPIResposeError(Exception):
+    """Exception for API errors."""
+
+    pass
