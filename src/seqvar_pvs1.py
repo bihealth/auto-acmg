@@ -1,11 +1,18 @@
 """PVS1 criteria for Sequence Variants (SeqVar)."""
 
+import logging
 import re
 from enum import Enum, auto
 from typing import Dict
 
+from src.core.config import settings
 from src.seqvar import SeqVar
 from src.types import PVS1Prediction, SeqVarConsequence
+
+# Setup logging
+logging_level = logging.DEBUG if settings.DEBUG else logging.INFO
+logging.basicConfig(level=logging_level)
+logger = logging.getLogger(__name__)
 
 
 class SeqVarPVS1:
@@ -35,22 +42,6 @@ class SeqVarPVS1:
         self.critical4protein: bool = False
         self.is_frequent_in_population: bool = False
         self.remove_much_of_protein: bool = False
-
-        # self.id = self.id_generator()
-        # self.vep_input = f"/tmp/vep.{self.id}.vcf"
-        # self.vep_output = f"/tmp/vep.{self.id}.tab"
-
-        # self.vep_variation = "na"
-        # self.vep_symbol = "na"
-        # self.vep_trans = "na"
-        # self.vep_canonical = "na"
-        # self.vep_pick = "na"
-        # self.vep_consequence = "na"
-        # self.hgvs_c = "na"
-        # self.hgvs_p = "na"
-        # self.hgvs_g = "na"
-        # self.vep_exon = "na"
-        # self.vep_intron = "na"
 
     def _initialize(self):
         """Setup the PVS1 class."""
@@ -83,11 +74,15 @@ class SeqVarPVS1:
                             self.prediction = PVS1Prediction.PVS1_Strong
                         else:
                             self.prediction = PVS1Prediction.PVS1_Moderate
-
-    # @staticmethod
-    # def id_generator(size: int = 6, chars: str = string.ascii_uppercase + string.digits) -> str:
-    #     """Generates a unique identifier for the VEP."""
-    #     return "".join(random.choice(chars) for _ in range(size))
+        elif self.consequence == SeqVarConsequence.SpliceSites:
+            # TODO: Implement SpliceSites PVS1 prediction
+            pass
+        elif self.consequence == SeqVarConsequence.InitiationCodon:
+            # TODO: Implement InitiationCodon PVS1 prediction
+            pass
+        else:
+            self.prediction = PVS1Prediction.NotPVS1
+            logger.info(f"Consequence {self.consequence} is not supported for PVS1 prediction.")
 
     @staticmethod
     def _get_pHGVS_termination(pHGVS: str) -> int:
@@ -99,11 +94,6 @@ class SeqVarPVS1:
         - NM_031475.2:p.Ala586Glyfs*73
         - NP_000305.3:p.Arg378SerfsTer5
         - p.Arg97Glyfs*26 (alternatively p.Arg97GlyfsTer26, or short p.Arg97fs)
-
-        :param pHGVS: Protein HGVS
-        :type pHGVS: str
-        :return: Termination position
-        :rtype: int
         """
         if "fs" in pHGVS:  # If frameshift
             pattern1 = re.compile(r"p\.\D+(\d+)\D+fs(\*|X|Ter)(\d+)")
@@ -136,11 +126,10 @@ class SeqVarPVS1:
         **Rule:** If the variant is located in the last exon or in the last 50 nucleotides
         of the penultimate exon, it is NOT predicted to undergo NMD.
         See more at https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6185798/#:~:text=Generally%2C%20NMD%20is%20not%20predicted%20to%20occur%20if%20the%20premature%20termination%20codon%20occurs%20in%20the%203%E2%80%99%20most%20exon%20or%20within%20the%203%E2%80%99%2Dmost%2050%20nucleotides%20of%20the%20penultimate%20exon
-
-        :return: Variant undergoes NMD
-        :rtype: bool
         """
+        # Ensure that necessary data is available
         assert self.gene_transcripts is not None
+
         new_stop_codon = self._get_pHGVS_termination(self.pHGVS)
         cds_sizes = [
             exon["altEndI"] - exon["altStartI"]
@@ -155,38 +144,21 @@ class SeqVarPVS1:
             return new_stop_codon * 3 <= nmd_cutoff
 
     def _in_biologically_relevant_transcript(self) -> bool:
-        """
-        Check if the exon is in a biologically relevant transcript.
+        """Check if the exon with SeqVar is in a biologically relevant transcript."""
+        # Ensure that necessary data is available
+        assert self.seqvar_transcripts is not None
 
-        :return: Variant's exon in biologically relevant transcript(s)
-        :rtype: bool
-        """
         return "ManeSelect" in self.seqvar_transcripts["feature_tag"]
 
     def _critical4protein_function(self) -> bool:
-        """
-        Check if the truncated/altered region is critical for the protein function.
-
-        :return: Variant is critical for protein function
-        :rtype: bool
-        """
+        """Check if the truncated/altered region is critical for the protein function."""
         # TODO: Implement this method
         return False
 
     def _lof_is_frequent_in_population(self) -> bool:
-        """
-        Check if the LoF variants in the exon are frequent in the general population.
-
-        :return: LoF variants are frequent
-        :rtype: bool
-        """
+        """Check if the LoF variants in the exon are frequent in the general population."""
         return False
 
     def _remove_more_then_10_percent_of_protein(self) -> bool:
-        """
-        Check if the protein is 10% of the normal length.
-
-        :return: Protein is 10% of the normal length
-        :rtype: bool
-        """
+        """Check if the protein is 10% of the normal length."""
         return False

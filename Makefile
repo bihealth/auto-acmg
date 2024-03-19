@@ -61,7 +61,7 @@ lint-mypy:
 
 .PHONY: example_run
 example_run:
-	pipenv run python -m src.main 13-113803407-G-A --genome_release hg19
+	pipenv run python -m src.main 4-113568536-G-GA --genome_release hg19
 
 .PHONY: test
 test:

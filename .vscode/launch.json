@@ -6,7 +6,7 @@
           "type": "debugpy",
           "request": "launch",
           "module": "src.main",
-          "args": ["13-113803407-G-A", "--genome_release", "hg19"],
+          "args": ["4-113568536-G-GA", "--genome_release", "grch37"],
           "console": "integratedTerminal"
       }
   ]
