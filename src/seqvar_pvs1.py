@@ -5,7 +5,9 @@ import re
 from enum import Enum, auto
 from typing import Dict, List
 
+from src.api.annonars import AnnonarsClient
 from src.core.config import settings
+from src.core.exceptions import InvalidAPIResposeError
 from src.seqvar import SeqVar
 from src.types import PVS1Prediction, SeqVarConsequence
 
@@ -56,7 +58,7 @@ class SeqVarPVS1:
         ]
         self.cds_length = sum(self.cds_sizes)
 
-    def verify_PVS1(self):
+    async def verify_PVS1(self):
         """Make the PVS1 prediction."""
         if self.consequence == SeqVarConsequence.NonsenseFrameshift:
             # Follow guidelines for PTEN
@@ -75,10 +77,9 @@ class SeqVarPVS1:
                     self.prediction = PVS1Prediction.PVS1_Strong
                 else:
                     # Guidelines are unclear on "and/or" statement here.
-                    if (
-                        self._lof_is_frequent_in_population()
-                        or not self._in_biologically_relevant_transcript(self.transcript_tags)
-                    ):
+                    if await self._lof_is_frequent_in_population(
+                        self.seqvar
+                    ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
                     else:
                         if self._lof_removes_more_then_10_percent_of_protein(
@@ -138,7 +139,6 @@ class SeqVarPVS1:
         undergoes NMD prediction.
         **Rule:** If the variant is located in the last exon or in the last 50 nucleotides
         of the penultimate exon, it is NOT predicted to undergo NMD.
-        See more at https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6185798/#:~:text=Generally%2C%20NMD%20is%20not%20predicted%20to%20occur%20if%20the%20premature%20termination%20codon%20occurs%20in%20the%203%E2%80%99%20most%20exon%20or%20within%20the%203%E2%80%99%2Dmost%2050%20nucleotides%20of%20the%20penultimate%20exon
         """
         # Ensure that necessary data is available
         assert self.cds_sizes is not None
@@ -154,7 +154,11 @@ class SeqVarPVS1:
 
     @staticmethod
     def _in_biologically_relevant_transcript(transcript_tags: List[str]) -> bool:
-        """Check if the exon with SeqVar is in a biologically relevant transcript."""
+        """
+        Check if the exon with SeqVar is in a biologically relevant transcript.
+        **Rule:** If the variant is located in a transcript with a MANE Select tag, it is
+        predicted to be in a biologically relevant transcript.
+        """
         # Ensure that necessary data is available
         return "ManeSelect" in transcript_tags
 
@@ -163,10 +167,39 @@ class SeqVarPVS1:
         # TODO: Implement this method
         return False
 
-    def _lof_is_frequent_in_population(self) -> bool:
-        """Check if the LoF variants in the exon are frequent in the general population."""
-        # TODO: Implemnt this method
-        return False
+    @staticmethod
+    async def _lof_is_frequent_in_population(seqvar) -> bool:
+        """
+        Check if the LoF variants in the exon are frequent in the general population.
+        **Rule:** If the LoF variants in the exon > 0.1% in the general population, it is
+        predicted to be frequent in the general population.
+        """
+        try:
+            annonars_client = AnnonarsClient()
+            # TODO: Use correct start and stop positions
+            response = await annonars_client.get_variant_from_range(
+                seqvar, seqvar.pos - 20, seqvar.pos + 20
+            )
+            if response:
+                lof_variants = 0
+                all_variants = len(response["result"]["gnomad_genomes"]["vep"])
+                for variant in response["result"]["gnomad_genomes"]["vep"]:
+                    if variant["consequence"] in ["frameshift_variant", "stop_gained"]:
+                        lof_variants += 1
+                # TODO: Proove that this is the correct threshold
+                # The guideline does not specify the exact threshold. 0.1% was taken from AutoPVS1
+                if lof_variants / all_variants > 0.001:
+                    return True
+                else:
+                    return False
+            else:
+                raise InvalidAPIResposeError("Failed to get variant from range.")
+        except Exception as e:
+            logger.error(
+                f"Failed to get variant from range for variant {seqvar.user_representation}."
+            )
+            logger.error(e)
+            return False
 
     @staticmethod
     def _lof_removes_more_then_10_percent_of_protein(pHGVS: str, cds_length: int) -> bool:
