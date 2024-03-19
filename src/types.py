@@ -10,6 +10,7 @@ class SeqVarConsequence(Enum):
     NonsenseFrameshift = auto()
     SpliceSites = auto()
     InitiationCodon = auto()
+    NotSet = auto()
 
 
 #: Enumeration for PVS1 prediction status

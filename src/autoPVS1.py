@@ -8,12 +8,50 @@ from src.core.config import settings
 from src.genome_builds import GenomeRelease
 from src.seqvar import SeqVar, SeqVarResolver
 from src.seqvar_pvs1 import SeqVarPVS1
-from src.types import PVS1Prediction
+from src.types import PVS1Prediction, SeqVarConsequence
 
 # Setup logging
 logging_level = logging.DEBUG if settings.DEBUG else logging.INFO
 logging.basicConfig(level=logging_level)
 logger = logging.getLogger(__name__)
+
+
+#: TODO: Review the mapping
+#: Mapping of consequence from transcript info to SeqVarConsequence
+SeqvarConsequenceMapping = {
+    "intergenic_variant": SeqVarConsequence.NotSet,
+    "intron_variant": SeqVarConsequence.NotSet,
+    "upstream_gene_variant": SeqVarConsequence.NotSet,
+    "downstream_gene_variant": SeqVarConsequence.NotSet,
+    "5_prime_utr_variant": SeqVarConsequence.NotSet,
+    "3_prime_utr_variant": SeqVarConsequence.NotSet,
+    "splice_region_variant": SeqVarConsequence.SpliceSites,  # Can affect splicing
+    "splice_donor_variant": SeqVarConsequence.SpliceSites,  # Canonical splice site
+    "splice_acceptor_variant": SeqVarConsequence.SpliceSites,  # Canonical splice site
+    "frameshift_variant": SeqVarConsequence.NonsenseFrameshift,  # Loss of function
+    "transcript_ablation": SeqVarConsequence.NotSet,  # Severe effect, but not specifically classified here
+    "transcript_amplification": SeqVarConsequence.NotSet,
+    "inframe_insertion": SeqVarConsequence.NotSet,  # Not necessarily loss of function
+    "inframe_deletion": SeqVarConsequence.NotSet,  # Not necessarily loss of function
+    "synonymous_variant": SeqVarConsequence.NotSet,  # Usually benign, but exceptions exist
+    "stop_retained_variant": SeqVarConsequence.NotSet,
+    "missense_variant": SeqVarConsequence.NotSet,  # Not loss of function in a direct way
+    "initiator_codon_variant": SeqVarConsequence.InitiationCodon,  # Affects start codon
+    "stop_gained": SeqVarConsequence.NonsenseFrameshift,  # Nonsense variant
+    "stop_lost": SeqVarConsequence.NotSet,  # Could be significant, but not classified here as Nonsense/Frameshift
+    "mature_mirna_variant": SeqVarConsequence.NotSet,
+    "non_coding_exon_variant": SeqVarConsequence.NotSet,  # Impact unclear
+    "nc_transcript_variant": SeqVarConsequence.NotSet,
+    "incomplete_terminal_codon_variant": SeqVarConsequence.NotSet,  # Rarely significant
+    "nmd_transcript_variant": SeqVarConsequence.NotSet,  # Effect on NMD, not directly LOF
+    "coding_sequence_variant": SeqVarConsequence.NotSet,  # Ambiguous
+    "tfbs_ablation": SeqVarConsequence.NotSet,  # Regulatory, not LOF
+    "tfbs_amplification": SeqVarConsequence.NotSet,
+    "tf_binding_site_variant": SeqVarConsequence.NotSet,
+    "regulatory_region_ablation": SeqVarConsequence.NotSet,  # Regulatory, not LOF
+    "regulatory_region_variant": SeqVarConsequence.NotSet,
+    "regulatory_region_amplification": SeqVarConsequence.NotSet,
+}
 
 
 class AutoPVS1:
@@ -24,12 +62,7 @@ class AutoPVS1:
         self.genome_release = genome_release
 
     async def resolve_variant(self) -> SeqVar | None:
-        """
-        Resolve the variant.
-
-        :return: Sequence variant
-        :rtype: SeqVar | None
-        """
+        """Resolve the variant."""
         # TODO: Add resolve for Structure variants
         try:
             # Try to resolve as Sequence variant
@@ -55,26 +88,47 @@ class AutoPVS1:
             self.seqvar_transcript = None
             self.gene_transcript = None
             self.gene_hgnc_id = None
+            self.consequence: SeqVarConsequence = SeqVarConsequence.NotSet
             self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
 
             logger.debug(f"Retrieving transcripts.")
             await self._get_transcripts_info()
-            if self.seqvar_transcript and self.gene_transcript:
-                # TODO: Add support for SpliceSites and InitiationCodon consequences
-                pvs1 = SeqVarPVS1(self.seqvar, self.seqvar_transcript, self.gene_transcript)
-                pvs1.verify_PVS1()
-                self.prediction = pvs1.prediction
-                logger.debug(
-                    f"PVS1 prediction for {pvs1.seqvar.user_representation}: {pvs1.prediction.name}"
-                )
+            if not self.seqvar_transcript or not self.gene_transcript:
+                logger.error("No transcripts found for the variant.")
+                return
             else:
-                logger.debug("No transcripts found for the variant.")
+                try:
+                    self.consequence = self._get_consequence(self.seqvar_transcript)
+                    pvs1 = SeqVarPVS1(
+                        self.seqvar, self.seqvar_transcript, self.gene_transcript, self.consequence
+                    )
+                    pvs1.verify_PVS1()
+                    self.prediction = pvs1.prediction
+                    logger.info(
+                        f"PVS1 prediction for {pvs1.seqvar.user_representation}: {pvs1.prediction}"
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"Failed to predict PVS1 for variant {self.seqvar.user_representation}."
+                    )
+                    logger.error(e)
         elif isinstance(variant, str):
             # TODO: Add Structure variants PVS1 prediction
             pass
         else:
             logger.error(f"Failed to resolve variant {self.variant_name}.")
             return
+
+    @staticmethod
+    def _get_consequence(seqvar_transcript: Dict[Any, Any]) -> SeqVarConsequence:
+        """Get the consequence of the sequence variant."""
+        if not seqvar_transcript:
+            return SeqVarConsequence.NotSet
+        else:
+            for consequence in seqvar_transcript["consequences"]:
+                if consequence in SeqvarConsequenceMapping:
+                    return SeqvarConsequenceMapping[consequence]
+            return SeqVarConsequence.NotSet
 
     @staticmethod
     def _choose_transcript(
@@ -110,7 +164,9 @@ class AutoPVS1:
                     mane_transcripts.append(hgvs)
                 cds_sizes = [
                     exon["altEndI"] - exon["altStartI"]
-                    for exon in transcript["gene"]["genomeAlignments"][0]["exons"]
+                    for exon in transcript["gene"]["genomeAlignments"][0][
+                        "exons"
+                    ]  # TODO: Change 0 to proper Genome Build
                 ]
                 exon_lengths[hgvs] = sum(cds_sizes)
 
@@ -126,7 +182,7 @@ class AutoPVS1:
         return seqvar_transcript, gene_transcript
 
     async def _get_transcripts_info(self):
-        """Get all transcripts for the given sequence variant."""
+        """Get all transcripts for the given sequence variant from Mehari."""
         if not self.seqvar:
             logger.error(
                 "No sequence variant specified. Assure that the variant is resolved before fetching transcripts."

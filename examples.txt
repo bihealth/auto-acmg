@@ -1,0 +1,5 @@
+Frameshift:
+4-113568536-G-GA / grch37 (LARP7, MANE)
+
+3-prime UTR:
+13-113803407-G-A / grch37 (F10, MANE)

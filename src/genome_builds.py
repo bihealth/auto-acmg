@@ -15,7 +15,12 @@ class GenomeRelease(Enum):
     @staticmethod
     def from_string(value: str):
         """Converts string to enum member if possible, otherwise returns None."""
-        genome_mapping = {"hg19": "GRCh37", "hg38": "GRCh38"}
+        genome_mapping = {
+            "hg19": "GRCh37",
+            "hg38": "GRCh38",
+            "grch37": "GRCh37",
+            "grch38": "GRCh38",
+        }
         value_mapped = genome_mapping.get(value, value)
         for member in GenomeRelease:
             if member.name == value_mapped:
