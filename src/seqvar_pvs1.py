@@ -61,8 +61,7 @@ class SeqVarPVS1:
     async def verify_PVS1(self):
         """Make the PVS1 prediction."""
         if self.consequence == SeqVarConsequence.NonsenseFrameshift:
-            # Follow guidelines for PTEN
-            if self.gene_hgnc_id == "PTEN":
+            if self.gene_hgnc_id == "HGNC:9588":  # Follow guidelines for PTEN
                 if self._get_pHGVS_termination(self.pHGVS) < 374:
                     self.prediction = PVS1Prediction.PVS1
                     return
