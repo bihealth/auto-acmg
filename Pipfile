@@ -11,12 +11,16 @@ mypy = "*"
 aiohttp = "*"
 pydantic = "*"
 pydantic-settings = "*"
+sphinx = "*"
 
 [dev-packages]
 debugpy = "*"
 pytest = "*"
 aioresponses = "*"
 pytest-asyncio = "*"
+sphinx = "*"
+sphinxcontrib-bibtex = "*"
+furo = "*"
 
 [requires]
 python_version = "3.12"

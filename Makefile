@@ -81,9 +81,9 @@ ci: \
 	lint \
 	test-ci
 
-# .PHONY: docs
-# docs:
-# 	PYTHONPATH=$(PWD) pipenv run -- make -C ../docs clean html
+.PHONY: docs
+docs:
+	PYTHONPATH=$(PWD) pipenv run -- make -C docs clean html
 
 # .PHONY: mksuperuser
 # mksuperuser:
