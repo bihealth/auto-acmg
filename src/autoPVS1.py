@@ -79,6 +79,7 @@ class AutoPVS1:
         """Run the AutoPVS1 algorithm."""
         logger.info(f"Running AutoPVS1 for variant {self.variant_name}.")
         variant = await self.resolve_variant()
+
         if isinstance(variant, SeqVar):
             self.seqvar = variant
             self.HGVSs: List[str] = []
@@ -87,6 +88,7 @@ class AutoPVS1:
             self.seqvar_transcript = None
             self.gene_transcript = None
             self.gene_hgnc_id = None
+            self.pvs1: SeqVarPVS1 | None = None
             self.consequence: SeqVarConsequence = SeqVarConsequence.NotSet
             self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
 
@@ -98,13 +100,13 @@ class AutoPVS1:
             else:
                 try:
                     self.consequence = self._get_consequence(self.seqvar_transcript)
-                    pvs1 = SeqVarPVS1(
+                    self.pvs1 = SeqVarPVS1(
                         self.seqvar, self.seqvar_transcript, self.gene_transcript, self.consequence
                     )
-                    await pvs1.verify_PVS1()
-                    self.prediction = pvs1.prediction
+                    await self.pvs1.verify_PVS1()
+                    self.prediction = self.pvs1.prediction
                     logger.info(
-                        f"PVS1 prediction for {pvs1.seqvar.user_representation}: {pvs1.prediction}"
+                        f"PVS1 prediction for {self.pvs1.seqvar.user_representation}: {self.pvs1.prediction}"
                     )
                 except Exception as e:
                     logger.error(

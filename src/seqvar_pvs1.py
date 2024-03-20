@@ -2,7 +2,6 @@
 
 import logging
 import re
-from enum import Enum, auto
 from typing import Dict, List
 
 from src.api.annonars import AnnonarsClient
