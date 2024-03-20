@@ -14,6 +14,7 @@ If you want to **use** AutoPVS1, the best place is to start at :ref:`dev_quickst
 
    dev_quickstart
    doc_algorithm
+   doc_algorithm_details
 
 .. toctree::
    :maxdepth: 2

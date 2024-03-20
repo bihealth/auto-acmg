@@ -15,6 +15,7 @@ Annonars
     :inherited-members:
     :undoc-members:
     :show-inheritance:
+    :private-members:
 
 -----
 Dotty
@@ -25,6 +26,7 @@ Dotty
     :inherited-members:
     :undoc-members:
     :show-inheritance:
+    :private-members:
 
 ------
 Mehari
@@ -35,3 +37,4 @@ Mehari
     :inherited-members:
     :undoc-members:
     :show-inheritance:
+    :private-members:
