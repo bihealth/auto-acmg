@@ -3,6 +3,7 @@
 import aiohttp
 
 from src.core.config import settings
+from src.models.annonars import AnnonarsResponse
 from src.seqvar import SeqVar
 
 #: Annonars API base URL
@@ -13,7 +14,9 @@ class AnnonarsClient:
     def __init__(self, api_base_url: str = ANNONARS_API_BASE_URL):
         self.api_base_url = api_base_url
 
-    async def get_variant_from_range(self, seqvar: SeqVar, start: int, stop: int) -> dict | None:
+    async def get_variant_from_range(
+        self, seqvar: SeqVar, start: int, stop: int
+    ) -> AnnonarsResponse | None:
         """
         Pull all variants within a range.
 

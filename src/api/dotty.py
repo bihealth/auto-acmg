@@ -4,6 +4,7 @@ import aiohttp
 
 from src.core.config import settings
 from src.genome_builds import GenomeRelease
+from src.models.dotty import DottyResponse
 
 #: Dotty API base URL
 DOTTI_API_BASE_URL = f"{settings.API_REEV_URL}/dotty"
@@ -15,7 +16,7 @@ class DottyClient:
 
     async def to_spdi(
         self, query: str, assembly: GenomeRelease = GenomeRelease.GRCh38
-    ) -> dict | None:
+    ) -> DottyResponse | None:
         """
         Converts a variant to SPDI format.
 
