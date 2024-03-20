@@ -16,7 +16,6 @@ logging.basicConfig(level=logging_level)
 logger = logging.getLogger(__name__)
 
 
-#: TODO: Review the mapping
 #: Mapping of consequence from transcript info to SeqVarConsequence
 SeqvarConsequenceMapping = {
     "intergenic_variant": SeqVarConsequence.NotSet,
@@ -164,9 +163,7 @@ class AutoPVS1:
                     mane_transcripts.append(hgvs)
                 cds_sizes = [
                     exon["altEndI"] - exon["altStartI"]
-                    for exon in transcript["gene"]["genomeAlignments"][0][
-                        "exons"
-                    ]  # TODO: Change 0 to proper Genome Build
+                    for exon in transcript["gene"]["genomeAlignments"][0]["exons"]
                 ]
                 exon_lengths[hgvs] = sum(cds_sizes)
 

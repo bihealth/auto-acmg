@@ -66,7 +66,7 @@ class SeqVarPVS1:
                     self.prediction = PVS1Prediction.PVS1
                     return
 
-            if self._undergo_nmd():
+            if self._undergo_nmd(self.cds_sizes, self.pHGVS, self.gene_hgnc_id):
                 if self._in_biologically_relevant_transcript(self.transcript_tags):
                     self.prediction = PVS1Prediction.PVS1
                 else:
@@ -75,7 +75,6 @@ class SeqVarPVS1:
                 if self._critical4protein_function():
                     self.prediction = PVS1Prediction.PVS1_Strong
                 else:
-                    # Guidelines are unclear on "and/or" statement here.
                     if await self._lof_is_frequent_in_population(
                         self.seqvar
                     ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
@@ -87,12 +86,56 @@ class SeqVarPVS1:
                             self.prediction = PVS1Prediction.PVS1_Strong
                         else:
                             self.prediction = PVS1Prediction.PVS1_Moderate
+
         elif self.consequence == SeqVarConsequence.SpliceSites:
-            # TODO: Implement SpliceSites PVS1 prediction
-            pass
+            if self._exon_skipping_or_cryptic_ss_disruption() and self._undergo_nmd(
+                self.cds_sizes, self.pHGVS, self.gene_hgnc_id
+            ):
+                if self._in_biologically_relevant_transcript(self.transcript_tags):
+                    self.prediction = PVS1Prediction.PVS1
+                else:
+                    self.prediction = PVS1Prediction.NotPVS1
+            elif self._exon_skipping_or_cryptic_ss_disruption() and not self._undergo_nmd(
+                self.cds_sizes, self.pHGVS, self.gene_hgnc_id
+            ):
+                if self._critical4protein_function():
+                    self.prediction = PVS1Prediction.PVS1_Strong
+                else:
+                    if await self._lof_is_frequent_in_population(
+                        self.seqvar
+                    ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
+                        self.prediction = PVS1Prediction.NotPVS1
+                    else:
+                        if self._lof_removes_more_then_10_percent_of_protein(
+                            self.pHGVS, self.cds_length
+                        ):
+                            self.prediction = PVS1Prediction.PVS1_Strong
+                        else:
+                            self.prediction = PVS1Prediction.PVS1_Moderate
+            else:
+                if self._critical4protein_function():
+                    self.prediction = PVS1Prediction.PVS1_Strong
+                else:
+                    if await self._lof_is_frequent_in_population(
+                        self.seqvar
+                    ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
+                        self.prediction = PVS1Prediction.NotPVS1
+                    else:
+                        if self._lof_removes_more_then_10_percent_of_protein(
+                            self.pHGVS, self.cds_length
+                        ):
+                            self.prediction = PVS1Prediction.PVS1_Strong
+                        else:
+                            self.prediction = PVS1Prediction.PVS1_Moderate
+
         elif self.consequence == SeqVarConsequence.InitiationCodon:
-            # TODO: Implement InitiationCodon PVS1 prediction
-            pass
+            if self._alternative_start_codon():
+                self.prediction = PVS1Prediction.NotPVS1
+            else:
+                if self._upstream_pathogenic_variant():
+                    self.prediction = PVS1Prediction.PVS1_Moderate
+                else:
+                    self.prediction = PVS1Prediction.PVS1_Supporting
         else:
             self.prediction = PVS1Prediction.NotPVS1
             logger.info(f"Consequence {self.consequence} is not supported for PVS1 prediction.")
@@ -132,24 +175,20 @@ class SeqVarPVS1:
             termination = -1
         return termination
 
-    def _undergo_nmd(self) -> bool:
+    def _undergo_nmd(self, cds_sizes: List[int], pHGVS: str, hgnc_id: str) -> bool:
         """
         Nonsense-mediated decay (NMD) classification. Return if the variant
         undergoes NMD prediction.
         **Rule:** If the variant is located in the last exon or in the last 50 nucleotides
         of the penultimate exon, it is NOT predicted to undergo NMD.
         """
-        # Ensure that necessary data is available
-        assert self.cds_sizes is not None
-        assert self.pHGVS is not None
-
-        new_stop_codon = self._get_pHGVS_termination(self.pHGVS)
-        if self.gene_hgnc_id == "HGNC:4284":  # Hearing Loss Guidelines GJB2
+        new_stop_codon = self._get_pHGVS_termination(pHGVS)
+        if hgnc_id == "HGNC:4284":  # Hearing Loss Guidelines GJB2
             return True
-        elif len(self.cds_sizes) <= 1:
+        elif len(cds_sizes) <= 1:
             return False
         else:
-            nmd_cutoff = sum(self.cds_sizes[:-1]) - min(50, self.cds_sizes[-2])
+            nmd_cutoff = sum(cds_sizes[:-1]) - min(50, cds_sizes[-2])
             return new_stop_codon * 3 <= nmd_cutoff
 
     @staticmethod
@@ -212,3 +251,18 @@ class SeqVarPVS1:
             return True
         else:
             return False
+
+    def _exon_skipping_or_cryptic_ss_disruption(self) -> bool:
+        """Check if the variant causes exon skipping or cryptic splice site disruption."""
+        # TODO: Implement this method
+        return False
+
+    def _alternative_start_codon(self) -> bool:
+        """Check if the variant introduces an alternative start codon."""
+        # TODO: Implement this method
+        return False
+
+    def _upstream_pathogenic_variant(self) -> bool:
+        """Check if the variant is an upstream pathogenic variant."""
+        # TODO: Implement this method
+        return False
