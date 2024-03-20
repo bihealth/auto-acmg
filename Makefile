@@ -57,7 +57,7 @@ flake8:
 
 .PHONY: lint-mypy
 lint-mypy:
-	MYPYPATH=$(PWD)/stubs pipenv run mypy $(DIRS_PYTHON)
+	MYPYPATH=$(PWD)/stubs pipenv run mypy --check-untyped-defs $(DIRS_PYTHON)
 
 .PHONY: example_run
 example_run:

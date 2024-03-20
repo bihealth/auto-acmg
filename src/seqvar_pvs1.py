@@ -2,13 +2,15 @@
 
 import logging
 import re
-from typing import Dict, List
+from typing import List
 
 from src.api.annonars import AnnonarsClient
 from src.core.config import settings
 from src.core.exceptions import InvalidAPIResposeError
+from src.enums import PVS1Prediction, SeqVarConsequence
+from src.models.mehari_gene import TranscriptGene
+from src.models.mehari_seqvar import TranscriptSeqvar
 from src.seqvar import SeqVar
-from src.types import PVS1Prediction, SeqVarConsequence
 
 # Setup logging
 logging_level = logging.DEBUG if settings.DEBUG else logging.INFO
@@ -22,8 +24,8 @@ class SeqVarPVS1:
     def __init__(
         self,
         seqvar: SeqVar,
-        seqvar_transcript: Dict,
-        gene_transcript: Dict,
+        seqvar_transcript: TranscriptSeqvar,
+        gene_transcript: TranscriptGene,
         consequence: SeqVarConsequence = SeqVarConsequence.NonsenseFrameshift,
     ):
         self.seqvar = seqvar
@@ -46,14 +48,14 @@ class SeqVarPVS1:
 
     def _initialize(self):
         """Setup the PVS1 class."""
-        self.HGVS = self.gene_transcripts["id"]
-        self.pHGVS = self.HGVS + ":" + self.seqvar_transcripts["hgvs_p"]
-        self.tHGVS = self.HGVS + ":" + self.seqvar_transcripts["hgvs_t"]
-        self.gene_hgnc_id = self.seqvar_transcripts["gene_id"]
-        self.transcript_tags = self.seqvar_transcripts["feature_tag"]
+        self.HGVS = self.gene_transcripts.id
+        self.pHGVS = self.HGVS + ":" + (self.seqvar_transcripts.hgvs_p or "")
+        self.tHGVS = self.HGVS + ":" + (self.seqvar_transcripts.hgvs_t or "")
+        self.gene_hgnc_id = self.seqvar_transcripts.gene_id
+        self.transcript_tags = self.seqvar_transcripts.feature_tag
         self.cds_sizes = [
-            exon["altEndI"] - exon["altStartI"]
-            for exon in self.gene_transcripts["genomeAlignments"][0]["exons"]
+            exon.altEndI - exon.altStartI
+            for exon in self.gene_transcripts.genomeAlignments[0].exons
         ]
         self.cds_length = sum(self.cds_sizes)
 

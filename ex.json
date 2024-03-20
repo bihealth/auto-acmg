@@ -1,0 +1,10 @@
+{
+  "NM_001267039.2":{
+     "seqvar":"TranscriptSeqvar(consequences",
+     "gene":"TranscriptGene(id=NM_001267039.2"
+  },
+  "NM_001370974.1":{
+     "seqvar":"TranscriptSeqvar(consequences=",
+     "gene":"TranscriptGene(id=NM_001370974.1"
+  }
+}

@@ -1,14 +1,17 @@
 """Implementations of the PVS1 algorithm."""
 
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 from src.api.mehari import MehariClient
 from src.core.config import settings
+from src.enums import PVS1Prediction, SeqVarConsequence
 from src.genome_builds import GenomeRelease
+from src.models.autopvs1 import TranscriptInfo
+from src.models.mehari_gene import GeneTranscripts, TranscriptGene
+from src.models.mehari_seqvar import TranscriptSeqvar, TranscriptsSeqVar
 from src.seqvar import SeqVar, SeqVarResolver
 from src.seqvar_pvs1 import SeqVarPVS1
-from src.types import PVS1Prediction, SeqVarConsequence
 
 # Setup logging
 logging_level = logging.DEBUG if settings.DEBUG else logging.INFO
@@ -81,13 +84,13 @@ class AutoPVS1:
         variant = await self.resolve_variant()
 
         if isinstance(variant, SeqVar):
-            self.seqvar = variant
+            self.seqvar: SeqVar = variant
             self.HGVSs: List[str] = []
-            self.seqvar_ts_info = None
-            self.gene_ts_info = None
-            self.seqvar_transcript = None
-            self.gene_transcript = None
-            self.gene_hgnc_id = None
+            self.seqvar_ts_info: List[TranscriptSeqvar] | None = None
+            self.gene_ts_info: List[TranscriptGene] | None = None
+            self.seqvar_transcript: TranscriptSeqvar | None = None
+            self.gene_transcript: TranscriptGene | None = None
+            self.gene_hgnc_id: str = ""
             self.pvs1: SeqVarPVS1 | None = None
             self.consequence: SeqVarConsequence = SeqVarConsequence.NotSet
             self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
@@ -121,63 +124,65 @@ class AutoPVS1:
             return
 
     @staticmethod
-    def _get_consequence(seqvar_transcript: Dict[Any, Any]) -> SeqVarConsequence:
+    def _get_consequence(seqvar_transcript: TranscriptSeqvar | None) -> SeqVarConsequence:
         """Get the consequence of the sequence variant."""
         if not seqvar_transcript:
             return SeqVarConsequence.NotSet
         else:
-            for consequence in seqvar_transcript["consequences"]:
+            for consequence in seqvar_transcript.consequences:
                 if consequence in SeqvarConsequenceMapping:
                     return SeqvarConsequenceMapping[consequence]
             return SeqVarConsequence.NotSet
 
     @staticmethod
     def _choose_transcript(
-        hgvss: List[str], seqvar_transcripts, gene_transcripts
-    ) -> Tuple[Dict[Any, Any], Dict[Any, Any]] | Tuple[None, None]:
+        hgvss: List[str],
+        seqvar_transcripts: List[TranscriptSeqvar],
+        gene_transcripts: List[TranscriptGene],
+    ) -> Tuple[TranscriptSeqvar | None, TranscriptGene | None]:
         """
         Choose the most suitable transcript for the PVS1 prediction.
         The first consideration is the MANE transcript, if available,
         and then the length of the exons.
         """
-        transcripts = {}
+        transcripts_mapping: Dict[str, TranscriptInfo] = {}
         seqvar_transcript = None
         gene_transcript = None
-        mane_transcripts = []
-        exon_lengths = {}
+        mane_transcripts: List[str] = []
+        exon_lengths: Dict[str, int] = {}
 
         # Setup mapping from HGVS to pair of transcripts
         for hgvs in hgvss:
-            transcripts[hgvs] = {"seqvar": None, "gene": None}
-            for transcript in seqvar_transcripts:
-                if transcript["feature_id"] == hgvs:
-                    transcripts[hgvs]["seqvar"] = transcript
+            transcripts_mapping[hgvs] = TranscriptInfo(seqvar=None, gene=None)
+            for seqvar_ts in seqvar_transcripts:
+                if seqvar_ts.feature_id == hgvs:
+                    transcripts_mapping[hgvs].seqvar = seqvar_ts
                     break
-            for transcript in gene_transcripts:
-                if transcript["id"] == hgvs:
-                    transcripts[hgvs]["gene"] = transcript
+            for gene_ts in gene_transcripts:
+                if gene_ts.id == hgvs:
+                    transcripts_mapping[hgvs].gene = gene_ts
                     break
 
         # Find MANE transcripts and calculate exon lengths
-        for hgvs, transcript in transcripts.items():
-            if transcript["seqvar"] and transcript["gene"]:
-                if "ManeSelect" in transcript["seqvar"]["feature_tag"]:
+        for hgvs, transcript in transcripts_mapping.items():
+            if transcript.seqvar and transcript.gene:
+                if "ManeSelect" in transcript.seqvar.feature_tag:
                     mane_transcripts.append(hgvs)
                 cds_sizes = [
-                    exon["altEndI"] - exon["altStartI"]
-                    for exon in transcript["gene"]["genomeAlignments"][0]["exons"]
+                    exon.altEndI - exon.altStartI
+                    for exon in transcript.gene.genomeAlignments[0].exons
                 ]
                 exon_lengths[hgvs] = sum(cds_sizes)
 
         # Choose the most suitable transcript
         if len(mane_transcripts) == 1:
-            seqvar_transcript = transcripts[mane_transcripts[0]]["seqvar"]
-            gene_transcript = transcripts[mane_transcripts[0]]["gene"]
+            seqvar_transcript = transcripts_mapping[mane_transcripts[0]].seqvar
+            gene_transcript = transcripts_mapping[mane_transcripts[0]].gene
         else:
-            lookup_group = mane_transcripts if mane_transcripts else exon_lengths.items()
-            max_length = max(lookup_group, key=lambda x: x[1])
-            seqvar_transcript = transcripts[max_length[0]]["seqvar"]
-            gene_transcript = transcripts[max_length[0]]["gene"]
+            lookup_group = mane_transcripts if mane_transcripts else list(exon_lengths.keys())
+            max_length_transcript = max(lookup_group, key=lambda x: exon_lengths[x])
+            seqvar_transcript = transcripts_mapping[max_length_transcript].seqvar
+            gene_transcript = transcripts_mapping[max_length_transcript].gene
         return seqvar_transcript, gene_transcript
 
     async def _get_transcripts_info(self):
@@ -189,30 +194,36 @@ class AutoPVS1:
             return
         try:
             mehari_client = MehariClient()
-            response = await mehari_client.get_seqvar_transcripts(self.seqvar)
-            if response["result"]:
-                self.seqvar_ts_info = response["result"]
-            else:
+            response_seqvar = await mehari_client.get_seqvar_transcripts(self.seqvar)
+            if not response_seqvar:
                 self.seqvar_ts_info = None
+            else:
+                response_seqvar = TranscriptsSeqVar(**response_seqvar)  # type: ignore
+                self.seqvar_ts_info = response_seqvar.result
 
             if self.seqvar_ts_info and len(self.seqvar_ts_info) > 0:
-                self.gene_hgnc_id = self.seqvar_ts_info[0]["gene_id"]
+                self.gene_hgnc_id = self.seqvar_ts_info[0].gene_id
 
                 for transcript in self.seqvar_ts_info:
-                    self.HGVSs.append(transcript["feature_id"])
+                    self.HGVSs.append(transcript.feature_id)
 
-                result = await mehari_client.get_gene_transcripts(
+                response_gene = await mehari_client.get_gene_transcripts(
                     self.gene_hgnc_id, self.seqvar.genome_release
                 )
 
-                if result["transcripts"]:
-                    self.gene_ts_info = result["transcripts"]
-                else:
+                if not response_gene:
                     self.gene_ts_info = None
+                else:
+                    response_gene = GeneTranscripts(**response_gene)  # type: ignore
+                    self.gene_ts_info = response_gene.transcripts
 
-            self.seqvar_transcript, self.gene_transcript = self._choose_transcript(
-                self.HGVSs, self.seqvar_ts_info, self.gene_ts_info
-            )
+            if self.seqvar_ts_info and self.gene_ts_info:
+                self.seqvar_transcript, self.gene_transcript = self._choose_transcript(
+                    self.HGVSs, self.seqvar_ts_info, self.gene_ts_info
+                )
+            else:
+                self.seqvar_transcript = None
+                self.gene_transcript = None
 
         except Exception as e:
             logger.error(

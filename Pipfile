@@ -12,6 +12,7 @@ aiohttp = "*"
 pydantic = "*"
 pydantic-settings = "*"
 sphinx = "*"
+datamodel-code-generator = "*"
 
 [dev-packages]
 debugpy = "*"
