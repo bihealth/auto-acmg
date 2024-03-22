@@ -14,9 +14,7 @@ class DottyClient:
     def __init__(self, api_base_url: str = DOTTI_API_BASE_URL):
         self.api_base_url = api_base_url
 
-    async def to_spdi(
-        self, query: str, assembly: GenomeRelease = GenomeRelease.GRCh38
-    ) -> DottyResponse:
+    def to_spdi(self, query: str, assembly: GenomeRelease = GenomeRelease.GRCh38) -> DottyResponse:
         """
         Converts a variant to SPDI format.
 

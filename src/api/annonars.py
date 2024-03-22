@@ -14,9 +14,7 @@ class AnnonarsClient:
     def __init__(self, api_base_url: str = ANNONARS_API_BASE_URL):
         self.api_base_url = api_base_url
 
-    async def get_variant_from_range(
-        self, seqvar: SeqVar, start: int, stop: int
-    ) -> AnnonarsResponse:
+    def get_variant_from_range(self, seqvar: SeqVar, start: int, stop: int) -> AnnonarsResponse:
         """
         Pull all variants within a range.
 

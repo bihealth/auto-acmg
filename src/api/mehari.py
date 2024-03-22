@@ -16,7 +16,7 @@ class MehariClient:
     def __init__(self, api_base_url: str = MEHARI_API_BASE_URL):
         self.api_base_url = api_base_url
 
-    async def get_seqvar_transcripts(self, seqvar: SeqVar) -> TranscriptsSeqVar | None:
+    def get_seqvar_transcripts(self, seqvar: SeqVar) -> TranscriptsSeqVar | None:
         """
         Get transcripts for a sequence variant.
 
@@ -37,9 +37,7 @@ class MehariClient:
         response.raise_for_status()
         return TranscriptsSeqVar.model_validate(response.json())
 
-    async def get_gene_transcripts(
-        self, hgnc_id: str, genome_build: GenomeRelease
-    ) -> GeneTranscripts:
+    def get_gene_transcripts(self, hgnc_id: str, genome_build: GenomeRelease) -> GeneTranscripts:
         """ "
         Get transcripts for a gene.
 

@@ -13,6 +13,7 @@ pydantic-settings = "*"
 sphinx = "*"
 datamodel-code-generator = "*"
 requests = "*"
+responses = "*"
 
 [dev-packages]
 debugpy = "*"

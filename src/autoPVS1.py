@@ -63,25 +63,23 @@ class AutoPVS1:
         self.variant_name = variant_name
         self.genome_release = genome_release
 
-    async def resolve_variant(self) -> SeqVar | None:
+    def resolve_variant(self) -> SeqVar | None:
         """Resolve the variant."""
         # TODO: Add resolve for Structure variants
         try:
             # Try to resolve as Sequence variant
             seqvar_resolver = SeqVarResolver()
-            seqvar: SeqVar = await seqvar_resolver.resolve_seqvar(
-                self.variant_name, self.genome_release
-            )
+            seqvar: SeqVar = seqvar_resolver.resolve_seqvar(self.variant_name, self.genome_release)
             logger.debug(f"Resolved variant: {seqvar}.")
             return seqvar
         except Exception as e:
             logger.error(e)
             return None
 
-    async def predict(self):
+    def predict(self):
         """Run the AutoPVS1 algorithm."""
         logger.info(f"Running AutoPVS1 for variant {self.variant_name}.")
-        variant = await self.resolve_variant()
+        variant = self.resolve_variant()
 
         if isinstance(variant, SeqVar):
             self.seqvar: SeqVar = variant
@@ -96,7 +94,7 @@ class AutoPVS1:
             self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
 
             logger.debug(f"Retrieving transcripts.")
-            await self._get_transcripts_info()
+            self._get_transcripts_info()
             if not self.seqvar_transcript or not self.gene_transcript:
                 logger.error("No transcripts found for the variant.")
                 return
@@ -106,7 +104,7 @@ class AutoPVS1:
                     self.pvs1 = SeqVarPVS1(
                         self.seqvar, self.seqvar_transcript, self.gene_transcript, self.consequence
                     )
-                    await self.pvs1.verify_PVS1()
+                    self.pvs1.verify_PVS1()
                     self.prediction = self.pvs1.prediction
                     logger.info(
                         f"PVS1 prediction for {self.pvs1.seqvar.user_representation}: {self.pvs1.prediction}"
@@ -185,7 +183,7 @@ class AutoPVS1:
             gene_transcript = transcripts_mapping[max_length_transcript].gene
         return seqvar_transcript, gene_transcript
 
-    async def _get_transcripts_info(self):
+    def _get_transcripts_info(self):
         """Get all transcripts for the given sequence variant from Mehari."""
         if not self.seqvar:
             logger.error(
@@ -194,7 +192,7 @@ class AutoPVS1:
             return
         try:
             mehari_client = MehariClient()
-            response_seqvar = await mehari_client.get_seqvar_transcripts(self.seqvar)
+            response_seqvar = mehari_client.get_seqvar_transcripts(self.seqvar)
             if not response_seqvar:
                 self.seqvar_ts_info = None
             else:
@@ -206,7 +204,7 @@ class AutoPVS1:
                 for transcript in self.seqvar_ts_info:
                     self.HGVSs.append(transcript.feature_id)
 
-                response_gene = await mehari_client.get_gene_transcripts(
+                response_gene = mehari_client.get_gene_transcripts(
                     self.gene_hgnc_id, self.seqvar.genome_release
                 )
 

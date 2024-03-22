@@ -174,7 +174,7 @@ class SeqVarResolver:
         )
         return self._validate_seqvar(variant)
 
-    async def resolve_seqvar(self, value: str, genome_release: GenomeRelease) -> SeqVar:
+    def resolve_seqvar(self, value: str, genome_release: GenomeRelease) -> SeqVar:
         """
         Resolve a sequence variant. Supports gnomAD-style, SPDI and dbSNP representations.
         ClinVar IDs are not supported at the moment.
@@ -200,9 +200,9 @@ class SeqVarResolver:
         try:
             dotty_client = DottyClient()
             if genome_release is None:
-                spdi = await dotty_client.to_spdi(value)
+                spdi = dotty_client.to_spdi(value)
             else:
-                spdi = await dotty_client.to_spdi(value, assembly=genome_release)
+                spdi = dotty_client.to_spdi(value, assembly=genome_release)
             if spdi is not None and spdi.success and spdi.value is not None:
                 return SeqVar(
                     genome_release=GenomeRelease[spdi.value.assembly],

@@ -59,7 +59,7 @@ class SeqVarPVS1:
         ]
         self.cds_length = sum(self.cds_sizes)
 
-    async def verify_PVS1(self):
+    def verify_PVS1(self):
         """Make the PVS1 prediction."""
         if self.consequence == SeqVarConsequence.NonsenseFrameshift:
             if self.gene_hgnc_id == "HGNC:9588":  # Follow guidelines for PTEN
@@ -76,7 +76,7 @@ class SeqVarPVS1:
                 if self._critical4protein_function():
                     self.prediction = PVS1Prediction.PVS1_Strong
                 else:
-                    if await self._lof_is_frequent_in_population(
+                    if self._lof_is_frequent_in_population(
                         self.seqvar
                     ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
@@ -102,7 +102,7 @@ class SeqVarPVS1:
                 if self._critical4protein_function():
                     self.prediction = PVS1Prediction.PVS1_Strong
                 else:
-                    if await self._lof_is_frequent_in_population(
+                    if self._lof_is_frequent_in_population(
                         self.seqvar
                     ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
@@ -117,7 +117,7 @@ class SeqVarPVS1:
                 if self._critical4protein_function():
                     self.prediction = PVS1Prediction.PVS1_Strong
                 else:
-                    if await self._lof_is_frequent_in_population(
+                    if self._lof_is_frequent_in_population(
                         self.seqvar
                     ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
@@ -208,7 +208,7 @@ class SeqVarPVS1:
         return False
 
     @staticmethod
-    async def _lof_is_frequent_in_population(seqvar: SeqVar) -> bool:
+    def _lof_is_frequent_in_population(seqvar: SeqVar) -> bool:
         """
         Check if the LoF variants in the exon are frequent in the general population.
         **Rule:** If the LoF variants in the exon > 0.1% in the general population, it is
@@ -217,7 +217,7 @@ class SeqVarPVS1:
         try:
             annonars_client = AnnonarsClient()
             # TODO: Use correct start and stop positions
-            response = await annonars_client.get_variant_from_range(
+            response = annonars_client.get_variant_from_range(
                 seqvar, seqvar.pos - 20, seqvar.pos + 20
             )
             if response:
