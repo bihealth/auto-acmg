@@ -222,9 +222,9 @@ class SeqVarPVS1:
             )
             if response:
                 lof_variants = 0
-                all_variants = len(response["result"]["gnomad_genomes"]["vep"])
-                for variant in response["result"]["gnomad_genomes"]["vep"]:
-                    if variant["consequence"] in ["frameshift_variant", "stop_gained"]:
+                all_variants = len(response.result.gnomad_genomes[0].vep)
+                for variant in response.result.gnomad_genomes[0].vep:
+                    if variant.consequence in ["frameshift_variant", "stop_gained"]:
                         lof_variants += 1
                 # TODO: Proove that this is the correct threshold
                 # The guideline does not specify the exact threshold. 0.1% was taken from AutoPVS1

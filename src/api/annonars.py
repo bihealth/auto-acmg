@@ -1,6 +1,6 @@
 """Annonars API client."""
 
-import aiohttp
+import requests
 
 from src.core.config import settings
 from src.models.annonars import AnnonarsResponse
@@ -16,7 +16,7 @@ class AnnonarsClient:
 
     async def get_variant_from_range(
         self, seqvar: SeqVar, start: int, stop: int
-    ) -> AnnonarsResponse | None:
+    ) -> AnnonarsResponse:
         """
         Pull all variants within a range.
 
@@ -36,9 +36,6 @@ class AnnonarsClient:
             f"&start={start}"
             f"&stop={stop}"
         )
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    return None
+        response = requests.get(url)
+        response.raise_for_status()
+        return AnnonarsResponse.model_validate(response.json())

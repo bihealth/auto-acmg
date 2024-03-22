@@ -1,6 +1,6 @@
 """Mehari API client."""
 
-import aiohttp
+import requests
 
 from src.core.config import settings
 from src.genome_builds import GenomeRelease
@@ -33,16 +33,13 @@ class MehariClient:
             f"&reference={seqvar.insert}"
             f"&alternative={seqvar.delete}"
         )
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    return None
+        response = requests.get(url)
+        response.raise_for_status()
+        return TranscriptsSeqVar.model_validate(response.json())
 
     async def get_gene_transcripts(
         self, hgnc_id: str, genome_build: GenomeRelease
-    ) -> GeneTranscripts | None:
+    ) -> GeneTranscripts:
         """ "
         Get transcripts for a gene.
 
@@ -62,9 +59,6 @@ class MehariClient:
             f"hgncId={hgnc_id}"
             f"&genomeBuild={genome_build_mapping[genome_build]}"
         )
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    return None
+        response = requests.get(url)
+        response.raise_for_status()
+        return GeneTranscripts.model_validate(response.json())

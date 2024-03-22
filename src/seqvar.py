@@ -203,13 +203,13 @@ class SeqVarResolver:
                 spdi = await dotty_client.to_spdi(value)
             else:
                 spdi = await dotty_client.to_spdi(value, assembly=genome_release)
-            if spdi is not None and spdi["success"]:
+            if spdi is not None and spdi.success and spdi.value is not None:
                 return SeqVar(
-                    genome_release=GenomeRelease[spdi["value"]["assembly"]],
-                    chrom=spdi["value"]["contig"],
-                    pos=spdi["value"]["pos"],
-                    delete=spdi["value"]["reference_deleted"],
-                    insert=spdi["value"]["alternate_inserted"],
+                    genome_release=GenomeRelease[spdi.value.assembly],
+                    chrom=spdi.value.contig,
+                    pos=spdi.value.pos,
+                    delete=spdi.value.reference_deleted,
+                    insert=spdi.value.alternate_inserted,
                     user_representation=value,
                 )
             else:

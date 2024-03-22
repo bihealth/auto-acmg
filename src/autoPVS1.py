@@ -198,7 +198,6 @@ class AutoPVS1:
             if not response_seqvar:
                 self.seqvar_ts_info = None
             else:
-                response_seqvar = TranscriptsSeqVar(**response_seqvar)  # type: ignore
                 self.seqvar_ts_info = response_seqvar.result
 
             if self.seqvar_ts_info and len(self.seqvar_ts_info) > 0:
@@ -214,7 +213,6 @@ class AutoPVS1:
                 if not response_gene:
                     self.gene_ts_info = None
                 else:
-                    response_gene = GeneTranscripts(**response_gene)  # type: ignore
                     self.gene_ts_info = response_gene.transcripts
 
             if self.seqvar_ts_info and self.gene_ts_info:

@@ -8,11 +8,11 @@ black = "*"
 isort = "*"
 flake8 = "*"
 mypy = "*"
-aiohttp = "*"
 pydantic = "*"
 pydantic-settings = "*"
 sphinx = "*"
 datamodel-code-generator = "*"
+requests = "*"
 
 [dev-packages]
 debugpy = "*"

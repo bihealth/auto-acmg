@@ -273,7 +273,7 @@ class GnomadGenome(BaseModel):
     ageInfo: AgeInfo
 
 
-class Result(BaseModel):
+class AnnonarsResult(BaseModel):
     cadd: Cadd
     dbsnp: List[DbsnpItem]
     dbnsfp: Dict[str, Any]
@@ -289,4 +289,4 @@ class Result(BaseModel):
 class AnnonarsResponse(BaseModel):
     server_version: str
     query: Query
-    result: Result
+    result: AnnonarsResult

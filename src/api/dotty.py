@@ -1,6 +1,6 @@
 """Dotty API client."""
 
-import aiohttp
+import requests
 
 from src.core.config import settings
 from src.genome_builds import GenomeRelease
@@ -16,7 +16,7 @@ class DottyClient:
 
     async def to_spdi(
         self, query: str, assembly: GenomeRelease = GenomeRelease.GRCh38
-    ) -> DottyResponse | None:
+    ) -> DottyResponse:
         """
         Converts a variant to SPDI format.
 
@@ -28,9 +28,6 @@ class DottyClient:
         :rtype: dict | None
         """
         url = f"{self.api_base_url}/api/v1/to-spdi?q={query}&assembly={assembly.name}"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    return None
+        response = requests.get(url)
+        response.raise_for_status()
+        return DottyResponse.model_validate(response.json())
