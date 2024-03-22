@@ -8,8 +8,7 @@ from src.api.annonars import AnnonarsClient
 from src.core.config import settings
 from src.core.exceptions import InvalidAPIResposeError
 from src.enums import PVS1Prediction, SeqVarConsequence
-from src.models.mehari_gene import TranscriptGene
-from src.models.mehari_seqvar import TranscriptSeqvar
+from src.models.mehari import TranscriptGene, TranscriptSeqvar
 from src.seqvar import SeqVar
 
 # Setup logging

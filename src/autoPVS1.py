@@ -8,8 +8,7 @@ from src.core.config import settings
 from src.enums import PVS1Prediction, SeqVarConsequence
 from src.genome_builds import GenomeRelease
 from src.models.autopvs1 import TranscriptInfo
-from src.models.mehari_gene import GeneTranscripts, TranscriptGene
-from src.models.mehari_seqvar import TranscriptSeqvar, TranscriptsSeqVar
+from src.models.mehari import TranscriptGene, TranscriptSeqvar
 from src.seqvar import SeqVar, SeqVarResolver
 from src.seqvar_pvs1 import SeqVarPVS1
 

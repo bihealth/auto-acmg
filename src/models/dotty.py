@@ -17,7 +17,7 @@ class Value(BaseModel):
     alternate_inserted: str
 
 
-class DottyResponse(BaseModel):
+class DottySpdiResponse(BaseModel):
     success: bool
     value: Optional[Value] = None
     message: Optional[str] = None

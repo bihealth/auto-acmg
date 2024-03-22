@@ -1,11 +1,11 @@
 """Mehari API client."""
 
 import requests
+from pydantic import ValidationError
 
 from src.core.config import settings
 from src.genome_builds import GenomeRelease
-from src.models.mehari_gene import GeneTranscripts
-from src.models.mehari_seqvar import TranscriptsSeqVar
+from src.models.mehari import GeneTranscripts, TranscriptsSeqVar
 from src.seqvar import SeqVar
 
 #: Mehari API base URL
@@ -35,9 +35,14 @@ class MehariClient:
         )
         response = requests.get(url)
         response.raise_for_status()
-        return TranscriptsSeqVar.model_validate(response.json())
+        try:
+            return TranscriptsSeqVar.model_validate(response.json())
+        except ValidationError as e:
+            return None
 
-    def get_gene_transcripts(self, hgnc_id: str, genome_build: GenomeRelease) -> GeneTranscripts:
+    def get_gene_transcripts(
+        self, hgnc_id: str, genome_build: GenomeRelease
+    ) -> GeneTranscripts | None:
         """ "
         Get transcripts for a gene.
 
@@ -59,4 +64,7 @@ class MehariClient:
         )
         response = requests.get(url)
         response.raise_for_status()
-        return GeneTranscripts.model_validate(response.json())
+        try:
+            return GeneTranscripts.model_validate(response.json())
+        except ValidationError as e:
+            return None
