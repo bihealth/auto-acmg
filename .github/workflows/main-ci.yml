@@ -56,14 +56,30 @@ jobs:
       - name: Run tests
         run: make test
 
-      # - name: Build docs
-      #   run: make docs
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          flags: main
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: bihealth/autopvs1
+  
+  Docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+         lfs: 'true'
 
-      # - name: Upload backend coverage reports to Codecov
-      #   uses: codecov/codecov-action@v4
-      #   with:
-      #     flags: main
-      #     directory: .
-      #   env:
-      #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install docs dependencies
+        run: make ci-docs-deps
+
+      - name: Build documentation
+        run: make ci-docs
+
 
