@@ -17,122 +17,131 @@ class Query(BaseModel):
 
 
 class Cadd(BaseModel):
-    Chrom: str
-    Pos: int
-    Ref: str
-    Alt: str
-    Type: str
-    Length: int
-    AnnoType: str
-    Consequence: str
-    ConsScore: int
-    ConsDetail: str
-    GC: float
-    CpG: float
-    motifECount: None
-    motifEName: None
-    motifEHIPos: None
-    motifEScoreChng: None
-    oAA: None
-    nAA: None
-    GeneID: str
-    FeatureID: str
-    GeneName: str
-    CCDS: str
-    Intron: str
-    Exon: None
-    cDNApos: None
-    relcDNApos: None
-    CDSpos: None
-    relCDSpos: None
-    protPos: None
-    relProtPos: None
-    Domain: None
-    Dst2Splice: None
-    Dst2SplType: None
-    minDistTSS: int
-    minDistTSE: int
-    SIFTcat: None
-    SIFTval: None
-    PolyPhenCat: None
-    PolyPhenVal: None
-    priPhCons: float
-    mamPhCons: float
-    verPhCons: float
-    priPhyloP: float
-    mamPhyloP: float
-    verPhyloP: float
-    bStatistic: int
-    targetScan: None
-    mirSVR_Score: None = Field(..., alias="mirSVR-Score")
-    mirSVR_E: None = Field(..., alias="mirSVR-E")
-    mirSVR_Aln: None = Field(..., alias="mirSVR-Aln")
-    cHmmTssA: float
-    cHmmTssAFlnk: float
-    cHmmTxFlnk: float
-    cHmmTx: float
-    cHmmTxWk: float
-    cHmmEnhG: float
-    cHmmEnh: float
-    cHmmZnfRpts: float
-    cHmmHet: float
-    cHmmTssBiv: float
-    cHmmBivFlnk: float
-    cHmmEnhBiv: float
-    cHmmReprPC: float
-    cHmmReprPCWk: float
-    cHmmQuies: float
-    GerpRS: None
-    GerpRSpval: None
-    GerpN: float
-    GerpS: float
-    TFBS: int
-    TFBSPeaks: int
-    TFBSPeaksMax: float
-    tOverlapMotifs: None
-    motifDist: None
-    Segway: str
-    EncH3K27Ac: float
-    EncH3K4Me1: float
-    EncH3K4Me3: float
-    EncExp: float
-    EncNucleo: float
-    EncOCC: int
-    EncOCCombPVal: float
-    EncOCDNasePVal: float
-    EncOCFairePVal: float
-    EncOCpolIIPVal: float
-    EncOCctcfPVal: float
-    EncOCmycPVal: float
-    EncOCDNaseSig: float
-    EncOCFaireSig: float
-    EncOCpolIISig: float
-    EncOCctcfSig: float
-    EncOCmycSig: float
-    Grantham: None
-    SpliceAI_acc_gain: float = Field(..., alias="SpliceAI-acc-gain")
-    SpliceAI_acc_loss: float = Field(..., alias="SpliceAI-acc-loss")
-    SpliceAI_don_gain: float = Field(..., alias="SpliceAI-don-gain")
-    SpliceAI_don_loss: float = Field(..., alias="SpliceAI-don-loss")
-    MMSp_acceptorIntron: None
-    MMSp_acceptor: None
-    MMSp_exon: None
-    MMSp_donor: None
-    MMSp_donorIntron: None
-    Dist2Mutation: int
-    Freq100bp: int
-    Rare100bp: int
-    Sngl100bp: int
-    Freq1000bp: int
-    Rare1000bp: int
-    Sngl1000bp: int
-    Freq10000bp: int
-    Rare10000bp: int
-    Sngl10000bp: int
-    dbscSNV_ada_score: None = Field(..., alias="dbscSNV-ada_score")
-    dbscSNV_rf_score: None = Field(..., alias="dbscSNV-rf_score")
-    RawScore: float
-    PHRED: float
+    Chrom: Optional[str] = None
+    Pos: Optional[int] = None
+    Ref: Optional[str] = None
+    Alt: Optional[str] = None
+    Type: Optional[str] = None
+    Length: Optional[int] = None
+    AnnoType: Optional[str] = None
+    Consequence: Optional[str] = None
+    ConsScore: Optional[int] = None
+    ConsDetail: Optional[str] = None
+    GC: Optional[float] = None
+    CpG: Optional[float] = None
+    motifECount: Optional[None] = None
+    motifEName: Optional[None] = None
+    motifEHIPos: Optional[None] = None
+    motifEScoreChng: Optional[None] = None
+    oAA: Optional[None] = None
+    nAA: Optional[None] = None
+    GeneID: Optional[str] = None
+    FeatureID: Optional[str] = None
+    GeneName: Optional[str] = None
+    CCDS: Optional[str] = None
+    Intron: Optional[str] = None
+    Exon: Optional[None] = None
+    cDNApos: Optional[None] = None
+    relcDNApos: Optional[None] = None
+    CDSpos: Optional[None] = None
+    relCDSpos: Optional[None] = None
+    protPos: Optional[None] = None
+    relProtPos: Optional[None] = None
+    Domain: Optional[None] = None
+    Dst2Splice: Optional[None] = None
+    Dst2SplType: Optional[None] = None
+    minDistTSS: Optional[int] = None
+    minDistTSE: Optional[int] = None
+    SIFTcat: Optional[None] = None
+    SIFTval: Optional[None] = None
+    PolyPhenCat: Optional[None] = None
+    PolyPhenVal: Optional[None] = None
+    priPhCons: Optional[float] = None
+    mamPhCons: Optional[float] = None
+    verPhCons: Optional[float] = None
+    priPhyloP: Optional[float] = None
+    mamPhyloP: Optional[float] = None
+    verPhyloP: Optional[float] = None
+    bStatistic: Optional[int] = None
+    targetScan: Optional[None] = None
+    # mirSVR_Score: Optional[None] = Field(..., alias="mirSVR-Score")
+    # mirSVR_E: Optional[None] = Field(..., alias="mirSVR-E")
+    # mirSVR_Aln: Optional[None] = Field(..., alias="mirSVR-Aln")
+    mirSVR_Score: Optional[None] = None
+    mirSVR_E: Optional[None] = None
+    mirSVR_Aln: Optional[None] = None
+    cHmmTssA: Optional[float] = None
+    cHmmTssAFlnk: Optional[float] = None
+    cHmmTxFlnk: Optional[float] = None
+    cHmmTx: Optional[float] = None
+    cHmmTxWk: Optional[float] = None
+    cHmmEnhG: Optional[float] = None
+    cHmmEnh: Optional[float] = None
+    cHmmZnfRpts: Optional[float] = None
+    cHmmHet: Optional[float] = None
+    cHmmTssBiv: Optional[float] = None
+    cHmmBivFlnk: Optional[float] = None
+    cHmmEnhBiv: Optional[float] = None
+    cHmmReprPC: Optional[float] = None
+    cHmmReprPCWk: Optional[float] = None
+    cHmmQuies: Optional[float] = None
+    GerpRS: Optional[None] = None
+    GerpRSpval: Optional[None] = None
+    GerpN: Optional[float] = None
+    GerpS: Optional[float] = None
+    TFBS: Optional[int] = None
+    TFBSPeaks: Optional[int] = None
+    TFBSPeaksMax: Optional[float] = None
+    tOverlapMotifs: Optional[None] = None
+    motifDist: Optional[None] = None
+    Segway: Optional[str] = None
+    EncH3K27Ac: Optional[float] = None
+    EncH3K4Me1: Optional[float] = None
+    EncH3K4Me3: Optional[float] = None
+    EncExp: Optional[float] = None
+    EncNucleo: Optional[float] = None
+    EncOCC: Optional[int] = None
+    EncOCCombPVal: Optional[float] = None
+    EncOCDNasePVal: Optional[float] = None
+    EncOCFairePVal: Optional[float] = None
+    EncOCpolIIPVal: Optional[float] = None
+    EncOCctcfPVal: Optional[float] = None
+    EncOCmycPVal: Optional[float] = None
+    EncOCDNaseSig: Optional[float] = None
+    EncOCFaireSig: Optional[float] = None
+    EncOCpolIISig: Optional[float] = None
+    EncOCctcfSig: Optional[float] = None
+    EncOCmycSig: Optional[float] = None
+    Grantham: Optional[None] = None
+    # SpliceAI_acc_gain: Optional[float] = Field(..., alias="SpliceAI-acc-gain")
+    # SpliceAI_acc_loss: Optional[float] = Field(..., alias="SpliceAI-acc-loss")
+    # SpliceAI_don_gain: Optional[float] = Field(..., alias="SpliceAI-don-gain")
+    # SpliceAI_don_loss: Optional[float] = Field(..., alias="SpliceAI-don-loss")
+    SpliceAI_acc_gain: Optional[float] = None
+    SpliceAI_acc_loss: Optional[float] = None
+    SpliceAI_don_gain: Optional[float] = None
+    SpliceAI_don_loss: Optional[float] = None
+    MMSp_acceptorIntron: Optional[None] = None
+    MMSp_acceptor: Optional[None] = None
+    MMSp_exon: Optional[None] = None
+    MMSp_donor: Optional[None] = None
+    MMSp_donorIntron: Optional[None] = None
+    Dist2Mutation: Optional[int] = None
+    Freq100bp: Optional[int] = None
+    Rare100bp: Optional[int] = None
+    Sngl100bp: Optional[int] = None
+    Freq1000bp: Optional[int] = None
+    Rare1000bp: Optional[int] = None
+    Sngl1000bp: Optional[int] = None
+    Freq10000bp: Optional[int] = None
+    Rare10000bp: Optional[int] = None
+    Sngl10000bp: Optional[int] = None
+    # dbscSNV_ada_score: Optional[None] = Field(..., alias="dbscSNV-ada_score")
+    # dbscSNV_rf_score: Optional[None] = Field(..., alias="dbscSNV-rf_score")
+    dbscSNV_ada_score: Optional[None] = None
+    dbscSNV_rf_score: Optional[None] = None
+    RawScore: Optional[float] = None
+    PHRED: Optional[float] = None
 
 
 class DbsnpItem(BaseModel):
@@ -178,19 +187,19 @@ class VepItem(BaseModel):
 
 class Overall(BaseModel):
     ac: Optional[int] = None
-    an: int
+    an: Optional[int] = None
     af: Optional[float] = None
 
 
 class Xx(BaseModel):
     ac: Optional[int] = None
-    an: int
+    an: Optional[int] = None
     af: Optional[float] = None
 
 
 class Xy(BaseModel):
     ac: Optional[int] = None
-    an: int
+    an: Optional[int] = None
     af: Optional[float] = None
 
 
@@ -215,7 +224,7 @@ class BySex(BaseModel):
 
 class Raw(BaseModel):
     ac: Optional[int] = None
-    an: int
+    an: Optional[int] = None
     af: Optional[float] = None
 
 
@@ -262,28 +271,28 @@ class AgeInfo(BaseModel):
 
 
 class GnomadGenome(BaseModel):
-    chrom: str
-    pos: int
-    refAllele: str
-    altAllele: str
-    vep: List[VepItem]
-    alleleCounts: List[AlleleCount]
-    variantInfo: VariantInfo
-    qualityInfo: QualityInfo
-    ageInfo: AgeInfo
+    chrom: Optional[str] = None
+    pos: Optional[int] = None
+    refAllele: Optional[str] = None
+    altAllele: Optional[str] = None
+    vep: Optional[List[VepItem]] = None
+    alleleCounts: Optional[List[AlleleCount]] = None
+    variantInfo: Optional[VariantInfo] = None
+    qualityInfo: Optional[QualityInfo] = None
+    ageInfo: Optional[AgeInfo] = None
 
 
 class AnnonarsRangeResult(BaseModel):
-    cadd: Cadd
-    dbsnp: List[DbsnpItem]
-    dbnsfp: Dict[str, Any]
-    dbscsnv: Dict[str, Any]
-    gnomad_mtdna: List
-    gnomad_exomes: List
-    gnomad_genomes: List[GnomadGenome]
-    helixmtdb: List
-    ucsc_conservation: List
-    clinvar: List
+    cadd: Optional[Cadd] = None
+    dbsnp: Optional[List[DbsnpItem]] = None
+    dbnsfp: Optional[Dict[str, Any]] = None
+    dbscsnv: Optional[Dict[str, Any]] = None
+    gnomad_mtdna: Optional[List] = None
+    gnomad_exomes: Optional[List] = None
+    gnomad_genomes: Optional[List[GnomadGenome]] = None
+    helixmtdb: Optional[List] = None
+    ucsc_conservation: Optional[List] = None
+    clinvar: Optional[List] = None
 
 
 class AnnonarsRangeResponse(BaseModel):

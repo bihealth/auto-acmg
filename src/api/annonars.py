@@ -38,8 +38,10 @@ class AnnonarsClient:
             f"&stop={stop}"
         )
         response = requests.get(url)
-        response.raise_for_status()
         try:
+            response.raise_for_status()
             return AnnonarsRangeResponse.model_validate(response.json())
+        except requests.RequestException:
+            return None
         except ValidationError as e:
             return None

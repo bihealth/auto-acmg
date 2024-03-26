@@ -219,7 +219,11 @@ class SeqVarPVS1:
             response = annonars_client.get_variant_from_range(
                 seqvar, seqvar.pos - 20, seqvar.pos + 20
             )
-            if response:
+            if (
+                response
+                and response.result.gnomad_genomes
+                and response.result.gnomad_genomes[0].vep
+            ):
                 lof_variants = 0
                 all_variants = len(response.result.gnomad_genomes[0].vep)
                 for variant in response.result.gnomad_genomes[0].vep:

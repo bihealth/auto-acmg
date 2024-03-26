@@ -33,7 +33,7 @@ class DottyClient:
         try:
             response.raise_for_status()
             return DottySpdiResponse.model_validate(response.json())
-        except ValidationError as e:
-            return None
         except requests.RequestException:
+            return None
+        except ValidationError as e:
             return None

@@ -34,10 +34,12 @@ class MehariClient:
             f"&alternative={seqvar.delete}"
         )
         response = requests.get(url)
-        response.raise_for_status()
         try:
+            response.raise_for_status()
             return TranscriptsSeqVar.model_validate(response.json())
         except ValidationError as e:
+            return None
+        except requests.RequestException:
             return None
 
     def get_gene_transcripts(
@@ -63,8 +65,10 @@ class MehariClient:
             f"&genomeBuild={genome_build_mapping[genome_build]}"
         )
         response = requests.get(url)
-        response.raise_for_status()
         try:
+            response.raise_for_status()
             return GeneTranscripts.model_validate(response.json())
         except ValidationError as e:
+            return None
+        except requests.RequestException:
             return None
