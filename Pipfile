@@ -24,6 +24,7 @@ sphinx = "*"
 sphinxcontrib-bibtex = "*"
 furo = "*"
 types-requests = "*"
+pytest-cov = "*"
 
 [requires]
 python_version = "3.12"
