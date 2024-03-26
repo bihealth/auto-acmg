@@ -75,8 +75,8 @@ example_run:
 test:
 	pipenv run pytest tests/
 
-.PHONY: test-ci
-test-ci:
+.PHONY: ci-test
+ci-test:
 	pipenv run pytest \
 		--cov-report term-missing \
 		--cov-report lcov \
@@ -87,7 +87,7 @@ test-ci:
 ci: \
 	deps \
 	lint \
-	test-ci
+	ci-test
 
 .PHONY: docs
 docs:
