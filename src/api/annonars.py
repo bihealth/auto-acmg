@@ -1,8 +1,10 @@
 """Annonars API client."""
 
-import aiohttp
+import requests
+from pydantic import ValidationError
 
 from src.core.config import settings
+from src.models.annonars import AnnonarsRangeResponse
 from src.seqvar import SeqVar
 
 #: Annonars API base URL
@@ -13,7 +15,9 @@ class AnnonarsClient:
     def __init__(self, api_base_url: str = ANNONARS_API_BASE_URL):
         self.api_base_url = api_base_url
 
-    async def get_variant_from_range(self, seqvar: SeqVar, start: int, stop: int) -> dict | None:
+    def get_variant_from_range(
+        self, seqvar: SeqVar, start: int, stop: int
+    ) -> AnnonarsRangeResponse | None:
         """
         Pull all variants within a range.
 
@@ -33,9 +37,11 @@ class AnnonarsClient:
             f"&start={start}"
             f"&stop={stop}"
         )
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    return None
+        response = requests.get(url)
+        try:
+            response.raise_for_status()
+            return AnnonarsRangeResponse.model_validate(response.json())
+        except requests.RequestException:
+            return None
+        except ValidationError as e:
+            return None

@@ -2,13 +2,14 @@
 
 import logging
 import re
-from typing import Dict, List
+from typing import List
 
 from src.api.annonars import AnnonarsClient
 from src.core.config import settings
 from src.core.exceptions import InvalidAPIResposeError
+from src.enums import PVS1Prediction, SeqVarConsequence
+from src.models.mehari import TranscriptGene, TranscriptSeqvar
 from src.seqvar import SeqVar
-from src.types import PVS1Prediction, SeqVarConsequence
 
 # Setup logging
 logging_level = logging.DEBUG if settings.DEBUG else logging.INFO
@@ -22,8 +23,8 @@ class SeqVarPVS1:
     def __init__(
         self,
         seqvar: SeqVar,
-        seqvar_transcript: Dict,
-        gene_transcript: Dict,
+        seqvar_transcript: TranscriptSeqvar,
+        gene_transcript: TranscriptGene,
         consequence: SeqVarConsequence = SeqVarConsequence.NonsenseFrameshift,
     ):
         self.seqvar = seqvar
@@ -46,18 +47,18 @@ class SeqVarPVS1:
 
     def _initialize(self):
         """Setup the PVS1 class."""
-        self.HGVS = self.gene_transcripts["id"]
-        self.pHGVS = self.HGVS + ":" + self.seqvar_transcripts["hgvs_p"]
-        self.tHGVS = self.HGVS + ":" + self.seqvar_transcripts["hgvs_t"]
-        self.gene_hgnc_id = self.seqvar_transcripts["gene_id"]
-        self.transcript_tags = self.seqvar_transcripts["feature_tag"]
+        self.HGVS = self.gene_transcripts.id
+        self.pHGVS = self.HGVS + ":" + (self.seqvar_transcripts.hgvs_p or "")
+        self.tHGVS = self.HGVS + ":" + (self.seqvar_transcripts.hgvs_t or "")
+        self.gene_hgnc_id = self.seqvar_transcripts.gene_id
+        self.transcript_tags = self.seqvar_transcripts.feature_tag
         self.cds_sizes = [
-            exon["altEndI"] - exon["altStartI"]
-            for exon in self.gene_transcripts["genomeAlignments"][0]["exons"]
+            exon.altEndI - exon.altStartI
+            for exon in self.gene_transcripts.genomeAlignments[0].exons
         ]
         self.cds_length = sum(self.cds_sizes)
 
-    async def verify_PVS1(self):
+    def verify_PVS1(self):
         """Make the PVS1 prediction."""
         if self.consequence == SeqVarConsequence.NonsenseFrameshift:
             if self.gene_hgnc_id == "HGNC:9588":  # Follow guidelines for PTEN
@@ -74,7 +75,7 @@ class SeqVarPVS1:
                 if self._critical4protein_function():
                     self.prediction = PVS1Prediction.PVS1_Strong
                 else:
-                    if await self._lof_is_frequent_in_population(
+                    if self._lof_is_frequent_in_population(
                         self.seqvar
                     ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
@@ -100,7 +101,7 @@ class SeqVarPVS1:
                 if self._critical4protein_function():
                     self.prediction = PVS1Prediction.PVS1_Strong
                 else:
-                    if await self._lof_is_frequent_in_population(
+                    if self._lof_is_frequent_in_population(
                         self.seqvar
                     ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
@@ -115,7 +116,7 @@ class SeqVarPVS1:
                 if self._critical4protein_function():
                     self.prediction = PVS1Prediction.PVS1_Strong
                 else:
-                    if await self._lof_is_frequent_in_population(
+                    if self._lof_is_frequent_in_population(
                         self.seqvar
                     ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
@@ -206,7 +207,7 @@ class SeqVarPVS1:
         return False
 
     @staticmethod
-    async def _lof_is_frequent_in_population(seqvar: SeqVar) -> bool:
+    def _lof_is_frequent_in_population(seqvar: SeqVar) -> bool:
         """
         Check if the LoF variants in the exon are frequent in the general population.
         **Rule:** If the LoF variants in the exon > 0.1% in the general population, it is
@@ -215,14 +216,18 @@ class SeqVarPVS1:
         try:
             annonars_client = AnnonarsClient()
             # TODO: Use correct start and stop positions
-            response = await annonars_client.get_variant_from_range(
+            response = annonars_client.get_variant_from_range(
                 seqvar, seqvar.pos - 20, seqvar.pos + 20
             )
-            if response:
+            if (
+                response
+                and response.result.gnomad_genomes
+                and response.result.gnomad_genomes[0].vep
+            ):
                 lof_variants = 0
-                all_variants = len(response["result"]["gnomad_genomes"]["vep"])
-                for variant in response["result"]["gnomad_genomes"]["vep"]:
-                    if variant["consequence"] in ["frameshift_variant", "stop_gained"]:
+                all_variants = len(response.result.gnomad_genomes[0].vep)
+                for variant in response.result.gnomad_genomes[0].vep:
+                    if variant.consequence in ["frameshift_variant", "stop_gained"]:
                         lof_variants += 1
                 # TODO: Proove that this is the correct threshold
                 # The guideline does not specify the exact threshold. 0.1% was taken from AutoPVS1
