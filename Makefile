@@ -7,13 +7,14 @@ help:
 	@echo "Targets:"
 	@echo "  help            This help (default target)"
 	@echo "  deps            Install all dependencies"
-	@echo "  docs-deps       Install all dependencies for docs"
+	@echo "  ci-docs-deps    Install all dependencies for docs in CI"
 	@echo "  format          Format source code"
 	@echo "  lint            Run lint checks"
 	@echo "  example_run     Run example"
 	@echo "  test            Run tests"
 	@echo "  ci              Install dependencies, run lints and tests"
 	@echo "  docs            Generate the documentation"
+	@echo "  ci-docs				 Generate the documentation in CI"
 	@echo "  mksuperuser     Create a superuser"
 	@echo "  serve           Run the (development) server"
 	@echo "  jupyterlab      Run jupyterlab"
@@ -25,7 +26,7 @@ deps:
 	pipenv install --dev
 
 .PHONY: docs-deps
-docs-deps:
+ci-docs-deps:
 	python -m pip install --upgrade --no-cache-dir pip setuptools
 	python -m pip install --upgrade --no-cache-dir sphinx readthedocs-sphinx-ext
 	python -m pip install --no-cache-dir -r docs/requirements.txt
@@ -91,6 +92,10 @@ ci: \
 .PHONY: docs
 docs:
 	PYTHONPATH=$(PWD) pipenv run -- make -C docs clean html
+
+.PHONY: ci-docs
+ci-docs:
+	python -- make -C docs clean html
 
 # .PHONY: mksuperuser
 # mksuperuser:
