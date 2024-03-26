@@ -8,10 +8,12 @@ black = "*"
 isort = "*"
 flake8 = "*"
 mypy = "*"
-aiohttp = "*"
 pydantic = "*"
 pydantic-settings = "*"
 sphinx = "*"
+datamodel-code-generator = "*"
+requests = "*"
+responses = "*"
 
 [dev-packages]
 debugpy = "*"
@@ -21,6 +23,7 @@ pytest-asyncio = "*"
 sphinx = "*"
 sphinxcontrib-bibtex = "*"
 furo = "*"
+types-requests = "*"
 
 [requires]
 python_version = "3.12"

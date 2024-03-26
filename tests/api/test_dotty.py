@@ -1,51 +1,52 @@
-import pytest
-from aioresponses import aioresponses
+import responses
 
 from src.api.dotty import DottyClient
 from src.genome_builds import GenomeRelease
+from src.models.dotty import DottySpdiResponse
+from tests.utils import get_json_object
 
 
-@pytest.mark.asyncio
-async def test_to_spdi_success():
+@responses.activate
+def test_to_spdi_success():
     """Test to_spdi method with a successful response."""
-    with aioresponses() as m:
-        mock_response = {"success": True, "value": "mocked response data"}
-        m.get(
-            "https://example.com/dotty/api/v1/to-spdi?q=test_query&assembly=GRCh38",
-            payload=mock_response,
-            status=200,
-        )
+    mock_response = get_json_object("dotty_spdi_success.json")
+    responses.add(
+        responses.GET,
+        "https://example.com/dotty/api/v1/to-spdi?q=test_query&assembly=GRCh38",
+        json=mock_response,
+        status=200,
+    )
 
-        client = DottyClient(api_base_url="https://example.com/dotty")
-        response = await client.to_spdi("test_query", GenomeRelease.GRCh38)
+    client = DottyClient(api_base_url="https://example.com/dotty")
+    response = client.to_spdi("test_query", GenomeRelease.GRCh38)
+    assert response == DottySpdiResponse(**mock_response)
 
-        assert response == mock_response
 
-
-@pytest.mark.asyncio
-async def test_to_spdi_failure():
+@responses.activate
+def test_to_spdi_failure():
     """Test to_spdi method with a failed response."""
-    with aioresponses() as m:
-        m.get("https://example.com/dotty/api/v1/to-spdi?q=test_query&assembly=GRCh38", status=404)
+    mock_response = get_json_object("dotty_spdi_failure.json")
+    responses.add(
+        responses.GET,
+        "https://example.com/dotty/api/v1/to-spdi?q=test_query&assembly=GRCh38",
+        json=mock_response,
+        status=200,
+    )
 
-        client = DottyClient(api_base_url="https://example.com/dotty")
-        response = await client.to_spdi("test_query", GenomeRelease.GRCh38)
+    client = DottyClient(api_base_url="https://example.com/dotty")
+    response = client.to_spdi("test_query", GenomeRelease.GRCh38)
+    assert response == DottySpdiResponse(**mock_response)
 
-        assert response is None
 
+@responses.activate
+def test_to_spdi_500():
+    """Test to_spdi method with a 500 response."""
+    responses.add(
+        responses.GET,
+        "https://example.com/dotty/api/v1/to-spdi?q=test_query&assembly=GRCh38",
+        status=500,
+    )
 
-@pytest.mark.asyncio
-async def test_to_spdi_grch37_assembly():
-    """Test to_spdi method with default assembly."""
-    with aioresponses() as m:
-        mock_response = {"success": True, "value": "mocked response data"}
-        m.get(
-            "https://example.com/dotty/api/v1/to-spdi?q=test_query&assembly=GRCh37",
-            payload=mock_response,
-            status=200,
-        )
-
-        client = DottyClient(api_base_url="https://example.com/dotty")
-        response = await client.to_spdi("test_query", GenomeRelease.GRCh37)
-
-        assert response == mock_response
+    client = DottyClient(api_base_url="https://example.com/dotty")
+    response = client.to_spdi("test_query", GenomeRelease.GRCh38)
+    assert response == None

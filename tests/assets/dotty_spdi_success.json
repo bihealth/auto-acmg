@@ -1,0 +1,11 @@
+{
+  "success": true,
+  "value": {
+    "assembly": "GRCh37",
+    "contig": "4",
+    "pos": 113568536,
+    "reference_deleted": "G",
+    "alternate_inserted": "GA"
+  },
+  "message": null
+}

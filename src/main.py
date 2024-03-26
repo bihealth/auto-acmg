@@ -1,7 +1,6 @@
 """Main entry point for the autopvs1 CLI."""
 
 import argparse
-import asyncio
 import logging
 import sys
 from typing import Optional
@@ -44,7 +43,7 @@ def create_parser():
     return parser
 
 
-async def main(args: Optional[list[str]] = None):
+def main(args: Optional[list[str]] = None):
     """Entry point for the CLI."""
     if args is None:
         args = sys.argv[1:]
@@ -60,11 +59,10 @@ async def main(args: Optional[list[str]] = None):
 
     try:
         auto_pvs1 = AutoPVS1(parsed_args.variant, parsed_args.genome_release)
-        await auto_pvs1.predict()
+        auto_pvs1.predict()
     except Exception as e:
         logger.error(e)
 
 
 if __name__ == "__main__":
-    # Run the main function
-    asyncio.run(main())
+    main()
