@@ -95,7 +95,7 @@ docs:
 
 .PHONY: ci-docs
 ci-docs:
-	python -- make -C docs clean html
+	python -m -- make -C docs clean html
 
 # .PHONY: mksuperuser
 # mksuperuser:
