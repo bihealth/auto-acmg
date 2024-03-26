@@ -30,8 +30,10 @@ class DottyClient:
         """
         url = f"{self.api_base_url}/api/v1/to-spdi?q={query}&assembly={assembly.name}"
         response = requests.get(url)
-        response.raise_for_status()
         try:
+            response.raise_for_status()
             return DottySpdiResponse.model_validate(response.json())
         except ValidationError as e:
+            return None
+        except requests.RequestException:
             return None
