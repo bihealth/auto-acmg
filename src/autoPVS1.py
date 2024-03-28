@@ -1,7 +1,8 @@
 """Implementations of the PVS1 algorithm."""
 
-import logging
 from typing import Dict, List, Tuple, Union
+
+import typer
 
 from src.api.mehari import MehariClient
 from src.core.config import settings
@@ -11,12 +12,6 @@ from src.models.autopvs1 import TranscriptInfo
 from src.models.mehari import TranscriptGene, TranscriptSeqvar
 from src.seqvar import SeqVar, SeqVarResolver
 from src.seqvar_pvs1 import SeqVarPVS1
-
-# Setup logging
-logging_level = logging.DEBUG if settings.DEBUG else logging.INFO
-logging.basicConfig(level=logging_level)
-logger = logging.getLogger(__name__)
-
 
 #: Mapping of consequence from transcript info to SeqVarConsequence
 SeqvarConsequenceMapping = {
@@ -69,15 +64,15 @@ class AutoPVS1:
             # Try to resolve as Sequence variant
             seqvar_resolver = SeqVarResolver()
             seqvar: SeqVar = seqvar_resolver.resolve_seqvar(self.variant_name, self.genome_release)
-            logger.debug(f"Resolved variant: {seqvar}.")
+            typer.echo(f"Resolved variant: {seqvar}.")
             return seqvar
         except Exception as e:
-            logger.error(e)
+            typer.secho(e, err=True, fg=typer.colors.RED)
             return None
 
     def predict(self):
         """Run the AutoPVS1 algorithm."""
-        logger.info(f"Running AutoPVS1 for variant {self.variant_name}.")
+        typer.echo(f"Running AutoPVS1 for variant {self.variant_name}.")
         variant = self.resolve_variant()
 
         if isinstance(variant, SeqVar):
@@ -92,10 +87,10 @@ class AutoPVS1:
             self.consequence: SeqVarConsequence = SeqVarConsequence.NotSet
             self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
 
-            logger.debug(f"Retrieving transcripts.")
+            typer.echo(f"Retrieving transcripts.")
             self._get_transcripts_info()
             if not self.seqvar_transcript or not self.gene_transcript:
-                logger.error("No transcripts found for the variant.")
+                typer.secho("No transcripts found for the variant.", err=True, fg=typer.colors.RED)
                 return
             else:
                 try:
@@ -105,19 +100,23 @@ class AutoPVS1:
                     )
                     self.pvs1.verify_PVS1()
                     self.prediction = self.pvs1.prediction
-                    logger.info(
+                    typer.echo(
                         f"PVS1 prediction for {self.pvs1.seqvar.user_representation}: {self.pvs1.prediction}"
                     )
                 except Exception as e:
-                    logger.error(
-                        f"Failed to predict PVS1 for variant {self.seqvar.user_representation}."
+                    typer.secho(
+                        f"Failed to predict PVS1 for variant {self.seqvar.user_representation}.",
+                        err=True,
+                        fg=typer.colors.RED,
                     )
-                    logger.error(e)
+                    typer.echo(e, err=True)
         elif isinstance(variant, str):
             # TODO: Add Structure variants PVS1 prediction
             pass
         else:
-            logger.error(f"Failed to resolve variant {self.variant_name}.")
+            typer.secho(
+                f"Failed to resolve variant {self.variant_name}.", err=True, fg=typer.colors.RED
+            )
             return
 
     @staticmethod
@@ -185,8 +184,10 @@ class AutoPVS1:
     def _get_transcripts_info(self):
         """Get all transcripts for the given sequence variant from Mehari."""
         if not self.seqvar:
-            logger.error(
-                "No sequence variant specified. Assure that the variant is resolved before fetching transcripts."
+            typer.secho(
+                "No sequence variant specified. Assure that the variant is resolved before fetching transcripts.",
+                err=True,
+                fg=typer.colors.RED,
             )
             return
         try:
@@ -221,7 +222,9 @@ class AutoPVS1:
                 self.gene_transcript = None
 
         except Exception as e:
-            logger.error(
-                f"Failed to get transcripts for variant {self.seqvar.user_representation}."
+            typer.secho(
+                f"Failed to get transcripts for variant {self.seqvar.user_representation}.",
+                err=True,
+                fg=typer.colors.RED,
             )
-            logger.error(e)
+            typer.secho(e, err=True)

@@ -1,8 +1,9 @@
 """PVS1 criteria for Sequence Variants (SeqVar)."""
 
-import logging
 import re
 from typing import List
+
+import typer
 
 from src.api.annonars import AnnonarsClient
 from src.core.config import settings
@@ -10,11 +11,6 @@ from src.core.exceptions import InvalidAPIResposeError
 from src.enums import PVS1Prediction, SeqVarConsequence
 from src.models.mehari import TranscriptGene, TranscriptSeqvar
 from src.seqvar import SeqVar
-
-# Setup logging
-logging_level = logging.DEBUG if settings.DEBUG else logging.INFO
-logging.basicConfig(level=logging_level)
-logger = logging.getLogger(__name__)
 
 
 class SeqVarPVS1:
@@ -138,7 +134,7 @@ class SeqVarPVS1:
                     self.prediction = PVS1Prediction.PVS1_Supporting
         else:
             self.prediction = PVS1Prediction.NotPVS1
-            logger.info(f"Consequence {self.consequence} is not supported for PVS1 prediction.")
+            typer.echo(f"Consequence {self.consequence} is not supported for PVS1 prediction.")
 
     @staticmethod
     def _get_pHGVS_termination(pHGVS: str) -> int:
@@ -238,10 +234,12 @@ class SeqVarPVS1:
             else:
                 raise InvalidAPIResposeError("Failed to get variant from range.")
         except Exception as e:
-            logger.error(
-                f"Failed to get variant from range for variant {seqvar.user_representation}."
+            typer.secho(
+                f"Failed to get variant from range for variant {seqvar.user_representation}.",
+                err=True,
+                fg=typer.colors.RED,
             )
-            logger.error(e)
+            typer.echo(e, err=True)
             return False
 
     @staticmethod
