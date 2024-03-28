@@ -5,8 +5,8 @@ from pydantic import ValidationError
 
 from src.core.config import settings
 from src.genome_builds import GenomeRelease
-from src.models.mehari import GeneTranscripts, TranscriptsSeqVar
 from src.seqvar import SeqVar
+from src.types.mehari import GeneTranscripts, TranscriptsSeqVar
 
 #: Mehari API base URL
 MEHARI_API_BASE_URL = f"{settings.API_REEV_URL}/mehari"

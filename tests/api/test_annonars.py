@@ -2,8 +2,8 @@ import responses
 
 from src.api.annonars import AnnonarsClient
 from src.genome_builds import GenomeRelease
-from src.models.annonars import AnnonarsRangeResponse
 from src.seqvar import SeqVar
+from src.types.annonars import AnnonarsRangeResponse
 from tests.utils import get_json_object
 
 #: Example sequence variant
