@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
-from src.models.mehari import TranscriptGene, TranscriptSeqvar
+from src.types.mehari import TranscriptGene, TranscriptSeqvar
 
 
 class TranscriptInfo(BaseModel):

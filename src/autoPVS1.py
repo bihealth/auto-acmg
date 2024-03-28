@@ -6,12 +6,12 @@ import typer
 
 from src.api.mehari import MehariClient
 from src.core.config import settings
-from src.enums import PVS1Prediction, SeqVarConsequence
 from src.genome_builds import GenomeRelease
-from src.models.autopvs1 import TranscriptInfo
-from src.models.mehari import TranscriptGene, TranscriptSeqvar
 from src.seqvar import SeqVar, SeqVarResolver
 from src.seqvar_pvs1 import SeqVarPVS1
+from src.types.autopvs1 import TranscriptInfo
+from src.types.enums import PVS1Prediction, SeqVarConsequence
+from src.types.mehari import TranscriptGene, TranscriptSeqvar
 
 #: Mapping of consequence from transcript info to SeqVarConsequence
 SeqvarConsequenceMapping = {
