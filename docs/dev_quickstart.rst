@@ -71,6 +71,17 @@ You can use the provided ``Makefile`` files to install the dependencies.
 
     $ make deps
 
+----------------------
+Set up the `.env` file
+----------------------
+
+You need to create a `.env` file in the root of the project. The default settings
+can be found in the `.env.dev` file. Copy the contents with the following command:
+
+.. code-block:: bash
+
+    $ cp .env.dev .env
+
 ---------------
 Running the CLI
 ---------------

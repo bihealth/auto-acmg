@@ -10,7 +10,7 @@ from src.core.config import settings
 from src.core.exceptions import InvalidAPIResposeError
 from src.seqvar import SeqVar
 from src.types.enums import PVS1Prediction, SeqVarConsequence
-from src.types.mehari import TranscriptGene, TranscriptSeqvar
+from src.types.mehari import CdsPos, TranscriptGene, TranscriptSeqvar
 
 
 class SeqVarPVS1:
@@ -25,8 +25,8 @@ class SeqVarPVS1:
     ):
         self.seqvar = seqvar
         self.consequence = consequence
-        self.seqvar_transcripts = seqvar_transcript
-        self.gene_transcripts = gene_transcript
+        self.seqvar_transcript = seqvar_transcript
+        self.gene_transcript = gene_transcript
         self.HGVS: str = ""
         self.pHGVS: str = ""
         self.tHGVS: str = ""
@@ -43,14 +43,13 @@ class SeqVarPVS1:
 
     def _initialize(self):
         """Setup the PVS1 class."""
-        self.HGVS = self.gene_transcripts.id
-        self.pHGVS = self.HGVS + ":" + (self.seqvar_transcripts.hgvs_p or "")
-        self.tHGVS = self.HGVS + ":" + (self.seqvar_transcripts.hgvs_t or "")
-        self.gene_hgnc_id = self.seqvar_transcripts.gene_id
-        self.transcript_tags = self.seqvar_transcripts.feature_tag
+        self.HGVS = self.gene_transcript.id
+        self.pHGVS = self.HGVS + ":" + (self.seqvar_transcript.hgvs_p or "")
+        self.tHGVS = self.HGVS + ":" + (self.seqvar_transcript.hgvs_t or "")
+        self.gene_hgnc_id = self.seqvar_transcript.gene_id
+        self.transcript_tags = self.seqvar_transcript.feature_tag
         self.cds_sizes = [
-            exon.altEndI - exon.altStartI
-            for exon in self.gene_transcripts.genomeAlignments[0].exons
+            exon.altEndI - exon.altStartI for exon in self.gene_transcript.genomeAlignments[0].exons
         ]
         self.cds_length = sum(self.cds_sizes)
 
@@ -72,7 +71,9 @@ class SeqVarPVS1:
                     self.prediction = PVS1Prediction.PVS1_Strong
                 else:
                     if self._lof_is_frequent_in_population(
-                        self.seqvar
+                        self.seqvar,
+                        self.gene_transcript.genomeAlignments[0].cdsStart,
+                        self.gene_transcript.genomeAlignments[0].cdsEnd,
                     ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
                     else:
@@ -98,7 +99,9 @@ class SeqVarPVS1:
                     self.prediction = PVS1Prediction.PVS1_Strong
                 else:
                     if self._lof_is_frequent_in_population(
-                        self.seqvar
+                        self.seqvar,
+                        self.gene_transcript.genomeAlignments[0].cdsStart,
+                        self.gene_transcript.genomeAlignments[0].cdsEnd,
                     ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
                     else:
@@ -113,7 +116,9 @@ class SeqVarPVS1:
                     self.prediction = PVS1Prediction.PVS1_Strong
                 else:
                     if self._lof_is_frequent_in_population(
-                        self.seqvar
+                        self.seqvar,
+                        self.gene_transcript.genomeAlignments[0].cdsStart,
+                        self.gene_transcript.genomeAlignments[0].cdsEnd,
                     ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
                     else:
@@ -198,12 +203,55 @@ class SeqVarPVS1:
         return "ManeSelect" in transcript_tags
 
     def _critical4protein_function(self) -> bool:
-        """Check if the truncated/altered region is critical for the protein function."""
-        # TODO: Implement this method
-        return False
+        """
+        Check if the truncated/altered region is critical for the protein function.
+        **Rule:** Affect of the variant on the protein function is indicated
+        by experimental or clinical evidence:
+        - Presence of Pathogenic variants downstream of the new stop codon
+        """
+        if not isinstance(self.seqvar_transcript.cds_pos, CdsPos):
+            return False
+        new_stop_codon = self.seqvar_transcript.cds_pos.ord
+        start_pos = 0
+        for exon in self.gene_transcript.genomeAlignments[0].exons:
+            if exon.altCdsStartI < new_stop_codon and exon.altCdsEndI > new_stop_codon:
+                start_pos = exon.altStartI + (new_stop_codon - exon.altCdsStartI)
+                break
+        end_pos = self.gene_transcript.genomeAlignments[0].exons[-1].altEndI
+
+        try:
+            annonars_client = AnnonarsClient()
+            response = annonars_client.get_variant_from_range(self.seqvar, start_pos, end_pos)
+            if (
+                response
+                and response.result.gnomad_genomes
+                and response.result.gnomad_genomes[0].vep
+            ):
+                pathogenic_variants = 0
+                for variant in response.result.gnomad_genomes[0].vep:
+                    # TODO: count only pathogenic variants
+                    if variant.consequence in ["pathogenic"]:
+                        pathogenic_variants += 1
+                # TODO: Proove that this is the correct threshold
+                if (
+                    pathogenic_variants > 2
+                    and pathogenic_variants / len(response.result.gnomad_genomes[0].vep) > 0.005
+                ):
+                    return True
+                return False
+            else:
+                raise InvalidAPIResposeError("Failed to get variant from range.")
+        except Exception as e:
+            typer.secho(
+                f"Failed to get variant from range for variant {self.seqvar.user_representation}.",
+                err=True,
+                fg=typer.colors.RED,
+            )
+            typer.echo(e, err=True)
+            return False
 
     @staticmethod
-    def _lof_is_frequent_in_population(seqvar: SeqVar) -> bool:
+    def _lof_is_frequent_in_population(seqvar: SeqVar, start: int, end: int) -> bool:
         """
         Check if the LoF variants in the exon are frequent in the general population.
         **Rule:** If the LoF variants in the exon > 0.1% in the general population, it is
@@ -211,10 +259,7 @@ class SeqVarPVS1:
         """
         try:
             annonars_client = AnnonarsClient()
-            # TODO: Use correct start and stop positions
-            response = annonars_client.get_variant_from_range(
-                seqvar, seqvar.pos - 20, seqvar.pos + 20
-            )
+            response = annonars_client.get_variant_from_range(seqvar, start, end)
             if (
                 response
                 and response.result.gnomad_genomes

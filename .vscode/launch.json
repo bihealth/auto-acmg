@@ -5,8 +5,8 @@
           "name": "Python: Launch",
           "type": "debugpy",
           "request": "launch",
-          "module": "src.main",
-          "args": ["4-113568536-G-GA", "--genome_release", "grch37"],
+          "module": "src.cli",
+          "args": ["4-113568536-G-GA", "--genome-release", "grch37"],
           "console": "integratedTerminal"
       }
   ]
