@@ -6,15 +6,14 @@ from typing import List
 import typer
 
 from src.api.annonars import AnnonarsClient
-from src.core.config import settings
 from src.core.exceptions import InvalidAPIResposeError
 from src.seqvar import SeqVar
-from src.types.enums import PVS1Prediction, SeqVarConsequence
-from src.types.mehari import CdsPos, TranscriptGene, TranscriptSeqvar
+from src.types.enums import PVS1Prediction, PVS1PredictionSeqVarPath, SeqVarConsequence
+from src.types.mehari import CdsPos, Exon, TranscriptGene, TranscriptSeqvar
 
 
-class SeqVarPVS1:
-    """PVS1 criteria for transcript."""
+class SetupSeqVarData:
+    """Mixin class for setting up the SeqVar data."""
 
     def __init__(
         self,
@@ -25,33 +24,39 @@ class SeqVarPVS1:
     ):
         self.seqvar = seqvar
         self.consequence = consequence
-        self.seqvar_transcript = seqvar_transcript
-        self.gene_transcript = gene_transcript
+        self._seqvar_transcript = seqvar_transcript
+        self._gene_transcript = gene_transcript
         self.HGVS: str = ""
         self.pHGVS: str = ""
         self.tHGVS: str = ""
         self.gene_hgnc_id: str = ""
-        self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
-        self._initialize()
+        self.transcript_tags: List[str] = []
+        self.exons: List[Exon] = []
+        self.cds_pos: int | None = None
 
-        # Frameshift/Nonsense attributes
-        self.undergo_nmd: bool = False
-        self.is_biologically_relevant: bool = False
-        self.is_critical_for_protein_function: bool = False
-        self.LoF_exon_is_frequent_in_pop: bool = False
-        self.LoF_removes_10_percent_of_protein: bool = False
+        self._initialize()
 
     def _initialize(self):
         """Setup the PVS1 class."""
-        self.HGVS = self.gene_transcript.id
-        self.pHGVS = self.HGVS + ":" + (self.seqvar_transcript.hgvs_p or "")
-        self.tHGVS = self.HGVS + ":" + (self.seqvar_transcript.hgvs_t or "")
-        self.gene_hgnc_id = self.seqvar_transcript.gene_id
-        self.transcript_tags = self.seqvar_transcript.feature_tag
-        self.cds_sizes = [
-            exon.altEndI - exon.altStartI for exon in self.gene_transcript.genomeAlignments[0].exons
-        ]
-        self.cds_length = sum(self.cds_sizes)
+        self.HGVS = self._gene_transcript.id
+        self.pHGVS = self.HGVS + ":" + (self._seqvar_transcript.hgvs_p or "")
+        self.tHGVS = self.HGVS + ":" + (self._seqvar_transcript.hgvs_t or "")
+        self.gene_hgnc_id = self._seqvar_transcript.gene_id
+        self.transcript_tags = self._seqvar_transcript.feature_tag
+        self.exons = self._gene_transcript.genomeAlignments[0].exons
+        self.cds_pos = (
+            self._seqvar_transcript.cds_pos.ord
+            if isinstance(self._seqvar_transcript.cds_pos, CdsPos)
+            else None
+        )
+
+
+class SeqVarPVS1(SetupSeqVarData):
+    """PVS1 criteria for transcript."""
+
+    def __init__(self):
+        self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
+        self.prediction_path: PVS1PredictionSeqVarPath = PVS1PredictionSeqVarPath.NotSet
 
     def verify_PVS1(self):
         """Make the PVS1 prediction."""
@@ -61,82 +66,101 @@ class SeqVarPVS1:
                     self.prediction = PVS1Prediction.PVS1
                     return
 
-            if self._undergo_nmd(self.cds_sizes, self.pHGVS, self.gene_hgnc_id):
+            if self._undergo_nmd(self.exons, self.pHGVS, self.gene_hgnc_id):
                 if self._in_biologically_relevant_transcript(self.transcript_tags):
                     self.prediction = PVS1Prediction.PVS1
+                    self.prediction_path = PVS1PredictionSeqVarPath.NF1
                 else:
                     self.prediction = PVS1Prediction.NotPVS1
+                    self.prediction_path = PVS1PredictionSeqVarPath.NF2
             else:
-                if self._critical4protein_function():
+                if self._critical4protein_function(self.seqvar, self.cds_pos, self.exons):
                     self.prediction = PVS1Prediction.PVS1_Strong
+                    self.prediction_path = PVS1PredictionSeqVarPath.NF3
                 else:
                     if self._lof_is_frequent_in_population(
                         self.seqvar,
-                        self.gene_transcript.genomeAlignments[0].cdsStart,
-                        self.gene_transcript.genomeAlignments[0].cdsEnd,
+                        self._gene_transcript.genomeAlignments[0].cdsStart,
+                        self._gene_transcript.genomeAlignments[0].cdsEnd,
                     ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
+                        self.prediction_path = PVS1PredictionSeqVarPath.NF4
                     else:
                         if self._lof_removes_more_then_10_percent_of_protein(
-                            self.pHGVS, self.cds_length
+                            self.pHGVS, self.exons
                         ):
                             self.prediction = PVS1Prediction.PVS1_Strong
+                            self.prediction_path = PVS1PredictionSeqVarPath.NF5
                         else:
                             self.prediction = PVS1Prediction.PVS1_Moderate
+                            self.prediction_path = PVS1PredictionSeqVarPath.NF6
 
         elif self.consequence == SeqVarConsequence.SpliceSites:
             if self._exon_skipping_or_cryptic_ss_disruption() and self._undergo_nmd(
-                self.cds_sizes, self.pHGVS, self.gene_hgnc_id
+                self.exons, self.pHGVS, self.gene_hgnc_id
             ):
                 if self._in_biologically_relevant_transcript(self.transcript_tags):
                     self.prediction = PVS1Prediction.PVS1
+                    self.prediction_path = PVS1PredictionSeqVarPath.SS1
                 else:
                     self.prediction = PVS1Prediction.NotPVS1
+                    self.prediction_path = PVS1PredictionSeqVarPath.SS2
             elif self._exon_skipping_or_cryptic_ss_disruption() and not self._undergo_nmd(
-                self.cds_sizes, self.pHGVS, self.gene_hgnc_id
+                self.exons, self.pHGVS, self.gene_hgnc_id
             ):
-                if self._critical4protein_function():
+                if self._critical4protein_function(self.seqvar, self.cds_pos, self.exons):
                     self.prediction = PVS1Prediction.PVS1_Strong
+                    self.prediction_path = PVS1PredictionSeqVarPath.SS3
                 else:
                     if self._lof_is_frequent_in_population(
                         self.seqvar,
-                        self.gene_transcript.genomeAlignments[0].cdsStart,
-                        self.gene_transcript.genomeAlignments[0].cdsEnd,
+                        self._gene_transcript.genomeAlignments[0].cdsStart,
+                        self._gene_transcript.genomeAlignments[0].cdsEnd,
                     ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
+                        self.prediction_path = PVS1PredictionSeqVarPath.SS4
                     else:
                         if self._lof_removes_more_then_10_percent_of_protein(
-                            self.pHGVS, self.cds_length
+                            self.pHGVS, self.exons
                         ):
                             self.prediction = PVS1Prediction.PVS1_Strong
+                            self.prediction_path = PVS1PredictionSeqVarPath.SS5
                         else:
                             self.prediction = PVS1Prediction.PVS1_Moderate
+                            self.prediction_path = PVS1PredictionSeqVarPath.SS6
             else:
-                if self._critical4protein_function():
+                if self._critical4protein_function(self.seqvar, self.cds_pos, self.exons):
                     self.prediction = PVS1Prediction.PVS1_Strong
+                    self.prediction_path = PVS1PredictionSeqVarPath.SS10
                 else:
                     if self._lof_is_frequent_in_population(
                         self.seqvar,
-                        self.gene_transcript.genomeAlignments[0].cdsStart,
-                        self.gene_transcript.genomeAlignments[0].cdsEnd,
+                        self._gene_transcript.genomeAlignments[0].cdsStart,
+                        self._gene_transcript.genomeAlignments[0].cdsEnd,
                     ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
+                        self.prediction_path = PVS1PredictionSeqVarPath.SS7
                     else:
                         if self._lof_removes_more_then_10_percent_of_protein(
-                            self.pHGVS, self.cds_length
+                            self.pHGVS, self.exons
                         ):
                             self.prediction = PVS1Prediction.PVS1_Strong
+                            self.prediction_path = PVS1PredictionSeqVarPath.SS8
                         else:
                             self.prediction = PVS1Prediction.PVS1_Moderate
+                            self.prediction_path = PVS1PredictionSeqVarPath.SS9
 
         elif self.consequence == SeqVarConsequence.InitiationCodon:
             if self._alternative_start_codon():
                 self.prediction = PVS1Prediction.NotPVS1
+                self.prediction_path = PVS1PredictionSeqVarPath.IC3
             else:
                 if self._upstream_pathogenic_variant():
                     self.prediction = PVS1Prediction.PVS1_Moderate
+                    self.prediction_path = PVS1PredictionSeqVarPath.IC1
                 else:
                     self.prediction = PVS1Prediction.PVS1_Supporting
+                    self.prediction_path = PVS1PredictionSeqVarPath.IC2
         else:
             self.prediction = PVS1Prediction.NotPVS1
             typer.echo(f"Consequence {self.consequence} is not supported for PVS1 prediction.")
@@ -176,7 +200,7 @@ class SeqVarPVS1:
             termination = -1
         return termination
 
-    def _undergo_nmd(self, cds_sizes: List[int], pHGVS: str, hgnc_id: str) -> bool:
+    def _undergo_nmd(self, exons: List[Exon], pHGVS: str, hgnc_id: str) -> bool:
         """
         Nonsense-mediated decay (NMD) classification. Return if the variant
         undergoes NMD prediction.
@@ -184,6 +208,7 @@ class SeqVarPVS1:
         of the penultimate exon, it is NOT predicted to undergo NMD.
         """
         new_stop_codon = self._get_pHGVS_termination(pHGVS)
+        cds_sizes = [exon.altEndI - exon.altStartI for exon in exons]
         if hgnc_id == "HGNC:4284":  # Hearing Loss Guidelines GJB2
             return True
         elif len(cds_sizes) <= 1:
@@ -202,26 +227,26 @@ class SeqVarPVS1:
         # Ensure that necessary data is available
         return "ManeSelect" in transcript_tags
 
-    def _critical4protein_function(self) -> bool:
+    @staticmethod
+    def _critical4protein_function(seqvar: SeqVar, cds_pos: int | None, exons: List[Exon]) -> bool:
         """
         Check if the truncated/altered region is critical for the protein function.
         **Rule:** Affect of the variant on the protein function is indicated
         by experimental or clinical evidence:
         - Presence of Pathogenic variants downstream of the new stop codon
         """
-        if not isinstance(self.seqvar_transcript.cds_pos, CdsPos):
+        if not cds_pos:
             return False
-        new_stop_codon = self.seqvar_transcript.cds_pos.ord
         start_pos = 0
-        for exon in self.gene_transcript.genomeAlignments[0].exons:
-            if exon.altCdsStartI < new_stop_codon and exon.altCdsEndI > new_stop_codon:
-                start_pos = exon.altStartI + (new_stop_codon - exon.altCdsStartI)
+        for exon in exons:
+            if exon.altCdsStartI < cds_pos and exon.altCdsEndI > cds_pos:
+                start_pos = exon.altStartI + (cds_pos - exon.altCdsStartI)
                 break
-        end_pos = self.gene_transcript.genomeAlignments[0].exons[-1].altEndI
+        end_pos = exons[-1].altEndI
 
         try:
             annonars_client = AnnonarsClient()
-            response = annonars_client.get_variant_from_range(self.seqvar, start_pos, end_pos)
+            response = annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
             if (
                 response
                 and response.result.gnomad_genomes
@@ -243,7 +268,7 @@ class SeqVarPVS1:
                 raise InvalidAPIResposeError("Failed to get variant from range.")
         except Exception as e:
             typer.secho(
-                f"Failed to get variant from range for variant {self.seqvar.user_representation}.",
+                f"Failed to get variant from range for variant {seqvar.user_representation}.",
                 err=True,
                 fg=typer.colors.RED,
             )
@@ -288,8 +313,9 @@ class SeqVarPVS1:
             return False
 
     @staticmethod
-    def _lof_removes_more_then_10_percent_of_protein(pHGVS: str, cds_length: int) -> bool:
+    def _lof_removes_more_then_10_percent_of_protein(pHGVS: str, exons: List[Exon]) -> bool:
         """Check if the LoF variant removes more than 10% of the protein."""
+        cds_length = sum([exon.altEndI - exon.altStartI for exon in exons])
         pattern = re.compile(r"p\.\D+(\d+)(\D+fs)?(\*|X|Ter)(\d+)?")
         match = pattern.search(pHGVS)
         codon_offset = int(match.group(1)) if match else -1
