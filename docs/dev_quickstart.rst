@@ -71,6 +71,12 @@ You can use the provided ``Makefile`` files to install the dependencies.
 
     $ make deps
 
+--------------
+Env File Setup
+--------------
+
+Next, you will need to copy `.env.dev` to `.env` and adjust the values as needed.
+
 ---------------
 Running the CLI
 ---------------
