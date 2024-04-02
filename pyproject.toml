@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autopvs1"
+version = "0.1.0"
+authors = [
+  {name = "Dzmitry Hramyka", email = "dzmitry.hramyka@bih-charite.de"},
+]
+description = "Automated prediction of the PVS1 ACMG/AMP variant classification"
+readme = "README.md"
+keywords = ["variant classification", "ACMG"]
+requires-python = ">=3.12"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/bihealth/autopvs1"
+Documentation = "https://autopvs1.readthedocs.io/en/latest"
+
