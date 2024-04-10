@@ -4,8 +4,8 @@ import requests
 from pydantic import ValidationError
 
 from src.core.config import settings
+from src.defs.annonars import AnnonarsRangeResponse
 from src.seqvar import SeqVar
-from src.types.annonars import AnnonarsRangeResponse
 
 #: Annonars API base URL
 ANNONARS_API_BASE_URL = f"{settings.API_REEV_URL}/annonars"
