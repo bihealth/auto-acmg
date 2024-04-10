@@ -9,45 +9,14 @@ from src.api.annonars import AnnonarsClient
 from src.api.mehari import MehariClient
 from src.core.exceptions import InvalidAPIResposeError
 from src.seqvar import SeqVar
-from src.types.autopvs1 import TranscriptInfo
-from src.types.enums import PVS1Prediction, PVS1PredictionSeqVarPath, SeqVarConsequence
+from src.types.autopvs1 import (
+    PVS1Prediction,
+    PVS1PredictionSeqVarPath,
+    SeqVarConsequence,
+    SeqvarConsequenceMapping,
+    TranscriptInfo,
+)
 from src.types.mehari import CdsPos, Exon, TranscriptGene, TranscriptSeqvar
-
-#: Mapping of consequence from transcript info to SeqVarConsequence
-SeqvarConsequenceMapping = {
-    "intergenic_variant": SeqVarConsequence.NotSet,
-    "intron_variant": SeqVarConsequence.NotSet,
-    "upstream_gene_variant": SeqVarConsequence.NotSet,
-    "downstream_gene_variant": SeqVarConsequence.NotSet,
-    "5_prime_utr_variant": SeqVarConsequence.NotSet,
-    "3_prime_utr_variant": SeqVarConsequence.NotSet,
-    "splice_region_variant": SeqVarConsequence.SpliceSites,  # Can affect splicing
-    "splice_donor_variant": SeqVarConsequence.SpliceSites,  # Canonical splice site
-    "splice_acceptor_variant": SeqVarConsequence.SpliceSites,  # Canonical splice site
-    "frameshift_variant": SeqVarConsequence.NonsenseFrameshift,  # Loss of function
-    "transcript_ablation": SeqVarConsequence.NotSet,  # Severe effect, but not specifically classified here
-    "transcript_amplification": SeqVarConsequence.NotSet,
-    "inframe_insertion": SeqVarConsequence.NotSet,  # Not necessarily loss of function
-    "inframe_deletion": SeqVarConsequence.NotSet,  # Not necessarily loss of function
-    "synonymous_variant": SeqVarConsequence.NotSet,  # Usually benign, but exceptions exist
-    "stop_retained_variant": SeqVarConsequence.NotSet,
-    "missense_variant": SeqVarConsequence.NotSet,  # Not loss of function in a direct way
-    "initiator_codon_variant": SeqVarConsequence.InitiationCodon,  # Affects start codon
-    "stop_gained": SeqVarConsequence.NonsenseFrameshift,  # Nonsense variant
-    "stop_lost": SeqVarConsequence.NotSet,  # Could be significant, but not classified here as Nonsense/Frameshift
-    "mature_mirna_variant": SeqVarConsequence.NotSet,
-    "non_coding_exon_variant": SeqVarConsequence.NotSet,  # Impact unclear
-    "nc_transcript_variant": SeqVarConsequence.NotSet,
-    "incomplete_terminal_codon_variant": SeqVarConsequence.NotSet,  # Rarely significant
-    "nmd_transcript_variant": SeqVarConsequence.NotSet,  # Effect on NMD, not directly LOF
-    "coding_sequence_variant": SeqVarConsequence.NotSet,  # Ambiguous
-    "tfbs_ablation": SeqVarConsequence.NotSet,  # Regulatory, not LOF
-    "tfbs_amplification": SeqVarConsequence.NotSet,
-    "tf_binding_site_variant": SeqVarConsequence.NotSet,
-    "regulatory_region_ablation": SeqVarConsequence.NotSet,  # Regulatory, not LOF
-    "regulatory_region_variant": SeqVarConsequence.NotSet,
-    "regulatory_region_amplification": SeqVarConsequence.NotSet,
-}
 
 
 class SeqVarPVS1Helpers:

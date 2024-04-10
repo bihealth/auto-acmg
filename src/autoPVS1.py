@@ -1,16 +1,11 @@
 """Implementations of the PVS1 algorithm."""
 
-from typing import Dict, List, Tuple, Union
-
 import typer
 
-from src.core.config import settings
 from src.genome_builds import GenomeRelease
 from src.seqvar import SeqVar, SeqVarResolver
 from src.seqvar_pvs1 import SeqVarPVS1
-from src.types.autopvs1 import TranscriptInfo
-from src.types.enums import PVS1Prediction, PVS1PredictionSeqVarPath, SeqVarConsequence
-from src.types.mehari import TranscriptGene, TranscriptSeqvar
+from src.types.autopvs1 import PVS1Prediction, PVS1PredictionSeqVarPath
 
 
 class AutoPVS1:
