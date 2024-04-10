@@ -158,11 +158,6 @@ def test_sr_parse_canonical_spdi_seqvar_fail(seqvar_resolver, value):
         seqvar_resolver._parse_canonical_spdi_seqvar(value)
 
 
-def test_sr_resolve_parse_error(seqvar_resolver):
-    with pytest.raises(ParseError):
-        seqvar_resolver.resolve_seqvar("invalid_variant_representation", GenomeRelease.GRCh38)
-
-
 # TODO: Fix the following tests, where DottyClient is mocked
 # # Mocking DottyClient's response
 # @pytest.fixture
@@ -180,6 +175,10 @@ def test_sr_resolve_parse_error(seqvar_resolver):
 #     mock_client.to_spdi.return_value = mock_spdi
 #     monkeypatch.setattr("src.sequence_variant.DottyClient", lambda: mock_client)
 #     return mock_client
+
+# def test_sr_resolve_parse_error(seqvar_resolver):
+#     with pytest.raises(ParseError):
+#         seqvar_resolver.resolve_seqvar("invalid_variant_representation", GenomeRelease.GRCh38)
 
 # @pytest.mark.parametrize(
 #     "value, genome_release, expected",
