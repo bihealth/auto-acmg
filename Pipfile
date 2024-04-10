@@ -14,7 +14,7 @@ sphinx = "*"
 datamodel-code-generator = "*"
 requests = "*"
 responses = "*"
-typer = {extras = ["all"], version = "*"}
+typer = "*"
 setuptools = "*"
 build = "*"
 
