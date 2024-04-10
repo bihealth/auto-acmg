@@ -4,7 +4,7 @@ import re
 from typing import Optional
 
 from src.api.dotty import DottyClient
-from src.core.exceptions import InvalidPos, ParseError
+from src.defs.exceptions import InvalidPos, ParseError
 from src.defs.genome_builds import (
     CHROM_LENGTHS_37,
     CHROM_LENGTHS_38,

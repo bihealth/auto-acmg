@@ -2,7 +2,7 @@
 
 from enum import Enum, auto
 
-from src.core.exceptions import MappingError
+from src.defs.exceptions import MappingError
 
 
 #: Enumeration for genome release

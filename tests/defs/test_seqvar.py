@@ -3,7 +3,7 @@ from unittest.mock import Mock
 import pytest
 
 from src.api.dotty import DottyClient
-from src.core.exceptions import InvalidPos, ParseError
+from src.defs.exceptions import InvalidPos, ParseError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar, SeqVarResolver
 
