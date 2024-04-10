@@ -24,7 +24,7 @@ REGEX_CANONICAL_SPDI = re.compile(
 )
 #: Regular expression for "relaxed" SPDI variant representation
 REGEX_RELAXED_SPDI = re.compile(
-    r"^(?:(?P<genome_build>\w+):)?(?P<chrom>(?:chr)?(?:[1-9]|1[0-9]|2[0-2]|X|Y|M|MT)):(?P<pos>\d+):(?P<del>[ACGT]+):(?P<ins>[ACGT]+)$",
+    r"^(?:(?P<genome_build>\w+):)?(?P<chrom>(?:chr)?(?:[1-9]|1[0-9]|2[0-2]|X|Y|M|MT)):(?P<pos>\d+):(?P<delete>[ACGT]+):(?P<insert>[ACGT]+)$",
     re.IGNORECASE,
 )
 #: Regular expression for dbSNP
