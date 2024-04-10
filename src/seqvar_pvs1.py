@@ -1,57 +1,53 @@
 """PVS1 criteria for Sequence Variants (SeqVar)."""
 
 import re
-from typing import List
+from typing import Dict, List, Tuple
 
 import typer
 
 from src.api.annonars import AnnonarsClient
+from src.api.mehari import MehariClient
 from src.core.exceptions import InvalidAPIResposeError
 from src.seqvar import SeqVar
+from src.types.autopvs1 import TranscriptInfo
 from src.types.enums import PVS1Prediction, PVS1PredictionSeqVarPath, SeqVarConsequence
 from src.types.mehari import CdsPos, Exon, TranscriptGene, TranscriptSeqvar
 
-
-class SetupSeqVarData:
-    """Mixin class for setting up the SeqVar data."""
-
-    def __init__(
-        self,
-        seqvar: SeqVar,
-        seqvar_transcript: TranscriptSeqvar,
-        gene_transcript: TranscriptGene,
-        consequence: SeqVarConsequence = SeqVarConsequence.NonsenseFrameshift,
-    ):
-        # Attributes to be set
-        self.seqvar = seqvar
-        self.consequence = consequence
-        self._seqvar_transcript = seqvar_transcript
-        self._gene_transcript = gene_transcript
-
-        # Attributes to be computed
-        self.HGVS: str = ""
-        self.pHGVS: str = ""
-        self.tHGVS: str = ""
-        self.gene_hgnc_id: str = ""
-        self.transcript_tags: List[str] = []
-        self.exons: List[Exon] = []
-        self.cds_pos: int | None = None
-
-        self._initialize()
-
-    def _initialize(self):
-        """Setup the PVS1 class."""
-        self.HGVS = self._gene_transcript.id
-        self.pHGVS = self.HGVS + ":" + (self._seqvar_transcript.hgvs_p or "")
-        self.tHGVS = self.HGVS + ":" + (self._seqvar_transcript.hgvs_t or "")
-        self.gene_hgnc_id = self._seqvar_transcript.gene_id
-        self.transcript_tags = self._seqvar_transcript.feature_tag
-        self.exons = self._gene_transcript.genomeAlignments[0].exons
-        self.cds_pos = (
-            self._seqvar_transcript.cds_pos.ord
-            if isinstance(self._seqvar_transcript.cds_pos, CdsPos)
-            else None
-        )
+#: Mapping of consequence from transcript info to SeqVarConsequence
+SeqvarConsequenceMapping = {
+    "intergenic_variant": SeqVarConsequence.NotSet,
+    "intron_variant": SeqVarConsequence.NotSet,
+    "upstream_gene_variant": SeqVarConsequence.NotSet,
+    "downstream_gene_variant": SeqVarConsequence.NotSet,
+    "5_prime_utr_variant": SeqVarConsequence.NotSet,
+    "3_prime_utr_variant": SeqVarConsequence.NotSet,
+    "splice_region_variant": SeqVarConsequence.SpliceSites,  # Can affect splicing
+    "splice_donor_variant": SeqVarConsequence.SpliceSites,  # Canonical splice site
+    "splice_acceptor_variant": SeqVarConsequence.SpliceSites,  # Canonical splice site
+    "frameshift_variant": SeqVarConsequence.NonsenseFrameshift,  # Loss of function
+    "transcript_ablation": SeqVarConsequence.NotSet,  # Severe effect, but not specifically classified here
+    "transcript_amplification": SeqVarConsequence.NotSet,
+    "inframe_insertion": SeqVarConsequence.NotSet,  # Not necessarily loss of function
+    "inframe_deletion": SeqVarConsequence.NotSet,  # Not necessarily loss of function
+    "synonymous_variant": SeqVarConsequence.NotSet,  # Usually benign, but exceptions exist
+    "stop_retained_variant": SeqVarConsequence.NotSet,
+    "missense_variant": SeqVarConsequence.NotSet,  # Not loss of function in a direct way
+    "initiator_codon_variant": SeqVarConsequence.InitiationCodon,  # Affects start codon
+    "stop_gained": SeqVarConsequence.NonsenseFrameshift,  # Nonsense variant
+    "stop_lost": SeqVarConsequence.NotSet,  # Could be significant, but not classified here as Nonsense/Frameshift
+    "mature_mirna_variant": SeqVarConsequence.NotSet,
+    "non_coding_exon_variant": SeqVarConsequence.NotSet,  # Impact unclear
+    "nc_transcript_variant": SeqVarConsequence.NotSet,
+    "incomplete_terminal_codon_variant": SeqVarConsequence.NotSet,  # Rarely significant
+    "nmd_transcript_variant": SeqVarConsequence.NotSet,  # Effect on NMD, not directly LOF
+    "coding_sequence_variant": SeqVarConsequence.NotSet,  # Ambiguous
+    "tfbs_ablation": SeqVarConsequence.NotSet,  # Regulatory, not LOF
+    "tfbs_amplification": SeqVarConsequence.NotSet,
+    "tf_binding_site_variant": SeqVarConsequence.NotSet,
+    "regulatory_region_ablation": SeqVarConsequence.NotSet,  # Regulatory, not LOF
+    "regulatory_region_variant": SeqVarConsequence.NotSet,
+    "regulatory_region_amplification": SeqVarConsequence.NotSet,
+}
 
 
 class SeqVarPVS1Helpers:
@@ -164,7 +160,7 @@ class SeqVarPVS1Helpers:
                 err=True,
                 fg=typer.colors.RED,
             )
-            typer.echo(e, err=True)
+            typer.secho(e, err=True, fg=typer.colors.RED)
             return False
 
     @staticmethod
@@ -201,7 +197,7 @@ class SeqVarPVS1Helpers:
                 err=True,
                 fg=typer.colors.RED,
             )
-            typer.echo(e, err=True)
+            typer.secho(e, err=True, fg=typer.colors.RED)
             return False
 
     @staticmethod
@@ -236,22 +232,230 @@ class SeqVarPVS1Helpers:
         return False
 
 
-class SeqVarPVS1(SetupSeqVarData, SeqVarPVS1Helpers):
+class SeqVarTranscriptsHelper:
+    """Transcript information for a sequence variant."""
+
+    def __init__(self, seqvar: SeqVar):
+        self.seqvar: SeqVar = seqvar
+
+        # Attributes to be set
+        self.HGVSs: List[str] = []
+        self.HGNC_id: str = ""
+        self.seqvar_ts_info: List[TranscriptSeqvar] | None = None
+        self.seqvar_transcript: TranscriptSeqvar | None = None
+        self.gene_ts_info: List[TranscriptGene] | None = None
+        self.gene_transcript: TranscriptGene | None = None
+        self.consequence: SeqVarConsequence = SeqVarConsequence.NotSet
+
+    def get_ts_info(
+        self,
+    ) -> Tuple[TranscriptSeqvar | None, TranscriptGene | None, SeqVarConsequence]:
+        """Return the transcript information."""
+        return self.seqvar_transcript, self.gene_transcript, self.consequence
+
+    def initialize(self):
+        """Get all transcripts for the given sequence variant from Mehari."""
+        if not self.seqvar:
+            typer.secho(
+                "No sequence variant specified. Assure that the variant is resolved before fetching transcripts.",
+                err=True,
+                fg=typer.colors.RED,
+            )
+            return
+        try:
+            # Get transcripts from Mehari
+            mehari_client = MehariClient()
+            response_seqvar = mehari_client.get_seqvar_transcripts(self.seqvar)
+            if not response_seqvar:
+                self.seqvar_ts_info = None
+            else:
+                self.seqvar_ts_info = response_seqvar.result
+
+            if not self.seqvar_ts_info or len(self.seqvar_ts_info) == 0:
+                self.seqvar_transcript = None
+                self.gene_transcript = None
+                self.consequence = SeqVarConsequence.NotSet
+                typer.secho(
+                    f"No transcripts found for variant {self.seqvar.user_representation}.",
+                    err=True,
+                    fg=typer.colors.RED,
+                )
+                return
+
+            # Get HGNC ID and HGVSs
+            self.HGNC_id = self.seqvar_ts_info[0].gene_id
+            for transcript in self.seqvar_ts_info:
+                self.HGVSs.append(transcript.feature_id)
+
+            # Get gene transcripts from Mehari
+            response_gene = mehari_client.get_gene_transcripts(
+                self.HGNC_id, self.seqvar.genome_release
+            )
+            if not response_gene:
+                self.gene_ts_info = None
+            else:
+                self.gene_ts_info = response_gene.transcripts
+
+            # Choose the most suitable transcript for the PVS1 prediction
+            if self.seqvar_ts_info and self.gene_ts_info:
+                self.seqvar_transcript, self.gene_transcript = self._choose_transcript(
+                    self.HGVSs, self.seqvar_ts_info, self.gene_ts_info
+                )
+                self.consequence = self._get_consequence(self.seqvar_transcript)
+            else:
+                self.seqvar_transcript = None
+                self.gene_transcript = None
+                self.consequence = SeqVarConsequence.NotSet
+
+        except Exception as e:
+            typer.secho(
+                f"Failed to get transcripts for variant {self.seqvar.user_representation}.",
+                err=True,
+                fg=typer.colors.RED,
+            )
+            typer.secho(e, err=True)
+
+    @staticmethod
+    def _get_consequence(seqvar_transcript: TranscriptSeqvar | None) -> SeqVarConsequence:
+        """Get the consequence of the sequence variant."""
+        if not seqvar_transcript:
+            return SeqVarConsequence.NotSet
+        else:
+            for consequence in seqvar_transcript.consequences:
+                if consequence in SeqvarConsequenceMapping:
+                    return SeqvarConsequenceMapping[consequence]
+            return SeqVarConsequence.NotSet
+
+    @staticmethod
+    def _choose_transcript(
+        hgvss: List[str],
+        seqvar_transcripts: List[TranscriptSeqvar],
+        gene_transcripts: List[TranscriptGene],
+    ) -> Tuple[TranscriptSeqvar | None, TranscriptGene | None]:
+        """
+        Choose the most suitable transcript for the PVS1 prediction.
+        The first consideration is the MANE transcript, if available,
+        and then the length of the exons.
+        """
+        transcripts_mapping: Dict[str, TranscriptInfo] = {}
+        seqvar_transcript = None
+        gene_transcript = None
+        mane_transcripts: List[str] = []
+        exon_lengths: Dict[str, int] = {}
+
+        # Setup mapping from HGVS to pair of transcripts
+        for hgvs in hgvss:
+            transcripts_mapping[hgvs] = TranscriptInfo(seqvar=None, gene=None)
+            for seqvar_ts in seqvar_transcripts:
+                if seqvar_ts.feature_id == hgvs:
+                    transcripts_mapping[hgvs].seqvar = seqvar_ts
+                    break
+            for gene_ts in gene_transcripts:
+                if gene_ts.id == hgvs:
+                    transcripts_mapping[hgvs].gene = gene_ts
+                    break
+
+        # Find MANE transcripts and calculate exon lengths
+        for hgvs, transcript in transcripts_mapping.items():
+            if transcript.seqvar and transcript.gene:
+                if "ManeSelect" in transcript.seqvar.feature_tag:
+                    mane_transcripts.append(hgvs)
+                cds_sizes = [
+                    exon.altEndI - exon.altStartI
+                    for exon in transcript.gene.genomeAlignments[0].exons
+                ]
+                exon_lengths[hgvs] = sum(cds_sizes)
+
+        # Choose the most suitable transcript
+        if len(mane_transcripts) == 1:
+            seqvar_transcript = transcripts_mapping[mane_transcripts[0]].seqvar
+            gene_transcript = transcripts_mapping[mane_transcripts[0]].gene
+        else:
+            lookup_group = mane_transcripts if mane_transcripts else list(exon_lengths.keys())
+            max_length_transcript = max(lookup_group, key=lambda x: exon_lengths[x])
+            seqvar_transcript = transcripts_mapping[max_length_transcript].seqvar
+            gene_transcript = transcripts_mapping[max_length_transcript].gene
+        return seqvar_transcript, gene_transcript
+
+
+class SeqVarPVS1(SeqVarPVS1Helpers):
     """PVS1 criteria for transcript."""
 
-    def __init__(self):
+    def __init__(self, seqvar: SeqVar):
+        # Attributes to be set
+        self.seqvar = seqvar
+
+        # Attributes to be computed
+        self._seqvar_transcript: TranscriptSeqvar | None = None
+        self._gene_transcript: TranscriptGene | None = None
+        self._consequence: SeqVarConsequence = SeqVarConsequence.NotSet
+        self.HGVS: str = ""
+        self.pHGVS: str = ""
+        self.tHGVS: str = ""
+        self.HGNC_id: str = ""
+        self.transcript_tags: List[str] = []
+        self.exons: List[Exon] = []
+        self.cds_pos: int | None = None
+
+        # Prediction attributes
         self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
         self.prediction_path: PVS1PredictionSeqVarPath = PVS1PredictionSeqVarPath.NotSet
 
+    def initialize(self):
+        """Setup the PVS1 class."""
+        # Fetch transcript data
+        seqvar_transcript = SeqVarTranscriptsHelper(self.seqvar)
+        seqvar_transcript.initialize()
+        self._seqvar_transcript, self._gene_transcript, self._consequence = (
+            seqvar_transcript.get_ts_info()
+        )
+
+        if (
+            not self._seqvar_transcript
+            or not self._gene_transcript
+            or self._consequence == SeqVarConsequence.NotSet
+        ):
+            typer.secho(
+                f"Failed to setup transcripts data.",
+                err=True,
+                fg=typer.colors.RED,
+            )
+            return
+
+        # Set attributes
+        self.HGVS = self._gene_transcript.id
+        self.pHGVS = self.HGVS + ":" + (self._seqvar_transcript.hgvs_p or "")
+        self.tHGVS = self.HGVS + ":" + (self._seqvar_transcript.hgvs_t or "")
+        self.HGNC_id = self._seqvar_transcript.gene_id
+        self.transcript_tags = self._seqvar_transcript.feature_tag
+        self.exons = self._gene_transcript.genomeAlignments[0].exons
+        self.cds_pos = (
+            self._seqvar_transcript.cds_pos.ord
+            if isinstance(self._seqvar_transcript.cds_pos, CdsPos)
+            else None
+        )
+
     def verify_PVS1(self):
         """Make the PVS1 prediction."""
-        if self.consequence == SeqVarConsequence.NonsenseFrameshift:
-            if self.gene_hgnc_id == "HGNC:9588":  # Follow guidelines for PTEN
+        if (
+            not self._seqvar_transcript
+            or not self._gene_transcript
+            or self._consequence == SeqVarConsequence.NotSet
+        ):
+            typer.secho(
+                f"Transcript data is not set. Assure to call initialize() before verify_PVS1().",
+                err=True,
+                fg=typer.colors.RED,
+            )
+            return
+
+        if self._consequence == SeqVarConsequence.NonsenseFrameshift:
+            if self.HGNC_id == "HGNC:9588":  # Follow guidelines for PTEN
                 if self._get_pHGVS_termination(self.pHGVS) < 374:
                     self.prediction = PVS1Prediction.PVS1
                     return
 
-            if self._undergo_nmd(self.exons, self.pHGVS, self.gene_hgnc_id):
+            if self._undergo_nmd(self.exons, self.pHGVS, self.HGNC_id):
                 if self._in_biologically_relevant_transcript(self.transcript_tags):
                     self.prediction = PVS1Prediction.PVS1
                     self.prediction_path = PVS1PredictionSeqVarPath.NF1
@@ -280,9 +484,9 @@ class SeqVarPVS1(SetupSeqVarData, SeqVarPVS1Helpers):
                             self.prediction = PVS1Prediction.PVS1_Moderate
                             self.prediction_path = PVS1PredictionSeqVarPath.NF6
 
-        elif self.consequence == SeqVarConsequence.SpliceSites:
+        elif self._consequence == SeqVarConsequence.SpliceSites:
             if self._exon_skipping_or_cryptic_ss_disruption() and self._undergo_nmd(
-                self.exons, self.pHGVS, self.gene_hgnc_id
+                self.exons, self.pHGVS, self.HGNC_id
             ):
                 if self._in_biologically_relevant_transcript(self.transcript_tags):
                     self.prediction = PVS1Prediction.PVS1
@@ -291,7 +495,7 @@ class SeqVarPVS1(SetupSeqVarData, SeqVarPVS1Helpers):
                     self.prediction = PVS1Prediction.NotPVS1
                     self.prediction_path = PVS1PredictionSeqVarPath.SS2
             elif self._exon_skipping_or_cryptic_ss_disruption() and not self._undergo_nmd(
-                self.exons, self.pHGVS, self.gene_hgnc_id
+                self.exons, self.pHGVS, self.HGNC_id
             ):
                 if self._critical4protein_function(self.seqvar, self.cds_pos, self.exons):
                     self.prediction = PVS1Prediction.PVS1_Strong
@@ -335,7 +539,7 @@ class SeqVarPVS1(SetupSeqVarData, SeqVarPVS1Helpers):
                             self.prediction = PVS1Prediction.PVS1_Moderate
                             self.prediction_path = PVS1PredictionSeqVarPath.SS9
 
-        elif self.consequence == SeqVarConsequence.InitiationCodon:
+        elif self._consequence == SeqVarConsequence.InitiationCodon:
             if self._alternative_start_codon():
                 self.prediction = PVS1Prediction.NotPVS1
                 self.prediction_path = PVS1PredictionSeqVarPath.IC3
@@ -348,4 +552,12 @@ class SeqVarPVS1(SetupSeqVarData, SeqVarPVS1Helpers):
                     self.prediction_path = PVS1PredictionSeqVarPath.IC2
         else:
             self.prediction = PVS1Prediction.NotPVS1
-            typer.echo(f"Consequence {self.consequence} is not supported for PVS1 prediction.")
+            typer.secho(
+                f"Consequence {self._consequence} is not supported for PVS1 prediction.",
+                err=True,
+                fg=typer.colors.RED,
+            )
+
+    def get_prediction(self) -> Tuple[PVS1Prediction, PVS1PredictionSeqVarPath]:
+        """Return the PVS1 prediction."""
+        return self.prediction, self.prediction_path
