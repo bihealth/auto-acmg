@@ -4,8 +4,8 @@ import requests
 from pydantic import ValidationError
 
 from src.core.config import settings
+from src.defs.dotty import DottySpdiResponse
 from src.genome_builds import GenomeRelease
-from src.types.dotty import DottySpdiResponse
 
 #: Dotty API base URL
 DOTTI_API_BASE_URL = f"{settings.API_REEV_URL}/dotty"

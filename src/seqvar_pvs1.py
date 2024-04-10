@@ -8,15 +8,15 @@ import typer
 from src.api.annonars import AnnonarsClient
 from src.api.mehari import MehariClient
 from src.core.exceptions import InvalidAPIResposeError
-from src.seqvar import SeqVar
-from src.types.autopvs1 import (
+from src.defs.autopvs1 import (
     PVS1Prediction,
     PVS1PredictionSeqVarPath,
     SeqVarConsequence,
     SeqvarConsequenceMapping,
     TranscriptInfo,
 )
-from src.types.mehari import CdsPos, Exon, TranscriptGene, TranscriptSeqvar
+from src.defs.mehari import CdsPos, Exon, TranscriptGene, TranscriptSeqvar
+from src.seqvar import SeqVar
 
 
 class SeqVarPVS1Helpers:
