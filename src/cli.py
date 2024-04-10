@@ -4,7 +4,7 @@ import typer
 from typing_extensions import Annotated
 
 from src.autoPVS1 import AutoPVS1
-from src.genome_builds import GenomeRelease
+from src.defs.genome_builds import GenomeRelease
 
 app = typer.Typer()
 

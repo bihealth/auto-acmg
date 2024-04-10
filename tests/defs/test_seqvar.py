@@ -4,8 +4,8 @@ import pytest
 
 from src.api.dotty import DottyClient
 from src.core.exceptions import InvalidPos, ParseError
-from src.genome_builds import GenomeRelease
-from src.seqvar import SeqVar, SeqVarResolver
+from src.defs.genome_builds import GenomeRelease
+from src.defs.seqvar import SeqVar, SeqVarResolver
 
 
 @pytest.fixture

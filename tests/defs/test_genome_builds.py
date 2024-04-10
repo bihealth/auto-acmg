@@ -1,6 +1,6 @@
 import pytest
 
-from src.genome_builds import GenomeRelease, MappingError, refseq_to_genome_build
+from src.defs.genome_builds import GenomeRelease, MappingError, refseq_to_genome_build
 
 
 def test_genome_release_from_string_valid():

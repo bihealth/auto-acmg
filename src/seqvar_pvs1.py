@@ -16,7 +16,7 @@ from src.defs.autopvs1 import (
     TranscriptInfo,
 )
 from src.defs.mehari import CdsPos, Exon, TranscriptGene, TranscriptSeqvar
-from src.seqvar import SeqVar
+from src.defs.seqvar import SeqVar
 
 
 class SeqVarPVS1Helpers:
