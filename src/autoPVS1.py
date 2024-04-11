@@ -3,8 +3,8 @@
 import typer
 
 from src.defs.autopvs1 import PVS1Prediction, PVS1PredictionSeqVarPath
-from src.genome_builds import GenomeRelease
-from src.seqvar import SeqVar, SeqVarResolver
+from src.defs.genome_builds import GenomeRelease
+from src.defs.seqvar import SeqVar, SeqVarResolver
 from src.seqvar_pvs1 import SeqVarPVS1
 
 
