@@ -19,7 +19,7 @@ def test_to_spdi_success():
 
     client = DottyClient(api_base_url="https://example.com/dotty")
     response = client.to_spdi("test_query", GenomeRelease.GRCh38)
-    assert response == DottySpdiResponse(**mock_response)
+    assert response == DottySpdiResponse.model_validate(mock_response)
 
 
 @responses.activate
@@ -35,7 +35,7 @@ def test_to_spdi_failure():
 
     client = DottyClient(api_base_url="https://example.com/dotty")
     response = client.to_spdi("test_query", GenomeRelease.GRCh38)
-    assert response == DottySpdiResponse(**mock_response)
+    assert response == DottySpdiResponse.model_validate(mock_response)
 
 
 @responses.activate

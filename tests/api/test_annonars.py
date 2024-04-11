@@ -32,7 +32,7 @@ def test_get_variant_from_range_success():
 
     client = AnnonarsClient(api_base_url="https://example.com/annonars")
     response = client.get_variant_from_range(example_seqvar, start, stop)
-    assert response == AnnonarsRangeResponse(**mock_response)
+    assert response == AnnonarsRangeResponse.model_validate(mock_response)
 
 
 @responses.activate
@@ -50,7 +50,7 @@ def test_get_variant_from_range_failure():
 
     client = AnnonarsClient(api_base_url="https://example.com/annonars")
     response = client.get_variant_from_range(example_seqvar, start, stop)
-    assert response == AnnonarsRangeResponse(**mock_response)
+    assert response == AnnonarsRangeResponse.model_validate(mock_response)
 
 
 @responses.activate
