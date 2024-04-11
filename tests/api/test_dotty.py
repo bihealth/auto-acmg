@@ -2,7 +2,7 @@ import responses
 
 from src.api.dotty import DottyClient
 from src.defs.dotty import DottySpdiResponse
-from src.genome_builds import GenomeRelease
+from src.defs.genome_builds import GenomeRelease
 from tests.utils import get_json_object
 
 

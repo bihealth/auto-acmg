@@ -1,9 +1,9 @@
 import responses
 
 from src.api.mehari import MehariClient
+from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import TranscriptsSeqVar
-from src.genome_builds import GenomeRelease
-from src.seqvar import SeqVar
+from src.defs.seqvar import SeqVar
 from tests.utils import get_json_object
 
 #: Example sequence variant

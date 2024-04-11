@@ -4,8 +4,8 @@ import re
 from typing import Optional
 
 from src.api.dotty import DottyClient
-from src.core.exceptions import InvalidPos, ParseError
-from src.genome_builds import (
+from src.defs.exceptions import InvalidPos, ParseError
+from src.defs.genome_builds import (
     CHROM_LENGTHS_37,
     CHROM_LENGTHS_38,
     REFSEQ_CHROM_37,
@@ -24,7 +24,7 @@ REGEX_CANONICAL_SPDI = re.compile(
 )
 #: Regular expression for "relaxed" SPDI variant representation
 REGEX_RELAXED_SPDI = re.compile(
-    r"^(?:(?P<genome_build>\w+):)?(?P<chrom>(?:chr)?(?:[1-9]|1[0-9]|2[0-2]|X|Y|M|MT)):(?P<pos>\d+):(?P<del>[ACGT]+):(?P<ins>[ACGT]+)$",
+    r"^(?:(?P<genome_build>\w+):)?(?P<chrom>(?:chr)?(?:[1-9]|1[0-9]|2[0-2]|X|Y|M|MT)):(?P<pos>\d+):(?P<delete>[ACGT]+):(?P<insert>[ACGT]+)$",
     re.IGNORECASE,
 )
 #: Regular expression for dbSNP
