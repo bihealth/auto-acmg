@@ -1,5 +1,6 @@
 """PVS1 criteria for Sequence Variants (SeqVar)."""
 
+import json
 import re
 from typing import Dict, List, Tuple
 
@@ -224,6 +225,7 @@ class SeqVarTranscriptsHelper:
 
     def initialize(self):
         """Get all transcripts for the given sequence variant from Mehari."""
+        # Should never happen, since __init__ is called with seqvar
         if not self.seqvar:
             typer.secho(
                 "No sequence variant specified. Assure that the variant is resolved before fetching transcripts.",
@@ -341,6 +343,9 @@ class SeqVarTranscriptsHelper:
             gene_transcript = transcripts_mapping[mane_transcripts[0]].gene
         else:
             lookup_group = mane_transcripts if mane_transcripts else list(exon_lengths.keys())
+            # If no overlapping transcripts, return None
+            if not lookup_group or not exon_lengths:
+                return None, None
             max_length_transcript = max(lookup_group, key=lambda x: exon_lengths[x])
             seqvar_transcript = transcripts_mapping[max_length_transcript].seqvar
             gene_transcript = transcripts_mapping[max_length_transcript].gene
