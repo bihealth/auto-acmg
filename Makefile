@@ -11,6 +11,7 @@ help:
 	@echo "  format          Format source code"
 	@echo "  lint            Run lint checks"
 	@echo "  example_run     Run example"
+	@echo "  run						 Run the application"
 	@echo "  test            Run tests"
 	@echo "  ci              Install dependencies, run lints and tests"
 	@echo "  docs            Generate the documentation"
@@ -71,6 +72,10 @@ lint-mypy:
 .PHONY: example_run
 example_run:
 	pipenv run python -m src.cli "4-113568536-G-GA" --genome-release hg19
+
+.PHONY: run
+run:
+	pipenv run python -m src.cli
 
 .PHONY: test
 test:
