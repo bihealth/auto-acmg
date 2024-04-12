@@ -1,11 +1,59 @@
-Frameshift:
-4-113568536-G-GA / grch37 (LARP7)
-
-3-prime UTR:
+Pending:
 13-113803407-G-A / grch37 (F10)
-
-Other:
+4-113568536-G-GA / grch37 (LARP7)
 6-24302274-T-C / grch37 (DCDC2)
 X-102884958-T-TTCGGAGGAGCAGTCC / grch37 (TCEAL1, ?orig=NM_004780.3(TCEAL1):c.124_138dup)
 chr7-140753336-A-C / grch38 (BRAF)
 chr16-53767042-T-C / grch38 (FTO)
+
+
+Frameshift/Nonsense:
+- undergo NMD -> biological relevant:
+
+- not undergo NMD -> critical for protein function:
+
+- not undergo NMD -> not critical for protein function -> frequent in general population:
+
+- not undergo NMD -> not critical for protein function -> rare in general population -> removes >10% of protein:
+
+- not undergo NMD -> not critical for protein function -> rare in general population -> removes <10% of protein:
+
+
+Splice sites:
+- exon skipping or cryptic splice site disrupts RF AND undergo NMD -> biological relevant:
+
+- exon skipping or cryptic splice site disrupts RF AND undergo NMD -> not biological relevant:
+
+- exon skipping or cryptic splice site disrupts RF AND NOT undergo NMD -> critical for protein function:
+
+- exon skipping or cryptic splice site disrupts RF AND NOT undergo NMD -> not critical for protein function -> frequent in general population:
+
+- exon skipping or cryptic splice site disrupts RF AND NOT undergo NMD -> not critical for protein function -> rare in general population -> removes >10% of protein:
+
+- exon skipping or cryptic splice site disrupts RF AND NOT undergo NMD -> not critical for protein function -> rare in general population -> removes <10% of protein:
+
+- exon skipping or use of cryptic splice site preserves RF -> critical for protein function:
+
+- exon skipping or use of cryptic splice site preserves RF -> not critical for protein function -> frequent in general population:
+
+- exon skipping or use of cryptic splice site preserves RF -> not critical for protein function -> rare in general population -> removes >10% of protein:
+
+- exon skipping or use of cryptic splice site preserves RF -> not critical for protein function -> rare in general population -> removes <10% of protein:
+
+
+Initiation codon:
+- no alternative start codon -> >=1 pathogenic variants upstream of the start codon:
+
+- no alternative start codon -> no pathogenic variants upstream of the start codon:
+
+- alternative start codon:
+
+
+# Coming in the nearest future:
+Deletion:
+TODO
+
+
+# Coming in the nearest future:
+Duplication:
+TODO
