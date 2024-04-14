@@ -45,7 +45,7 @@ class SeqVar:
         pos: int,
         delete: str,
         insert: str,
-        user_representation: Optional[str] = None,
+        user_repr: Optional[str] = None,
     ):
         self.genome_release = genome_release
         self.chrom = self._normalize_chromosome(chrom)
@@ -53,8 +53,8 @@ class SeqVar:
         self.delete = delete.upper()
         self.insert = insert.upper()
         self.user_repr = (
-            user_representation
-            if user_representation is not None
+            user_repr
+            if user_repr
             else f"{genome_release.name}-{self.chrom}-{pos}-{delete}-{insert}"
         )
 
@@ -133,7 +133,7 @@ class SeqVarResolver:
             pos=pos,
             delete=delete,
             insert=insert,
-            user_representation=value,
+            user_repr=value,
         )
         return self._validate_seqvar(variant)
 
@@ -171,7 +171,7 @@ class SeqVarResolver:
             pos=pos,
             delete=delete,
             insert=insert,
-            user_representation=value,
+            user_repr=value,
         )
         return self._validate_seqvar(variant)
 
@@ -211,7 +211,7 @@ class SeqVarResolver:
                     pos=spdi.value.pos,
                     delete=spdi.value.reference_deleted,
                     insert=spdi.value.alternate_inserted,
-                    user_representation=value,
+                    user_repr=value,
                 )
             else:
                 raise ParseError(f"Unable to resolve seqvar: {value}")

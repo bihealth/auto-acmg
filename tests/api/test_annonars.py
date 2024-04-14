@@ -13,7 +13,7 @@ example_seqvar = SeqVar(
     delete="A",
     insert="T",
     genome_release=GenomeRelease.GRCh38,
-    user_representation="1:1000A>T",
+    user_repr="1:1000A>T",
 )
 
 

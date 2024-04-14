@@ -49,7 +49,9 @@ class StrucVar:
         self.start = start
         self.stop = stop
         self.user_repr = (
-            user_repr if user_repr else f"{sv_type}-{genome_release.name}-{chrom}-{start}-{stop}"
+            user_repr
+            if user_repr
+            else f"{sv_type.name}-{genome_release.name}-{self.chrom}-{start}-{stop}"
         )
 
     def _normalize_chromosome(self, chrom: str) -> str:
@@ -89,6 +91,10 @@ class StrucVarResolver:
 
         return variant
 
+    def _normalize_chromosome(self, chrom: str) -> str:
+        """Normalize the chromosome name."""
+        return chrom.lower().replace("chr", "").replace("m", "mt").upper()
+
     def _parse_separated_strucvar(
         self, value: str, default_genome_release: GenomeRelease = GenomeRelease.GRCh38
     ) -> StrucVar:
@@ -114,7 +120,7 @@ class StrucVarResolver:
         genome_release = (
             GenomeRelease[genome_release_value] if genome_release_value else default_genome_release
         )
-        chrom = match.group("chrom")
+        chrom = self._normalize_chromosome(match.group("chrom"))
         start = int(match.group("start"))
         stop = int(match.group("stop"))
 
