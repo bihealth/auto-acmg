@@ -24,13 +24,13 @@ def test_seqvar_initialization():
     assert variant.pos == 100
     assert variant.delete == "A"
     assert variant.insert == "T"
-    assert variant.user_representation == "GRCh37-1-100-A-T"
+    assert variant.user_repr == "GRCh37-1-100-A-T"
 
 
 def test_seqvar_initialization_user_representation():
     """Test SeqVar initialization with custom user representation."""
     variant = SeqVar(GenomeRelease.GRCh37, "chr1", 100, "A", "T", user_representation="1:100:A:T")
-    assert variant.user_representation == "1:100:A:T"
+    assert variant.user_repr == "1:100:A:T"
 
 
 @pytest.mark.parametrize(

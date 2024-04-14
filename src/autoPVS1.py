@@ -39,7 +39,7 @@ class AutoPVS1:
 
             try:
                 typer.secho(
-                    f"Predicting PVS1 for variant {self.seqvar.user_representation}, genome release: {self.genome_release.name}.",
+                    f"Predicting PVS1 for variant {self.seqvar.user_repr}, genome release: {self.genome_release.name}.",
                     fg=typer.colors.BLUE,
                 )
                 seqvar_pvs1 = SeqVarPVS1(self.seqvar)
@@ -47,12 +47,12 @@ class AutoPVS1:
                 seqvar_pvs1.verify_PVS1()
                 self.prediction, self.prediction_path = seqvar_pvs1.get_prediction()
                 typer.secho(
-                    f"PVS1 prediction for {self.seqvar.user_representation}: {self.prediction.name}",
+                    f"PVS1 prediction for {self.seqvar.user_repr}: {self.prediction.name}",
                     fg=typer.colors.GREEN,
                 )
             except Exception as e:
                 typer.secho(
-                    f"Failed to predict PVS1 for variant {self.seqvar.user_representation}.",
+                    f"Failed to predict PVS1 for variant {self.seqvar.user_repr}.",
                     err=True,
                     fg=typer.colors.RED,
                 )
