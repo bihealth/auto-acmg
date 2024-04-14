@@ -12,20 +12,16 @@ help:
 	@echo "  lint            Run lint checks"
 	@echo "  example_run     Run example"
 	@echo "  test            Run tests"
+	@echo "  ci-test         Run tests in CI"
 	@echo "  ci              Install dependencies, run lints and tests"
 	@echo "  docs            Generate the documentation"
-	@echo "  ci-docs				 Generate the documentation in CI"
-	@echo "  mksuperuser     Create a superuser"
-	@echo "  serve           Run the (development) server"
-	@echo "  jupyterlab      Run jupyterlab"
-	@echo "  celery          Run celery"
-	@echo "  migrate         Create alembic versions and upgrade"
+	@echo "  ci-docs		 Generate the documentation in CI"
 
 .PHONY: deps
 deps:
 	pipenv install --dev
 
-.PHONY: docs-deps
+.PHONY: ci-docs-deps
 ci-docs-deps:
 	python -m pip install --upgrade --no-cache-dir pip setuptools
 	python -m pip install --upgrade --no-cache-dir sphinx readthedocs-sphinx-ext
@@ -97,26 +93,3 @@ docs:
 .PHONY: ci-docs
 ci-docs:
 	make -C docs clean html
-
-# .PHONY: mksuperuser
-# mksuperuser:
-# 	PYTHONPATH=. pipenv run python app/backend_pre_start.py
-# 	PYTHONPATH=. pipenv run python app/initial_data.py
-
-# .PHONY: serve
-# serve:
-# 	pipenv run uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload --workers 8
-
-# .PHONY: celery
-# celery:
-# 	PYTHONPATH=. pipenv run \
-# 		watchmedo auto-restart --directory=./ --pattern=*.py --recursive -- \
-# 		celery -A app.worker worker --loglevel=debug --beat -Q main-queue
-
-# .PHONY: jupyterlab
-# jupyterlab:
-# 	cp utils/minimal.ipynb tmp.ipynb && \
-# 	PYTHON=. pipenv run \
-# 		jupyter lab \
-# 			--ip=0.0.0.0 --allow-root --NotebookApp.custom_display_url=http://127.0.0.1:8888 \
-# 			tmp.ipynb
