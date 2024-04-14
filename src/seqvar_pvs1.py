@@ -126,7 +126,7 @@ class SeqVarPVS1Helpers:
                 raise InvalidAPIResposeError("Failed to get variant from range.")
         except Exception as e:
             typer.secho(
-                f"Failed to get variant from range for variant {seqvar.user_representation}.",
+                f"Failed to get variant from range for variant {seqvar.user_repr}.",
                 err=True,
                 fg=typer.colors.RED,
             )
@@ -163,7 +163,7 @@ class SeqVarPVS1Helpers:
                 raise InvalidAPIResposeError("Failed to get variant from range.")
         except Exception as e:
             typer.secho(
-                f"Failed to get variant from range for variant {seqvar.user_representation}.",
+                f"Failed to get variant from range for variant {seqvar.user_repr}.",
                 err=True,
                 fg=typer.colors.RED,
             )
@@ -247,7 +247,7 @@ class SeqVarTranscriptsHelper:
                 self.gene_transcript = None
                 self.consequence = SeqVarConsequence.NotSet
                 typer.secho(
-                    f"No transcripts found for variant {self.seqvar.user_representation}.",
+                    f"No transcripts found for variant {self.seqvar.user_repr}.",
                     err=True,
                     fg=typer.colors.RED,
                 )
@@ -280,7 +280,7 @@ class SeqVarTranscriptsHelper:
 
         except Exception as e:
             typer.secho(
-                f"Failed to get transcripts for variant {self.seqvar.user_representation}.",
+                f"Failed to get transcripts for variant {self.seqvar.user_repr}.",
                 err=True,
                 fg=typer.colors.RED,
             )

@@ -45,16 +45,16 @@ class SeqVar:
         pos: int,
         delete: str,
         insert: str,
-        user_representation: Optional[str] = None,
+        user_repr: Optional[str] = None,
     ):
         self.genome_release = genome_release
         self.chrom = self._normalize_chromosome(chrom)
         self.pos = pos
         self.delete = delete.upper()
         self.insert = insert.upper()
-        self.user_representation = (
-            user_representation
-            if user_representation is not None
+        self.user_repr = (
+            user_repr
+            if user_repr
             else f"{genome_release.name}-{self.chrom}-{pos}-{delete}-{insert}"
         )
 
@@ -64,10 +64,11 @@ class SeqVar:
 
     def __repr__(self):
         """Return a user-friendly representation of the variant."""
-        return self.user_representation
+        return self.user_repr
 
 
 class SeqVarResolver:
+    """The class to resolve sequence variants."""
 
     def __init__(self):
         pass
@@ -100,7 +101,7 @@ class SeqVarResolver:
         return value.lower().replace("chr", "").replace("m", "mt").upper()
 
     def _parse_separated_seqvar(
-        self, value: str, default_genome_build: GenomeRelease = GenomeRelease.GRCh38
+        self, value: str, default_genome_release: GenomeRelease = GenomeRelease.GRCh38
     ) -> SeqVar:
         """
         Parse a colon/hyphen separated sequence variant representation.
@@ -119,7 +120,7 @@ class SeqVarResolver:
 
         genome_build_value = match.group("genome_build")
         genome_build = (
-            GenomeRelease[genome_build_value] if genome_build_value else default_genome_build
+            GenomeRelease[genome_build_value] if genome_build_value else default_genome_release
         )
         chrom = self._normalize_chrom(match.group("chrom"))
         pos = int(match.group("pos"))
@@ -132,7 +133,7 @@ class SeqVarResolver:
             pos=pos,
             delete=delete,
             insert=insert,
-            user_representation=value,
+            user_repr=value,
         )
         return self._validate_seqvar(variant)
 
@@ -170,7 +171,7 @@ class SeqVarResolver:
             pos=pos,
             delete=delete,
             insert=insert,
-            user_representation=value,
+            user_repr=value,
         )
         return self._validate_seqvar(variant)
 
@@ -188,7 +189,7 @@ class SeqVarResolver:
         :raises ParseError: If the variant representation is invalid
         """
         try:
-            return self._parse_separated_seqvar(value, default_genome_build=genome_release)
+            return self._parse_separated_seqvar(value, default_genome_release=genome_release)
         except ParseError:
             pass
 
@@ -210,7 +211,7 @@ class SeqVarResolver:
                     pos=spdi.value.pos,
                     delete=spdi.value.reference_deleted,
                     insert=spdi.value.alternate_inserted,
-                    user_representation=value,
+                    user_repr=value,
                 )
             else:
                 raise ParseError(f"Unable to resolve seqvar: {value}")

@@ -24,13 +24,13 @@ def test_seqvar_initialization():
     assert variant.pos == 100
     assert variant.delete == "A"
     assert variant.insert == "T"
-    assert variant.user_representation == "GRCh37-1-100-A-T"
+    assert variant.user_repr == "GRCh37-1-100-A-T"
 
 
 def test_seqvar_initialization_user_representation():
     """Test SeqVar initialization with custom user representation."""
-    variant = SeqVar(GenomeRelease.GRCh37, "chr1", 100, "A", "T", user_representation="1:100:A:T")
-    assert variant.user_representation == "1:100:A:T"
+    variant = SeqVar(GenomeRelease.GRCh37, "chr1", 100, "A", "T", user_repr="1:100:A:T")
+    assert variant.user_repr == "1:100:A:T"
 
 
 @pytest.mark.parametrize(
@@ -52,7 +52,7 @@ def test_seqvar_normalize_chromosome(input_chrom, expected_normalized_chrom):
 # ===== SeqVarResolver tests =====
 
 
-def test_sr_validate_seqvar_valid(seqvar_resolver):
+def test_validate_seqvar_valid(seqvar_resolver):
     """Test that valid SeqVar is returned unchanged."""
     variant = SeqVar(GenomeRelease.GRCh37, "1", 100, "A", "T")
     assert seqvar_resolver._validate_seqvar(variant) is variant
@@ -66,9 +66,7 @@ def test_sr_validate_seqvar_valid(seqvar_resolver):
         (GenomeRelease.GRCh37, "1", 10e8, "A", "T"),  # Out of range position is invalid
     ],
 )
-def test_sr_validate_seqvar_invalid_pos(
-    seqvar_resolver, genome_release, chrom, pos, delete, insert
-):
+def test_validate_seqvar_invalid_pos(seqvar_resolver, genome_release, chrom, pos, delete, insert):
     """Test that InvalidPos is raised for invalid position."""
     with pytest.raises(InvalidPos):
         variant = SeqVar(genome_release, chrom, pos, delete, insert)
@@ -85,7 +83,7 @@ def test_sr_validate_seqvar_invalid_pos(
         ("X", "X"),
     ],
 )
-def test_sr_normalize_chrom(seqvar_resolver, input_chrom, expected_normalized_chrom):
+def test_normalize_chrom(seqvar_resolver, input_chrom, expected_normalized_chrom):
     """Test SeqVarResolver._normalize_chrom method."""
     assert seqvar_resolver._normalize_chrom(input_chrom) == expected_normalized_chrom
 
@@ -98,14 +96,14 @@ def test_sr_normalize_chrom(seqvar_resolver, input_chrom, expected_normalized_ch
         ("GRCh37-1-100-A-T", SeqVar(GenomeRelease.GRCh37, "1", 100, "A", "T")),
     ],
 )
-def test_sr_parse_separated_seqvar(seqvar_resolver, representation, expected):
+def test_parse_separated_seqvar(seqvar_resolver, representation, expected):
     variant = seqvar_resolver._parse_separated_seqvar(representation)
     assert variant.genome_release == expected.genome_release
     assert variant.chrom == expected.chrom
     assert variant.pos == expected.pos
     assert variant.delete == expected.delete
     assert variant.insert == expected.insert
-    assert variant.user_representation == expected.user_representation
+    assert variant.user_repr == expected.user_repr
 
 
 @pytest.mark.parametrize(
@@ -116,7 +114,7 @@ def test_sr_parse_separated_seqvar(seqvar_resolver, representation, expected):
         "A-T",  # Missing fields
     ],
 )
-def test_sr_parse_separated_seqvar_fail(seqvar_resolver, representation):
+def test_parse_separated_seqvar_fail(seqvar_resolver, representation):
     with pytest.raises(ParseError):
         seqvar_resolver._parse_separated_seqvar(representation)
 
@@ -135,14 +133,14 @@ def test_sr_parse_separated_seqvar_fail(seqvar_resolver, representation):
         ),
     ],
 )
-def test_sr_parse_canonical_spdi_seqvar_success(seqvar_resolver, value, expected):
+def test_parse_canonical_spdi_seqvar_success(seqvar_resolver, value, expected):
     variant = seqvar_resolver._parse_canonical_spdi_seqvar(value)
     assert variant.genome_release == expected.genome_release
     assert variant.chrom == expected.chrom
     assert variant.pos == expected.pos
     assert variant.delete == expected.delete
     assert variant.insert == expected.insert
-    assert variant.user_representation == expected.user_representation
+    assert variant.user_repr == expected.user_repr
 
 
 @pytest.mark.parametrize(
@@ -153,7 +151,7 @@ def test_sr_parse_canonical_spdi_seqvar_success(seqvar_resolver, value, expected
         "XYZ_000001.10:100:A:T",  # Incorrect NC sequence format
     ],
 )
-def test_sr_parse_canonical_spdi_seqvar_fail(seqvar_resolver, value):
+def test_parse_canonical_spdi_seqvar_fail(seqvar_resolver, value):
     with pytest.raises(ParseError):
         seqvar_resolver._parse_canonical_spdi_seqvar(value)
 
@@ -176,7 +174,7 @@ def test_sr_parse_canonical_spdi_seqvar_fail(seqvar_resolver, value):
 #     monkeypatch.setattr("src.sequence_variant.DottyClient", lambda: mock_client)
 #     return mock_client
 
-# def test_sr_resolve_parse_error(seqvar_resolver):
+# def test_resolve_parse_error(seqvar_resolver):
 #     with pytest.raises(ParseError):
 #         seqvar_resolver.resolve_seqvar("invalid_variant_representation", GenomeRelease.GRCh38)
 
@@ -196,7 +194,7 @@ def test_sr_parse_canonical_spdi_seqvar_fail(seqvar_resolver, value):
 #     assert variant.pos == expected.pos
 #     assert variant.delete == expected.delete
 #     assert variant.insert == expected.insert
-#     assert variant.user_representation == expected.user_representation
+#     assert variant.user_repr == expected.user_repr
 
 # @pytest.mark.parametrize(
 #     "value, genome_release",
