@@ -12,6 +12,8 @@ app = typer.Typer()
 ALLOWED_GENOME_RELEASES = ["GRCh37", "GRCh38", "hg19", "hg38", "grch37", "grch38"]
 #: Allowed sequence variant formats
 ALLOWED_SEQVAR_FORMATS = ["Canonical SPDI", "gnomAD", "relaxed SPDI", "dbSNP", "ClinVar"]
+#: Allowed structural variant formats
+ALLOWED_STRUCVAR_FORMATS = ["Colon-separated", "Hyphen-separated"]
 
 
 @app.command()
@@ -19,7 +21,7 @@ def classify(
     variant: Annotated[
         str,
         typer.Argument(
-            help=f"Variant to be classified, e.g., 'NM_000038.3:c.797G>A'. Accepted formats: {', '.join(ALLOWED_SEQVAR_FORMATS)}"
+            help=f"Variant to be classified, e.g., 'NM_000038.3:c.797G>A'. Accepted sequence variants formats: {', '.join(ALLOWED_SEQVAR_FORMATS)}. Accepted structural variants formats: {', '.join(ALLOWED_STRUCVAR_FORMATS)}."
         ),
     ],
     genome_release: Annotated[

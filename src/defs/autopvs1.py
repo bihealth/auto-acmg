@@ -58,6 +58,25 @@ class PVS1PredictionSeqVarPath(Enum):
     IC3 = auto()
 
 
+#: Enumeration for PVS1 prediction path for structural variant
+class PVS1PredictionStrucVarPath(Enum):
+    """PVS1 prediction path for structure variants."""
+
+    NotSet = auto()
+    DEL1 = auto()
+    DEL2 = auto()
+    DEL3 = auto()
+    DEL4 = auto()
+    DEL5 = auto()
+    DEL6 = auto()
+    DEL7 = auto()
+    DEL8 = auto()
+    DUP1 = auto()
+    DUP2 = auto()
+    DUP3 = auto()
+    DUP4 = auto()
+
+
 #: Enumeration for PVS1 prediction path for structure variants
 class PVS1PredictionsStrucVarPath(Enum):
     """PVS1 prediction path for structure variants."""
