@@ -135,5 +135,5 @@ class StrucVarResolver:
         """
         try:
             return self._parse_separated_strucvar(value, genome_release)
-        except (KeyError, ValueError) as e:
+        except Exception as e:
             raise ParseError(f"Unable to parse structural variant: {value}") from e

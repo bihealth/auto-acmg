@@ -65,7 +65,7 @@ flake8:
 
 .PHONY: lint-mypy
 lint-mypy:
-	MYPYPATH=$(PWD)/stubs pipenv run mypy --check-untyped-defs $(DIRS_PYTHON)
+	pipenv run mypy --check-untyped-defs $(DIRS_PYTHON)
 
 #pipenv run python -m src.main 4-113568536-G-GA --genome_release hg19
 .PHONY: example_run
