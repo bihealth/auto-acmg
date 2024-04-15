@@ -15,14 +15,38 @@ from src.strucvar_pvs1 import StrucVarPVS1
 
 
 class AutoPVS1:
-    """AutoPVS1 algorithm for PVS1 criteria prediction."""
+    """Implements the AutoPVS1 algorithm for predicting PVS1 criteria based on genomic variants.
+
+    This class handles both sequence variants and structural variants to determine their potential
+    impact under the PVS1 criteria of the ACMG guidelines for variant classification.
+
+    Attributes:
+        variant_name (str): The name or identifier of the variant being analyzed.
+        genome_release (GenomeRelease): The genome release version, defaults to GRCh38.
+    """
 
     def __init__(self, variant_name: str, genome_release: GenomeRelease = GenomeRelease.GRCh38):
+        """Initializes the AutoPVS1 with the specified variant and genome release.
+
+        Args:
+            variant_name: The name or identifier of the variant.
+            genome_release (Optional): The genome release version, such as GRCh38 or GRCh37.
+        """
         self.variant_name = variant_name
         self.genome_release = genome_release
 
     def resolve_variant(self) -> SeqVar | StrucVar | None:
-        """Resolve the variant."""
+        """Attempts to resolve the specified variant as either a sequence or structural variant.
+
+        This method first tries to resolve the variant as a sequence variant. If it fails, it then
+        attempts to resolve it as a structural variant.
+
+        Returns:
+            SeqVar, StrucVar, or None: The resolved variant object or None if resolution fails.
+
+        Raises:
+            Exception: Specific exceptions are caught and logged, but generic exceptions may be raised if both resolutions fail.
+        """
         try:
             try:
                 seqvar_resolver = SeqVarResolver()
@@ -43,7 +67,14 @@ class AutoPVS1:
             return None
 
     def predict(self):
-        """Run the AutoPVS1 algorithm."""
+        """Runs the prediction algorithm to assess the PVS1 criteria for the resolved variant.
+
+        This method resolves the variant and then, based on the type of variant, predicts its
+        classification according to the PVS1 criteria. It handles both sequence and structural variants.
+
+        Raises:
+            Exception: Handles general exceptions that may occur during prediction and logs them.
+        """
         typer.secho(f"Running AutoPVS1 for variant {self.variant_name}.", fg=typer.colors.BLUE)
         variant = self.resolve_variant()
 
