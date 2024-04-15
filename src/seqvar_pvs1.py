@@ -20,8 +20,8 @@ from src.defs.mehari import CdsPos, Exon, TranscriptGene, TranscriptSeqvar
 from src.defs.seqvar import SeqVar
 
 
-class SeqVarPVS1Helpers:
-    """Helper methods for PVS1 criteria for transcript."""
+class SeqVarPVS1Helper:
+    """Helper methods for PVS1 criteria for sequence variants."""
 
     @staticmethod
     def _get_pHGVS_termination(pHGVS: str) -> int:
@@ -352,7 +352,7 @@ class SeqVarTranscriptsHelper:
         return seqvar_transcript, gene_transcript
 
 
-class SeqVarPVS1(SeqVarPVS1Helpers):
+class SeqVarPVS1(SeqVarPVS1Helper):
     """PVS1 criteria for transcript."""
 
     def __init__(self, seqvar: SeqVar):
