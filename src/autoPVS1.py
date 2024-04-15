@@ -1,7 +1,5 @@
 """Implementations of the PVS1 algorithm."""
 
-from typing import Union
-
 import typer
 
 from src.defs.autopvs1 import (

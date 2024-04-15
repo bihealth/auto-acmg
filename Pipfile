@@ -25,7 +25,7 @@ aioresponses = "*"
 pytest-asyncio = "*"
 sphinx = "*"
 sphinxcontrib-bibtex = "*"
-furo = "*"
+sphinxawesome-theme = "*"
 types-requests = "*"
 pytest-cov = "*"
 
