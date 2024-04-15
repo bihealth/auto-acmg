@@ -11,7 +11,7 @@ from src.defs.autopvs1 import (
 from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import GeneTranscripts, TranscriptsSeqVar
 from src.defs.seqvar import SeqVar
-from src.seqvar_pvs1 import SeqVarPVS1, SeqVarPVS1Helpers, SeqVarTranscriptsHelper
+from src.seqvar_pvs1 import SeqVarPVS1, SeqVarPVS1Helper, SeqVarTranscriptsHelper
 from tests.utils import get_json_object
 
 
@@ -70,7 +70,7 @@ class MockExon:
 )
 def test_get_pHGVS_termination(pHGVS, expected_termination):
     """Test the _get_pHGVS_termination method."""
-    termination = SeqVarPVS1Helpers._get_pHGVS_termination(pHGVS)
+    termination = SeqVarPVS1Helper._get_pHGVS_termination(pHGVS)
     assert termination == expected_termination, f"Failed for pHGVS: {pHGVS}"
 
 
@@ -92,7 +92,7 @@ def test_get_pHGVS_termination(pHGVS, expected_termination):
 )
 def test_undergo_nmd(exons, pHGVS, hgnc_id, expected_result):
     """Test the _undergo_nmd method."""
-    result = SeqVarPVS1Helpers()._undergo_nmd(exons, pHGVS, hgnc_id)
+    result = SeqVarPVS1Helper()._undergo_nmd(exons, pHGVS, hgnc_id)
     assert result == expected_result, f"Failed for hgnc_id: {hgnc_id}, pHGVS: {pHGVS}"
 
 
@@ -110,7 +110,7 @@ def test_undergo_nmd(exons, pHGVS, hgnc_id, expected_result):
 )
 def test_in_biologically_relevant_transcript(transcript_tags, expected_result):
     """Test the _in_biologically_relevant_transcript method."""
-    result = SeqVarPVS1Helpers._in_biologically_relevant_transcript(transcript_tags)
+    result = SeqVarPVS1Helper._in_biologically_relevant_transcript(transcript_tags)
     assert result == expected_result, f"Failed for transcript_tags: {transcript_tags}"
 
 
@@ -142,7 +142,7 @@ def test_lof_is_frequent_in_population():
 )
 def test_lof_removes_more_then_10_percent_of_protein(exons, pHGVS, expected_result):
     """Test the _lof_removes_more_then_10_percent_of_protein method."""
-    result = SeqVarPVS1Helpers._lof_removes_more_then_10_percent_of_protein(pHGVS, exons)
+    result = SeqVarPVS1Helper._lof_removes_more_then_10_percent_of_protein(pHGVS, exons)
     assert (
         result == expected_result
     ), f"Expected {expected_result} for pHGVS: {pHGVS} with exon lengths: {[exon.altEndI - exon.altStartI for exon in exons]}"
