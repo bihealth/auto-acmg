@@ -32,4 +32,9 @@ PVS1 for SeqVars
 PVS1 for StrucVars
 ------------------
 
-Comming soon....
+.. automodule:: src.strucvar_pvs1
+    :members:
+    :inherited-members:
+    :undoc-members:
+    :show-inheritance:
+    :private-members:
