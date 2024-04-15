@@ -25,14 +25,28 @@ class SeqVarPVS1Helper:
 
     @staticmethod
     def _get_pHGVS_termination(pHGVS: str) -> int:
-        """
-        Get termination position from pHGVS.
-        **Note:** If the position is not found, return -1.
+        """Gets the termination position from a protein HGVS (p.HGVS) notation.
+
+        Note:
+            If the position is not found, returns -1.
+
+        Args:
+            pHGVS: A string containing the protein HGVS notation.
+
+        Returns:
+            int: The termination position extracted from the pHGVS string, or -1 if not found.
+
         Examples:
-        - NM_031475.2:p.Gln98*
-        - NM_031475.2:p.Ala586Glyfs*73
-        - NP_000305.3:p.Arg378SerfsTer5
-        - p.Arg97Glyfs*26 (alternatively p.Arg97GlyfsTer26, or short p.Arg97fs)
+            >>> get_termination_position("NM_031475.2:p.Gln98*")
+            98
+            >>> get_termination_position("NM_031475.2:p.Ala586Glyfs*73")
+            586
+            >>> get_termination_position("NP_000305.3:p.Arg378SerfsTer5")
+            378
+            >>> get_termination_position("p.Arg97Glyfs*26")
+            97 + 26 = 123
+            >>> get_termination_position("p.Arg97GlyfsTer26")
+            97 + 26 = 123
         """
         if "fs" in pHGVS:  # If frameshift
             pattern1 = re.compile(r"p\.\D+(\d+)\D+fs(\*|X|Ter)(\d+)")
@@ -59,11 +73,23 @@ class SeqVarPVS1Helper:
         return termination
 
     def _undergo_nmd(self, exons: List[Exon], pHGVS: str, hgnc_id: str) -> bool:
-        """
-        Nonsense-mediated decay (NMD) classification. Return if the variant
-        undergoes NMD prediction.
-        **Rule:** If the variant is located in the last exon or in the last 50 nucleotides
-        of the penultimate exon, it is NOT predicted to undergo NMD.
+        """Classifies if the variant undergoes Nonsense-mediated decay (NMD).
+
+        Note:
+            Rule:
+            If the variant is located in the last exon or in the last 50 nucleotides of the
+            penultimate exon, it is NOT predicted to undergo NMD.
+
+            Important:
+            For the GJB2 gene (HGNC:4284), the variant is always predicted to undergo NMD.
+
+        Args:
+            exons: A list of exons of the gene.
+            pHGVS: A string containing the protein HGVS notation.
+            hgnc_id: The HGNC ID of the gene.
+
+        Returns:
+            bool: True if the variant is predicted to undergo NMD, False otherwise.
         """
         new_stop_codon = self._get_pHGVS_termination(pHGVS)
         cds_sizes = [exon.altEndI - exon.altStartI for exon in exons]
@@ -77,24 +103,53 @@ class SeqVarPVS1Helper:
 
     @staticmethod
     def _in_biologically_relevant_transcript(transcript_tags: List[str]) -> bool:
+        """Checks if the exon with SeqVar is in a biologically relevant transcript.
+
+        Note:
+            Rule:
+            If the variant is located in a transcript with a MANE Select tag, it is
+            considered to be in a biologically relevant transcript.
+
+        Args:
+            transcript_tags: A list of tags for the transcript.
+
+        Returns:
+            bool: True if the variant is in a biologically relevant transcript, False otherwise.
         """
-        Check if the exon with SeqVar is in a biologically relevant transcript.
-        **Rule:** If the variant is located in a transcript with a MANE Select tag, it is
-        predicted to be in a biologically relevant transcript.
-        """
-        # Ensure that necessary data is available
         return "ManeSelect" in transcript_tags
 
     @staticmethod
     def _critical4protein_function(seqvar: SeqVar, cds_pos: int | None, exons: List[Exon]) -> bool:
-        """
-        Check if the truncated/altered region is critical for the protein function.
-        **Rule:** Affect of the variant on the protein function is indicated
-        by experimental or clinical evidence:
-        - Presence of Pathogenic variants downstream of the new stop codon
+        """Checks if the truncated or altered region is critical for the protein function.
+
+        This method assesses the impact of a sequence variant based on the presence of pathogenic
+        variants downstream of the new stop codon, utilizing both experimental and clinical evidence.
+
+        Note:
+            The significance of a truncated or altered region is determined by the presence and
+            frequency of pathogenic variants downstream from the new stop codon.
+
+        Implementation:
+            The method implements the rule by:
+            - Fetching variants from the range of the altered region downstream from the new position.
+            - Counting the number of pathogenic variants in that region.
+            - Considering the region critical if there are more than two pathogenic variants and
+            their frequency exceeds 0.5%.
+
+        Args:
+            seqvar (SeqVar): The sequence variant being analyzed.
+            cds_pos (int): The position of the variant in the coding sequence.
+            exons (list of Exon): A list of exons of the gene where the variant occurs.
+
+        Returns:
+            bool: True if the altered region is critical for the protein function, otherwise False.
+
+        Raises:
+            InvalidAPIResponseError: If the API response is invalid or cannot be processed.
         """
         if not cds_pos:
             return False
+        # Get the range of the altered region
         start_pos = 0
         for exon in exons:
             if exon.altCdsStartI < cds_pos and exon.altCdsEndI > cds_pos:
@@ -135,10 +190,31 @@ class SeqVarPVS1Helper:
 
     @staticmethod
     def _lof_is_frequent_in_population(seqvar: SeqVar, start: int, end: int) -> bool:
-        """
-        Check if the LoF variants in the exon are frequent in the general population.
-        **Rule:** If the LoF variants in the exon > 0.1% in the general population, it is
-        predicted to be frequent in the general population.
+        """Checks if the Loss-of-Function (LoF) variants in the exon are frequent in the general population.
+
+        This function determines the frequency of LoF variants within a specified genomic region and evaluates
+        whether this frequency exceeds a defined threshold indicative of common occurrence in the general population.
+
+        Note:
+            A LoF variant is considered frequent if its occurrence in the general population exceeds 0.1%.
+            This threshold is set based on guidelines from the AutoPVS1 software.
+
+        Implementation:
+            The function implements the rule by:
+            - Fetching variants from the specified range of the altered region.
+            - Counting the number of LoF variants, specifically those classified as 'frameshift_variant' or 'stop_gained'.
+            - Determining the region as having frequent LoF variants if their frequency exceeds 0.1%.
+
+        Args:
+            seqvar (SeqVar): The sequence variant being analyzed.
+            start (int): The start position of the altered region in the genomic sequence.
+            end (int): The end position of the altered region in the genomic sequence.
+
+        Returns:
+            bool: True if the LoF variant frequency is greater than 0.1%, False otherwise.
+
+        Raises:
+            InvalidAPIResponseError: If the API response is invalid or cannot be processed.
         """
         try:
             annonars_client = AnnonarsClient()
@@ -172,7 +248,26 @@ class SeqVarPVS1Helper:
 
     @staticmethod
     def _lof_removes_more_then_10_percent_of_protein(pHGVS: str, exons: List[Exon]) -> bool:
-        """Check if the LoF variant removes more than 10% of the protein."""
+        """Check if the LoF variant removes more than 10% of the protein.
+
+        Note:
+            Rule:
+            A LoF variant is considered to remove more than 10% of the protein if the variant
+            removes more than 10% of the protein:)
+
+            Implementation:
+            The rule is implemented by:
+            - Calculating the length of the coding sequence (based on pHGVS).
+            - Calculating the length of the protein based on exons information.
+            - If the variant removes more than 10% of the protein, the rule is met.
+
+        Args:
+            pHGVS: A string containing the protein HGVS notation.
+            exons: A list of exons of the gene.
+
+        Returns:
+            bool: True if the LoF variant removes more than 10% of the protein, False otherwise.
+        """
         cds_length = sum([exon.altEndI - exon.altStartI for exon in exons])
         pattern = re.compile(r"p\.\D+(\d+)(\D+fs)?(\*|X|Ter)(\d+)?")
         match = pattern.search(pHGVS)
@@ -220,7 +315,12 @@ class SeqVarTranscriptsHelper:
     def get_ts_info(
         self,
     ) -> Tuple[TranscriptSeqvar | None, TranscriptGene | None, SeqVarConsequence]:
-        """Return the transcript information."""
+        """Return the transcript information.
+
+        Returns:
+            Tuple[TranscriptSeqvar | None, TranscriptGene | None, SeqVarConsequence]: The sequence variant transcript,
+            gene transcript, and the consequence of the sequence variant.
+        """
         return self.seqvar_transcript, self.gene_transcript, self.consequence
 
     def initialize(self):
@@ -288,7 +388,14 @@ class SeqVarTranscriptsHelper:
 
     @staticmethod
     def _get_consequence(seqvar_transcript: TranscriptSeqvar | None) -> SeqVarConsequence:
-        """Get the consequence of the sequence variant."""
+        """Get the consequence of the sequence variant.
+
+        Args:
+            seqvar_transcript: The sequence variant transcript.
+
+        Returns:
+            SeqVarConsequence: The consequence of the sequence variant.
+        """
         if not seqvar_transcript:
             return SeqVarConsequence.NotSet
         else:
@@ -303,10 +410,11 @@ class SeqVarTranscriptsHelper:
         seqvar_transcripts: List[TranscriptSeqvar],
         gene_transcripts: List[TranscriptGene],
     ) -> Tuple[TranscriptSeqvar | None, TranscriptGene | None]:
-        """
-        Choose the most suitable transcript for the PVS1 prediction.
-        The first consideration is the MANE transcript, if available,
-        and then the length of the exons.
+        """Choose the most suitable transcript for the PVS1 prediction.
+
+        Note:
+            The first consideration is the MANE transcript, if available,
+            and then the length of the exons.
         """
         transcripts_mapping: Dict[str, TranscriptInfo] = {}
         seqvar_transcript = None
@@ -353,7 +461,23 @@ class SeqVarTranscriptsHelper:
 
 
 class SeqVarPVS1(SeqVarPVS1Helper):
-    """PVS1 criteria for transcript."""
+    """Handles the PVS1 criteria assessment for sequence variants.
+
+    Attributes:
+        seqvar (SeqVar): The sequence variant being analyzed.
+        _seqvar_transcript (TranscriptSeqvar | None): Associated transcript of the sequence variant.
+        _gene_transcript (TranscriptGene | None): Associated gene transcript.
+        _consequence (SeqVarConsequence): Consequence of the sequence variant.
+        HGVS (str): HGVS notation of the gene.
+        pHGVS (str): Protein HGVS notation.
+        tHGVS (str): Transcript HGVS notation.
+        HGNC_id (str): HGNC identifier for the gene.
+        transcript_tags (List[str]): Tags associated with the transcript.
+        exons (List[Exon]): List of exons from the gene transcript.
+        cds_pos (int | None): Position of the coding sequence.
+        prediction (PVS1Prediction): Prediction result based on PVS1 criteria.
+        prediction_path (PVS1PredictionSeqVarPath): Pathway leading to the prediction decision.
+    """
 
     def __init__(self, seqvar: SeqVar):
         # Attributes to be set
@@ -376,7 +500,11 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         self.prediction_path: PVS1PredictionSeqVarPath = PVS1PredictionSeqVarPath.NotSet
 
     def initialize(self):
-        """Setup the PVS1 class."""
+        """Setup the PVS1 class.
+
+        Fetches the transcript data and sets the attributes. Use this method before making
+        predictions.
+        """
         # Fetch transcript data
         seqvar_transcript = SeqVarTranscriptsHelper(self.seqvar)
         seqvar_transcript.initialize()
@@ -410,7 +538,11 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         )
 
     def verify_PVS1(self):
-        """Make the PVS1 prediction."""
+        """Make the PVS1 prediction.
+
+        The prediction is based on the PVS1 criteria for sequence variants. The prediction
+        and prediction path is stored in the prediction and prediction_path attributes.
+        """
         if (
             not self._seqvar_transcript
             or not self._gene_transcript
@@ -533,5 +665,9 @@ class SeqVarPVS1(SeqVarPVS1Helper):
             )
 
     def get_prediction(self) -> Tuple[PVS1Prediction, PVS1PredictionSeqVarPath]:
-        """Return the PVS1 prediction."""
+        """Return the PVS1 prediction.
+
+        Returns:
+            Tuple[PVS1Prediction, PVS1PredictionSeqVarPath]: The PVS1 prediction and the path leading to the prediction.
+        """
         return self.prediction, self.prediction_path
