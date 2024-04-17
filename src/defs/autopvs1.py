@@ -102,7 +102,9 @@ SeqvarConsequenceMapping = {
     "upstream_gene_variant": SeqVarConsequence.NotSet,
     "downstream_gene_variant": SeqVarConsequence.NotSet,
     "5_prime_utr_variant": SeqVarConsequence.NotSet,
-    "3_prime_utr_variant": SeqVarConsequence.NotSet,
+    "5_prime_UTR_variant": SeqVarConsequence.NotSet,
+    "3_prime_utr_variant": SeqVarConsequence.NonsenseFrameshift,
+    "3_prime_UTR_variant": SeqVarConsequence.NonsenseFrameshift,
     "splice_region_variant": SeqVarConsequence.SpliceSites,  # Can affect splicing
     "splice_donor_variant": SeqVarConsequence.SpliceSites,  # Canonical splice site
     "splice_acceptor_variant": SeqVarConsequence.SpliceSites,  # Canonical splice site
