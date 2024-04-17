@@ -77,11 +77,11 @@ class SeqVarPVS1Helper:
 
         Note:
             Rule:
-            If the variant is located in the last exon or in the last 50 nucleotides of the
-            penultimate exon, it is NOT predicted to undergo NMD.
+                If the variant is located in the last exon or in the last 50 nucleotides of the
+                penultimate exon, it is NOT predicted to undergo NMD.
 
             Important:
-            For the GJB2 gene (HGNC:4284), the variant is always predicted to undergo NMD.
+                For the GJB2 gene (HGNC:4284), the variant is always predicted to undergo NMD.
 
         Args:
             exons: A list of exons of the gene.
@@ -107,8 +107,8 @@ class SeqVarPVS1Helper:
 
         Note:
             Rule:
-            If the variant is located in a transcript with a MANE Select tag, it is
-            considered to be in a biologically relevant transcript.
+                If the variant is located in a transcript with a MANE Select tag, it is
+                considered to be in a biologically relevant transcript.
 
         Args:
             transcript_tags: A list of tags for the transcript.
@@ -126,15 +126,16 @@ class SeqVarPVS1Helper:
         variants downstream of the new stop codon, utilizing both experimental and clinical evidence.
 
         Note:
-            The significance of a truncated or altered region is determined by the presence and
-            frequency of pathogenic variants downstream from the new stop codon.
+            Rule:
+                The significance of a truncated or altered region is determined by the presence and
+                frequency of pathogenic variants downstream from the new stop codon.
 
-        Implementation:
-            The method implements the rule by:
-            - Fetching variants from the range of the altered region downstream from the new position.
-            - Counting the number of pathogenic variants in that region.
-            - Considering the region critical if there are more than two pathogenic variants and
-            their frequency exceeds 0.5%.
+            Implementation:
+                The method implements the rule by:
+                - Fetching variants from the range of the altered region downstream from the new position.
+                - Counting the number of pathogenic variants in that region.
+                - Considering the region critical if there are more than two pathogenic variants and
+                their frequency exceeds 0.5%.
 
         Args:
             seqvar (SeqVar): The sequence variant being analyzed.
@@ -160,21 +161,18 @@ class SeqVarPVS1Helper:
         try:
             annonars_client = AnnonarsClient()
             response = annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
-            if (
-                response
-                and response.result.gnomad_genomes
-                and response.result.gnomad_genomes[0].vep
-            ):
+            if response and response.result.gnomad_exomes:
+                all_variants = 0
                 pathogenic_variants = 0
-                for variant in response.result.gnomad_genomes[0].vep:
-                    # TODO: count only pathogenic variants
-                    if variant.consequence in ["pathogenic"]:
-                        pathogenic_variants += 1
+                for exome in response.result.gnomad_exomes:
+                    if exome.vep:
+                        for variant in response.result.gnomad_exomes[0].vep:
+                            all_variants += 1
+                            if variant.clinSig in ["pathogenic", "likely_pathogenic"]:
+                                pathogenic_variants += 1
+
                 # TODO: Proove that this is the correct threshold
-                if (
-                    pathogenic_variants > 2
-                    and pathogenic_variants / len(response.result.gnomad_genomes[0].vep) > 0.005
-                ):
+                if pathogenic_variants > 2 and pathogenic_variants / all_variants > 0.005:
                     return True
                 return False
             else:
@@ -196,14 +194,15 @@ class SeqVarPVS1Helper:
         whether this frequency exceeds a defined threshold indicative of common occurrence in the general population.
 
         Note:
-            A LoF variant is considered frequent if its occurrence in the general population exceeds 0.1%.
-            This threshold is set based on guidelines from the AutoPVS1 software.
+            Rule:
+                A LoF variant is considered frequent if its occurrence in the general population exceeds 0.1%.
+                This threshold is set based on guidelines from the AutoPVS1 software.
 
-        Implementation:
-            The function implements the rule by:
-            - Fetching variants from the specified range of the altered region.
-            - Counting the number of LoF variants, specifically those classified as 'frameshift_variant' or 'stop_gained'.
-            - Determining the region as having frequent LoF variants if their frequency exceeds 0.1%.
+            Implementation:
+                The function implements the rule by:
+                - Fetching variants from the specified range of the altered region.
+                - Counting the number of LoF variants, specifically those classified as 'frameshift_variant' or 'stop_gained'.
+                - Determining the region as having frequent LoF variants if their frequency exceeds 0.1%.
 
         Args:
             seqvar (SeqVar): The sequence variant being analyzed.
@@ -252,14 +251,14 @@ class SeqVarPVS1Helper:
 
         Note:
             Rule:
-            A LoF variant is considered to remove more than 10% of the protein if the variant
-            removes more than 10% of the protein:)
+                A LoF variant is considered to remove more than 10% of the protein if the variant
+                removes more than 10% of the protein:)
 
             Implementation:
-            The rule is implemented by:
-            - Calculating the length of the coding sequence (based on pHGVS).
-            - Calculating the length of the protein based on exons information.
-            - If the variant removes more than 10% of the protein, the rule is met.
+                The rule is implemented by:
+                - Calculating the length of the coding sequence (based on pHGVS).
+                - Calculating the length of the protein based on exons information.
+                - If the variant removes more than 10% of the protein, the rule is met.
 
         Args:
             pHGVS: A string containing the protein HGVS notation.
