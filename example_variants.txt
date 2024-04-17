@@ -9,6 +9,7 @@ chr16-53767042-T-C / grch38 (FTO)
 
 Frameshift/Nonsense:
 - undergo NMD -> biological relevant:
+4-113568536-G-GA / grch37 (Gene: LARP7)
 NM_004360.3:c.1085delT (p.Val362GlyfsTer31)   (Gene: CDH1)   (From Recommendation 07.09.2018)
 NM_000152.4:c.525delT (p.Glu176ArgfsTer45)   (Gene: GAA)   (From Recommendation 07.09.2018)
 NM_000152.4:c.1987delC (p.Gln663SerfsTer33)   (Gene: GAA)   (From Recommendation 07.09.2018)

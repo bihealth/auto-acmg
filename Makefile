@@ -75,7 +75,11 @@ example_run:
 
 .PHONY: run
 run:
-	pipenv run python -m src.cli
+ifdef GR
+	pipenv run python -m src.cli "$(VAR)" --genome-release $(GR)
+else
+	pipenv run python -m src.cli "$(VAR)"
+endif
 
 .PHONY: test
 test:
