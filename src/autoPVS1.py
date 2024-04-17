@@ -2,11 +2,14 @@
 
 import typer
 
+from src.core.config import settings
 from src.defs.autopvs1 import (
     PVS1Prediction,
+    PVS1PredictionPathMapping,
     PVS1PredictionSeqVarPath,
     PVS1PredictionStrucVarPath,
 )
+from src.defs.exceptions import ParseError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar, SeqVarResolver
 from src.defs.strucvar import StrucVar, StrucVarResolver
@@ -55,13 +58,15 @@ class AutoPVS1:
                 )
                 typer.secho(f"Resolved variant: {seqvar}.", fg=typer.colors.BLUE)
                 return seqvar
-            except Exception as e:
+            except ParseError:
                 strucvar_resolver = StrucVarResolver()
                 strucvar: StrucVar = strucvar_resolver.resolve_strucvar(
                     self.variant_name, self.genome_release
                 )
                 typer.secho(f"Resolved structural variant: {strucvar}.", fg=typer.colors.BLUE)
                 return strucvar
+        except ParseError:
+            return None
         except Exception as e:
             typer.secho(e, err=True, fg=typer.colors.RED)
             return None
@@ -93,9 +98,24 @@ class AutoPVS1:
                 seqvar_pvs1.verify_PVS1()
                 self.seqvar_prediction, self.seqvar_prediction_path = seqvar_pvs1.get_prediction()
                 typer.secho(
-                    f"PVS1 prediction for {self.seqvar.user_repr}: {self.seqvar_prediction.name}",
+                    (
+                        f"PVS1 prediction for {self.seqvar.user_repr}: "
+                        f"{self.seqvar_prediction.name}.\n"
+                        f"The prediction path is:\n"
+                        f"{PVS1PredictionPathMapping[self.seqvar_prediction_path]}."
+                    ),
                     fg=typer.colors.GREEN,
                 )
+                if settings.DEBUG:
+                    typer.secho(
+                        (
+                            f"\nConsequence: {seqvar_pvs1._consequence.name},\n"
+                            f"pHGVS: {seqvar_pvs1.pHGVS},\n"
+                            f"Transcript tags: {seqvar_pvs1.transcript_tags},\n"
+                            f"Exons: {seqvar_pvs1.exons}."
+                        ),
+                        fg=typer.colors.YELLOW,
+                    )
             except Exception as e:
                 typer.secho(
                     f"Failed to predict PVS1 for variant {self.seqvar.user_repr}.",

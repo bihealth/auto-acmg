@@ -32,15 +32,15 @@ NM_004360.3:c.1792C>T (p.Arg598Ter)   (Gene: CDH1)   (From Recommendation 07.09.
 
 - not undergo NMD -> critical for protein function:
 NM_004360.3:c.2506G>T (p.Glu836Ter)   (Gene: CDH1)   (From Recommendation 07.09.2018)
-NM_000314.6:c.1003C>T (p.Arg335Ter)   (Gene: PTEN)   (From Recommendation 07.09.2018)
+NM_000314.6:c.1003C>T (p.Arg335Ter)   (Gene: PTEN)   (From Recommendation 07.09.2018)   ### Debug
 
 - not undergo NMD -> not critical for protein function -> frequent in general population:
 
 - not undergo NMD -> not critical for protein function -> rare in general population -> removes >10% of protein:
 
 - not undergo NMD -> not critical for protein function -> rare in general population -> removes <10% of protein:
-NM_000314.6:c.1134_1135insCTGG (p.Tyr379LeufsTer4)   (Gene: PTEN)  (Note: PM4)   (From Recommendation 07.09.2018)
-NM_000152.4:c.2842_2483insT (p.Leu948SerfsTer70)   (Gene: GAA)  (Note: PM4)   (From Recommendation 07.09.2018)
+NM_000314.6:c.1134_1135insCTGG (p.Tyr379LeufsTer4)   (Gene: PTEN)  (Note: PM4)   (From Recommendation 07.09.2018)   ### Debug
+NM_000152.4:c.2842_2483insT (p.Leu948SerfsTer70)   (Gene: GAA)  (Note: PM4)   (From Recommendation 07.09.2018)   ### Debug
 NM_000218.2c.1986C>G (p.Tyr662Ter)   (Gene: KCNQ1)  (Note: PM4)   (From Recommendation 07.09.2018)
 
 
@@ -84,7 +84,7 @@ NM_000277.2:c.168+1G>A (p.?)   (Gene PAH)   (From Recommendation 07.09.2018)
 
 Initiation codon:
 - no alternative start codon -> >=1 pathogenic variants upstream of the start codon:
-NM_000152.4:c.1A>G (p.Met1?)   (Gene GAA)   (From Recommendation 07.09.2018)
+NM_000152.4:c.1A>G (p.Met1?)   (Gene GAA)   (From Recommendation 07.09.2018)   ### Debug
 NM_000218.2:c.2T>C (p.Met1?)   (Gene KCNQ1)   (From Recommendation 07.09.2018)
 NM_000277.2:c.1A>G (p.Met1?)   (Gene PAH)   (From Recommendation 07.09.2018)
 NM_000314.6:c.3G>T (p.Met1?)   (Gene PTEN)   (From Recommendation 07.09.2018)
