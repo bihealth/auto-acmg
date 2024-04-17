@@ -461,23 +461,7 @@ class SeqVarTranscriptsHelper:
 
 
 class SeqVarPVS1(SeqVarPVS1Helper):
-    """Handles the PVS1 criteria assessment for sequence variants.
-
-    Attributes:
-        seqvar (SeqVar): The sequence variant being analyzed.
-        _seqvar_transcript (TranscriptSeqvar | None): Associated transcript of the sequence variant.
-        _gene_transcript (TranscriptGene | None): Associated gene transcript.
-        _consequence (SeqVarConsequence): Consequence of the sequence variant.
-        HGVS (str): HGVS notation of the gene.
-        pHGVS (str): Protein HGVS notation.
-        tHGVS (str): Transcript HGVS notation.
-        HGNC_id (str): HGNC identifier for the gene.
-        transcript_tags (List[str]): Tags associated with the transcript.
-        exons (List[Exon]): List of exons from the gene transcript.
-        cds_pos (int | None): Position of the coding sequence.
-        prediction (PVS1Prediction): Prediction result based on PVS1 criteria.
-        prediction_path (PVS1PredictionSeqVarPath): Pathway leading to the prediction decision.
-    """
+    """Handles the PVS1 criteria assessment for sequence variants."""
 
     def __init__(self, seqvar: SeqVar):
         # Attributes to be set
