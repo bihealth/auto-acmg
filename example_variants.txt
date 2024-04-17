@@ -1,5 +1,137 @@
-Frameshift:
-4-113568536-G-GA / grch37 (LARP7, MANE)
+Pending:
+13-113803407-G-A / grch37 (F10)
+4-113568536-G-GA / grch37 (LARP7)
+6-24302274-T-C / grch37 (DCDC2)
+X-102884958-T-TTCGGAGGAGCAGTCC / grch37 (TCEAL1, ?orig=NM_004780.3(TCEAL1):c.124_138dup)
+chr7-140753336-A-C / grch38 (BRAF)
+chr16-53767042-T-C / grch38 (FTO)
 
-3-prime UTR:
-13-113803407-G-A / grch37 (F10, MANE)
+
+Frameshift/Nonsense:
+- undergo NMD -> biological relevant:
+4-113568536-G-GA / grch37 (Gene: LARP7)
+NM_004360.3:c.1085delT (p.Val362GlyfsTer31)   (Gene: CDH1)   (From Recommendation 07.09.2018)
+NM_000152.4:c.525delT (p.Glu176ArgfsTer45)   (Gene: GAA)   (From Recommendation 07.09.2018)
+NM_000152.4:c.1987delC (p.Gln663SerfsTer33)   (Gene: GAA)   (From Recommendation 07.09.2018)
+NM_000152.4:c.2706delG (p.Lys903ArgfsTer2)   (Gene: GAA)   (From Recommendation 07.09.2018)
+NM_000218.2c.567dupG (p.Arg190AlafsTer14)   (Gene: KCNQ1)   (From Recommendation 07.09.2018)
+NM_000218.2c. 1343dupC (p.Glu449ArgfsTer14)   (Gene: KCNQ1)   (From Recommendation 07.09.2018)
+NM_000441.1:c.365dupT (p.Pro123SerfsTer4)   (Gene: SLC26A4)   (From Recommendation 07.09.2018)
+NM_206933.2:c.4338_4339delCT (p.Cys1447GlnfsTer29)   (Gene: USH2A)   (From Recommendation 07.09.2018)
+NM_206933.2:c.4510dupA (p.Arg1504LysfsTer26)   (Gene: USH2A)   (From Recommendation 07.09.2018)
+NM_004004.5:c.235delC (p.Leu79CysfsTer3)   (Gene: GJB2)   (From Recommendation 07.09.2018)
+NM_004004.5:c.35delG (p.Gly12ValfsTer2)   (Gene: GJB2)   (From Recommendation 07.09.2018)
+NM_004004.5:c.167delT (p.Leu56ArgfsTer26)   (Gene: GJB2)   (From Recommendation 07.09.2018)
+NM_000277.1:c.822_832del (p.Lys274AsnfsTer5)   (Gene: PAH)   (From Recommendation 07.09.2018)
+NM_000277.2:c.632delC (p.Pro211HisfsTer130)   (Gene: PAH)   (From Recommendation 07.09.2018)
+NM_000314.6:c.50_51delAA (p.Gln17ArgfsTer26)   (Gene: PTEN)   (From Recommendation 07.09.2018)
+NM_000277.2:c.47_48del (p.Ser16Ter)   (Gene: PAH)   (From Recommendation 07.09.2018)
+NM_000277.2:c.1147C>T (p.Gln383Ter)   (Gene: PAH)   (From Recommendation 07.09.2018)
+NM_004360.3:c.1792C>T (p.Arg598Ter)   (Gene: CDH1)   (From Recommendation 07.09.2018)
+
+
+- not undergo NMD -> critical for protein function:
+NM_004360.3:c.2506G>T (p.Glu836Ter)   (Gene: CDH1)   (From Recommendation 07.09.2018)
+NM_000314.6:c.1003C>T (p.Arg335Ter)   (Gene: PTEN)   (From Recommendation 07.09.2018)
+
+- not undergo NMD -> not critical for protein function -> frequent in general population:
+
+- not undergo NMD -> not critical for protein function -> rare in general population -> removes >10% of protein:
+
+- not undergo NMD -> not critical for protein function -> rare in general population -> removes <10% of protein:
+NM_000314.6:c.1134_1135insCTGG (p.Tyr379LeufsTer4)   (Gene: PTEN)  (Note: PM4)   (From Recommendation 07.09.2018)
+NM_000152.4:c.2842_2483insT (p.Leu948SerfsTer70)   (Gene: GAA)  (Note: PM4)   (From Recommendation 07.09.2018)
+NM_000218.2c.1986C>G (p.Tyr662Ter)   (Gene: KCNQ1)  (Note: PM4)   (From Recommendation 07.09.2018)
+
+
+Splice sites:
+- exon skipping or cryptic splice site disrupts RF AND undergo NMD -> biological relevant:
+NM_000441.1:c.919-2A>G (p.?)   (Gene SLC26A4)   (From Recommendation 07.09.2018)
+NM_000314.6:c.493-2A>G (p.?)   (Gene PTEN)   (From Recommendation 07.09.2018)
+NM_004360.3:c.1565+1G>A (p.?)   (Gene CDH1)   (From Recommendation 07.09.2018)
+NM_000277.2:c.842+2T>A (p.?)   (Gene PAH)   (From Recommendation 07.09.2018)
+NM_000277.2:c.1066-2A>T (p.?)   (Gene PAH)   (From Recommendation 07.09.2018)
+NM_000546.5:c.994-1G>C (p.?)   (Gene TP53)   (From Recommendation 07.09.2018)
+NM_000218.2c.1686-2A>G (p.?)   (Gene KCNQ1)   (From Recommendation 07.09.2018)
+NM_000277.2:c.442-1G>A (p.?)   (Gene PAH)   (From Recommendation 07.09.2018)
+
+- exon skipping or cryptic splice site disrupts RF AND undergo NMD -> not biological relevant:
+
+- exon skipping or cryptic splice site disrupts RF AND NOT undergo NMD -> critical for protein function:
+
+- exon skipping or cryptic splice site disrupts RF AND NOT undergo NMD -> not critical for protein function -> frequent in general population:
+
+- exon skipping or cryptic splice site disrupts RF AND NOT undergo NMD -> not critical for protein function -> rare in general population -> removes >10% of protein:
+
+- exon skipping or cryptic splice site disrupts RF AND NOT undergo NMD -> not critical for protein function -> rare in general population -> removes <10% of protein:
+
+- exon skipping or use of cryptic splice site preserves RF -> critical for protein function:
+NM_000314.6:c.209+1G>A (p.?)   (Gene PTEN)   (From Recommendation 07.09.2018)
+NM_000314.6:c.1026+1G>A (p.?)   (Gene PTEN)   (From Recommendation 07.09.2018)
+
+- exon skipping or use of cryptic splice site preserves RF -> not critical for protein function -> frequent in general population:
+
+- exon skipping or use of cryptic splice site preserves RF -> not critical for protein function -> rare in general population -> removes >10% of protein:
+
+- exon skipping or use of cryptic splice site preserves RF -> not critical for protein function -> rare in general population -> removes <10% of protein:
+NM_206933.2:c.8559-2A>G   (Gene USH2A)   (Note: PM4)   (From Recommendation 07.09.2018)
+NM_000152.4:c.2481+2T>C (p.?)   (Gene GAA)   (From Recommendation 07.09.2018)
+NM_000277.2:c.1315+2T>C   (Gene PAH)   (From Recommendation 07.09.2018)
+NM_000152.4:c.1327-2A>G (p.?)   (Gene GAA)   (From Recommendation 07.09.2018)
+NM_000546.5:c.1101-2A>G   (Gene TP53)   (From Recommendation 07.09.2018)
+NM_000277.2:c.168+1G>A (p.?)   (Gene PAH)   (From Recommendation 07.09.2018) 
+
+
+Initiation codon:
+- no alternative start codon -> >=1 pathogenic variants upstream of the start codon:
+NM_000152.4:c.1A>G (p.Met1?)   (Gene GAA)   (From Recommendation 07.09.2018)
+NM_000218.2:c.2T>C (p.Met1?)   (Gene KCNQ1)   (From Recommendation 07.09.2018)
+NM_000277.2:c.1A>G (p.Met1?)   (Gene PAH)   (From Recommendation 07.09.2018)
+NM_000314.6:c.3G>T (p.Met1?)   (Gene PTEN)   (From Recommendation 07.09.2018)
+
+- no alternative start codon -> no pathogenic variants upstream of the start codon:
+
+- alternative start codon:
+
+
+Deletion:
+- full gene deletion:
+
+- partial deleteion disrupts RF AND undergo NMD -> biological relevant:
+NM_000218.2:(?_478)_(604_?)del (Exon 3 deletion)   (Gene KCNQ1)   (From Recommendation 07.09.2018)
+
+- partial deleteion disrupts RF AND undergo NMD -> not biological relevant:
+
+- partial deleteion disrupts RF AND NOT undergo NMD -> critical for protein function:
+
+- partial deleteion disrupts RF AND NOT undergo NMD -> not critical for protein function -> frequent in general population:
+
+- partial deleteion disrupts RF AND NOT undergo NMD -> not critical for protein function -> rare in general population -> removes >10% of protein:
+
+- partial deleteion disrupts RF AND NOT undergo NMD -> not critical for protein function -> rare in general population -> removes <10% of protein:
+
+- partial deleteion preserves RF -> critical for protein function:
+NM_000218.2:(?_1591)_(2031_?)del   (Exon13-16 deletion)   (Gene KCNQ1)   (From Recommendation 07.09.2018)
+NM_000546.5:c.(?_994)_(1182_?)del   (Exon 10-11 deletion)   (Gene TP53)   (From Recommendation 07.09.2018)
+NM_206933.2:(?_12295)_(14133_?)del   (Exon 63-64 deletion)   (Gene USH2A)   (From Recommendation 07.09.2018)
+
+- partial deleteion preserves RF -> not critical for protein function -> frequent in general population:
+
+- partial deleteion preserves RF -> not critical for protein function -> rare in general population -> removes >10% of protein:
+
+- partial deleteion preserves RF -> not critical for protein function -> rare in general population -> removes <10% of protein:
+NM_000152.4:c.2481+102_2646+31del (p.Gly828_Asn882del)   (Gene GAA)   (Note: PM4)   (From Recommendation 07.09.2018)
+
+
+Duplication:
+- proven in tandem -> disrupts RF AND undergo NMD:
+NM_000546.5:c.-28-5118_672+241dup (Exon 2-6 duplication)   (Gene TP53)   (From Recommendation 07.09.2018)
+
+
+- proven in tandem -> no info on RF and NMD:
+
+- presumed in tandem -> disrupts RF AND undergo NMD:
+
+- presumed in tandem -> no info on RF and NMD:
+
+- provem NOT in tandem:

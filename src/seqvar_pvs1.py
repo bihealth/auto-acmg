@@ -506,10 +506,10 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         predictions.
         """
         # Fetch transcript data
-        seqvar_transcript = SeqVarTranscriptsHelper(self.seqvar)
-        seqvar_transcript.initialize()
+        seqvar_transcript_helper = SeqVarTranscriptsHelper(self.seqvar)
+        seqvar_transcript_helper.initialize()
         self._seqvar_transcript, self._gene_transcript, self._consequence = (
-            seqvar_transcript.get_ts_info()
+            seqvar_transcript_helper.get_ts_info()
         )
 
         if (
