@@ -49,11 +49,37 @@ Initiation codon:
 - alternative start codon:
 
 
-# Coming in the nearest future:
 Deletion:
-TODO
+- full gene deletion:
+
+- partial deleteion disrupts RF AND undergo NMD -> biological relevant:
+
+- partial deleteion disrupts RF AND undergo NMD -> not biological relevant:
+
+- partial deleteion disrupts RF AND NOT undergo NMD -> critical for protein function:
+
+- partial deleteion disrupts RF AND NOT undergo NMD -> not critical for protein function -> frequent in general population:
+
+- partial deleteion disrupts RF AND NOT undergo NMD -> not critical for protein function -> rare in general population -> removes >10% of protein:
+
+- partial deleteion disrupts RF AND NOT undergo NMD -> not critical for protein function -> rare in general population -> removes <10% of protein:
+
+- partial deleteion preserves RF -> critical for protein function:
+
+- partial deleteion preserves RF -> not critical for protein function -> frequent in general population:
+
+- partial deleteion preserves RF -> not critical for protein function -> rare in general population -> removes >10% of protein:
+
+- partial deleteion preserves RF -> not critical for protein function -> rare in general population -> removes <10% of protein:
 
 
-# Coming in the nearest future:
 Duplication:
-TODO
+- proven in tandem -> disrupts RF AND undergo NMD:
+
+- proven in tandem -> no info on RF and NMD:
+
+- presumed in tandem -> disrupts RF AND undergo NMD:
+
+- presumed in tandem -> no info on RF and NMD:
+
+- provem NOT in tandem:
