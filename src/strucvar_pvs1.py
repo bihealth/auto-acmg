@@ -95,14 +95,14 @@ class StrucVarPVS1(StrucVarPVS1Helper):
                         or not self._in_biologically_relevant_transcript()
                     ):
                         self.prediction = PVS1Prediction.NotPVS1
-                        self.prediction_path = PVS1PredictionStrucVarPath.DEL5
+                        self.prediction_path = PVS1PredictionStrucVarPath.DEL5_1
                     else:
                         if self._lof_removes_more_then_10_percent_of_protein():
                             self.prediction = PVS1Prediction.PVS1_Strong
-                            self.prediction_path = PVS1PredictionStrucVarPath.DEL6
+                            self.prediction_path = PVS1PredictionStrucVarPath.DEL6_1
                         else:
                             self.prediction = PVS1Prediction.PVS1_Moderate
-                            self.prediction_path = PVS1PredictionStrucVarPath.DEL7
+                            self.prediction_path = PVS1PredictionStrucVarPath.DEL7_1
             else:
                 if self._critical4protein_function():
                     self.prediction = PVS1Prediction.PVS1_Strong
@@ -113,14 +113,14 @@ class StrucVarPVS1(StrucVarPVS1Helper):
                         or not self._in_biologically_relevant_transcript()
                     ):
                         self.prediction = PVS1Prediction.NotPVS1
-                        self.prediction_path = PVS1PredictionStrucVarPath.DEL5
+                        self.prediction_path = PVS1PredictionStrucVarPath.DEL5_2
                     else:
                         if self._lof_removes_more_then_10_percent_of_protein():
                             self.prediction = PVS1Prediction.PVS1_Strong
-                            self.prediction_path = PVS1PredictionStrucVarPath.DEL6
+                            self.prediction_path = PVS1PredictionStrucVarPath.DEL6_2
                         else:
                             self.prediction = PVS1Prediction.PVS1_Moderate
-                            self.prediction_path = PVS1PredictionStrucVarPath.DEL7
+                            self.prediction_path = PVS1PredictionStrucVarPath.DEL7_2
 
         elif self.variant.sv_type == StrucVarType.DUP:
             if self._proven_in_tandem():
@@ -129,14 +129,14 @@ class StrucVarPVS1(StrucVarPVS1Helper):
                     self.prediction_path = PVS1PredictionStrucVarPath.DUP1
                 else:
                     self.prediction = PVS1Prediction.NotPVS1
-                    self.prediction_path = PVS1PredictionStrucVarPath.DUP2
+                    self.prediction_path = PVS1PredictionStrucVarPath.DUP2_1
             elif self._presumed_in_tandem():
                 if self._duplication_disrupts_rf() and self._undergo_nmd():
                     self.prediction = PVS1Prediction.PVS1_Strong
                     self.prediction_path = PVS1PredictionStrucVarPath.DUP3
                 else:
                     self.prediction = PVS1Prediction.NotPVS1
-                    self.prediction_path = PVS1PredictionStrucVarPath.DUP2
+                    self.prediction_path = PVS1PredictionStrucVarPath.DUP2_2
 
             else:
                 self.prediction = PVS1Prediction.NotPVS1

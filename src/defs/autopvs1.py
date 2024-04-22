@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from typing import List, Optional
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
@@ -67,36 +67,22 @@ class PVS1PredictionStrucVarPath(Enum):
     DEL2 = auto()
     DEL3 = auto()
     DEL4 = auto()
-    DEL5 = auto()
-    DEL6 = auto()
-    DEL7 = auto()
+    DEL5_1 = auto()
+    DEL6_1 = auto()
+    DEL7_1 = auto()
+    DEL5_2 = auto()
+    DEL6_2 = auto()
+    DEL7_2 = auto()
     DEL8 = auto()
     DUP1 = auto()
-    DUP2 = auto()
-    DUP3 = auto()
-    DUP4 = auto()
-
-
-#: Enumeration for PVS1 prediction path for structure variants
-class PVS1PredictionsStrucVarPath(Enum):
-    """PVS1 prediction path for structure variants."""
-
-    DEL1 = auto()
-    DEL2 = auto()
-    DEL3 = auto()
-    DEL4 = auto()
-    DEL5 = auto()
-    DEL6 = auto()
-    DEL7 = auto()
-    DEL8 = auto()
-    DUP1 = auto()
-    DUP2 = auto()
+    DUP2_1 = auto()
+    DUP2_2 = auto()
     DUP3 = auto()
     DUP4 = auto()
 
 
 #: Mapping of consequence from transcript info to SeqVarConsequence
-SeqvarConsequenceMapping = {
+SeqvarConsequenceMapping: Dict[str, SeqVarConsequence] = {
     "intergenic_variant": SeqVarConsequence.NotSet,
     "intron_variant": SeqVarConsequence.NotSet,
     "upstream_gene_variant": SeqVarConsequence.NotSet,
@@ -131,4 +117,190 @@ SeqvarConsequenceMapping = {
     "regulatory_region_ablation": SeqVarConsequence.NotSet,  # Regulatory, not LOF
     "regulatory_region_variant": SeqVarConsequence.NotSet,
     "regulatory_region_amplification": SeqVarConsequence.NotSet,
+}
+
+
+#: Mapping of PVS1 prediction path to description for sequence variant
+PVS1PredictionPathMapping: Dict[
+    Union[PVS1PredictionSeqVarPath, PVS1PredictionStrucVarPath], str
+] = {
+    PVS1PredictionSeqVarPath.NotSet: "Not Set",
+    PVS1PredictionSeqVarPath.NF1: (
+        "Predicted to undergo NMD -> Exon is present in biologically-relevant transcript(s)"
+    ),
+    PVS1PredictionSeqVarPath.NF2: (
+        "Predicted to undergo NMD -> Exon is absent from biologically-relevant transcript(s)"
+    ),
+    PVS1PredictionSeqVarPath.NF3: (
+        "Not predicted to undergo NMD -> "
+        "Truncated/altered region is critical to protein function"
+    ),
+    PVS1PredictionSeqVarPath.NF4: (
+        "Not predicted to undergo NMD -> "
+        "Role of region in protein function is unknown -> "
+        "LoF variants in this exon are frequent in the general population and/or "
+        "exon is absent from biologically-relevant transcript(s)"
+    ),
+    PVS1PredictionSeqVarPath.NF5: (
+        "Not predicted to undergo NMD -> "
+        "Role of region in protein function is unknown -> "
+        "LoF variants in this exon are not frequent in the general population and "
+        "exon is present in biologically-relevant transcript(s) -> "
+        "Variant removes >10% of protein"
+    ),
+    PVS1PredictionSeqVarPath.NF6: (
+        "Not predicted to undergo NMD -> "
+        "Role of region in protein function is unknown -> "
+        "LoF variants in this exon are not frequent in the general population and "
+        "exon is present in biologically-relevant transcript(s) -> "
+        "Variant removes <10% of protein"
+    ),
+    PVS1PredictionSeqVarPath.SS1: (
+        "Exon skipping or use of a cryptic slice site disrupts reading frame and "
+        "is predicted to undergo NMD -> "
+        "Exon is present in biologically-relevant transcript(s)"
+    ),
+    PVS1PredictionSeqVarPath.SS2: (
+        "Exon skipping or use of a cryptic slice site disrupts reading frame and "
+        "is predicted to undergo NMD -> "
+        "Exon is absent from biologically-relevant transcript(s)"
+    ),
+    PVS1PredictionSeqVarPath.SS3: (
+        "Exon skipping or use of a cryptic slice site disrupts reading frame and "
+        "is not predicted to undergo NMD -> "
+        "Truncated/altered region is critical to protein function"
+    ),
+    PVS1PredictionSeqVarPath.SS4: (
+        "Exon skipping or use of a cryptic slice site disrupts reading frame and "
+        "is not predicted to undergo NMD -> "
+        "Role of region in protein function is unknown -> "
+        "LoF variants in this exon are frequent in the general population and/or "
+        "exon is absent from biologically-relevant transcript(s)"
+    ),
+    PVS1PredictionSeqVarPath.SS5: (
+        "Exon skipping or use of a cryptic slice site disrupts reading frame and "
+        "is not predicted to undergo NMD -> "
+        "Role of region in protein function is unknown -> "
+        "LoF variants in this exon are not frequent in the general population and "
+        "exon is present in biologically-relevant transcript(s) -> "
+        "Variant removes >10% of protein"
+    ),
+    PVS1PredictionSeqVarPath.SS6: (
+        "Exon skipping or use of a cryptic slice site disrupts reading frame and "
+        "is not predicted to undergo NMD -> "
+        "Role of region in protein function is unknown -> "
+        "LoF variants in this exon are not frequent in the general population and "
+        "exon is present in biologically-relevant transcript(s) -> "
+        "Variant removes <10% of protein"
+    ),
+    PVS1PredictionSeqVarPath.SS7: (
+        "Exon skipping or use of a cryptic slice site preserves reading frame -> "
+        "Role of region in protein function is unknown -> "
+        "LoF variants in this exon are frequent in the general population and/or "
+        "exon is absent from biologically-relevant transcript(s)"
+    ),
+    PVS1PredictionSeqVarPath.SS8: (
+        "Exon skipping or use of a cryptic slice site preserves reading frame -> "
+        "Role of region in protein function is unknown -> "
+        "LoF variants in this exon are not frequent in the general population and "
+        "exon is present in biologically-relevant transcript(s) -> "
+        "Variant removes >10% of protein"
+    ),
+    PVS1PredictionSeqVarPath.SS9: (
+        "Exon skipping or use of a cryptic slice site preserves reading frame -> "
+        "Role of region in protein function is unknown -> "
+        "LoF variants in this exon are not frequent in the general population and "
+        "exon is present in biologically-relevant transcript(s) -> "
+        "Variant removes <10% of protein"
+    ),
+    PVS1PredictionSeqVarPath.SS10: (
+        "Exon skipping or use of a cryptic slice site preserves reading frame -> "
+        "Truncated/altered region is critical to protein function"
+    ),
+    PVS1PredictionSeqVarPath.IC1: (
+        "No known alternative start codon in other transcripts -> "
+        ">=1 pathogenic variant(s) upstream of closest potential in-frame start codon"
+    ),
+    PVS1PredictionSeqVarPath.IC2: (
+        "No known alternative start codon in other transcripts -> "
+        "No pathogenic variant(s) upstream of closest potential in-frame start codon"
+    ),
+    PVS1PredictionSeqVarPath.IC3: "Different functional transcript uses alternative start codon",
+    PVS1PredictionStrucVarPath.NotSet: "Not Set",
+    PVS1PredictionStrucVarPath.DEL1: "Full gene deletion",
+    PVS1PredictionStrucVarPath.DEL2: (
+        "Single to multi exon deletion disrupts reading frame and "
+        "is predicted to undergo NMD -> "
+        "Exon is present in biologically-relevant transcript(s)"
+    ),
+    PVS1PredictionStrucVarPath.DEL3: (
+        "Single to multi exon deletion disrupts reading frame and "
+        "is predicted to undergo NMD -> "
+        "Exon is absent from biologically-relevant transcript(s)"
+    ),
+    PVS1PredictionStrucVarPath.DEL4: (
+        "Single to multi exon deletion disrupts reading frame and "
+        "is not predicted to undergo NMD -> "
+        "Truncated/altered region is critical to protein function"
+    ),
+    PVS1PredictionStrucVarPath.DEL5_1: (
+        "Single to multi exon deletion disrupts reading frame and "
+        "is not predicted to undergo NMD -> "
+        "Role of region in protein function is unknown -> "
+        "LoF variants in this exon are frequent in the general population and/or "
+        "exon is absent from biologically-relevant transcript(s)"
+    ),
+    PVS1PredictionStrucVarPath.DEL6_1: (
+        "Single to multi exon deletion disrupts reading frame and "
+        "is not predicted to undergo NMD -> "
+        "Role of region in protein function is unknown -> "
+        "LoF variants in this exon are not frequent in the general population and "
+        "exon is present in biologically-relevant transcript(s) -> "
+        "Variant removes >10% of protein"
+    ),
+    PVS1PredictionStrucVarPath.DEL7_1: (
+        "Single to multi exon deletion disrupts reading frame and "
+        "is not predicted to undergo NMD -> "
+        "Role of region in protein function is unknown -> "
+        "LoF variants in this exon are not frequent in the general population and "
+        "exon is present in biologically-relevant transcript(s) -> "
+        "Variant removes <10% of protein"
+    ),
+    PVS1PredictionStrucVarPath.DEL5_2: (
+        "Single to multi exon deletion preserves reading frame -> "
+        "Role of region in protein function is unknown -> "
+        "LoF variants in this exon are frequent in the general population and/or "
+        "exon is absent from biologically-relevant transcript(s)"
+    ),
+    PVS1PredictionStrucVarPath.DEL6_2: (
+        "Single to multi exon deletion preserves reading frame -> "
+        "Role of region in protein function is unknown -> "
+        "LoF variants in this exon are not frequent in the general population and "
+        "exon is present in biologically-relevant transcript(s) -> "
+        "Variant removes >10% of protein"
+    ),
+    PVS1PredictionStrucVarPath.DEL7_2: (
+        "Single to multi exon deletion preserves reading frame -> "
+        "Role of region in protein function is unknown -> "
+        "LoF variants in this exon are not frequent in the general population and "
+        "exon is present in biologically-relevant transcript(s) -> "
+        "Variant removes <10% of protein"
+    ),
+    PVS1PredictionStrucVarPath.DEL8: (
+        "Single to multi exon deletion preserves reading frame -> "
+        "Truncated/altered region is critical to protein function"
+    ),
+    PVS1PredictionStrucVarPath.DUP1: (
+        "Proven in tandem -> " "Reading frame disrupted and NMD predicted to occur"
+    ),
+    PVS1PredictionStrucVarPath.DUP2_1: (
+        "Proven in tandem -> " "No or unknown impact on reading frame and NMD"
+    ),
+    PVS1PredictionStrucVarPath.DUP2_2: (
+        "Presumed in tandem -> " "No or unknown impact on reading frame and NMD"
+    ),
+    PVS1PredictionStrucVarPath.DUP3: (
+        "Proven in tandem -> " "Reading frame presumed disrupted and NMD predicted to occur"
+    ),
+    PVS1PredictionStrucVarPath.DUP4: "Proven not in tandem",
 }
