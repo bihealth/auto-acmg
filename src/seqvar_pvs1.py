@@ -9,6 +9,7 @@ import typer
 from src.api.annonars import AnnonarsClient
 from src.api.mehari import MehariClient
 from src.defs.autopvs1 import (
+    CdsInfo,
     PVS1Prediction,
     PVS1PredictionSeqVarPath,
     SeqVarConsequence,
@@ -123,7 +124,8 @@ class SeqVarPVS1Helper:
         """Checks if the truncated or altered region is critical for the protein function.
 
         This method assesses the impact of a sequence variant based on the presence of pathogenic
-        variants downstream of the new stop codon, utilizing both experimental and clinical evidence.
+        variants downstream of the new stop codon, utilizing both experimental and clinical
+        evidence.
 
         Note:
             The significance of a truncated or altered region is determined by the presence and
@@ -131,7 +133,8 @@ class SeqVarPVS1Helper:
 
         Implementation:
             The method implements the rule by:
-            - Fetching variants from the range of the altered region downstream from the new position.
+            - Fetching variants from the range of the altered region downstream from the new
+            position.
             - Counting the number of pathogenic variants in that region.
             - Considering the region critical if there are more than two pathogenic variants and
             their frequency exceeds 0.5%.
@@ -190,19 +193,23 @@ class SeqVarPVS1Helper:
 
     @staticmethod
     def _lof_is_frequent_in_population(seqvar: SeqVar, start: int, end: int) -> bool:
-        """Checks if the Loss-of-Function (LoF) variants in the exon are frequent in the general population.
+        """Checks if the Loss-of-Function (LoF) variants in the exon are frequent in the general
+        population.
 
-        This function determines the frequency of LoF variants within a specified genomic region and evaluates
-        whether this frequency exceeds a defined threshold indicative of common occurrence in the general population.
+        This function determines the frequency of LoF variants within a specified genomic region and
+        evaluates
+        whether this frequency exceeds a defined threshold indicative of common occurrence in the
+        general population.
 
         Note:
-            A LoF variant is considered frequent if its occurrence in the general population exceeds 0.1%.
-            This threshold is set based on guidelines from the AutoPVS1 software.
+            A LoF variant is considered frequent if its occurrence in the general population
+            exceeds 0.1%. This threshold is set based on guidelines from the AutoPVS1 software.
 
         Implementation:
             The function implements the rule by:
             - Fetching variants from the specified range of the altered region.
-            - Counting the number of LoF variants, specifically those classified as 'frameshift_variant' or 'stop_gained'.
+            - Counting the number of LoF variants, specifically those classified as
+            'frameshift_variant' or 'stop_gained'.
             - Determining the region as having frequent LoF variants if their frequency exceeds 0.1%.
 
         Args:
@@ -285,15 +292,25 @@ class SeqVarPVS1Helper:
         return False
 
     @staticmethod
-    def _alternative_start_codon() -> bool:
-        """Check if the variant introduces an alternative start codon."""
-        # TODO: Implement this method
-        return False
+    def _alternative_start_codon(hgvs: str, cds_info: Dict[str, CdsInfo]) -> bool:
+        """Check if the variant introduces an alternative start codon in other transcripts."""
+        if hgvs not in cds_info:
+            raise ValueError(f"Main transcript ID {hgvs} not found in the dataset.")
+
+        main_start_codon, main_cds_start = cds_info[hgvs].start_codon, cds_info[hgvs].cds_start
+        # Check if other transcripts have alternative start codons
+        alternative_starts = False
+        for transcript_id, info in cds_info.items():
+            if transcript_id == hgvs:
+                continue
+            if info.start_codon != main_start_codon and info.cds_start != main_cds_start:
+                alternative_starts = True
+                break
+        return alternative_starts
 
     @staticmethod
     def _upstream_pathogenic_variant() -> bool:
-        """Check if the variant is an upstream pathogenic variant."""
-        # TODO: Implement this method
+        """Check if the transcript has an upstream pathogenic variant(s)."""
         return False
 
 
@@ -306,29 +323,46 @@ class SeqVarTranscriptsHelper:
         # Attributes to be set
         self.HGVSs: List[str] = []
         self.HGNC_id: str = ""
-        self.seqvar_ts_info: List[TranscriptSeqvar] | None = None
+        self.seqvar_ts_info: List[TranscriptSeqvar] = []
         self.seqvar_transcript: TranscriptSeqvar | None = None
-        self.gene_ts_info: List[TranscriptGene] | None = None
+        self.gene_ts_info: List[TranscriptGene] = []
         self.gene_transcript: TranscriptGene | None = None
         self.consequence: SeqVarConsequence = SeqVarConsequence.NotSet
 
     def get_ts_info(
         self,
-    ) -> Tuple[TranscriptSeqvar | None, TranscriptGene | None, SeqVarConsequence]:
+    ) -> Tuple[
+        TranscriptSeqvar | None,
+        TranscriptGene | None,
+        List[TranscriptSeqvar],
+        List[TranscriptGene],
+        SeqVarConsequence,
+    ]:
         """Return the transcript information.
 
         Returns:
-            Tuple[TranscriptSeqvar | None, TranscriptGene | None, SeqVarConsequence]: The sequence variant transcript,
+            Tuple[TranscriptSeqvar | None, TranscriptGene | None, List[TranscriptSeqvar],
+            List[TranscriptGene], SeqVarConsequence]:
+            The sequence variant transcript,
             gene transcript, and the consequence of the sequence variant.
         """
-        return self.seqvar_transcript, self.gene_transcript, self.consequence
+        return (
+            self.seqvar_transcript,
+            self.gene_transcript,
+            self.seqvar_ts_info,
+            self.gene_ts_info,
+            self.consequence,
+        )
 
     def initialize(self):
         """Get all transcripts for the given sequence variant from Mehari."""
         # Should never happen, since __init__ is called with seqvar
         if not self.seqvar:
             typer.secho(
-                "No sequence variant specified. Assure that the variant is resolved before fetching transcripts.",
+                (
+                    "No sequence variant specified. Assure that the variant is resolved before "
+                    "fetching transcripts."
+                ),
                 err=True,
                 fg=typer.colors.RED,
             )
@@ -338,7 +372,7 @@ class SeqVarTranscriptsHelper:
             mehari_client = MehariClient()
             response_seqvar = mehari_client.get_seqvar_transcripts(self.seqvar)
             if not response_seqvar:
-                self.seqvar_ts_info = None
+                self.seqvar_ts_info = []
             else:
                 self.seqvar_ts_info = response_seqvar.result
 
@@ -363,7 +397,7 @@ class SeqVarTranscriptsHelper:
                 self.HGNC_id, self.seqvar.genome_release
             )
             if not response_gene:
-                self.gene_ts_info = None
+                self.gene_ts_info = []
             else:
                 self.gene_ts_info = response_gene.transcripts
 
@@ -486,6 +520,8 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         # Attributes to be computed
         self._seqvar_transcript: TranscriptSeqvar | None = None
         self._gene_transcript: TranscriptGene | None = None
+        self._all_seqvar_ts: List[TranscriptSeqvar] = []
+        self._all_gene_ts: List[TranscriptGene] = []
         self._consequence: SeqVarConsequence = SeqVarConsequence.NotSet
         self.HGVS: str = ""
         self.pHGVS: str = ""
@@ -494,6 +530,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         self.transcript_tags: List[str] = []
         self.exons: List[Exon] = []
         self.cds_pos: int | None = None
+        self.cds_info: Dict[str, CdsInfo] = {}
 
         # Prediction attributes
         self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
@@ -508,9 +545,13 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         # Fetch transcript data
         seqvar_transcript_helper = SeqVarTranscriptsHelper(self.seqvar)
         seqvar_transcript_helper.initialize()
-        self._seqvar_transcript, self._gene_transcript, self._consequence = (
-            seqvar_transcript_helper.get_ts_info()
-        )
+        (
+            self._seqvar_transcript,
+            self._gene_transcript,
+            self._all_seqvar_ts,
+            self._all_gene_ts,
+            self._consequence,
+        ) = seqvar_transcript_helper.get_ts_info()
 
         if (
             not self._seqvar_transcript
@@ -536,6 +577,16 @@ class SeqVarPVS1(SeqVarPVS1Helper):
             if isinstance(self._seqvar_transcript.cds_pos, CdsPos)
             else None
         )
+        self.cds_info = {
+            ts.id: CdsInfo(
+                start_codon=ts.startCodon,
+                stop_codon=ts.stopCodon,
+                cds_start=ts.genomeAlignments[0].cdsStart,
+                cds_end=ts.genomeAlignments[0].cdsEnd,
+                exons=ts.genomeAlignments[0].exons,
+            )
+            for ts in self._all_gene_ts
+        }
 
     def verify_PVS1(self):
         """Make the PVS1 prediction.
@@ -646,7 +697,8 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                             self.prediction_path = PVS1PredictionSeqVarPath.SS9
 
         elif self._consequence == SeqVarConsequence.InitiationCodon:
-            if self._alternative_start_codon():
+            # if True:
+            if self._alternative_start_codon(self.HGVS, self.cds_info):
                 self.prediction = PVS1Prediction.NotPVS1
                 self.prediction_path = PVS1PredictionSeqVarPath.IC3
             else:
@@ -668,6 +720,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         """Return the PVS1 prediction.
 
         Returns:
-            Tuple[PVS1Prediction, PVS1PredictionSeqVarPath]: The PVS1 prediction and the path leading to the prediction.
+            Tuple[PVS1Prediction, PVS1PredictionSeqVarPath]: The PVS1 prediction and the path
+            leading to the prediction.
         """
         return self.prediction, self.prediction_path

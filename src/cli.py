@@ -21,7 +21,11 @@ def classify(
     variant: Annotated[
         str,
         typer.Argument(
-            help=f"Variant to be classified, e.g., 'NM_000038.3:c.797G>A'. Accepted sequence variants formats: {', '.join(ALLOWED_SEQVAR_FORMATS)}. Accepted structural variants formats: {', '.join(ALLOWED_STRUCVAR_FORMATS)}."
+            help=(
+                f"Variant to be classified, e.g., 'NM_000038.3:c.797G>A'. "
+                f"Accepted sequence variants formats: {', '.join(ALLOWED_SEQVAR_FORMATS)}. "
+                f"Accepted structural variants formats: {', '.join(ALLOWED_STRUCVAR_FORMATS)}."
+            )
         ),
     ],
     genome_release: Annotated[
@@ -40,7 +44,10 @@ def classify(
         genome_release_enum = GenomeRelease.from_string(genome_release)
         if not genome_release_enum:
             raise ValueError(
-                f"Invalid genome release: {genome_release}. Please use one of {', '.join(ALLOWED_GENOME_RELEASES)}."
+                (
+                    f"Invalid genome release: {genome_release}. "
+                    f"Please use one of {', '.join(ALLOWED_GENOME_RELEASES)}."
+                )
             )
 
         auto_pvs1 = AutoPVS1(variant, genome_release_enum)
