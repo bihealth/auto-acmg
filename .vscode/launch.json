@@ -1,13 +1,3 @@
-{
-  "version": "0.2.0",
-  "configurations": [
-      {
-          "name": "Python: Launch",
-          "type": "debugpy",
-          "request": "launch",
-          "module": "src.cli",
-          "args": ["NM_000152.4:c.1A>G", "--genome-release", "grch37"],
-          "console": "integratedTerminal"
-      }
-  ]
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:d64bdeb945594730020ff4db029e463c0c1ee051088ded1c0093b0223ae00e92
+size 309
