@@ -3,12 +3,24 @@ from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
-from src.defs.mehari import TranscriptGene, TranscriptSeqvar
+from src.defs.mehari import Exon, TranscriptGene, TranscriptSeqvar
 
 
 class TranscriptInfo(BaseModel):
+    """Information about a transcript."""
+
     seqvar: Optional[TranscriptSeqvar]
     gene: Optional[TranscriptGene]
+
+
+class CdsInfo(BaseModel):
+    """Information about the coding sequence."""
+
+    start_codon: int
+    stop_codon: int
+    cds_start: int
+    cds_end: int
+    exons: List[Exon]
 
 
 #: Enumeration for sequence variant consequence

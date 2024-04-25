@@ -175,21 +175,35 @@ def test_get_ts_info_success(ts_helper):
     ts_helper.gene_transcript = GeneTranscripts.model_validate(
         get_json_object("mehari_genes_success.json")
     ).transcripts
+    ts_helper.seqvar_ts_info = TranscriptsSeqVar.model_validate(
+        get_json_object("mehari_seqvar_success.json")
+    )
+    ts_helper.gene_ts_info = GeneTranscripts.model_validate(
+        get_json_object("mehari_genes_success.json")
+    )
     ts_helper.consequence = SeqVarConsequence.InitiationCodon
 
-    seqvar_transcript, gene_transcript, consequence = ts_helper.get_ts_info()
+    seqvar_transcript, gene_transcript, seqvar_ts_info, gene_ts_info, consequence = (
+        ts_helper.get_ts_info()
+    )
 
     assert seqvar_transcript is not None
     assert gene_transcript is not None
+    assert seqvar_ts_info is not None
+    assert gene_ts_info is not None
     assert consequence == SeqVarConsequence.InitiationCodon
 
 
 def test_get_ts_info_failure(ts_helper):
     """Test get_ts_info method with a failed response."""
-    seqvar_transcript, gene_transcript, consequence = ts_helper.get_ts_info()
+    seqvar_transcript, gene_transcript, seqvar_ts_info, gene_ts_info, consequence = (
+        ts_helper.get_ts_info()
+    )
 
     assert seqvar_transcript is None
     assert gene_transcript is None
+    assert seqvar_ts_info == []
+    assert gene_ts_info == []
     assert consequence == SeqVarConsequence.NotSet
 
 
@@ -228,18 +242,17 @@ def test_initialize_failure(
     ts_helper.seqvar = seqvar
     ts_helper.initialize()
 
-    assert ts_helper.seqvar_ts_info is None
-    assert ts_helper.gene_ts_info is None
+    assert ts_helper.seqvar_ts_info == []
+    assert ts_helper.gene_ts_info == []
+    assert ts_helper.seqvar_ts_info == []
+    assert ts_helper.gene_ts_info == []
     assert ts_helper.HGNC_id is ""
     assert len(ts_helper.HGVSs) == 0
 
 
 def test_initialize_no_seqvar(ts_helper):
     ts_helper.initialize()
-    # TODO: Fix the assertion below
-    # assert ts_helper.seqvar_ts_info is None    # Work in CI
-    # assert len(ts_helper.seqvar_ts_info) == 0    # Work locally
-    assert ts_helper.gene_ts_info is None
+    assert ts_helper.gene_ts_info == []
     assert ts_helper.HGNC_id is ""
     assert len(ts_helper.HGVSs) == 0
 
@@ -359,6 +372,8 @@ def test_get_pvs1_prediction_success(
     mock_get_ts_info.return_value = (
         seqvar_transcripts[0],
         gene_transcripts[0],
+        seqvar_transcripts,
+        gene_transcripts,
         SeqVarConsequence.InitiationCodon,
     )
 
@@ -373,13 +388,13 @@ def test_get_pvs1_prediction_success(
 @patch.object(SeqVarTranscriptsHelper, "get_ts_info", autospec=True)
 @patch.object(SeqVarTranscriptsHelper, "initialize", autospec=True)
 def test_get_pvs1_prediction_failure(mock_initialize, mock_get_ts_info, seqvar):
-    mock_get_ts_info.return_value = (None, None, SeqVarConsequence.NotSet)
+    mock_get_ts_info.return_value = (None, None, [], [], SeqVarConsequence.NotSet)
 
     pvs1 = SeqVarPVS1(seqvar)
     pvs1.initialize()
 
-    assert pvs1._seqvar_transcript is None
-    assert pvs1._gene_transcript is None
+    assert pvs1._seqvar_transcript == None
+    assert pvs1._gene_transcript == None
     assert pvs1._consequence is SeqVarConsequence.NotSet
 
 

@@ -146,7 +146,7 @@ class StrucVarPVS1(StrucVarPVS1Helper):
             self.prediction = PVS1Prediction.NotPVS1
             self.prediction_path = PVS1PredictionStrucVarPath.NotSet
             typer.secho(
-                "Invalid structural variant.",
+                f"Invalid structural variant. Ensure the structural variant type is either DEL or DUP.",
                 err=True,
                 fg=typer.colors.RED,
             )

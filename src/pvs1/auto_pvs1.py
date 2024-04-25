@@ -13,8 +13,8 @@ from src.defs.exceptions import ParseError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar, SeqVarResolver
 from src.defs.strucvar import StrucVar, StrucVarResolver
-from src.seqvar_pvs1 import SeqVarPVS1
-from src.strucvar_pvs1 import StrucVarPVS1
+from src.pvs1.seqvar_pvs1 import SeqVarPVS1
+from src.pvs1.strucvar_pvs1 import StrucVarPVS1
 
 
 class AutoPVS1:
@@ -48,8 +48,7 @@ class AutoPVS1:
             SeqVar, StrucVar, or None: The resolved variant object or None if resolution fails.
 
         Raises:
-            Exception: Specific exceptions are caught and logged, but generic exceptions may be
-            raised if both resolutions fail.
+            Exception: Specific exceptions are caught and logged, but generic exceptions may be raised if both resolutions fail.
         """
         try:
             try:
@@ -76,8 +75,7 @@ class AutoPVS1:
         """Runs the prediction algorithm to assess the PVS1 criteria for the resolved variant.
 
         This method resolves the variant and then, based on the type of variant, predicts its
-        classification according to the PVS1 criteria. It handles both sequence and structural
-        variants.
+        classification according to the PVS1 criteria. It handles both sequence and structural variants.
 
         Raises:
             Exception: Handles general exceptions that may occur during prediction and logs them.
@@ -92,10 +90,7 @@ class AutoPVS1:
 
             try:
                 typer.secho(
-                    (
-                        f"Predicting PVS1 for variant {self.seqvar.user_repr}, "
-                        f"genome release: {self.genome_release.name}."
-                    ),
+                    f"Predicting PVS1 for variant {self.seqvar.user_repr}, genome release: {self.genome_release.name}.",
                     fg=typer.colors.BLUE,
                 )
                 seqvar_pvs1 = SeqVarPVS1(self.seqvar)
@@ -137,10 +132,7 @@ class AutoPVS1:
 
             try:
                 typer.secho(
-                    (
-                        f"Predicting PVS1 for structural variant {self.strucvar.user_repr}, "
-                        f"genome release: {self.genome_release.name}."
-                    ),
+                    f"Predicting PVS1 for structural variant {self.strucvar.user_repr}, genome release: {self.genome_release.name}.",
                     fg=typer.colors.BLUE,
                 )
                 strucvar_pvs1 = StrucVarPVS1(self.strucvar)
