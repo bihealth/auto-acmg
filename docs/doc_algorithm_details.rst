@@ -6,9 +6,9 @@ Algorithm Building Blocks
 
 This section contains the internal building blocks of the algorithm.
 
---------
-autoPVS1
---------
+---------
+auto-acmg
+---------
 
 .. automodule:: src.autoPVS1
     :members:

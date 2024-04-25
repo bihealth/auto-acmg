@@ -4,7 +4,7 @@
 Algorithm
 =========
 
-The core of the AutoPVS1 service is its Algorithm.
+The core of the auto-acmg service is its Algorithm.
 The Algorithm is based on the paper `Recommendations for interpreting the loss of function PVS1 ACMG/AMP variant criterion <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6185798/>`__,
 and basically implements the provided guidelines.
 
