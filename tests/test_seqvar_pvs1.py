@@ -11,7 +11,7 @@ from src.defs.autopvs1 import (
 from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import GeneTranscripts, TranscriptsSeqVar
 from src.defs.seqvar import SeqVar
-from src.seqvar_pvs1 import SeqVarPVS1, SeqVarPVS1Helper, SeqVarTranscriptsHelper
+from src.pvs1.seqvar_pvs1 import SeqVarPVS1, SeqVarPVS1Helper, SeqVarTranscriptsHelper
 from tests.utils import get_json_object
 
 
