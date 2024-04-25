@@ -61,7 +61,7 @@ jobs:
         with:
           flags: main
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: bihealth/autopvs1
+          slug: bihealth/auto-acmg
   
   Docs:
     runs-on: ubuntu-latest

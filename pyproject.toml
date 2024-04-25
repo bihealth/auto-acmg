@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "autopvs1"
+name = "auto-acmg"
 version = "0.1.0"
 authors = [
   {name = "Dzmitry Hramyka", email = "dzmitry.hramyka@bih-charite.de"},
@@ -19,6 +19,6 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/bihealth/autopvs1"
-Documentation = "https://autopvs1.readthedocs.io/en/latest"
+Homepage = "https://github.com/bihealth/auto-acmg"
+Documentation = "https://auto-acmg.readthedocs.io/en/latest"
 

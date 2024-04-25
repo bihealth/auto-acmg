@@ -59,7 +59,7 @@ Clone Rsepository
 
 .. code-block:: bash
 
-    $ git clone git@github.com:bihealth/autopvs1.git
+    $ git clone git@github.com:bihealth/auto-acmg.git
   
 --------------------
 Install Dependencies
@@ -90,7 +90,7 @@ You can run the CLI with the following command:
 
 .. code-block:: bash
 
-    $ pipenv run autopvs1 --help
+    $ make run VAR="NM_000152.4:c.1A>G" GR="GRCh37"
 
 Also there's example for usage of CLI:
 
