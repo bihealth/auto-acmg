@@ -12,9 +12,16 @@ If you want to **use** auto-acmg, the best place is to start at :ref:`dev_quicks
    :maxdepth: 2
    :caption: Contents:
 
+   acmg_seqvars_details
+   acmg_seqvars_criteria
+   acmg_pvs1
+   acmg_pvs1_algorithm_details
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Development:
+
    dev_quickstart
-   doc_algorithm
-   doc_algorithm_details
 
 .. toctree::
    :maxdepth: 2
