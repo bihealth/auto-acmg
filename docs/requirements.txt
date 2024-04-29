@@ -1,4 +1,5 @@
 sphinxawesome-theme
+sphinxcontrib-bibtex
 aiohttp
 pydantic_settings
 typer

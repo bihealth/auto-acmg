@@ -1,10 +1,12 @@
-.. _doc_algorithm_details:
+.. _acmg_pvs1_algorithm_details:
 
-=========================
-Algorithm Building Blocks
-=========================
+==============================
+PVS1 Algorithm Building Blocks
+==============================
 
 This section contains the internal building blocks of the algorithm.
+Note, that these are not intended to be used directly, but rather
+to be used by the main algorithm.
 
 ---------
 auto-acmg
