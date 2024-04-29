@@ -169,18 +169,18 @@ def test_upstream_pathogenic_variant():
 def test_get_ts_info_success(ts_helper):
     """Test get_ts_info method with a successful response."""
     # Mock the actual data that would be returned from the Mehari API
-    ts_helper.seqvar_transcript = TranscriptsSeqVar.model_validate(
-        get_json_object("mehari_seqvar_success.json")
-    ).result
-    ts_helper.gene_transcript = GeneTranscripts.model_validate(
-        get_json_object("mehari_genes_success.json")
-    ).transcripts
     ts_helper.seqvar_ts_info = TranscriptsSeqVar.model_validate(
         get_json_object("mehari_seqvar_success.json")
     )
+    ts_helper.seqvar_transcript = TranscriptsSeqVar.model_validate(
+        get_json_object("mehari_seqvar_success.json")
+    ).result
     ts_helper.gene_ts_info = GeneTranscripts.model_validate(
         get_json_object("mehari_genes_success.json")
     )
+    ts_helper.gene_transcript = GeneTranscripts.model_validate(
+        get_json_object("mehari_genes_success.json")
+    ).transcripts
     ts_helper.consequence = SeqVarConsequence.InitiationCodon
 
     seqvar_transcript, gene_transcript, seqvar_ts_info, gene_ts_info, consequence = (

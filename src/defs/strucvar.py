@@ -1,6 +1,7 @@
 """Implementation of structural variant class."""
 
 import re
+from collections.abc import Iterable
 from enum import Enum, auto
 from typing import Optional, Union
 
@@ -59,7 +60,25 @@ class StrucVar:
         return chrom.lower().replace("chr", "").replace("m", "mt").upper()
 
     def __repr__(self):
+        """Return a string representation of the structural variant."""
         return self.user_repr
+
+    def __dir__(self):
+        """Return a dictionary representation of the structural variant."""
+        return {
+            "sv_type": self.sv_type,
+            "genome_release": self.genome_release,
+            "chrom": self.chrom,
+            "start": self.start,
+            "stop": self.stop,
+            "user_repr": self.user_repr,
+        }
+
+    def __eq__(self, other):
+        """Return True if the two objects are equal."""
+        if not isinstance(other, StrucVar):
+            return False
+        return self.__dir__() == other.__dir__()
 
 
 class StrucVarResolver:

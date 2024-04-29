@@ -46,7 +46,8 @@ class AutoPVS1:
         """Runs the prediction algorithm to assess the PVS1 criteria for the resolved variant.
 
         This method resolves the variant and then, based on the type of variant, predicts its
-        classification according to the PVS1 criteria. It handles both sequence and structural variants.
+        classification according to the PVS1 criteria. It handles both sequence and structural
+        variants.
 
         Returns:
             Tuple[PVS1Prediction, Union[PVS1PredictionSeqVarPath, PVS1PredictionStrucVarPath]]: The

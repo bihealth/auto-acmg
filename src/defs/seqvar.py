@@ -66,6 +66,23 @@ class SeqVar:
         """Return a user-friendly representation of the variant."""
         return self.user_repr
 
+    def __dict__(self):
+        """Return a dictionary representation of the variant."""
+        return {
+            "genome_release": self.genome_release,
+            "chrom": self.chrom,
+            "pos": self.pos,
+            "delete": self.delete,
+            "insert": self.insert,
+            "user_repr": self.user_repr,
+        }
+
+    def __eq__(self, other):
+        """Return True if the two objects are equal."""
+        if not isinstance(other, SeqVar):
+            return False
+        return self.__dict__() == other.__dict__()
+
 
 class SeqVarResolver:
     """The class to resolve sequence variants."""
