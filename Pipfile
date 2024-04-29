@@ -4,22 +4,21 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-black = "*"
-isort = "*"
-flake8 = "*"
-mypy = "*"
+build = "*"
 pydantic = "*"
 pydantic-settings = "*"
-sphinx = "*"
-datamodel-code-generator = "*"
 requests = "*"
 responses = "*"
 typer = "*"
 setuptools = "*"
-build = "*"
 
 [dev-packages]
+mypy = "*"
+datamodel-code-generator = "*"
 debugpy = "*"
+isort = "*"
+flake8 = "*"
+black = "*"
 pytest = "*"
 aioresponses = "*"
 pytest-asyncio = "*"
