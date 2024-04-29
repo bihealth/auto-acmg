@@ -1,7 +1,7 @@
 /dev-*.py
 /*.ipynb
 
-.env
+# DS_Store file
 .DS_Store
 
 # Created by https://www.toptal.com/developers/gitignore/api/python
