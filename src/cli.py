@@ -3,8 +3,9 @@
 import typer
 from typing_extensions import Annotated
 
-from src.autoPVS1 import AutoPVS1
+from src.auto_acmg import AutoACMG
 from src.defs.genome_builds import GenomeRelease
+from src.pvs1.auto_pvs1 import AutoPVS1
 
 app = typer.Typer()
 
@@ -38,7 +39,7 @@ def classify(
     ] = "GRCh38",
 ):
     """
-    Classify a variant using the specified genome release.
+    Classify sequence variant on the ACMG guidelines.
     """
     try:
         genome_release_enum = GenomeRelease.from_string(genome_release)
@@ -50,8 +51,8 @@ def classify(
                 )
             )
 
-        auto_pvs1 = AutoPVS1(variant, genome_release_enum)
-        auto_pvs1.predict()
+        auto_acmg = AutoACMG(variant, genome_release_enum)
+        auto_acmg.predict()
     except Exception as e:
         typer.secho(f"Error: {e}", err=True, fg=typer.colors.RED)
 

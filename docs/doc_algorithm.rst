@@ -14,7 +14,8 @@ Here you'll find information about the Algorithm's main components and how they 
 Overview
 --------
 
-The central approach is following the provided guidelines to determine if a variant is pathogenic based on the PVS1 criterion.
+The central approach is following the provided guidelines to determine if a variant is pathogenic based on the PVS1 
+criterion.
 
 .. figure:: img/pvs1_guidelines.jpg
     :align: center

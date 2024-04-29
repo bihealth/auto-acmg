@@ -10,7 +10,7 @@ This section contains the internal building blocks of the algorithm.
 auto-acmg
 ---------
 
-.. automodule:: src.autoPVS1
+.. automodule:: src.pvs1.auto_pvs1
     :members:
     :inherited-members:
     :undoc-members:
@@ -21,7 +21,7 @@ auto-acmg
 PVS1 for SeqVars
 ----------------
 
-.. automodule:: src.seqvar_pvs1
+.. automodule:: src.pvs1.seqvar_pvs1
     :members:
     :inherited-members:
     :undoc-members:
@@ -32,7 +32,7 @@ PVS1 for SeqVars
 PVS1 for StrucVars
 ------------------
 
-.. automodule:: src.strucvar_pvs1
+.. automodule:: src.pvs1.strucvar_pvs1
     :members:
     :inherited-members:
     :undoc-members:
