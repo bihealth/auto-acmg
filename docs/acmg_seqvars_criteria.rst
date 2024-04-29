@@ -1126,3 +1126,10 @@ Notes
 -----
 
 - We use the thresholds from `PMID:30376034 <https://pubmed.ncbi.nlm.nih.gov/30376034/>`__.
+
+.. _acmg_seqvars_criteria-bibliography:
+
+Bibliography
+============
+
+.. footbibliography::
