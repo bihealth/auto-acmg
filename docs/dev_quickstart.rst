@@ -23,16 +23,16 @@ You can use `pyenv <https://github.com/pyenv/pyenv>`__ for getting a specific py
 
 .. code-block:: bash
 
-    $ sudo apt-get update; sudo apt-get install make build-essential libssl-dev zlib1g-dev \
+    sudo apt-get update; sudo apt-get install make build-essential libssl-dev zlib1g-dev \
     libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
     libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
-    $ curl https://pyenv.run | bash
+
+    curl https://pyenv.run | bash
 
 Append the following to your ```~/.bashrc``:
 
 .. code-block:: bash
 
-    $ pyenv
     export PATH="$HOME/.pyenv/bin:$PATH"
     eval "$(pyenv init --path)"
     eval "$(pyenv virtualenv-init -)"
@@ -44,14 +44,14 @@ Now you can install a specific python version:
 
 .. code-block:: bash
 
-    $ pyenv install 3.12
-    $ pyenv local 3.12
+    pyenv install 3.12
+    pyenv local 3.12
 
 Install pipenv:
 
 .. code-block:: bash
 
-    $ pip install --user pipenv
+    pip install --user pipenv
 
 -----------------
 Clone Rsepository
@@ -59,7 +59,7 @@ Clone Rsepository
 
 .. code-block:: bash
 
-    $ git clone git@github.com:bihealth/auto-acmg.git
+    git clone git@github.com:bihealth/auto-acmg.git
   
 --------------------
 Install Dependencies
@@ -69,7 +69,7 @@ You can use the provided ``Makefile`` files to install the dependencies.
 
 .. code-block:: bash
 
-    $ make deps
+    make deps
 
 ----------------------
 Set up the `.env` file
@@ -80,7 +80,7 @@ can be found in the `.env.dev` file. Copy the contents with the following comman
 
 .. code-block:: bash
 
-    $ cp .env.dev .env
+    cp .env.dev .env
 
 ---------------
 Running the CLI
@@ -90,10 +90,10 @@ You can run the CLI with the following command:
 
 .. code-block:: bash
 
-    $ make run VAR="NM_000152.4:c.1A>G" GR="GRCh37"
+    make run VAR="NM_000152.4:c.1A>G" GR="GRCh37"
 
 Also there's example for usage of CLI:
 
 .. code-block:: bash
 
-    $ make example_run
+    make example_run

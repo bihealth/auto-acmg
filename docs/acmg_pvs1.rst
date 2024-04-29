@@ -1,8 +1,8 @@
-.. _doc_algorithm:
+.. _acmg_pvs1_algorithm:
 
-=========
-Algorithm
-=========
+==============
+PVS1 Algorithm
+==============
 
 The core of the auto-acmg service is its Algorithm.
 The Algorithm is based on the paper `Recommendations for interpreting the loss of function PVS1 ACMG/AMP variant criterion <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6185798/>`__,
@@ -17,9 +17,9 @@ Overview
 The central approach is following the provided guidelines to determine if a variant is pathogenic based on the PVS1 
 criterion.
 
-.. figure:: img/pvs1_guidelines.jpg
+.. figure:: img/Tayoun-2018-Figure-1.png
+    :alt: Figure 1 from Tayoun et al. (2018)
     :align: center
-    :alt: Algorithm Overview
 
     Algorithm Overview
 
