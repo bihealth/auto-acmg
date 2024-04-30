@@ -63,6 +63,16 @@ class MockExon:
         self.ord = ord
 
 
+#: Mock the CdsInfo class
+class MockCdsInfo:
+    def __init__(self, start_codon, stop_codon, cds_start, cds_end, exons):
+        self.start_codon = start_codon
+        self.stop_codon = stop_codon
+        self.cds_start = cds_start
+        self.cds_end = cds_end
+        self.exons = exons
+
+
 # === SeqVarPVS1Helpers ===
 
 
@@ -305,9 +315,90 @@ def test_exon_skipping_or_cryptic_ss_disruption():
     pass
 
 
-def test_alternative_start_codon():
+@pytest.mark.parametrize(
+    "hgvs, cds_info, expected_result",
+    [
+        # Test no alternative start codon is found
+        (
+            "NM_000001",
+            {
+                "NM_000001": MockCdsInfo(
+                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                ),
+                "NM_000002": MockCdsInfo(
+                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                ),
+            },
+            False,
+        ),
+        # Test an alternative start codon is found
+        (
+            "NM_000001",
+            {
+                "NM_000001": MockCdsInfo(
+                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                ),
+                "NM_000002": MockCdsInfo(
+                    start_codon=150, stop_codon=1000, cds_start=150, cds_end=1000, exons=[]
+                ),
+            },
+            True,
+        ),
+        # Test multiple transcripts, one with an alternative start
+        (
+            "NM_000001",
+            {
+                "NM_000001": MockCdsInfo(
+                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                ),
+                "NM_000002": MockCdsInfo(
+                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                ),
+                "NM_000003": MockCdsInfo(
+                    start_codon=200, stop_codon=1000, cds_start=200, cds_end=1000, exons=[]
+                ),
+            },
+            True,
+        ),
+        # Test multiple transcripts, none with an alternative start
+        (
+            "NM_000001",
+            {
+                "NM_000001": MockCdsInfo(
+                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                ),
+                "NM_000002": MockCdsInfo(
+                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                ),
+                "NM_000003": MockCdsInfo(
+                    start_codon=100, stop_codon=2000, cds_start=100, cds_end=1000, exons=[]
+                ),
+            },
+            False,
+        ),
+    ],
+)
+def test_alternative_start_codon(hgvs, cds_info, expected_result):
+    result = SeqVarPVS1Helper._alternative_start_codon(hgvs, cds_info)
+    assert result == expected_result
+
+
+def test_alternative_start_codon_invalid():
     """Test the _alternative_start_codon method."""
-    pass
+    hgvs = "NM_000"
+    cds_info = {
+        "NM_000001": MockCdsInfo(
+            start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+        ),
+        "NM_000002": MockCdsInfo(
+            start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+        ),
+        "NM_000003": MockCdsInfo(
+            start_codon=200, stop_codon=1000, cds_start=200, cds_end=1000, exons=[]
+        ),
+    }
+    with pytest.raises(ValueError):
+        SeqVarPVS1Helper._alternative_start_codon(hgvs, cds_info)  # type: ignore
 
 
 def test_upstream_pathogenic_variant():
