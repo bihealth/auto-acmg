@@ -8,6 +8,7 @@ import typer
 from src.api.annonars import AnnonarsClient
 from src.api.mehari import MehariClient
 from src.defs.autopvs1 import (
+    AlteredRegionMode,
     CdsInfo,
     PVS1Prediction,
     PVS1PredictionSeqVarPath,
@@ -72,6 +73,143 @@ class SeqVarPVS1Helper:
             termination = -1
         return termination
 
+    @staticmethod
+    def _calculate_altered_region(
+        cds_pos: int, exons: List[Exon], mode: AlteredRegionMode
+    ) -> Tuple[int, int]:
+        """Calculates the altered region's start and end positions.
+
+        Args:
+            cds_pos: The position of the variant in the coding sequence.
+            exons: A list of exons of the gene where the variant occurs.
+            mode: The mode to calculate the altered region.
+
+        Returns:
+            Tuple[int, int]: The start and end positions of the altered region.
+        """
+        if mode == AlteredRegionMode.Downstream:
+            start_pos = exons[0].altStartI
+            for exon in exons:
+                if exon.altCdsStartI <= cds_pos <= exon.altCdsEndI:
+                    start_pos = exon.altStartI + (cds_pos - exon.altCdsStartI)
+                    break
+                if exon.altCdsEndI < cds_pos:
+                    start_pos = exon.altEndI + (cds_pos - exon.altCdsEndI)
+            end_pos = exons[-1].altEndI
+            return start_pos, end_pos
+        elif mode == AlteredRegionMode.Exon:
+            # Get the range of the altered exon
+            start_pos = exons[0].altStartI
+            end_pos = exons[-1].altEndI
+            for exon in exons:
+                # Variant is in the exon
+                if exon.altCdsStartI <= cds_pos and exon.altCdsEndI >= cds_pos:
+                    start_pos = exon.altStartI + (cds_pos - exon.altCdsStartI)
+                    end_pos = exon.altEndI
+                    break
+                # Variant is in the intron
+                if exon.altCdsEndI < cds_pos:
+                    start_pos = exon.altEndI + (cds_pos - exon.altCdsEndI)
+                if exon.altCdsStartI > cds_pos:
+                    end_pos = exon.altStartI
+                    break
+            return start_pos, end_pos
+        else:
+            raise ValueError("Invalid mode provided.")
+
+    @staticmethod
+    def _count_pathogenic_variants(seqvar: SeqVar, start_pos: int, end_pos: int) -> Tuple[int, int]:
+        """Counts pathogenic variants in the specified range.
+
+        Args:
+            seqvar: The sequence variant being analyzed.
+            start_pos: The start position of the range.
+            end_pos: The end position of the range.
+
+        Returns:
+            Tuple[int, int]: The number of pathogenic variants and the total number of variants.
+        """
+        annonars_client = AnnonarsClient()
+        try:
+            response = annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
+            if response and response.result.clinvar:
+                pathogenic_variants = [
+                    v
+                    for v in response.result.clinvar
+                    if v.referenceAssertions
+                    and v.referenceAssertions[0].clinicalSignificance
+                    in [
+                        "CLINICAL_SIGNIFICANCE_LIKELY_PATHOGENIC",
+                        "CLINICAL_SIGNIFICANCE_PATHOGENIC",
+                    ]
+                ]
+                return len(pathogenic_variants), len(response.result.clinvar)
+            else:
+                raise InvalidAPIResposeError("Failed to get variant from range.")
+        except Exception as e:
+            typer.secho(
+                f"Failed to get variant from range for variant {seqvar.user_repr}.",
+                err=True,
+                fg=typer.colors.RED,
+            )
+            typer.secho(str(e), err=True, fg=typer.colors.RED)
+            return 0, 0
+
+    @staticmethod
+    def _get_consequence(val: SeqVarConsequence) -> List[str]:
+        """Get the VEP consequence of the sequence variant by value.
+
+        Args:
+            val: The value of the consequence.
+
+        Returns:
+            List[str]: The VEP consequences of the sequence variant.
+        """
+        return [key for key, value in SeqvarConsequenceMapping.items() if value == val]
+
+    def _count_lof_variants(self, seqvar: SeqVar, start_pos: int, end_pos: int) -> Tuple[int, int]:
+        """Counts Loss-of-Function (LoF) variants in the specified range.
+
+        Args:
+            seqvar: The sequence variant being analyzed.
+            start_pos: The start position of the range.
+            end_pos: The end position of the range.
+
+        Returns:
+            Tuple[int, int]: The number of frequent LoF variants and the total number of LoF variants.
+        """
+        annonars_client = AnnonarsClient()
+        try:
+            response = annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
+            if response and response.result.gnomad_genomes:
+                frequent_lof_variants = 0
+                lof_variants = 0
+                for variant in response.result.gnomad_genomes:
+                    if not variant.vep:
+                        continue
+                    for vep in variant.vep:
+                        if vep.consequence in self._get_consequence(
+                            SeqVarConsequence.NonsenseFrameshift
+                        ):
+                            lof_variants += 1
+                            if not variant.alleleCounts:
+                                continue
+                            for allele in variant.alleleCounts:
+                                if allele.afPopmax and allele.afPopmax > 0.001:
+                                    frequent_lof_variants += 1
+                                    break
+                return frequent_lof_variants, lof_variants
+            else:
+                raise InvalidAPIResposeError("Failed to get variant from range.")
+        except Exception as e:
+            typer.secho(
+                f"Failed to get variant from range for variant {seqvar.user_repr}.",
+                err=True,
+                fg=typer.colors.RED,
+            )
+            typer.secho(e, err=True, fg=typer.colors.RED)
+            return 0, 0
+
     def _undergo_nmd(self, exons: List[Exon], pHGVS: str, hgnc_id: str) -> bool:
         """Classifies if the variant undergoes Nonsense-mediated decay (NMD).
 
@@ -118,8 +256,9 @@ class SeqVarPVS1Helper:
         """
         return "ManeSelect" in transcript_tags
 
-    @staticmethod
-    def _critical4protein_function(seqvar: SeqVar, cds_pos: int | None, exons: List[Exon]) -> bool:
+    def _critical4protein_function(
+        self, seqvar: SeqVar, cds_pos: int | None, exons: List[Exon]
+    ) -> bool:
         """Checks if the truncated or altered region is critical for the protein function.
 
         This method assesses the impact of a sequence variant based on the presence of pathogenic
@@ -152,39 +291,18 @@ class SeqVarPVS1Helper:
         if not cds_pos:
             return False
         # Get the range of the altered region
-        start_pos = exons[0].altStartI
-        for exon in exons:
-            # Variant is in the exon
-            if exon.altCdsStartI <= cds_pos and exon.altCdsEndI >= cds_pos:
-                start_pos = exon.altStartI + (cds_pos - exon.altCdsStartI)
-                break
-            # Variant is in the intron
-            if exon.altCdsEndI < cds_pos:
-                start_pos = exon.altEndI + (cds_pos - exon.altCdsEndI)
-        end_pos = exons[-1].altEndI
+        start_pos, end_pos = self._calculate_altered_region(
+            cds_pos, exons, AlteredRegionMode.Downstream
+        )
 
         try:
-            annonars_client = AnnonarsClient()
-            response = annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
-            if response and response.result.clinvar:
-                pathogenic_variants = 0
-                for variant in response.result.clinvar:
-                    if variant.referenceAssertions and variant.referenceAssertions[
-                        0
-                    ].clinicalSignificance in [
-                        "CLINICAL_SIGNIFICANCE_LIKELY_PATHOGENIC",
-                        "CLINICAL_SIGNIFICANCE_PATHOGENIC",
-                    ]:
-                        pathogenic_variants += 1
-                # TODO: Proove that this is the correct threshold
-                if (
-                    pathogenic_variants > 2
-                    and pathogenic_variants / len(response.result.clinvar) > 0.05
-                ):
-                    return True
-                return False
+            pathogenic_variants, total_variants = self._count_pathogenic_variants(
+                seqvar, start_pos, end_pos
+            )
+            if pathogenic_variants > 5 and pathogenic_variants / total_variants > 0.05:
+                return True
             else:
-                raise InvalidAPIResposeError("Failed to get variant from range.")
+                return False
         except Exception as e:
             typer.secho(
                 f"Failed to get variant from range for variant {seqvar.user_repr}.",
@@ -194,9 +312,8 @@ class SeqVarPVS1Helper:
             typer.secho(e, err=True, fg=typer.colors.RED)
             return False
 
-    @staticmethod
     def _lof_is_frequent_in_population(
-        seqvar: SeqVar, cds_pos: int | None, exons: List[Exon]
+        self, seqvar: SeqVar, cds_pos: int | None, exons: List[Exon]
     ) -> bool:
         """Checks if the Loss-of-Function (LoF) variants in the exon are frequent in the general
         population.
@@ -229,49 +346,17 @@ class SeqVarPVS1Helper:
         """
         if not cds_pos:
             return False
-        # Get the range of the altered exon
-        start_pos = exons[0].altStartI
-        end_pos = exons[-1].altEndI
-        for exon in exons:
-            # Variant is in the exon
-            if exon.altCdsStartI <= cds_pos and exon.altCdsEndI >= cds_pos:
-                start_pos = exon.altStartI + (cds_pos - exon.altCdsStartI)
-                end_pos = exon.altEndI
-                break
-            # Variant is in the intron
-            if exon.altCdsEndI < cds_pos:
-                start_pos = exon.altEndI + (cds_pos - exon.altCdsEndI)
-            if exon.altCdsStartI > cds_pos:
-                end_pos = exon.altStartI
-                break
+        # Get the range of the altered region
+        start_pos, end_pos = self._calculate_altered_region(cds_pos, exons, AlteredRegionMode.Exon)
 
         try:
-            annonars_client = AnnonarsClient()
-            response = annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
-            if response and response.result.gnomad_genomes:
-                frequent_lof_variants = 0
-                lof_variants = 0
-                for variant in response.result.gnomad_genomes:
-                    if not variant.vep:
-                        continue
-                    for vep in variant.vep:
-                        if vep.consequence in ["frameshift_variant", "stop_gained"]:
-                            lof_variants += 1
-                            if not variant.alleleCounts:
-                                continue
-                            for allele in variant.alleleCounts:
-                                if allele.afPopmax and allele.afPopmax > 0.001:
-                                    frequent_lof_variants += 1
-                                    break
-                # TODO: Proove that this is the correct threshold
-                if lof_variants == 0:
-                    return False
-                if frequent_lof_variants / lof_variants > 0.1:
-                    return True
-                else:
-                    return False
+            frequent_lof_variants, lof_variants = self._count_lof_variants(
+                seqvar, start_pos, end_pos
+            )
+            if frequent_lof_variants > 0 and frequent_lof_variants / lof_variants > 0.1:
+                return True
             else:
-                raise InvalidAPIResposeError("Failed to get variant from range.")
+                return False
         except Exception as e:
             typer.secho(
                 f"Failed to get variant from range for variant {seqvar.user_repr}.",
