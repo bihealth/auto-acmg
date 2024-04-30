@@ -20,7 +20,7 @@ example_seqvar = SeqVar(
 @responses.activate
 def test_get_variant_from_range_success():
     """Test to_annonar method with a successful response."""
-    mock_response = get_json_object("annonars_range_success.json")
+    mock_response = get_json_object("annonars/annonars_range_success.json")
     start = 1000
     stop = 2000
     responses.add(
@@ -38,7 +38,7 @@ def test_get_variant_from_range_success():
 @responses.activate
 def test_get_variant_from_range_failure():
     """Test to_annonar method with a failed response."""
-    mock_response = get_json_object("annonars_range_failure.json")
+    mock_response = get_json_object("annonars/annonars_range_failure.json")
     start = 1000
     stop = 999
     responses.add(

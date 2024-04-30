@@ -6,6 +6,13 @@ from pydantic import BaseModel
 from src.defs.mehari import Exon, TranscriptGene, TranscriptSeqvar
 
 
+class AlteredRegionMode(Enum):
+    """Enumeration for altered region mode."""
+
+    Downstream = auto()
+    Exon = auto()
+
+
 class TranscriptInfo(BaseModel):
     """Information about a transcript."""
 

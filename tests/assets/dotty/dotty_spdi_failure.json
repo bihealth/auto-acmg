@@ -1,0 +1,5 @@
+{
+  "success": false,
+  "value": null,
+  "message": "Problem parsing HGVS: NM_001267: char 10: end of input"
+}
