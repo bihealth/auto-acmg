@@ -77,11 +77,11 @@ class SeqVarPVS1Helper:
 
         Note:
             Rule:
-            If the variant is located in the last exon or in the last 50 nucleotides of the
-            penultimate exon, it is NOT predicted to undergo NMD.
+                If the variant is located in the last exon or in the last 50 nucleotides of the
+                penultimate exon, it is NOT predicted to undergo NMD.
 
             Important:
-            For the GJB2 gene (HGNC:4284), the variant is always predicted to undergo NMD.
+                For the GJB2 gene (HGNC:4284), the variant is always predicted to undergo NMD.
 
         Args:
             exons: A list of exons of the gene.
@@ -107,8 +107,8 @@ class SeqVarPVS1Helper:
 
         Note:
             Rule:
-            If the variant is located in a transcript with a MANE Select tag, it is
-            considered to be in a biologically relevant transcript.
+                If the variant is located in a transcript with a MANE Select tag, it is
+                considered to be in a biologically relevant transcript.
 
         Args:
             transcript_tags: A list of tags for the transcript.
@@ -129,19 +129,19 @@ class SeqVarPVS1Helper:
         Note:
             The significance of a truncated or altered region is determined by the presence and
             frequency of pathogenic variants downstream from the new stop codon.
-
-        Implementation:
-            The method implements the rule by:
-            - Fetching variants from the range of the altered region downstream from the new
-            position.
-            - Counting the number of pathogenic variants in that region.
-            - Considering the region critical if there are more than two pathogenic variants and
-            their frequency exceeds 0.5%.
+            Implementation:
+                The method implements the rule by:
+                - Calculating the range of the altered region.
+                - Fetching variants from the specified range of the altered region.
+                - Counting the number of pathogenic variants in that region, by iterating through
+                  the clinvar data.
+                - Considering the region critical if there are more than two pathogenic variants and
+                  their frequency exceeds 5%.
 
         Args:
-            seqvar (SeqVar): The sequence variant being analyzed.
-            cds_pos (int): The position of the variant in the coding sequence.
-            exons (list of Exon): A list of exons of the gene where the variant occurs.
+            seqvar: The sequence variant being analyzed.
+            cds_pos: The position of the variant in the coding sequence.
+            exons: A list of exons of the gene where the variant occurs.
 
         Returns:
             bool: True if the altered region is critical for the protein function, otherwise False.
@@ -177,7 +177,6 @@ class SeqVarPVS1Helper:
                     ]:
                         pathogenic_variants += 1
                 # TODO: Proove that this is the correct threshold
-                return False
                 if (
                     pathogenic_variants > 2
                     and pathogenic_variants / len(response.result.clinvar) > 0.05
@@ -209,17 +208,18 @@ class SeqVarPVS1Helper:
         Note:
             A LoF variant is considered frequent if its occurrence in the general population
             exceeds 0.1%. This threshold is set based on guidelines from the AutoPVS1 software.
-
-        Implementation:
-            The function implements the rule by:
-            - Fetching variants from the specified range of the altered region.
-            - Counting the number of LoF variants, specifically those classified as
-            'frameshift_variant' or 'stop_gained'.
-            - Determining the region as having frequent LoF variants if their frequency exceeds 0.1%.
-
+            Implementation:
+                The function implements the rule by:
+                - Calculating the range of the altered region (exon with the variant).
+                - Fetching variants from the specified range of the altered region.
+                - Counting the number of LoF variants and frequent LoF variants in that region,
+                  by iterating through the gnomAD genomes data.
+                - Considering the LoF variants frequent in the general population if the frequency
+                  of "frequent" LoF variants exceeds 10%.
         Args:
-            seqvar (SeqVar): The sequence variant being analyzed.
-            exons (list of Exon): A list of exons of the gene where the variant occurs.
+            seqvar: The sequence variant being analyzed.
+            cds_pos: The position of the variant in the coding sequence.
+            exons: A list of exons of the gene where the variant occurs.
 
         Returns:
             bool: True if the LoF variant frequency is greater than 0.1%, False otherwise.
@@ -289,12 +289,11 @@ class SeqVarPVS1Helper:
             Rule:
             A LoF variant is considered to remove more than 10% of the protein if the variant
             removes more than 10% of the protein:)
-
             Implementation:
-            The rule is implemented by:
-            - Calculating the length of the coding sequence (based on pHGVS).
-            - Calculating the length of the protein based on exons information.
-            - If the variant removes more than 10% of the protein, the rule is met.
+                The rule is implemented by:
+                - Calculating the length of the coding sequence (based on pHGVS).
+                - Calculating the length of the protein based on exons information.
+                - If the variant removes more than 10% of the protein, the rule is met.
 
         Args:
             pHGVS: A string containing the protein HGVS notation.
@@ -321,7 +320,26 @@ class SeqVarPVS1Helper:
 
     @staticmethod
     def _alternative_start_codon(hgvs: str, cds_info: Dict[str, CdsInfo]) -> bool:
-        """Check if the variant introduces an alternative start codon in other transcripts."""
+        """Check if the variant introduces an alternative start codon in other transcripts.
+
+        Note:
+            Rule:
+                If the variant introduces an alternative start codon in other transcripts, it is
+                considered to be non-pathogenic.
+            Implementation:
+                The rule is implemented by:
+                - Iterating through all transcripts and checking if the coding sequence start
+                  differs from the main transcript.
+                - If the start codon differs, the rule is met.
+
+        Args:
+            hgvs: The main transcript ID.
+            cds_info: A dictionary containing the CDS information for all transcripts.
+
+        Returns:
+            bool: True if the variant introduces an alternative start codon in other transcripts,
+                False otherwise.
+        """
         if hgvs not in cds_info:
             raise ValueError(f"Main transcript ID {hgvs} not found in the dataset.")
 
@@ -529,6 +547,8 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         seqvar (SeqVar): The sequence variant being analyzed.
         _seqvar_transcript (TranscriptSeqvar | None): Associated transcript of the sequence variant.
         _gene_transcript (TranscriptGene | None): Associated gene transcript.
+        _all_seqvar_ts (List[TranscriptSeqvar]): All sequence variant transcripts.
+        _all_gene_ts (List[TranscriptGene]): All gene transcripts.
         _consequence (SeqVarConsequence): Consequence of the sequence variant.
         HGVS (str): HGVS notation of the gene.
         pHGVS (str): Protein HGVS notation.
@@ -537,6 +557,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         transcript_tags (List[str]): Tags associated with the transcript.
         exons (List[Exon]): List of exons from the gene transcript.
         cds_pos (int | None): Position of the coding sequence.
+        cds_info (Dict[str, CdsInfo]): CDS information for all transcripts.
         prediction (PVS1Prediction): Prediction result based on PVS1 criteria.
         prediction_path (PVS1PredictionSeqVarPath): Pathway leading to the prediction decision.
     """
