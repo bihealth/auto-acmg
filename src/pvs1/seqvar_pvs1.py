@@ -1,6 +1,5 @@
 """PVS1 criteria for Sequence Variants (SeqVar)."""
 
-import json
 import re
 from typing import Dict, List, Tuple
 
@@ -153,30 +152,35 @@ class SeqVarPVS1Helper:
         if not cds_pos:
             return False
         # Get the range of the altered region
-        start_pos = 0
+        start_pos = exons[0].altStartI
         for exon in exons:
-            if exon.altCdsStartI < cds_pos and exon.altCdsEndI > cds_pos:
+            # Variant is in the exon
+            if exon.altCdsStartI <= cds_pos and exon.altCdsEndI >= cds_pos:
                 start_pos = exon.altStartI + (cds_pos - exon.altCdsStartI)
                 break
+            # Variant is in the intron
+            if exon.altCdsEndI < cds_pos:
+                start_pos = exon.altEndI + (cds_pos - exon.altCdsEndI)
         end_pos = exons[-1].altEndI
 
         try:
             annonars_client = AnnonarsClient()
             response = annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
-            if (
-                response
-                and response.result.gnomad_genomes
-                and response.result.gnomad_genomes[0].vep
-            ):
+            if response and response.result.clinvar:
                 pathogenic_variants = 0
-                for variant in response.result.gnomad_genomes[0].vep:
-                    # TODO: count only pathogenic variants
-                    if variant.consequence in ["pathogenic"]:
+                for variant in response.result.clinvar:
+                    if variant.referenceAssertions and variant.referenceAssertions[
+                        0
+                    ].clinicalSignificance in [
+                        "CLINICAL_SIGNIFICANCE_LIKELY_PATHOGENIC",
+                        "CLINICAL_SIGNIFICANCE_PATHOGENIC",
+                    ]:
                         pathogenic_variants += 1
                 # TODO: Proove that this is the correct threshold
+                return False
                 if (
                     pathogenic_variants > 2
-                    and pathogenic_variants / len(response.result.gnomad_genomes[0].vep) > 0.005
+                    and pathogenic_variants / len(response.result.clinvar) > 0.05
                 ):
                     return True
                 return False
@@ -192,14 +196,15 @@ class SeqVarPVS1Helper:
             return False
 
     @staticmethod
-    def _lof_is_frequent_in_population(seqvar: SeqVar, start: int, end: int) -> bool:
+    def _lof_is_frequent_in_population(
+        seqvar: SeqVar, cds_pos: int | None, exons: List[Exon]
+    ) -> bool:
         """Checks if the Loss-of-Function (LoF) variants in the exon are frequent in the general
         population.
 
         This function determines the frequency of LoF variants within a specified genomic region and
-        evaluates
-        whether this frequency exceeds a defined threshold indicative of common occurrence in the
-        general population.
+        evaluates whether this frequency exceeds a defined threshold indicative of common occurrence
+        in the general population.
 
         Note:
             A LoF variant is considered frequent if its occurrence in the general population
@@ -214,8 +219,7 @@ class SeqVarPVS1Helper:
 
         Args:
             seqvar (SeqVar): The sequence variant being analyzed.
-            start (int): The start position of the altered region in the genomic sequence.
-            end (int): The end position of the altered region in the genomic sequence.
+            exons (list of Exon): A list of exons of the gene where the variant occurs.
 
         Returns:
             bool: True if the LoF variant frequency is greater than 0.1%, False otherwise.
@@ -223,22 +227,46 @@ class SeqVarPVS1Helper:
         Raises:
             InvalidAPIResponseError: If the API response is invalid or cannot be processed.
         """
+        if not cds_pos:
+            return False
+        # Get the range of the altered exon
+        start_pos = exons[0].altStartI
+        end_pos = exons[-1].altEndI
+        for exon in exons:
+            # Variant is in the exon
+            if exon.altCdsStartI <= cds_pos and exon.altCdsEndI >= cds_pos:
+                start_pos = exon.altStartI + (cds_pos - exon.altCdsStartI)
+                end_pos = exon.altEndI
+                break
+            # Variant is in the intron
+            if exon.altCdsEndI < cds_pos:
+                start_pos = exon.altEndI + (cds_pos - exon.altCdsEndI)
+            if exon.altCdsStartI > cds_pos:
+                end_pos = exon.altStartI
+                break
+
         try:
             annonars_client = AnnonarsClient()
-            response = annonars_client.get_variant_from_range(seqvar, start, end)
-            if (
-                response
-                and response.result.gnomad_genomes
-                and response.result.gnomad_genomes[0].vep
-            ):
+            response = annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
+            if response and response.result.gnomad_genomes:
+                frequent_lof_variants = 0
                 lof_variants = 0
-                all_variants = len(response.result.gnomad_genomes[0].vep)
-                for variant in response.result.gnomad_genomes[0].vep:
-                    if variant.consequence in ["frameshift_variant", "stop_gained"]:
-                        lof_variants += 1
+                for variant in response.result.gnomad_genomes:
+                    if not variant.vep:
+                        continue
+                    for vep in variant.vep:
+                        if vep.consequence in ["frameshift_variant", "stop_gained"]:
+                            lof_variants += 1
+                            if not variant.alleleCounts:
+                                continue
+                            for allele in variant.alleleCounts:
+                                if allele.afPopmax and allele.afPopmax > 0.001:
+                                    frequent_lof_variants += 1
+                                    break
                 # TODO: Proove that this is the correct threshold
-                # The guideline does not specify the exact threshold. 0.1% was taken from AutoPVS1
-                if lof_variants / all_variants > 0.001:
+                if lof_variants == 0:
+                    return False
+                if frequent_lof_variants / lof_variants > 0.1:
                     return True
                 else:
                     return False
@@ -536,6 +564,29 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
         self.prediction_path: PVS1PredictionSeqVarPath = PVS1PredictionSeqVarPath.NotSet
 
+    @staticmethod
+    def choose_hgvs_p(
+        hgvs: str, seqvar_ts: TranscriptSeqvar, seqvar_transcripts: List[TranscriptSeqvar]
+    ) -> str:
+        """Choose the most suitable protein HGVS notation.
+
+        Args:
+            hgvs: The transcript HGVS notation.
+            seqvar_ts: The sequence variant transcript.
+            seqvar_transcripts: A list of all sequence variant transcripts.
+
+        Returns:
+            str: The most suitable protein HGVS notation.
+        """
+        # Return pHGVS from the main transcript
+        if seqvar_ts.hgvs_p and seqvar_ts.hgvs_p not in ["", "p.?"]:
+            return hgvs + ":" + seqvar_ts.hgvs_p
+        # Choose the first transcript with a protein HGVS
+        for transcript in seqvar_transcripts:
+            if transcript.hgvs_p and transcript.hgvs_p not in ["", "p.?"]:
+                return hgvs + ":" + transcript.hgvs_p
+        return hgvs + ":p.?"
+
     def initialize(self):
         """Setup the PVS1 class.
 
@@ -567,7 +618,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
 
         # Set attributes
         self.HGVS = self._gene_transcript.id
-        self.pHGVS = self.HGVS + ":" + (self._seqvar_transcript.hgvs_p or "")
+        self.pHGVS = self.choose_hgvs_p(self.HGVS, self._seqvar_transcript, self._all_seqvar_ts)
         self.tHGVS = self.HGVS + ":" + (self._seqvar_transcript.hgvs_t or "")
         self.HGNC_id = self._seqvar_transcript.gene_id
         self.transcript_tags = self._seqvar_transcript.feature_tag
@@ -610,6 +661,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
             if self.HGNC_id == "HGNC:9588":  # Follow guidelines for PTEN
                 if self._get_pHGVS_termination(self.pHGVS) < 374:
                     self.prediction = PVS1Prediction.PVS1
+                    self.prediction_path = PVS1PredictionSeqVarPath.PTEN
                     return
 
             if self._undergo_nmd(self.exons, self.pHGVS, self.HGNC_id):
@@ -625,9 +677,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                     self.prediction_path = PVS1PredictionSeqVarPath.NF3
                 else:
                     if self._lof_is_frequent_in_population(
-                        self.seqvar,
-                        self._gene_transcript.genomeAlignments[0].cdsStart,
-                        self._gene_transcript.genomeAlignments[0].cdsEnd,
+                        self.seqvar, self.cds_pos, self.exons
                     ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionSeqVarPath.NF4
@@ -659,9 +709,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                     self.prediction_path = PVS1PredictionSeqVarPath.SS3
                 else:
                     if self._lof_is_frequent_in_population(
-                        self.seqvar,
-                        self._gene_transcript.genomeAlignments[0].cdsStart,
-                        self._gene_transcript.genomeAlignments[0].cdsEnd,
+                        self.seqvar, self.cds_pos, self.exons
                     ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionSeqVarPath.SS4
@@ -680,9 +728,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                     self.prediction_path = PVS1PredictionSeqVarPath.SS10
                 else:
                     if self._lof_is_frequent_in_population(
-                        self.seqvar,
-                        self._gene_transcript.genomeAlignments[0].cdsStart,
-                        self._gene_transcript.genomeAlignments[0].cdsEnd,
+                        self.seqvar, self.cds_pos, self.exons
                     ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionSeqVarPath.SS7
@@ -697,7 +743,6 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                             self.prediction_path = PVS1PredictionSeqVarPath.SS9
 
         elif self._consequence == SeqVarConsequence.InitiationCodon:
-            # if True:
             if self._alternative_start_codon(self.HGVS, self.cds_info):
                 self.prediction = PVS1Prediction.NotPVS1
                 self.prediction_path = PVS1PredictionSeqVarPath.IC3

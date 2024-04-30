@@ -49,6 +49,7 @@ class PVS1PredictionSeqVarPath(Enum):
     """PVS1 prediction path."""
 
     NotSet = auto()
+    PTEN = auto()
     NF1 = auto()
     NF2 = auto()
     NF3 = auto()
@@ -137,6 +138,7 @@ PVS1PredictionPathMapping: Dict[
     Union[PVS1PredictionSeqVarPath, PVS1PredictionStrucVarPath], str
 ] = {
     PVS1PredictionSeqVarPath.NotSet: "Not Set",
+    PVS1PredictionSeqVarPath.PTEN: "Special guideline for PTEN -> Predicted to undergo NMD",
     PVS1PredictionSeqVarPath.NF1: (
         "Predicted to undergo NMD -> Exon is present in biologically-relevant transcript(s)"
     ),

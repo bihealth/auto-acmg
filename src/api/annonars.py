@@ -42,6 +42,9 @@ class AnnonarsClient:
             response.raise_for_status()
             return AnnonarsRangeResponse.model_validate(response.json())
         except requests.RequestException:
+            print(f"Annonars API request failed: {url}")
             return None
         except ValidationError as e:
+            print(f"Validation error: {e}")
+            print(response.json(), file=open("ann.json", "w"))
             return None
