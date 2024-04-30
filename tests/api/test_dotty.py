@@ -9,7 +9,7 @@ from tests.utils import get_json_object
 @responses.activate
 def test_to_spdi_success():
     """Test to_spdi method with a successful response."""
-    mock_response = get_json_object("dotty_spdi_success.json")
+    mock_response = get_json_object("dotty/dotty_spdi_success.json")
     responses.add(
         responses.GET,
         "https://example.com/dotty/api/v1/to-spdi?q=test_query&assembly=GRCh38",
@@ -25,7 +25,7 @@ def test_to_spdi_success():
 @responses.activate
 def test_to_spdi_failure():
     """Test to_spdi method with a failed response."""
-    mock_response = get_json_object("dotty_spdi_failure.json")
+    mock_response = get_json_object("dotty/dotty_spdi_failure.json")
     responses.add(
         responses.GET,
         "https://example.com/dotty/api/v1/to-spdi?q=test_query&assembly=GRCh38",
