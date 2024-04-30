@@ -29,3 +29,9 @@ class InvalidAPIResposeError(Exception):
     """Exception for API errors."""
 
     pass
+
+
+class AlgorithmError(Exception):
+    """Exception for algorithm errors."""
+
+    pass

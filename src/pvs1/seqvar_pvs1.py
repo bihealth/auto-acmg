@@ -3,7 +3,7 @@
 import re
 from typing import Dict, List, Tuple
 
-import typer
+from loguru import logger
 
 from src.api.annonars import AnnonarsClient
 from src.api.mehari import MehariClient
@@ -16,7 +16,7 @@ from src.defs.autopvs1 import (
     SeqvarConsequenceMapping,
     TranscriptInfo,
 )
-from src.defs.exceptions import InvalidAPIResposeError
+from src.defs.exceptions import AlgorithmError, InvalidAPIResposeError
 from src.defs.mehari import CdsPos, Exon, TranscriptGene, TranscriptSeqvar
 from src.defs.seqvar import SeqVar
 
@@ -49,6 +49,7 @@ class SeqVarPVS1Helper:
             >>> get_termination_position("p.Arg97GlyfsTer26")
             97 + 26 = 123
         """
+        logger.debug("Getting termination position from pHGVS: {}", pHGVS)
         if "fs" in pHGVS:  # If frameshift
             pattern1 = re.compile(r"p\.\D+(\d+)\D+fs(\*|X|Ter)(\d+)")
             match1 = pattern1.search(pHGVS)
@@ -71,6 +72,7 @@ class SeqVarPVS1Helper:
             termination = int(match.group(1)) if match else -1
         else:
             termination = -1
+        logger.debug("Termination position: {}", termination)
         return termination
 
     @staticmethod
@@ -87,6 +89,9 @@ class SeqVarPVS1Helper:
         Returns:
             Tuple[int, int]: The start and end positions of the altered region.
         """
+        logger.debug(
+            "Calculating altered region for CDS position: {} for the mode: {}.", cds_pos, mode
+        )
         if mode == AlteredRegionMode.Downstream:
             start_pos = exons[0].altStartI
             for exon in exons:
@@ -96,6 +101,7 @@ class SeqVarPVS1Helper:
                 if exon.altCdsEndI < cds_pos:
                     start_pos = exon.altEndI + (cds_pos - exon.altCdsEndI)
             end_pos = exons[-1].altEndI
+            logger.debug("Altered region: {} - {}", start_pos, end_pos)
             return start_pos, end_pos
         elif mode == AlteredRegionMode.Exon:
             # Get the range of the altered exon
@@ -113,9 +119,8 @@ class SeqVarPVS1Helper:
                 if exon.altCdsStartI > cds_pos:
                     end_pos = exon.altStartI
                     break
+            logger.debug("Altered region: {} - {}", start_pos, end_pos)
             return start_pos, end_pos
-        else:
-            raise ValueError("Invalid mode provided.")
 
     @staticmethod
     def _count_pathogenic_variants(seqvar: SeqVar, start_pos: int, end_pos: int) -> Tuple[int, int]:
@@ -128,32 +133,33 @@ class SeqVarPVS1Helper:
 
         Returns:
             Tuple[int, int]: The number of pathogenic variants and the total number of variants.
+
+        Raises:
+            InvalidAPIResposeError: If the API response is invalid or cannot be processed.
         """
+        logger.debug("Counting pathogenic variants in the range {} - {}.", start_pos, end_pos)
         annonars_client = AnnonarsClient()
-        try:
-            response = annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
-            if response and response.result.clinvar:
-                pathogenic_variants = [
-                    v
-                    for v in response.result.clinvar
-                    if v.referenceAssertions
-                    and v.referenceAssertions[0].clinicalSignificance
-                    in [
-                        "CLINICAL_SIGNIFICANCE_LIKELY_PATHOGENIC",
-                        "CLINICAL_SIGNIFICANCE_PATHOGENIC",
-                    ]
+        response = annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
+        if response and response.result.clinvar:
+            pathogenic_variants = [
+                v
+                for v in response.result.clinvar
+                if v.referenceAssertions
+                and v.referenceAssertions[0].clinicalSignificance
+                in [
+                    "CLINICAL_SIGNIFICANCE_LIKELY_PATHOGENIC",
+                    "CLINICAL_SIGNIFICANCE_PATHOGENIC",
                 ]
-                return len(pathogenic_variants), len(response.result.clinvar)
-            else:
-                raise InvalidAPIResposeError("Failed to get variant from range.")
-        except Exception as e:
-            typer.secho(
-                f"Failed to get variant from range for variant {seqvar.user_repr}.",
-                err=True,
-                fg=typer.colors.RED,
+            ]
+            logger.debug(
+                "Pathogenic variants: {}, Total variants: {}",
+                len(pathogenic_variants),
+                len(response.result.clinvar),
             )
-            typer.secho(str(e), err=True, fg=typer.colors.RED)
-            return 0, 0
+            return len(pathogenic_variants), len(response.result.clinvar)
+        else:
+            logger.error("Failed to get variant from range. No ClinVar data.")
+            raise InvalidAPIResposeError("Failed to get variant from range. No ClinVar data.")
 
     @staticmethod
     def _get_consequence(val: SeqVarConsequence) -> List[str]:
@@ -178,37 +184,37 @@ class SeqVarPVS1Helper:
         Returns:
             Tuple[int, int]: The number of frequent LoF variants and the total number of LoF variants.
         """
+        logger.debug("Counting LoF variants in the range {} - {}.", start_pos, end_pos)
         annonars_client = AnnonarsClient()
-        try:
-            response = annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
-            if response and response.result.gnomad_genomes:
-                frequent_lof_variants = 0
-                lof_variants = 0
-                for variant in response.result.gnomad_genomes:
-                    if not variant.vep:
-                        continue
-                    for vep in variant.vep:
-                        if vep.consequence in self._get_consequence(
-                            SeqVarConsequence.NonsenseFrameshift
-                        ):
-                            lof_variants += 1
-                            if not variant.alleleCounts:
-                                continue
-                            for allele in variant.alleleCounts:
-                                if allele.afPopmax and allele.afPopmax > 0.001:
-                                    frequent_lof_variants += 1
-                                    break
-                return frequent_lof_variants, lof_variants
-            else:
-                raise InvalidAPIResposeError("Failed to get variant from range.")
-        except Exception as e:
-            typer.secho(
-                f"Failed to get variant from range for variant {seqvar.user_repr}.",
-                err=True,
-                fg=typer.colors.RED,
+        response = annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
+        if response and response.result.gnomad_genomes:
+            frequent_lof_variants = 0
+            lof_variants = 0
+            for variant in response.result.gnomad_genomes:
+                if not variant.vep:
+                    continue
+                for vep in variant.vep:
+                    if vep.consequence in self._get_consequence(
+                        SeqVarConsequence.NonsenseFrameshift
+                    ):
+                        lof_variants += 1
+                        if not variant.alleleCounts:
+                            continue
+                        for allele in variant.alleleCounts:
+                            if allele.afPopmax and allele.afPopmax > 0.001:
+                                frequent_lof_variants += 1
+                                break
+            logger.debug(
+                "Frequent LoF variants: {}, Total LoF variants: {}",
+                frequent_lof_variants,
+                lof_variants,
             )
-            typer.secho(e, err=True, fg=typer.colors.RED)
-            return 0, 0
+            return frequent_lof_variants, lof_variants
+        else:
+            logger.error("Failed to get variant from range. No gnomAD genomes data.")
+            raise InvalidAPIResposeError(
+                "Failed to get variant from range. No gnomAD genomes data."
+            )
 
     def _undergo_nmd(self, exons: List[Exon], pHGVS: str, hgnc_id: str) -> bool:
         """Classifies if the variant undergoes Nonsense-mediated decay (NMD).
@@ -229,14 +235,22 @@ class SeqVarPVS1Helper:
         Returns:
             bool: True if the variant is predicted to undergo NMD, False otherwise.
         """
+        logger.debug("Checking if the variant undergoes NMD.")
         new_stop_codon = self._get_pHGVS_termination(pHGVS)
         cds_sizes = [exon.altEndI - exon.altStartI for exon in exons]
         if hgnc_id == "HGNC:4284":  # Hearing Loss Guidelines GJB2
+            logger.debug("Variant is in the GJB2 gene. Predicted to undergo NMD.")
             return True
         elif len(cds_sizes) <= 1:
+            logger.debug("Only one (or 0) exon. Predicted to undergo NMD.")
             return False
         else:
             nmd_cutoff = sum(cds_sizes[:-1]) - min(50, cds_sizes[-2])
+            logger.debug(
+                "New stop codon (*3): {}, NMD cutoff: {}.",
+                new_stop_codon * 3,
+                nmd_cutoff,
+            )
             return new_stop_codon * 3 <= nmd_cutoff
 
     @staticmethod
@@ -254,6 +268,7 @@ class SeqVarPVS1Helper:
         Returns:
             bool: True if the variant is in a biologically relevant transcript, False otherwise.
         """
+        logger.debug("Checking if the variant is in a biologically relevant transcript.")
         return "ManeSelect" in transcript_tags
 
     def _critical4protein_function(
@@ -288,13 +303,14 @@ class SeqVarPVS1Helper:
         Raises:
             InvalidAPIResponseError: If the API response is invalid or cannot be processed.
         """
+        logger.debug("Checking if the altered region is critical for the protein function.")
         if not cds_pos:
-            return False
-        # Get the range of the altered region
+            logger.error("CDS position is not available. Cannot determine criticality.")
+            raise AlgorithmError("CDS position is not available. Cannot determine criticality.")
+
         start_pos, end_pos = self._calculate_altered_region(
             cds_pos, exons, AlteredRegionMode.Downstream
         )
-
         try:
             pathogenic_variants, total_variants = self._count_pathogenic_variants(
                 seqvar, start_pos, end_pos
@@ -304,13 +320,8 @@ class SeqVarPVS1Helper:
             else:
                 return False
         except Exception as e:
-            typer.secho(
-                f"Failed to get variant from range for variant {seqvar.user_repr}.",
-                err=True,
-                fg=typer.colors.RED,
-            )
-            typer.secho(e, err=True, fg=typer.colors.RED)
-            return False
+            logger.error("Failed to predict criticality for variant. Error: {}", e)
+            raise AlgorithmError("Failed to predict criticality for variant. Error: {}", e)
 
     def _lof_is_frequent_in_population(
         self, seqvar: SeqVar, cds_pos: int | None, exons: List[Exon]
@@ -344,11 +355,12 @@ class SeqVarPVS1Helper:
         Raises:
             InvalidAPIResponseError: If the API response is invalid or cannot be processed.
         """
+        logger.debug("Checking if LoF variants are frequent in the general population.")
         if not cds_pos:
-            return False
-        # Get the range of the altered region
-        start_pos, end_pos = self._calculate_altered_region(cds_pos, exons, AlteredRegionMode.Exon)
+            logger.error("CDS position is not available. Cannot determine LoF frequency.")
+            raise AlgorithmError("CDS position is not available. Cannot determine LoF frequency.")
 
+        start_pos, end_pos = self._calculate_altered_region(cds_pos, exons, AlteredRegionMode.Exon)
         try:
             frequent_lof_variants, lof_variants = self._count_lof_variants(
                 seqvar, start_pos, end_pos
@@ -358,13 +370,8 @@ class SeqVarPVS1Helper:
             else:
                 return False
         except Exception as e:
-            typer.secho(
-                f"Failed to get variant from range for variant {seqvar.user_repr}.",
-                err=True,
-                fg=typer.colors.RED,
-            )
-            typer.secho(e, err=True, fg=typer.colors.RED)
-            return False
+            logger.error("Failed to predict LoF frequency for variant. Error: {}", e)
+            raise AlgorithmError("Failed to predict LoF frequency for variant. Error: {}", e)
 
     @staticmethod
     def _lof_removes_more_then_10_percent_of_protein(pHGVS: str, exons: List[Exon]) -> bool:
@@ -387,14 +394,31 @@ class SeqVarPVS1Helper:
         Returns:
             bool: True if the LoF variant removes more than 10% of the protein, False otherwise.
         """
+        logger.debug("Checking if the LoF variant removes more than 10% of the protein.")
         cds_length = sum([exon.altEndI - exon.altStartI for exon in exons])
         pattern = re.compile(r"p\.\D+(\d+)(\D+fs)?(\*|X|Ter)(\d+)?")
         match = pattern.search(pHGVS)
         codon_offset = int(match.group(1)) if match else -1
         codon_length = cds_length / 3
         if codon_offset > 0 and (codon_length - codon_offset) / codon_length > 0.1:
+            logger.debug(
+                (
+                    "LoF variant removes more than 10% of the protein lenght with "
+                    "codon offset: {} and total length {}."
+                ),
+                codon_offset,
+                codon_length,
+            )
             return True
         else:
+            logger.debug(
+                (
+                    "LoF variant does not remove more than 10% of the protein lenght with "
+                    "codon offset: {} and total length {}."
+                ),
+                codon_offset,
+                codon_length,
+            )
             return False
 
     @staticmethod
@@ -425,7 +449,9 @@ class SeqVarPVS1Helper:
             bool: True if the variant introduces an alternative start codon in other transcripts,
                 False otherwise.
         """
+        logger.debug("Checking if the variant introduces an alternative start codon.")
         if hgvs not in cds_info:
+            logger.error("Main transcript ID {} not found in the dataset.", hgvs)
             raise ValueError(f"Main transcript ID {hgvs} not found in the dataset.")
 
         main_start_codon, main_cds_start = cds_info[hgvs].start_codon, cds_info[hgvs].cds_start
@@ -435,6 +461,7 @@ class SeqVarPVS1Helper:
             if transcript_id == hgvs:
                 continue
             if info.start_codon != main_start_codon and info.cds_start != main_cds_start:
+                logger.debug("Alternative start codon found in transcript {}.", transcript_id)
                 alternative_starts = True
                 break
         return alternative_starts
@@ -487,17 +514,6 @@ class SeqVarTranscriptsHelper:
 
     def initialize(self):
         """Get all transcripts for the given sequence variant from Mehari."""
-        # Should never happen, since __init__ is called with seqvar
-        if not self.seqvar:
-            typer.secho(
-                (
-                    "No sequence variant specified. Assure that the variant is resolved before "
-                    "fetching transcripts."
-                ),
-                err=True,
-                fg=typer.colors.RED,
-            )
-            return
         try:
             # Get transcripts from Mehari
             mehari_client = MehariClient()
@@ -511,11 +527,7 @@ class SeqVarTranscriptsHelper:
                 self.seqvar_transcript = None
                 self.gene_transcript = None
                 self.consequence = SeqVarConsequence.NotSet
-                typer.secho(
-                    f"No transcripts found for variant {self.seqvar.user_repr}.",
-                    err=True,
-                    fg=typer.colors.RED,
-                )
+                logger.warning("No transcripts found for the sequence variant.")
                 return
 
             # Get HGNC ID and HGVSs
@@ -544,12 +556,8 @@ class SeqVarTranscriptsHelper:
                 self.consequence = SeqVarConsequence.NotSet
 
         except Exception as e:
-            typer.secho(
-                f"Failed to get transcripts for variant {self.seqvar.user_repr}.",
-                err=True,
-                fg=typer.colors.RED,
-            )
-            typer.secho(e, err=True)
+            logger.error("Failed to get transcripts for the sequence variant. Error: {}", e)
+            raise AlgorithmError("Failed to get transcripts for the sequence variant. Error: {}", e)
 
     @staticmethod
     def _get_consequence(seqvar_transcript: TranscriptSeqvar | None) -> SeqVarConsequence:
@@ -581,6 +589,7 @@ class SeqVarTranscriptsHelper:
             The first consideration is the MANE transcript, if available,
             and then the length of the exons.
         """
+        logger.debug("Choosing the most suitable transcript for the PVS1 prediction.")
         transcripts_mapping: Dict[str, TranscriptInfo] = {}
         seqvar_transcript = None
         gene_transcript = None
@@ -612,12 +621,15 @@ class SeqVarTranscriptsHelper:
 
         # Choose the most suitable transcript
         if len(mane_transcripts) == 1:
+            logger.debug("The MANE transcript found: {}", mane_transcripts[0])
             seqvar_transcript = transcripts_mapping[mane_transcripts[0]].seqvar
             gene_transcript = transcripts_mapping[mane_transcripts[0]].gene
         else:
+            logger.debug("Choosing the longest transcript.")
             lookup_group = mane_transcripts if mane_transcripts else list(exon_lengths.keys())
             # If no overlapping transcripts, return None
             if not lookup_group or not exon_lengths:
+                logger.warning("No overlapping transcripts found.")
                 return None, None
             max_length_transcript = max(lookup_group, key=lambda x: exon_lengths[x])
             seqvar_transcript = transcripts_mapping[max_length_transcript].seqvar
@@ -684,12 +696,15 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         Returns:
             str: The most suitable protein HGVS notation.
         """
+        logger.debug("Choosing the most suitable protein HGVS notation.")
         # Return pHGVS from the main transcript
         if seqvar_ts.hgvs_p and seqvar_ts.hgvs_p not in ["", "p.?"]:
+            logger.debug("Protein HGVS found in the main transcript {}.", hgvs)
             return hgvs + ":" + seqvar_ts.hgvs_p
         # Choose the first transcript with a protein HGVS
         for transcript in seqvar_transcripts:
             if transcript.hgvs_p and transcript.hgvs_p not in ["", "p.?"]:
+                logger.debug("Protein HGVS found in the transcript {}.", transcript.feature_id)
                 return hgvs + ":" + transcript.hgvs_p
         return hgvs + ":p.?"
 
@@ -699,6 +714,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         Fetches the transcript data and sets the attributes. Use this method before making
         predictions.
         """
+        logger.debug("Setting up the SeqVarPVS1 class.")
         # Fetch transcript data
         seqvar_transcript_helper = SeqVarTranscriptsHelper(self.seqvar)
         seqvar_transcript_helper.initialize()
@@ -715,14 +731,11 @@ class SeqVarPVS1(SeqVarPVS1Helper):
             or not self._gene_transcript
             or self._consequence == SeqVarConsequence.NotSet
         ):
-            typer.secho(
-                f"Failed to setup transcripts data.",
-                err=True,
-                fg=typer.colors.RED,
-            )
-            return
+            logger.error("Transcript data is not set. Cannot initialize the PVS1 class.")
+            raise AlgorithmError("Transcript data is not set. Cannot initialize the PVS1 class.")
 
         # Set attributes
+        logger.debug("Setting up the attributes for the PVS1 class.")
         self.HGVS = self._gene_transcript.id
         self.pHGVS = self.choose_hgvs_p(self.HGVS, self._seqvar_transcript, self._all_seqvar_ts)
         self.tHGVS = self.HGVS + ":" + (self._seqvar_transcript.hgvs_t or "")
@@ -744,6 +757,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
             )
             for ts in self._all_gene_ts
         }
+        logger.debug("SeqVarPVS1 initialized successfully.")
 
     def verify_PVS1(self):
         """Make the PVS1 prediction.
@@ -751,17 +765,16 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         The prediction is based on the PVS1 criteria for sequence variants. The prediction
         and prediction path is stored in the prediction and prediction_path attributes.
         """
+        logger.debug("Verifying the PVS1 criteria.")
         if (
             not self._seqvar_transcript
             or not self._gene_transcript
             or self._consequence == SeqVarConsequence.NotSet
         ):
-            typer.secho(
-                f"Transcript data is not set. Assure to call initialize() before verify_PVS1().",
-                err=True,
-                fg=typer.colors.RED,
+            logger.error("Transcript data is not set. Did you forget to initialize the class?")
+            raise AlgorithmError(
+                "Transcript data is not set. Did you forget to initialize the class?"
             )
-            return
 
         if self._consequence == SeqVarConsequence.NonsenseFrameshift:
             if self.HGNC_id == "HGNC:9588":  # Follow guidelines for PTEN
@@ -859,13 +872,12 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                 else:
                     self.prediction = PVS1Prediction.PVS1_Supporting
                     self.prediction_path = PVS1PredictionSeqVarPath.IC2
-        else:
+
+        elif self._consequence == SeqVarConsequence.NotSet:
             self.prediction = PVS1Prediction.NotPVS1
-            typer.secho(
-                f"Consequence {self._consequence} is not supported for PVS1 prediction.",
-                err=True,
-                fg=typer.colors.RED,
-            )
+            self.prediction_path = PVS1PredictionSeqVarPath.NotSet
+            logger.error("Consequence of the sequence variant is not set.")
+            raise AlgorithmError("Consequence of the sequence variant is not set.")
 
     def get_prediction(self) -> Tuple[PVS1Prediction, PVS1PredictionSeqVarPath]:
         """Return the PVS1 prediction.
