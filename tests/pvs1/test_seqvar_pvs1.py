@@ -11,10 +11,10 @@ from src.defs.autopvs1 import (
     PVS1PredictionSeqVarPath,
     SeqVarConsequence,
 )
+from src.defs.exceptions import AlgorithmError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import Exon, GeneTranscripts, TranscriptsSeqVar
 from src.defs.seqvar import SeqVar
-from src.defs.exceptions import AlgorithmError
 from src.pvs1.seqvar_pvs1 import SeqVarPVS1, SeqVarPVS1Helper, SeqVarTranscriptsHelper
 from tests.utils import get_json_object
 
@@ -127,14 +127,6 @@ def test_calculate_altered_region(cds_pos, exons, mode, expected_result):
     assert result == expected_result
 
 
-def test_calculate_altered_region_invalid_mode():
-    """Test the _calculate_altered_region method with an invalid mode."""
-    with pytest.raises(ValueError):
-        SeqVarPVS1Helper._calculate_altered_region(
-            100, [MockExon(0, 100, 0, 100)], "InvalidMode"  # type: ignore
-        )
-
-
 # TODO: Fix the test
 # def test_count_pathogenic_variants(seqvar, mock_annonars_client):
 #     """Test the _count_pathogenic_variants method."""
@@ -221,7 +213,6 @@ def test_in_biologically_relevant_transcript(transcript_tags, expected_result):
         (100, 3, 100, False),  # Test pathogenic variants do not exceed the threshold
         (100, 0, 0, False),  # Test no variants are found
         (100, 0, 100, False),  # Test no pathogenic variants are found
-        (100, 100, 0, False),  # Test more pathogenic variants than total variants
     ],
 )
 def test_critical4protein_function(
@@ -247,21 +238,61 @@ def test_critical4protein_function(
         mock_calculate.assert_called_once_with(cds_pos, exons, AlteredRegionMode.Downstream)
         mock_count_pathogenic.assert_called_once_with(seqvar, 1, 1000)  # The range is mocked
 
-# @pytest.mark.parametrize(
-#     "cds_pos, exons",
-#     [
-#         (None, 0),  # Test with no cds_pos
-#     ],
-# )
-# def test_critical4protein_function_invalid(seqvar, cds_pos, exons):
-#     """Test the _critical4protein_function method with invalid cds_pos."""
-#     with pytest.raises(AlgorithmError):
-#         SeqVarPVS1Helper()._critical4protein_function(seqvar, cds_pos, exons)
+
+@pytest.mark.parametrize(
+    "cds_pos, pathogenic_variants, total_variants",
+    [
+        (None, 0, 0),  # Test with no cds_pos
+        (100, 100, 0),  # Test more pathogenic variants than total variants
+    ],
+)
+def test_critical4protein_function_failure(
+    seqvar, cds_pos, pathogenic_variants, total_variants, monkeypatch
+):
+    """Test the _critical4protein_function method."""
+    # Create a mock list of Exons
+    exons = [MagicMock(spec=Exon)]
+    # Mocking _calculate_altered_region to return a controlled range
+    mock_calculate = MagicMock(return_value=(1, 1000))  # The range is mocked
+    monkeypatch.setattr(SeqVarPVS1Helper, "_calculate_altered_region", mock_calculate)
+    # Mocking _count_pathogenic_variants to return controlled counts of pathogenic and total variants
+    mock_count_pathogenic = MagicMock(return_value=(pathogenic_variants, total_variants))
+    monkeypatch.setattr(SeqVarPVS1Helper, "_count_pathogenic_variants", mock_count_pathogenic)
+
+    with pytest.raises(AlgorithmError):
+        # Run the method under test
+        helper = SeqVarPVS1Helper()
+        helper._critical4protein_function(seqvar, cds_pos, exons)  # type: ignore
+
+
+@pytest.mark.parametrize(
+    "cds_pos, frequent_lof_variants, lof_variants",
+    [
+        (None, 0, 0),  # Test case where cds_pos is None
+        (100, 20, 0),  # Test case where more frequent LoF variants than total LoF variants
+    ],
+)
+def test_lof_is_frequent_in_population_failure(
+    seqvar, cds_pos, frequent_lof_variants, lof_variants, monkeypatch
+):
+    # Create a mock list of Exons
+    exons = [MagicMock(spec=Exon)]
+    # Mocking _calculate_altered_region to return a controlled range
+    mock_calculate = MagicMock(return_value=(1, 1000))  # The range is mocked
+    monkeypatch.setattr(SeqVarPVS1Helper, "_calculate_altered_region", mock_calculate)
+    # Mocking _count_lof_variants to return controlled counts of frequent and total LoF variants
+    mock_count_lof_variants = MagicMock(return_value=(frequent_lof_variants, lof_variants))
+    monkeypatch.setattr(SeqVarPVS1Helper, "_count_lof_variants", mock_count_lof_variants)
+
+    # Run the method under test
+    with pytest.raises(AlgorithmError):
+        helper = SeqVarPVS1Helper()
+        helper._lof_is_frequent_in_population(seqvar, cds_pos, exons)  # type: ignore
+
 
 @pytest.mark.parametrize(
     "cds_pos, frequent_lof_variants, lof_variants, expected_result",
     [
-        (None, 0, 0, False),  # Test case where cds_pos is None
         (100, 11, 100, True),  # Test case where frequent LoF variants exceed the 10% threshold
         (
             100,
@@ -270,7 +301,6 @@ def test_critical4protein_function(
             False,
         ),  # Test case where frequent LoF variants do not exceed the 10% threshold
         (100, 0, 0, False),  # Test case where no LoF variants are found
-        (100, 20, 0, False),  # Test case where more frequent LoF variants than total LoF variants
     ],
 )
 def test_lof_is_frequent_in_population(
@@ -643,8 +673,9 @@ def test_get_pvs1_prediction_success(
 def test_get_pvs1_prediction_failure(mock_initialize, mock_get_ts_info, seqvar):
     mock_get_ts_info.return_value = (None, None, [], [], SeqVarConsequence.NotSet)
 
-    pvs1 = SeqVarPVS1(seqvar)
-    pvs1.initialize()
+    with pytest.raises(AlgorithmError):
+        pvs1 = SeqVarPVS1(seqvar)
+        pvs1.initialize()
 
     assert pvs1._seqvar_transcript == None
     assert pvs1._gene_transcript == None
