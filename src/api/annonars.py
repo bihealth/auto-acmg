@@ -1,6 +1,7 @@
 """Annonars API client."""
 
 import requests
+from loguru import logger
 from pydantic import ValidationError
 
 from src.core.config import settings
@@ -37,11 +38,14 @@ class AnnonarsClient:
             f"&start={start}"
             f"&stop={stop}"
         )
+        logger.debug("GET request to: {}", url)
         response = requests.get(url)
         try:
             response.raise_for_status()
             return AnnonarsRangeResponse.model_validate(response.json())
-        except requests.RequestException:
+        except requests.RequestException as e:
+            logger.exception("Request failed: {}", e)
             return None
         except ValidationError as e:
+            logger.exception("Validation failed: {}", e)
             return None

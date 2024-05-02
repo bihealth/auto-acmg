@@ -1,6 +1,7 @@
 """Entry point for the command line interface."""
 
 import typer
+from loguru import logger
 from typing_extensions import Annotated
 
 from src.auto_acmg import AutoACMG
@@ -54,7 +55,7 @@ def classify(
         auto_acmg = AutoACMG(variant, genome_release_enum)
         auto_acmg.predict()
     except Exception as e:
-        typer.secho(f"Error: {e}", err=True, fg=typer.colors.RED)
+        logger.error("Error occurred: {}", e)
 
 
 if __name__ == "__main__":

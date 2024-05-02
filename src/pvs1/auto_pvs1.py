@@ -2,6 +2,8 @@
 
 from typing import Tuple, Union
 
+from loguru import logger
+
 from src.defs.autopvs1 import (
     PVS1Prediction,
     PVS1PredictionSeqVarPath,
@@ -55,7 +57,7 @@ class AutoPVS1:
         """
         if isinstance(self.variant, SeqVar):
             self.seqvar: SeqVar = self.variant
-            self.seqvar_prediction: PVS1Prediction = PVS1Prediction.NotPVS1
+            self.seqvar_prediction: PVS1Prediction = PVS1Prediction.NotSet
             self.seqvar_prediction_path: PVS1PredictionSeqVarPath = PVS1PredictionSeqVarPath.NotSet
 
             try:
@@ -65,11 +67,12 @@ class AutoPVS1:
                 self.seqvar_prediction, self.seqvar_prediction_path = seqvar_pvs1.get_prediction()
                 return self.seqvar_prediction, self.seqvar_prediction_path
             except Exception as e:
+                logger.exception("Error occurred: {}", e)
                 return None, None
 
         elif isinstance(self.variant, StrucVar):
             self.strucvar: StrucVar = self.variant
-            self.strucvar_prediction: PVS1Prediction = PVS1Prediction.NotPVS1  # type: ignore
+            self.strucvar_prediction: PVS1Prediction = PVS1Prediction.NotSet  # type: ignore
             self.strucvar_prediction_path: PVS1PredictionStrucVarPath = PVS1PredictionStrucVarPath.NotSet  # type: ignore
 
             try:
@@ -81,6 +84,5 @@ class AutoPVS1:
                 )
                 return self.strucvar_prediction, self.strucvar_prediction_path
             except Exception as e:
+                logger.exception("Error occurred: {}", e)
                 return None, None
-        else:
-            return None, None

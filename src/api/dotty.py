@@ -1,6 +1,7 @@
 """Dotty API client."""
 
 import requests
+from loguru import logger
 from pydantic import ValidationError
 
 from src.core.config import settings
@@ -29,11 +30,14 @@ class DottyClient:
         :rtype: dict | None
         """
         url = f"{self.api_base_url}/api/v1/to-spdi?q={query}&assembly={assembly.name}"
+        logger.debug("GET request to: {}", url)
         response = requests.get(url)
         try:
             response.raise_for_status()
             return DottySpdiResponse.model_validate(response.json())
-        except requests.RequestException:
+        except requests.RequestException as e:
+            logger.exception("Request failed: {}", e)
             return None
         except ValidationError as e:
+            logger.exception("Validation failed: {}", e)
             return None

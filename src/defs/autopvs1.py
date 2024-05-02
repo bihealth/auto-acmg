@@ -44,6 +44,7 @@ class SeqVarConsequence(Enum):
 class PVS1Prediction(Enum):
     """PVS1 prediction."""
 
+    NotSet = auto()
     PVS1 = auto()
     PVS1_Strong = auto()
     PVS1_Moderate = auto()

@@ -1,6 +1,7 @@
 """Implementations of the PVS1 algorithm."""
 
 import typer
+from loguru import logger
 
 from src.defs.autopvs1 import (
     PVS1Prediction,
@@ -8,7 +9,7 @@ from src.defs.autopvs1 import (
     PVS1PredictionSeqVarPath,
     PVS1PredictionStrucVarPath,
 )
-from src.defs.exceptions import ParseError
+from src.defs.exceptions import InvalidPos, ParseError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar, SeqVarResolver
 from src.defs.strucvar import StrucVar, StrucVarResolver
@@ -36,6 +37,11 @@ class AutoACMG:
         """
         self.variant_name = variant_name
         self.genome_release = genome_release
+        logger.debug(
+            "AutoACMG initialized with variant: {} and genome release: {}",
+            variant_name,
+            genome_release,
+        )
 
     def resolve_variant(self) -> SeqVar | StrucVar | None:
         """Attempts to resolve the specified variant as either a sequence or structural variant.
@@ -50,21 +56,26 @@ class AutoACMG:
             Exception: Specific exceptions are caught and logged, but generic exceptions may be
             raised if both resolutions fail.
         """
+        logger.debug("Resolving variant: {}", self.variant_name)
         try:
+            seqvar_resolver = SeqVarResolver()
+            seqvar: SeqVar = seqvar_resolver.resolve_seqvar(self.variant_name, self.genome_release)
+            logger.debug("Resolved sequence variant: {}", seqvar)
+            return seqvar
+        except ParseError:
+            logger.exception("Failed to resolve sequence variant, trying structural variant.")
             try:
-                seqvar_resolver = SeqVarResolver()
-                seqvar: SeqVar = seqvar_resolver.resolve_seqvar(
-                    self.variant_name, self.genome_release
-                )
-                return seqvar
-            except ParseError:
                 strucvar_resolver = StrucVarResolver()
                 strucvar: StrucVar = strucvar_resolver.resolve_strucvar(
                     self.variant_name, self.genome_release
                 )
+                logger.debug("Resolved structural variant: {}", strucvar)
                 return strucvar
+            except (InvalidPos, ParseError) as e:
+                logger.error("Failed to resolve structural variant: {}", e)
+                return None
         except Exception as e:
-            typer.secho(e, err=True, fg=typer.colors.RED)
+            logger.error("An unexpected error occurred: {}", e)
             return None
 
     def predict(self):
@@ -76,29 +87,23 @@ class AutoACMG:
         Raises:
             Exception: Handles general exceptions that may occur during prediction and logs them.
         """
-        typer.secho(f"Resolving variant: {self.variant_name}.", fg=typer.colors.BLUE)
+        logger.info("Predicting ACMG criteria for variant: {}", self.variant_name)
         variant = self.resolve_variant()
         if not variant:
-            typer.secho(
-                f"Failed to resolve variant {self.variant_name}.", err=True, fg=typer.colors.RED
-            )
+            logger.error("Failed to resolve variant: {}", self.variant_name)
             return
-        else:
-            typer.secho(f"Variant resolved: {variant}.", fg=typer.colors.BLUE)
 
         if isinstance(variant, SeqVar):
-            typer.secho(f"Classifying ACMG criteria for sequence variant.", fg=typer.colors.BLUE)
+            logger.info(
+                "Classifying ACMG criteria for sequence variant {}, genome release: {}.",
+                variant.user_repr,
+                self.genome_release.name,
+            )
             # PVS1
             try:
-                typer.secho(
-                    (
-                        f"Predicting PVS1 for variant {variant.user_repr}, genome release: "
-                        f"{self.genome_release.name}."
-                    ),
-                    fg=typer.colors.BLUE,
-                )
+                logger.info("Predicting PVS1.")
                 self.seqvar: SeqVar = variant
-                self.seqvar_prediction: PVS1Prediction = PVS1Prediction.NotPVS1
+                self.seqvar_prediction: PVS1Prediction = PVS1Prediction.NotSet
                 self.seqvar_prediction_path: PVS1PredictionSeqVarPath = (
                     PVS1PredictionSeqVarPath.NotSet
                 )
@@ -106,78 +111,53 @@ class AutoACMG:
                 pvs1 = AutoPVS1(self.seqvar, self.genome_release)
                 seqvar_prediction, seqvar_prediction_path = pvs1.predict()
                 if seqvar_prediction is None or seqvar_prediction_path is None:
-                    typer.secho(
-                        f"Failed to predict PVS1 for variant {self.seqvar.user_repr}.",
-                        err=True,
-                        fg=typer.colors.RED,
-                    )
+                    logger.error("Failed to predict PVS1 criteria.")
                     return
                 else:
                     # Double check if the prediction path is indeed for sequence variant
                     assert isinstance(seqvar_prediction_path, PVS1PredictionSeqVarPath)
                     self.seqvar_prediction = seqvar_prediction
                     self.seqvar_prediction_path = seqvar_prediction_path
-                    typer.secho(
-                        (
-                            f"PVS1 prediction for {self.seqvar.user_repr}: "
-                            f"{self.seqvar_prediction.name}.\n"
-                            f"The prediction path is:\n"
-                            f"{PVS1PredictionPathMapping[self.seqvar_prediction_path]}."
-                        ),
-                        fg=typer.colors.GREEN,
+                    logger.info(
+                        "PVS1 prediction for {}: {}.\n" "The prediction path is:\n{}.",
+                        self.seqvar.user_repr,
+                        self.seqvar_prediction.name,
+                        PVS1PredictionPathMapping[self.seqvar_prediction_path],
                     )
             except Exception as e:
-                typer.secho(
-                    f"Failed to predict PVS1 for variant {self.seqvar.user_repr}.",
-                    err=True,
-                    fg=typer.colors.RED,
-                )
-                typer.secho(e, err=True)
+                logger.error("Failed to predict PVS1 criteria. Error: {}", e)
                 return
 
         elif isinstance(variant, StrucVar):
-            typer.secho(f"Classifying ACMG criteria for structural variant.", fg=typer.colors.BLUE)
+            logger.info(
+                "Classifying ACMG criteria for structural variant {}, genome release: {}.",
+                variant.user_repr,
+                self.genome_release.name,
+            )
             # PVS1
             try:
-                typer.secho(
-                    (
-                        f"Predicting PVS1 for structural variant {variant.user_repr}, genome "
-                        f"release: {self.genome_release.name}."
-                    ),
-                    fg=typer.colors.BLUE,
-                )
+                logger.info("Predicting PVS1.")
                 self.strucvar: StrucVar = variant
-                self.strucvar_prediction: PVS1Prediction = PVS1Prediction.NotPVS1  # type: ignore
+                self.strucvar_prediction: PVS1Prediction = PVS1Prediction.NotSet  # type: ignore
                 self.strucvar_prediction_path: PVS1PredictionStrucVarPath = PVS1PredictionStrucVarPath.NotSet  # type: ignore
 
                 pvs1 = AutoPVS1(self.strucvar, self.genome_release)
                 strucvar_prediction, strucvar_prediction_path = pvs1.predict()
                 if strucvar_prediction is None or strucvar_prediction_path is None:
-                    typer.secho(
-                        f"Failed to predict PVS1 for structural variant {self.strucvar.user_repr}.",
-                        err=True,
-                        fg=typer.colors.RED,
-                    )
+                    logger.error("Failed to predict PVS1 criteria.")
                     return
                 else:
                     # Double check if the prediction path is indeed for structural variant
                     assert isinstance(strucvar_prediction_path, PVS1PredictionStrucVarPath)
                     self.strucvar_prediction = strucvar_prediction
                     self.strucvar_prediction_path = strucvar_prediction_path
-                    typer.secho(
-                        f"PVS1 prediction for {self.strucvar.user_repr}: {self.strucvar_prediction.name}",
-                        fg=typer.colors.GREEN,
+                    logger.info(
+                        "PVS1 prediction for {}: {}.\n" "The prediction path is:\n{}.",
+                        self.strucvar.user_repr,
+                        self.strucvar_prediction.name,
+                        PVS1PredictionPathMapping[self.strucvar_prediction_path],
                     )
             except Exception as e:
-                typer.secho(
-                    (
-                        f"Failed to predict PVS1 for structural variant {self.strucvar.user_repr}."
-                        f"The prediction path is:\n"
-                        f"{PVS1PredictionPathMapping[self.strucvar_prediction_path]}."
-                    ),
-                    err=True,
-                    fg=typer.colors.RED,
-                )
-                typer.secho(e, err=True)
+                logger.error("Failed to predict PVS1 criteria. Error: {}", e)
                 return
-        typer.secho(f"ACMG criteria classification completed.", fg=typer.colors.BLUE)
+        logger.info("ACMG criteria prediction completed.")

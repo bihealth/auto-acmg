@@ -1,6 +1,6 @@
 """PVS1 criteria for Structural Variants (StrucVar)."""
 
-import typer
+from loguru import logger
 
 from src.defs.autopvs1 import PVS1Prediction, PVS1PredictionStrucVarPath
 from src.defs.strucvar import StrucVar, StrucVarType
@@ -65,7 +65,7 @@ class StrucVarPVS1(StrucVarPVS1Helper):
 
     def __init__(self, variant: StrucVar):
         self.variant = variant
-        self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
+        self.prediction: PVS1Prediction = PVS1Prediction.NotSet
         self.prediction_path: PVS1PredictionStrucVarPath = PVS1PredictionStrucVarPath.NotSet
 
     def initialize(self):
@@ -143,13 +143,9 @@ class StrucVarPVS1(StrucVarPVS1Helper):
                 self.prediction_path = PVS1PredictionStrucVarPath.DUP4
 
         else:
-            self.prediction = PVS1Prediction.NotPVS1
+            self.prediction = PVS1Prediction.NotSet
             self.prediction_path = PVS1PredictionStrucVarPath.NotSet
-            typer.secho(
-                f"Invalid structural variant. Ensure the structural variant type is either DEL or DUP.",
-                err=True,
-                fg=typer.colors.RED,
-            )
+            logger.error("Unsupported structural variant type: {}", self.variant.sv_type)
 
     def get_prediction(self) -> tuple[PVS1Prediction, PVS1PredictionStrucVarPath]:
         """Get the PVS1 prediction."""

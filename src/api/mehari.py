@@ -1,6 +1,7 @@
 """Mehari API client."""
 
 import requests
+from loguru import logger
 from pydantic import ValidationError
 
 from src.core.config import settings
@@ -33,13 +34,16 @@ class MehariClient:
             f"&reference={seqvar.insert}"
             f"&alternative={seqvar.delete}"
         )
+        logger.debug("GET request to: {}", url)
         response = requests.get(url)
         try:
             response.raise_for_status()
             return TranscriptsSeqVar.model_validate(response.json())
-        except ValidationError as e:
+        except requests.RequestException as e:
+            logger.exception("Request failed: {}", e)
             return None
-        except requests.RequestException:
+        except ValidationError as e:
+            logger.exception("Validation failed: {}", e)
             return None
 
     def get_gene_transcripts(
@@ -64,11 +68,14 @@ class MehariClient:
             f"hgncId={hgnc_id}"
             f"&genomeBuild={genome_build_mapping[genome_build]}"
         )
+        logger.debug("GET request to: {}", url)
         response = requests.get(url)
         try:
             response.raise_for_status()
             return GeneTranscripts.model_validate(response.json())
-        except ValidationError as e:
+        except requests.RequestException as e:
+            logger.exception("Request failed: {}", e)
             return None
-        except requests.RequestException:
+        except ValidationError as e:
+            logger.exception("Validation failed: {}", e)
             return None
