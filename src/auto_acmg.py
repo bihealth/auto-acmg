@@ -1,7 +1,10 @@
 """Implementations of the PVS1 algorithm."""
 
+from typing import Optional
+
 from loguru import logger
 
+from src.auto_ps1 import AutoPS1
 from src.defs.autopvs1 import (
     PVS1Prediction,
     PVS1PredictionPathMapping,
@@ -98,34 +101,47 @@ class AutoACMG:
                 variant.user_repr,
                 self.genome_release.name,
             )
+            self.seqvar: SeqVar = variant
+            self.seqvar_pvs1_prediction: PVS1Prediction = PVS1Prediction.NotSet
+            self.seqvar_pvs1_prediction_path: PVS1PredictionSeqVarPath = (
+                PVS1PredictionSeqVarPath.NotSet
+            )
+            self.seqvar_ps1: Optional[bool] = None
+
             # PVS1
             try:
                 logger.info("Predicting PVS1.")
-                self.seqvar: SeqVar = variant
-                self.seqvar_prediction: PVS1Prediction = PVS1Prediction.NotSet
-                self.seqvar_prediction_path: PVS1PredictionSeqVarPath = (
-                    PVS1PredictionSeqVarPath.NotSet
-                )
-
                 pvs1 = AutoPVS1(self.seqvar, self.genome_release)
                 seqvar_prediction, seqvar_prediction_path = pvs1.predict()
                 if seqvar_prediction is None or seqvar_prediction_path is None:
                     logger.error("Failed to predict PVS1 criteria.")
-                    return
                 else:
                     # Double check if the prediction path is indeed for sequence variant
                     assert isinstance(seqvar_prediction_path, PVS1PredictionSeqVarPath)
-                    self.seqvar_prediction = seqvar_prediction
-                    self.seqvar_prediction_path = seqvar_prediction_path
+                    self.seqvar_pvs1_prediction = seqvar_prediction
+                    self.seqvar_pvs1_prediction_path = seqvar_prediction_path
                     logger.info(
                         "PVS1 prediction for {}: {}.\n" "The prediction path is:\n{}.",
                         self.seqvar.user_repr,
-                        self.seqvar_prediction.name,
-                        PVS1PredictionPathMapping[self.seqvar_prediction_path],
+                        self.seqvar_pvs1_prediction.name,
+                        PVS1PredictionPathMapping[self.seqvar_pvs1_prediction_path],
                     )
             except Exception as e:
                 logger.error("Failed to predict PVS1 criteria. Error: {}", e)
-                return
+
+            # PS1
+            try:
+                logger.info("Predicting PS1.")
+                ps1 = AutoPS1(self.seqvar, self.genome_release)
+                self.seqvar_ps1 = ps1.predict()
+                if self.seqvar_ps1 is None:
+                    logger.error("Failed to predict PS1 criteria.")
+                else:
+                    logger.info(
+                        "PS1 prediction for {}: {}.", self.seqvar.user_repr, self.seqvar_ps1
+                    )
+            except Exception as e:
+                logger.error("Failed to predict PS1 criteria. Error: {}", e)
 
         elif isinstance(variant, StrucVar):
             logger.info(

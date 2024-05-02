@@ -114,4 +114,4 @@ def test_auto_acmg_predict_seqvar_failure(
     assert mock_seqvar_resolver.resolve_seqvar.called
     assert mock_auto_pvs1_failure.predict.called
     assert auto_acmg.seqvar == mock_seqvar
-    assert auto_acmg.seqvar_prediction_path == PVS1PredictionSeqVarPath.NotSet
+    assert auto_acmg.seqvar_pvs1_prediction_path == PVS1PredictionSeqVarPath.NotSet
