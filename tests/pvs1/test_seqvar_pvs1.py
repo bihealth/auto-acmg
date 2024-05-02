@@ -533,7 +533,10 @@ def test_initialize_failure(
     assert len(ts_helper.HGVSs) == 0
 
 
-def test_initialize_no_seqvar(ts_helper):
+@patch.object(MehariClient, "get_seqvar_transcripts")
+@patch.object(MehariClient, "get_gene_transcripts")
+def test_initialize_no_seqvar(mock_get_gene_transcripts, mock_get_seqvar_transcripts, ts_helper):
+    mock_get_gene_transcripts, mock_get_seqvar_transcripts = MagicMock(), MagicMock()
     ts_helper.initialize()
     assert ts_helper.gene_ts_info == []
     assert ts_helper.HGNC_id is ""
