@@ -25,6 +25,38 @@ class SeqVarPVS1Helper:
     """Helper methods for PVS1 criteria for sequence variants."""
 
     @staticmethod
+    def _choose_hgvs_p(
+        hgvs: str, seqvar_ts: TranscriptSeqvar, seqvar_transcripts: List[TranscriptSeqvar]
+    ) -> str:
+        """Choose the most suitable protein HGVS notation.
+
+        This method chooses the most suitable protein HGVS notation for the sequence variant based
+        on the available transcripts.
+
+        Note:
+            Use this method only in SeqVarPVS1 initialization.
+
+        Args:
+            hgvs: The transcript HGVS notation.
+            seqvar_ts: The sequence variant transcript.
+            seqvar_transcripts: A list of all sequence variant transcripts.
+
+        Returns:
+            str: The most suitable protein HGVS notation.
+        """
+        logger.debug("Choosing the most suitable protein HGVS notation.")
+        # Return pHGVS from the main transcript
+        if seqvar_ts.hgvs_p and seqvar_ts.hgvs_p not in ["", "p.?"]:
+            logger.debug("Protein HGVS found in the main transcript {}.", hgvs)
+            return hgvs + ":" + seqvar_ts.hgvs_p
+        # Choose the first transcript with a protein HGVS
+        for transcript in seqvar_transcripts:
+            if transcript.hgvs_p and transcript.hgvs_p not in ["", "p.?"]:
+                logger.debug("Protein HGVS found in the transcript {}.", transcript.feature_id)
+                return hgvs + ":" + transcript.hgvs_p
+        return hgvs + ":p.?"
+
+    @staticmethod
     def _get_pHGVS_termination(pHGVS: str) -> int:
         """Gets the termination position from a protein HGVS (p.HGVS) notation.
 
@@ -682,32 +714,6 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
         self.prediction_path: PVS1PredictionSeqVarPath = PVS1PredictionSeqVarPath.NotSet
 
-    @staticmethod
-    def choose_hgvs_p(
-        hgvs: str, seqvar_ts: TranscriptSeqvar, seqvar_transcripts: List[TranscriptSeqvar]
-    ) -> str:
-        """Choose the most suitable protein HGVS notation.
-
-        Args:
-            hgvs: The transcript HGVS notation.
-            seqvar_ts: The sequence variant transcript.
-            seqvar_transcripts: A list of all sequence variant transcripts.
-
-        Returns:
-            str: The most suitable protein HGVS notation.
-        """
-        logger.debug("Choosing the most suitable protein HGVS notation.")
-        # Return pHGVS from the main transcript
-        if seqvar_ts.hgvs_p and seqvar_ts.hgvs_p not in ["", "p.?"]:
-            logger.debug("Protein HGVS found in the main transcript {}.", hgvs)
-            return hgvs + ":" + seqvar_ts.hgvs_p
-        # Choose the first transcript with a protein HGVS
-        for transcript in seqvar_transcripts:
-            if transcript.hgvs_p and transcript.hgvs_p not in ["", "p.?"]:
-                logger.debug("Protein HGVS found in the transcript {}.", transcript.feature_id)
-                return hgvs + ":" + transcript.hgvs_p
-        return hgvs + ":p.?"
-
     def initialize(self):
         """Setup the PVS1 class.
 
@@ -737,7 +743,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         # Set attributes
         logger.debug("Setting up the attributes for the PVS1 class.")
         self.HGVS = self._gene_transcript.id
-        self.pHGVS = self.choose_hgvs_p(self.HGVS, self._seqvar_transcript, self._all_seqvar_ts)
+        self.pHGVS = self._choose_hgvs_p(self.HGVS, self._seqvar_transcript, self._all_seqvar_ts)
         self.tHGVS = self.HGVS + ":" + (self._seqvar_transcript.hgvs_t or "")
         self.HGNC_id = self._seqvar_transcript.gene_id
         self.transcript_tags = self._seqvar_transcript.feature_tag
