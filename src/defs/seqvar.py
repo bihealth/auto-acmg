@@ -87,18 +87,17 @@ class SeqVar:
 class SeqVarResolver:
     """The class to resolve sequence variants."""
 
-    def __init__(self):
-        pass
-
     def _validate_seqvar(self, variant: SeqVar) -> SeqVar:
-        """
-        Validate the sequence variant position.
+        """Validate the sequence variant position.
 
-        :param variant: Sequence variant
-        :type variant: SeqVar
-        :return: Sequence variant
-        :rtype: SeqVar
-        :raises InvalidPos: If the position is invalid
+        Args:
+            variant (SeqVar): Sequence variant
+
+        Returns:
+            SeqVar: Sequence variant
+
+        Raises:
+            InvalidPos: If the position is invalid
         """
         if variant.pos < 1:
             raise InvalidPos(f"Invalid position: {variant.pos}")
@@ -114,22 +113,26 @@ class SeqVarResolver:
         return variant
 
     def _normalize_chrom(self, value: str) -> str:
-        """Normalize the chromosome name: replace 'chr' with '' and 'm' with 'mt'."""
+        """Normalize the chromosome name.
+
+        Replaces 'chr' with '' and 'm' with 'mt'.
+        """
         return value.lower().replace("chr", "").replace("m", "mt").upper()
 
     def _parse_separated_seqvar(
         self, value: str, default_genome_release: GenomeRelease = GenomeRelease.GRCh38
     ) -> SeqVar:
-        """
-        Parse a colon/hyphen separated sequence variant representation.
+        """Parse a colon/hyphen separated sequence variant representation.
 
-        :param value: Sequence variant representation
-        :type value: str
-        :param default_genome_build: Default genome build
-        :type default_genome_build: GenomeRelease
-        :return: Sequence variant
-        :rtype: SeqVar
-        :raises ParseError: If the variant representation is invalid
+        Args:
+            value (str): Sequence variant representation
+            default_genome_release (GenomeRelease): Default genome release
+
+        Returns:
+            SeqVar: Sequence variant
+
+        Raises:
+            ParseError: If the variant representation is invalid
         """
         match = REGEX_GNOMAD_VARIANT.match(value) or REGEX_RELAXED_SPDI.match(value)
         if not match:
@@ -155,14 +158,16 @@ class SeqVarResolver:
         return self._validate_seqvar(variant)
 
     def _parse_canonical_spdi_seqvar(self, value: str) -> SeqVar:
-        """
-        Parse a canonical SPDI sequence variant representation.
+        """Parse a canonical SPDI sequence variant representation.
 
-        :param value: Sequence variant representation
-        :type value: str
-        :return: Sequence variant
-        :rtype: SeqVar
-        :raises ParseError: If the variant representation is invalid
+        Args:
+            value (str): Sequence variant representation
+
+        Returns:
+            SeqVar: Sequence variant
+
+        Raises:
+            ParseError: If the variant representation is invalid
         """
         match = REGEX_CANONICAL_SPDI.match(value)
         if not match:
@@ -193,27 +198,34 @@ class SeqVarResolver:
         return self._validate_seqvar(variant)
 
     def resolve_seqvar(self, value: str, genome_release: GenomeRelease) -> SeqVar:
-        """
-        Resolve a sequence variant. Supports gnomAD-style, SPDI and dbSNP representations.
+        """Resolve a sequence variant.
+
+        Supports gnomAD-style, SPDI and dbSNP representations.
         ClinVar IDs are not supported at the moment.
 
-        :param value: Sequence variant representation
-        :type value: str
-        :param genome_release: Genome release
-        :type genome_release: GenomeRelease
-        :return: Sequence variant
-        :rtype: SeqVar
-        :raises ParseError: If the variant representation is invalid
+        Args:
+            value (str): Sequence variant representation
+            genome_release (GenomeRelease): Genome release version
+
+        Returns:
+            SeqVar: Sequence variant
+
+        Raises:
+            ParseError: If the variant representation is invalid or cannot be resolved
         """
         try:
             return self._parse_separated_seqvar(value, default_genome_release=genome_release)
         except ParseError:
             pass
+        except InvalidPos as e:
+            raise ParseError(f"Invalid position: {e}")
 
         try:
             return self._parse_canonical_spdi_seqvar(value)
         except ParseError:
             pass
+        except InvalidPos as e:
+            raise ParseError(f"Invalid position: {e}")
 
         try:
             dotty_client = DottyClient()
@@ -232,7 +244,5 @@ class SeqVarResolver:
                 )
             else:
                 raise ParseError(f"Unable to resolve seqvar: {value}")
-        except ParseError:
-            pass
-
-        raise ParseError(f"Unable to resolve seqvar: {value}")
+        except Exception as e:
+            raise ParseError(f"Unable to resolve seqvar. The error was: {e}")

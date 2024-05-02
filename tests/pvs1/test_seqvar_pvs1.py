@@ -74,7 +74,39 @@ class MockCdsInfo:
         self.exons = exons
 
 
-# === SeqVarPVS1Helpers ===
+# === SeqVarPVS1Helper ===
+
+
+@pytest.mark.parametrize(
+    "main_hgvs, main_hgvs_p, transcripts_data, expected_result",
+    [
+        # Case where main transcript has valid protein HGVS
+        ("NM_000001.1", "p.Gly100Ser", [], "NM_000001.1:p.Gly100Ser"),
+        # Case where main transcript HGVS protein is not set, but another transcript has it
+        ("NM_000001.1", "", [("NM_000002.1", "p.Arg200Gln")], "NM_000001.1:p.Arg200Gln"),
+        # Case where main transcript and others do not have valid protein HGVS
+        ("NM_000001.1", "", [("NM_000002.1", ""), ("NM_000003.1", "p.?")], "NM_000001.1:p.?"),
+        # Case with no valid protein HGVS notation in any transcript
+        ("NM_000001.1", "p.?", [("NM_000002.1", "p.?"), ("NM_000003.1", "")], "NM_000001.1:p.?"),
+        # Case where multiple transcripts have valid HGVS, but the first valid one is chosen
+        (
+            "NM_000001.1",
+            "",
+            [("NM_000002.1", ""), ("NM_000003.1", "p.Lys300Thr")],
+            "NM_000001.1:p.Lys300Thr",
+        ),
+    ],
+)
+def test_choose_hgvs_p(main_hgvs, main_hgvs_p, transcripts_data, expected_result):
+    # Mocking the main and other transcripts
+    main_transcript = MagicMock(hgvs_p=main_hgvs_p)
+    transcripts = [MagicMock(feature_id=id, hgvs_p=hgvs_p) for id, hgvs_p in transcripts_data]
+
+    # Invoke the method under test
+    result = SeqVarPVS1Helper._choose_hgvs_p(main_hgvs, main_transcript, transcripts)  # type: ignore
+
+    # Verify the result
+    assert result == expected_result
 
 
 # TODO: Check if the termination number is correct
