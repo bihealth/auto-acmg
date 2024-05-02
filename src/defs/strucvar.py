@@ -84,18 +84,17 @@ class StrucVar:
 class StrucVarResolver:
     """The class to resolve structural variant representations."""
 
-    def __init__(self):
-        pass
-
     def _validate_strucvar(self, variant: StrucVar) -> StrucVar:
-        """
-        Validate the structural variant position.
+        """Validate the structural variant position.
 
-        :param variant: Structural variant
-        :type variant: StrucVar
-        :return: Structural variant
-        :rtype: StrucVar
-        :raises InvalidPos: If the structural variant position is invalid
+        Args:
+            variant (StrucVar): Structural variant
+
+        Returns:
+            StrucVar: Validated structural variant
+
+        Raises:
+            InvalidPos: If the variant position is invalid
         """
         if variant.start > variant.stop or variant.start < 1:
             raise InvalidPos(f"Invalid positions: start={variant.start}, stop={variant.stop}")
@@ -111,22 +110,26 @@ class StrucVarResolver:
         return variant
 
     def _normalize_chromosome(self, chrom: str) -> str:
-        """Normalize the chromosome name."""
+        """Normalize the chromosome name.
+
+        Replace 'chr' with an empty string and 'm' with 'MT'.
+        """
         return chrom.lower().replace("chr", "").replace("m", "mt").upper()
 
     def _parse_separated_strucvar(
         self, value: str, default_genome_release: GenomeRelease = GenomeRelease.GRCh38
     ) -> StrucVar:
-        """
-        Parse a separated structural variant representation.
+        """Parse a separated structural variant representation.
 
-        :param value: Structural variant representation
-        :type value: str
-        :param default_genome_release: Default genome release
-        :type default_genome_release: GenomeRelease
-        :return: Structural variant
-        :rtype: StrucVar
-        :raises ParseError: If the structural variant representation is invalid
+        Args:
+            value: Structural variant representation
+            default_genome_release: Default genome release
+
+        Returns:
+            StrucVar: Structural variant
+
+        Raises:
+            ParseError: If the structural variant representation is invalid
         """
         match_colon = REGEX_CNV_COLON.match(value)
         match_hyphen = REGEX_CNV_HYPHEN.match(value)
@@ -147,16 +150,18 @@ class StrucVarResolver:
         return self._validate_strucvar(variant)
 
     def resolve_strucvar(self, value: str, genome_release: GenomeRelease) -> StrucVar:
-        """
-        Resolve the structural variant representation.
+        """Resolve the structural variant representation.
 
-        :param value: Structural variant representation
-        :type value: str
-        :param genome_release: Genome release
-        :type genome_release: GenomeRelease
-        :return: Structural variant
-        :rtype: StrucVar
-        :raises ParseError: If the structural variant representation is invalid
+        Args:
+            value: Structural variant representation
+            genome_release: Genome release
+
+        Returns:
+            StrucVar: Resolved structural variant
+
+        Raises:
+            ParseError: If the structural variant representation is invalid.
+                        Captures the InvalidPos exception and raises a ParseError as well.
         """
         try:
             return self._parse_separated_strucvar(value, genome_release)

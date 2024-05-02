@@ -1,6 +1,5 @@
 """Implementations of the PVS1 algorithm."""
 
-import typer
 from loguru import logger
 
 from src.defs.autopvs1 import (
@@ -71,7 +70,7 @@ class AutoACMG:
                 )
                 logger.debug("Resolved structural variant: {}", strucvar)
                 return strucvar
-            except (InvalidPos, ParseError) as e:
+            except ParseError as e:
                 logger.error("Failed to resolve structural variant: {}", e)
                 return None
         except Exception as e:
