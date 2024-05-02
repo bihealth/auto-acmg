@@ -536,6 +536,7 @@ def test_initialize_failure(
 @patch.object(MehariClient, "get_seqvar_transcripts")
 @patch.object(MehariClient, "get_gene_transcripts")
 def test_initialize_no_seqvar(mock_get_gene_transcripts, mock_get_seqvar_transcripts, ts_helper):
+    # Mock the MehariClient methods for CI
     mock_get_gene_transcripts, mock_get_seqvar_transcripts = MagicMock(), MagicMock()
     ts_helper.initialize()
     assert ts_helper.gene_ts_info == []
