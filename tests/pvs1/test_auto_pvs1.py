@@ -16,9 +16,7 @@ runner = CliRunner()
 
 @pytest.fixture
 def mock_seqvar():
-    return SeqVar(
-        genome_release=GenomeRelease.GRCh38, chrom="1", pos=100000, delete="A", insert="T"
-    )
+    return SeqVar(genome_release=GenomeRelease.GRCh38, chrom="1", pos=100000, delete="A", insert="T")
 
 
 @pytest.fixture

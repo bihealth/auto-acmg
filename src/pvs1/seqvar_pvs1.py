@@ -25,9 +25,7 @@ class SeqVarPVS1Helper:
     """Helper methods for PVS1 criteria for sequence variants."""
 
     @staticmethod
-    def _choose_hgvs_p(
-        hgvs: str, seqvar_ts: TranscriptSeqvar, seqvar_transcripts: List[TranscriptSeqvar]
-    ) -> str:
+    def _choose_hgvs_p(hgvs: str, seqvar_ts: TranscriptSeqvar, seqvar_transcripts: List[TranscriptSeqvar]) -> str:
         """Choose the most suitable protein HGVS notation.
 
         This method chooses the most suitable protein HGVS notation for the sequence variant based
@@ -108,9 +106,7 @@ class SeqVarPVS1Helper:
         return termination
 
     @staticmethod
-    def _calculate_altered_region(
-        cds_pos: int, exons: List[Exon], mode: AlteredRegionMode
-    ) -> Tuple[int, int]:
+    def _calculate_altered_region(cds_pos: int, exons: List[Exon], mode: AlteredRegionMode) -> Tuple[int, int]:
         """Calculates the altered region's start and end positions.
 
         Args:
@@ -121,9 +117,7 @@ class SeqVarPVS1Helper:
         Returns:
             Tuple[int, int]: The start and end positions of the altered region.
         """
-        logger.debug(
-            "Calculating altered region for CDS position: {} for the mode: {}.", cds_pos, mode
-        )
+        logger.debug("Calculating altered region for CDS position: {} for the mode: {}.", cds_pos, mode)
         if mode == AlteredRegionMode.Downstream:
             start_pos = exons[0].altStartI
             for exon in exons:
@@ -226,9 +220,7 @@ class SeqVarPVS1Helper:
                 if not variant.vep:
                     continue
                 for vep in variant.vep:
-                    if vep.consequence in self._get_consequence(
-                        SeqVarConsequence.NonsenseFrameshift
-                    ):
+                    if vep.consequence in self._get_consequence(SeqVarConsequence.NonsenseFrameshift):
                         lof_variants += 1
                         if not variant.alleleCounts:
                             continue
@@ -244,9 +236,7 @@ class SeqVarPVS1Helper:
             return frequent_lof_variants, lof_variants
         else:
             logger.error("Failed to get variant from range. No gnomAD genomes data.")
-            raise InvalidAPIResposeError(
-                "Failed to get variant from range. No gnomAD genomes data."
-            )
+            raise InvalidAPIResposeError("Failed to get variant from range. No gnomAD genomes data.")
 
     def _undergo_nmd(self, exons: List[Exon], pHGVS: str, hgnc_id: str) -> bool:
         """Classifies if the variant undergoes Nonsense-mediated decay (NMD).
@@ -303,9 +293,7 @@ class SeqVarPVS1Helper:
         logger.debug("Checking if the variant is in a biologically relevant transcript.")
         return "ManeSelect" in transcript_tags
 
-    def _critical4protein_function(
-        self, seqvar: SeqVar, cds_pos: int | None, exons: List[Exon]
-    ) -> bool:
+    def _critical4protein_function(self, seqvar: SeqVar, cds_pos: int | None, exons: List[Exon]) -> bool:
         """Checks if the truncated or altered region is critical for the protein function.
 
         This method assesses the impact of a sequence variant based on the presence of pathogenic
@@ -340,13 +328,9 @@ class SeqVarPVS1Helper:
             logger.error("CDS position is not available. Cannot determine criticality.")
             raise AlgorithmError("CDS position is not available. Cannot determine criticality.")
 
-        start_pos, end_pos = self._calculate_altered_region(
-            cds_pos, exons, AlteredRegionMode.Downstream
-        )
+        start_pos, end_pos = self._calculate_altered_region(cds_pos, exons, AlteredRegionMode.Downstream)
         try:
-            pathogenic_variants, total_variants = self._count_pathogenic_variants(
-                seqvar, start_pos, end_pos
-            )
+            pathogenic_variants, total_variants = self._count_pathogenic_variants(seqvar, start_pos, end_pos)
             if pathogenic_variants > 5 and pathogenic_variants / total_variants > 0.05:
                 return True
             else:
@@ -355,9 +339,7 @@ class SeqVarPVS1Helper:
             logger.error("Failed to predict criticality for variant. Error: {}", e)
             raise AlgorithmError("Failed to predict criticality for variant. Error: {}", e)
 
-    def _lof_is_frequent_in_population(
-        self, seqvar: SeqVar, cds_pos: int | None, exons: List[Exon]
-    ) -> bool:
+    def _lof_is_frequent_in_population(self, seqvar: SeqVar, cds_pos: int | None, exons: List[Exon]) -> bool:
         """Checks if the Loss-of-Function (LoF) variants in the exon are frequent in the general
         population.
 
@@ -394,9 +376,7 @@ class SeqVarPVS1Helper:
 
         start_pos, end_pos = self._calculate_altered_region(cds_pos, exons, AlteredRegionMode.Exon)
         try:
-            frequent_lof_variants, lof_variants = self._count_lof_variants(
-                seqvar, start_pos, end_pos
-            )
+            frequent_lof_variants, lof_variants = self._count_lof_variants(seqvar, start_pos, end_pos)
             if frequent_lof_variants > 0 and frequent_lof_variants / lof_variants > 0.1:
                 return True
             else:
@@ -568,9 +548,7 @@ class SeqVarTranscriptsHelper:
                 self.HGVSs.append(transcript.feature_id)
 
             # Get gene transcripts from Mehari
-            response_gene = mehari_client.get_gene_transcripts(
-                self.HGNC_id, self.seqvar.genome_release
-            )
+            response_gene = mehari_client.get_gene_transcripts(self.HGNC_id, self.seqvar.genome_release)
             if not response_gene:
                 self.gene_ts_info = []
             else:
@@ -645,10 +623,7 @@ class SeqVarTranscriptsHelper:
             if transcript.seqvar and transcript.gene:
                 if "ManeSelect" in transcript.seqvar.feature_tag:
                     mane_transcripts.append(hgvs)
-                cds_sizes = [
-                    exon.altEndI - exon.altStartI
-                    for exon in transcript.gene.genomeAlignments[0].exons
-                ]
+                cds_sizes = [exon.altEndI - exon.altStartI for exon in transcript.gene.genomeAlignments[0].exons]
                 exon_lengths[hgvs] = sum(cds_sizes)
 
         # Choose the most suitable transcript
@@ -732,11 +707,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
             self._consequence,
         ) = seqvar_transcript_helper.get_ts_info()
 
-        if (
-            not self._seqvar_transcript
-            or not self._gene_transcript
-            or self._consequence == SeqVarConsequence.NotSet
-        ):
+        if not self._seqvar_transcript or not self._gene_transcript or self._consequence == SeqVarConsequence.NotSet:
             logger.error("Transcript data is not set. Cannot initialize the PVS1 class.")
             raise AlgorithmError("Transcript data is not set. Cannot initialize the PVS1 class.")
 
@@ -749,9 +720,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         self.transcript_tags = self._seqvar_transcript.feature_tag
         self.exons = self._gene_transcript.genomeAlignments[0].exons
         self.cds_pos = (
-            self._seqvar_transcript.cds_pos.ord
-            if isinstance(self._seqvar_transcript.cds_pos, CdsPos)
-            else None
+            self._seqvar_transcript.cds_pos.ord if isinstance(self._seqvar_transcript.cds_pos, CdsPos) else None
         )
         self.cds_info = {
             ts.id: CdsInfo(
@@ -772,15 +741,9 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         and prediction path is stored in the prediction and prediction_path attributes.
         """
         logger.debug("Verifying the PVS1 criteria.")
-        if (
-            not self._seqvar_transcript
-            or not self._gene_transcript
-            or self._consequence == SeqVarConsequence.NotSet
-        ):
+        if not self._seqvar_transcript or not self._gene_transcript or self._consequence == SeqVarConsequence.NotSet:
             logger.error("Transcript data is not set. Did you forget to initialize the class?")
-            raise AlgorithmError(
-                "Transcript data is not set. Did you forget to initialize the class?"
-            )
+            raise AlgorithmError("Transcript data is not set. Did you forget to initialize the class?")
 
         if self._consequence == SeqVarConsequence.NonsenseFrameshift:
             if self.HGNC_id == "HGNC:9588":  # Follow guidelines for PTEN
@@ -807,9 +770,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionSeqVarPath.NF4
                     else:
-                        if self._lof_removes_more_then_10_percent_of_protein(
-                            self.pHGVS, self.exons
-                        ):
+                        if self._lof_removes_more_then_10_percent_of_protein(self.pHGVS, self.exons):
                             self.prediction = PVS1Prediction.PVS1_Strong
                             self.prediction_path = PVS1PredictionSeqVarPath.NF5
                         else:
@@ -839,9 +800,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionSeqVarPath.SS4
                     else:
-                        if self._lof_removes_more_then_10_percent_of_protein(
-                            self.pHGVS, self.exons
-                        ):
+                        if self._lof_removes_more_then_10_percent_of_protein(self.pHGVS, self.exons):
                             self.prediction = PVS1Prediction.PVS1_Strong
                             self.prediction_path = PVS1PredictionSeqVarPath.SS5
                         else:
@@ -858,9 +817,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionSeqVarPath.SS7
                     else:
-                        if self._lof_removes_more_then_10_percent_of_protein(
-                            self.pHGVS, self.exons
-                        ):
+                        if self._lof_removes_more_then_10_percent_of_protein(self.pHGVS, self.exons):
                             self.prediction = PVS1Prediction.PVS1_Strong
                             self.prediction_path = PVS1PredictionSeqVarPath.SS8
                         else:

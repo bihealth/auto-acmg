@@ -4,7 +4,7 @@ from typing import Optional
 
 from loguru import logger
 
-from src.auto_ps1 import AutoPS1
+from src.auto_ps1 import AutoPS1PM5
 from src.defs.auto_pvs1 import (
     PVS1Prediction,
     PVS1PredictionPathMapping,
@@ -68,9 +68,7 @@ class AutoACMG:
             logger.exception("Failed to resolve sequence variant, trying structural variant.")
             try:
                 strucvar_resolver = StrucVarResolver()
-                strucvar: StrucVar = strucvar_resolver.resolve_strucvar(
-                    self.variant_name, self.genome_release
-                )
+                strucvar: StrucVar = strucvar_resolver.resolve_strucvar(self.variant_name, self.genome_release)
                 logger.debug("Resolved structural variant: {}", strucvar)
                 return strucvar
             except ParseError as e:
@@ -103,10 +101,9 @@ class AutoACMG:
             )
             self.seqvar: SeqVar = variant
             self.seqvar_pvs1_prediction: PVS1Prediction = PVS1Prediction.NotSet
-            self.seqvar_pvs1_prediction_path: PVS1PredictionSeqVarPath = (
-                PVS1PredictionSeqVarPath.NotSet
-            )
+            self.seqvar_pvs1_prediction_path: PVS1PredictionSeqVarPath = PVS1PredictionSeqVarPath.NotSet
             self.seqvar_ps1: Optional[bool] = None
+            self.seqvar_pm5: Optional[bool] = None
 
             # PVS1
             try:
@@ -129,17 +126,21 @@ class AutoACMG:
             except Exception as e:
                 logger.error("Failed to predict PVS1 criteria. Error: {}", e)
 
-            # PS1
+            # PS1 and PM5
             try:
-                logger.info("Predicting PS1.")
-                ps1 = AutoPS1(self.seqvar, self.genome_release)
-                self.seqvar_ps1 = ps1.predict()
-                if self.seqvar_ps1 is None:
-                    logger.error("Failed to predict PS1 criteria.")
-                else:
-                    logger.info(
-                        "PS1 prediction for {}: {}.", self.seqvar.user_repr, self.seqvar_ps1
-                    )
+                logger.info("Predicting PS1 and PM5.")
+                ps1pm5 = AutoPS1PM5(self.seqvar, self.genome_release)
+                prediction = ps1pm5.predict()
+                if not prediction:
+                    logger.error("Failed to predict PS1&PM5 criteria. Unexpected error occurred.")
+                    return
+                self.seqvar_ps1, self.seqvar_pm5 = prediction.PS1, prediction.PM5
+                logger.info(
+                    "PS1 prediction for {}: {}.\n" "PM5 prediction: {}.",
+                    self.seqvar.user_repr,
+                    self.seqvar_ps1,
+                    self.seqvar_pm5,
+                )
             except Exception as e:
                 logger.error("Failed to predict PS1 criteria. Error: {}", e)
 

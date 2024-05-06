@@ -46,9 +46,7 @@ class MehariClient:
             logger.exception("Validation failed: {}", e)
             return None
 
-    def get_gene_transcripts(
-        self, hgnc_id: str, genome_build: GenomeRelease
-    ) -> GeneTranscripts | None:
+    def get_gene_transcripts(self, hgnc_id: str, genome_build: GenomeRelease) -> GeneTranscripts | None:
         """ "
         Get transcripts for a gene.
 
@@ -63,11 +61,7 @@ class MehariClient:
             GenomeRelease.GRCh37: "GENOME_BUILD_GRCH37",
             GenomeRelease.GRCh38: "GENOME_BUILD_GRCH38",
         }
-        url = (
-            f"{self.api_base_url}/genes/txs?"
-            f"hgncId={hgnc_id}"
-            f"&genomeBuild={genome_build_mapping[genome_build]}"
-        )
+        url = f"{self.api_base_url}/genes/txs?" f"hgncId={hgnc_id}" f"&genomeBuild={genome_build_mapping[genome_build]}"
         logger.debug("GET request to: {}", url)
         response = requests.get(url)
         try:

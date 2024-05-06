@@ -1,7 +1,11 @@
 from enum import Enum
 
+from pydantic import BaseModel
+
 
 class AminoAcid(Enum):
+    """Amino acid enumeration."""
+
     Ala = "A"
     Cys = "C"
     Asp = "D"
@@ -23,3 +27,10 @@ class AminoAcid(Enum):
     Trp = "W"
     Tyr = "Y"
     Stop = "*"
+
+
+class PS1PM5(BaseModel):
+    """PS1 and PM5 criteria prediction."""
+
+    PS1: bool = False
+    PM5: bool = False
