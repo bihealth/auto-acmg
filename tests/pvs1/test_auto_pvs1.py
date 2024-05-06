@@ -3,7 +3,7 @@ from unittest.mock import Mock
 import pytest
 from typer.testing import CliRunner
 
-from src.defs.autopvs1 import PVS1PredictionStrucVarPath
+from src.defs.auto_pvs1 import PVS1PredictionStrucVarPath
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.defs.strucvar import StrucVar, StrucVarType

@@ -4,7 +4,7 @@ import pytest
 
 from src.api.mehari import MehariClient
 from src.defs.annonars_range import AnnonarsRangeResponse
-from src.defs.autopvs1 import (
+from src.defs.auto_pvs1 import (
     AlteredRegionMode,
     PVS1Prediction,
     PVS1PredictionSeqVarPath,

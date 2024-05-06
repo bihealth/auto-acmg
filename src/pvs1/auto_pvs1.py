@@ -4,7 +4,7 @@ from typing import Tuple, Union
 
 from loguru import logger
 
-from src.defs.autopvs1 import (
+from src.defs.auto_pvs1 import (
     PVS1Prediction,
     PVS1PredictionSeqVarPath,
     PVS1PredictionStrucVarPath,

@@ -5,7 +5,7 @@ from typing import Optional
 from loguru import logger
 
 from src.auto_ps1 import AutoPS1
-from src.defs.autopvs1 import (
+from src.defs.auto_pvs1 import (
     PVS1Prediction,
     PVS1PredictionPathMapping,
     PVS1PredictionSeqVarPath,

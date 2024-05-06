@@ -17,6 +17,15 @@ class VariantQuery(BaseModel):
     alternative: str
 
 
+class Dbnsfp(BaseModel):
+    HGVSc_ANNOVAR: Optional[str] = None
+    HGVSp_ANNOVAR: Optional[str] = None
+    HGVSc_snpEff: Optional[str] = None
+    HGVSp_snpEff: Optional[str] = None
+    HGVSc_VEP: Optional[str] = None
+    HGVSp_VEP: Optional[str] = None
+
+
 class Overall(BaseModel):
     ac: Optional[int] = None
     an: Optional[int] = None
@@ -110,7 +119,7 @@ class ClinvarItem(BaseModel):
 class VariantResult(BaseModel):
     cadd: Optional[Any] = None
     dbsnp: Optional[Any] = None
-    dbnsfp: Optional[Any] = None
+    dbnsfp: Optional[Dbnsfp] = None
     dbscsnv: Optional[Any] = None
     gnomad_mtdna: Optional[Any] = None
     gnomad_exomes: Optional[Any] = None

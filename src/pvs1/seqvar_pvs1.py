@@ -7,7 +7,7 @@ from loguru import logger
 
 from src.api.annonars import AnnonarsClient
 from src.api.mehari import MehariClient
-from src.defs.autopvs1 import (
+from src.defs.auto_pvs1 import (
     AlteredRegionMode,
     CdsInfo,
     PVS1Prediction,
