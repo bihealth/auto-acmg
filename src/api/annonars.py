@@ -7,7 +7,8 @@ from loguru import logger
 from pydantic import ValidationError
 
 from src.core.config import settings
-from src.defs.annonars import AnnonarsRangeResponse, AnnonarsVariantResponse
+from src.defs.annonars_range import AnnonarsRangeResponse
+from src.defs.annonars_variant import AnnonarsVariantResponse
 from src.defs.seqvar import SeqVar
 
 #: Annonars API base URL

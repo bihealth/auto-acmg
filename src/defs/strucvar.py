@@ -1,9 +1,8 @@
 """Implementation of structural variant class."""
 
 import re
-from collections.abc import Iterable
 from enum import Enum, auto
-from typing import Optional, Union
+from typing import Optional
 
 from src.defs.exceptions import InvalidPos, ParseError
 from src.defs.genome_builds import CHROM_LENGTHS_37, CHROM_LENGTHS_38, GenomeRelease

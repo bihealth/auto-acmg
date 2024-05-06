@@ -5,7 +5,7 @@ from typing import Optional
 from loguru import logger
 
 from src.api.annonars import AnnonarsClient
-from src.defs.annonars import AnnonarsVariantResponse
+from src.defs.annonars_variant import AnnonarsVariantResponse
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 

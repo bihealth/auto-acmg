@@ -1,10 +1,9 @@
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.api.annonars import AnnonarsClient
 from src.api.mehari import MehariClient
-from src.defs.annonars import AnnonarsRangeResponse
+from src.defs.annonars_range import AnnonarsRangeResponse
 from src.defs.autopvs1 import (
     AlteredRegionMode,
     PVS1Prediction,

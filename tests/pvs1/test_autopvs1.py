@@ -5,8 +5,8 @@ from typer.testing import CliRunner
 
 from src.defs.autopvs1 import PVS1PredictionStrucVarPath
 from src.defs.genome_builds import GenomeRelease
-from src.defs.seqvar import SeqVar, SeqVarResolver
-from src.defs.strucvar import StrucVar, StrucVarResolver, StrucVarType
+from src.defs.seqvar import SeqVar
+from src.defs.strucvar import StrucVar, StrucVarType
 from src.pvs1.auto_pvs1 import AutoPVS1
 from src.pvs1.seqvar_pvs1 import PVS1Prediction, PVS1PredictionSeqVarPath, SeqVarPVS1
 from src.pvs1.strucvar_pvs1 import StrucVarPVS1

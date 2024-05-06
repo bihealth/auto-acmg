@@ -11,7 +11,7 @@ from src.defs.autopvs1 import (
     PVS1PredictionSeqVarPath,
     PVS1PredictionStrucVarPath,
 )
-from src.defs.exceptions import InvalidPos, ParseError
+from src.defs.exceptions import ParseError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar, SeqVarResolver
 from src.defs.strucvar import StrucVar, StrucVarResolver

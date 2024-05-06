@@ -1,6 +1,6 @@
 import pytest
 
-from src.defs.annonars import AnnonarsRangeResponse
+from src.defs.annonars_range import AnnonarsRangeResponse
 from tests.utils import get_json_object
 
 

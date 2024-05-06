@@ -65,9 +65,9 @@ class Cadd(BaseModel):
     verPhyloP: float
     bStatistic: int
     targetScan: None
-    mirSVR_Score: None = Field(..., alias='mirSVR-Score')
-    mirSVR_E: None = Field(..., alias='mirSVR-E')
-    mirSVR_Aln: None = Field(..., alias='mirSVR-Aln')
+    mirSVR_Score: None = Field(..., alias="mirSVR-Score")
+    mirSVR_E: None = Field(..., alias="mirSVR-E")
+    mirSVR_Aln: None = Field(..., alias="mirSVR-Aln")
     cHmm_E1: int
     cHmm_E2: int
     cHmm_E3: int
@@ -99,37 +99,37 @@ class Cadd(BaseModel):
     GerpS: float
     tOverlapMotifs: None
     motifDist: None
-    EncodeH3K4me1_sum: float = Field(..., alias='EncodeH3K4me1-sum')
-    EncodeH3K4me1_max: float = Field(..., alias='EncodeH3K4me1-max')
-    EncodeH3K4me2_sum: float = Field(..., alias='EncodeH3K4me2-sum')
-    EncodeH3K4me2_max: float = Field(..., alias='EncodeH3K4me2-max')
-    EncodeH3K4me3_sum: float = Field(..., alias='EncodeH3K4me3-sum')
-    EncodeH3K4me3_max: float = Field(..., alias='EncodeH3K4me3-max')
-    EncodeH3K9ac_sum: float = Field(..., alias='EncodeH3K9ac-sum')
-    EncodeH3K9ac_max: float = Field(..., alias='EncodeH3K9ac-max')
-    EncodeH3K9me3_sum: float = Field(..., alias='EncodeH3K9me3-sum')
-    EncodeH3K9me3_max: float = Field(..., alias='EncodeH3K9me3-max')
-    EncodeH3K27ac_sum: float = Field(..., alias='EncodeH3K27ac-sum')
-    EncodeH3K27ac_max: float = Field(..., alias='EncodeH3K27ac-max')
-    EncodeH3K27me3_sum: float = Field(..., alias='EncodeH3K27me3-sum')
-    EncodeH3K27me3_max: float = Field(..., alias='EncodeH3K27me3-max')
-    EncodeH3K36me3_sum: float = Field(..., alias='EncodeH3K36me3-sum')
-    EncodeH3K36me3_max: float = Field(..., alias='EncodeH3K36me3-max')
-    EncodeH3K79me2_sum: float = Field(..., alias='EncodeH3K79me2-sum')
-    EncodeH3K79me2_max: float = Field(..., alias='EncodeH3K79me2-max')
-    EncodeH4K20me1_sum: float = Field(..., alias='EncodeH4K20me1-sum')
-    EncodeH4K20me1_max: float = Field(..., alias='EncodeH4K20me1-max')
-    EncodeH2AFZ_sum: float = Field(..., alias='EncodeH2AFZ-sum')
-    EncodeH2AFZ_max: float = Field(..., alias='EncodeH2AFZ-max')
-    EncodeDNase_sum: float = Field(..., alias='EncodeDNase-sum')
-    EncodeDNase_max: float = Field(..., alias='EncodeDNase-max')
-    EncodetotalRNA_sum: float = Field(..., alias='EncodetotalRNA-sum')
-    EncodetotalRNA_max: float = Field(..., alias='EncodetotalRNA-max')
+    EncodeH3K4me1_sum: float = Field(..., alias="EncodeH3K4me1-sum")
+    EncodeH3K4me1_max: float = Field(..., alias="EncodeH3K4me1-max")
+    EncodeH3K4me2_sum: float = Field(..., alias="EncodeH3K4me2-sum")
+    EncodeH3K4me2_max: float = Field(..., alias="EncodeH3K4me2-max")
+    EncodeH3K4me3_sum: float = Field(..., alias="EncodeH3K4me3-sum")
+    EncodeH3K4me3_max: float = Field(..., alias="EncodeH3K4me3-max")
+    EncodeH3K9ac_sum: float = Field(..., alias="EncodeH3K9ac-sum")
+    EncodeH3K9ac_max: float = Field(..., alias="EncodeH3K9ac-max")
+    EncodeH3K9me3_sum: float = Field(..., alias="EncodeH3K9me3-sum")
+    EncodeH3K9me3_max: float = Field(..., alias="EncodeH3K9me3-max")
+    EncodeH3K27ac_sum: float = Field(..., alias="EncodeH3K27ac-sum")
+    EncodeH3K27ac_max: float = Field(..., alias="EncodeH3K27ac-max")
+    EncodeH3K27me3_sum: float = Field(..., alias="EncodeH3K27me3-sum")
+    EncodeH3K27me3_max: float = Field(..., alias="EncodeH3K27me3-max")
+    EncodeH3K36me3_sum: float = Field(..., alias="EncodeH3K36me3-sum")
+    EncodeH3K36me3_max: float = Field(..., alias="EncodeH3K36me3-max")
+    EncodeH3K79me2_sum: float = Field(..., alias="EncodeH3K79me2-sum")
+    EncodeH3K79me2_max: float = Field(..., alias="EncodeH3K79me2-max")
+    EncodeH4K20me1_sum: float = Field(..., alias="EncodeH4K20me1-sum")
+    EncodeH4K20me1_max: float = Field(..., alias="EncodeH4K20me1-max")
+    EncodeH2AFZ_sum: float = Field(..., alias="EncodeH2AFZ-sum")
+    EncodeH2AFZ_max: float = Field(..., alias="EncodeH2AFZ-max")
+    EncodeDNase_sum: float = Field(..., alias="EncodeDNase-sum")
+    EncodeDNase_max: float = Field(..., alias="EncodeDNase-max")
+    EncodetotalRNA_sum: float = Field(..., alias="EncodetotalRNA-sum")
+    EncodetotalRNA_max: float = Field(..., alias="EncodetotalRNA-max")
     Grantham: int
-    SpliceAI_acc_gain: int = Field(..., alias='SpliceAI-acc-gain')
-    SpliceAI_acc_loss: int = Field(..., alias='SpliceAI-acc-loss')
-    SpliceAI_don_gain: int = Field(..., alias='SpliceAI-don-gain')
-    SpliceAI_don_loss: int = Field(..., alias='SpliceAI-don-loss')
+    SpliceAI_acc_gain: int = Field(..., alias="SpliceAI-acc-gain")
+    SpliceAI_acc_loss: int = Field(..., alias="SpliceAI-acc-loss")
+    SpliceAI_don_gain: int = Field(..., alias="SpliceAI-don-gain")
+    SpliceAI_don_loss: int = Field(..., alias="SpliceAI-don-loss")
     MMSp_acceptorIntron: int
     MMSp_acceptor: int
     MMSp_exon: int
@@ -146,8 +146,8 @@ class Cadd(BaseModel):
     Rare10000bp: int
     Sngl10000bp: int
     EnsembleRegulatoryFeature: None
-    dbscSNV_ada_score: None = Field(..., alias='dbscSNV-ada_score')
-    dbscSNV_rf_score: None = Field(..., alias='dbscSNV-rf_score')
+    dbscSNV_ada_score: None = Field(..., alias="dbscSNV-ada_score")
+    dbscSNV_rf_score: None = Field(..., alias="dbscSNV-rf_score")
     RemapOverlapTF: None
     RemapOverlapCL: None
     RawScore: float
@@ -164,16 +164,16 @@ class Dbsnp(BaseModel):
 
 class Dbnsfp(BaseModel):
     chr: str
-    pos_1_based_: int = Field(..., alias='pos(1-based)')
+    pos_1_based_: int = Field(..., alias="pos(1-based)")
     ref: str
     alt: str
     aaref: str
     aaalt: str
     rs_dbSNP: str
     hg19_chr: str
-    hg19_pos_1_based_: int = Field(..., alias='hg19_pos(1-based)')
+    hg19_pos_1_based_: int = Field(..., alias="hg19_pos(1-based)")
     hg18_chr: str
-    hg18_pos_1_based_: int = Field(..., alias='hg18_pos(1-based)')
+    hg18_pos_1_based_: int = Field(..., alias="hg18_pos(1-based)")
     aapos: str
     genename: str
     Ensembl_geneid: str
@@ -242,9 +242,9 @@ class Dbnsfp(BaseModel):
     MetaRNN_score: str
     MetaRNN_rankscore: float
     MetaRNN_pred: str
-    M_CAP_score: None = Field(..., alias='M-CAP_score')
-    M_CAP_rankscore: None = Field(..., alias='M-CAP_rankscore')
-    M_CAP_pred: None = Field(..., alias='M-CAP_pred')
+    M_CAP_score: None = Field(..., alias="M-CAP_score")
+    M_CAP_rankscore: None = Field(..., alias="M-CAP_rankscore")
+    M_CAP_pred: None = Field(..., alias="M-CAP_pred")
     REVEL_score: str
     REVEL_rankscore: float
     MutPred_score: str
@@ -273,9 +273,9 @@ class Dbnsfp(BaseModel):
     ClinPred_score: float
     ClinPred_rankscore: float
     ClinPred_pred: str
-    LIST_S2_score: None = Field(..., alias='LIST-S2_score')
-    LIST_S2_rankscore: None = Field(..., alias='LIST-S2_rankscore')
-    LIST_S2_pred: None = Field(..., alias='LIST-S2_pred')
+    LIST_S2_score: None = Field(..., alias="LIST-S2_score")
+    LIST_S2_rankscore: None = Field(..., alias="LIST-S2_rankscore")
+    LIST_S2_pred: None = Field(..., alias="LIST-S2_pred")
     VARITY_R_score: None
     VARITY_R_rankscore: None
     VARITY_ER_score: None
@@ -317,21 +317,19 @@ class Dbnsfp(BaseModel):
     CADD_phred_hg19: float
     DANN_score: float
     DANN_rankscore: float
-    fathmm_MKL_coding_score: float = Field(..., alias='fathmm-MKL_coding_score')
-    fathmm_MKL_coding_rankscore: float = Field(..., alias='fathmm-MKL_coding_rankscore')
-    fathmm_MKL_coding_pred: str = Field(..., alias='fathmm-MKL_coding_pred')
-    fathmm_MKL_coding_group: str = Field(..., alias='fathmm-MKL_coding_group')
-    fathmm_XF_coding_score: float = Field(..., alias='fathmm-XF_coding_score')
-    fathmm_XF_coding_rankscore: float = Field(..., alias='fathmm-XF_coding_rankscore')
-    fathmm_XF_coding_pred: str = Field(..., alias='fathmm-XF_coding_pred')
-    Eigen_raw_coding: float = Field(..., alias='Eigen-raw_coding')
-    Eigen_raw_coding_rankscore: float = Field(..., alias='Eigen-raw_coding_rankscore')
-    Eigen_phred_coding: float = Field(..., alias='Eigen-phred_coding')
-    Eigen_PC_raw_coding: float = Field(..., alias='Eigen-PC-raw_coding')
-    Eigen_PC_raw_coding_rankscore: float = Field(
-        ..., alias='Eigen-PC-raw_coding_rankscore'
-    )
-    Eigen_PC_phred_coding: float = Field(..., alias='Eigen-PC-phred_coding')
+    fathmm_MKL_coding_score: float = Field(..., alias="fathmm-MKL_coding_score")
+    fathmm_MKL_coding_rankscore: float = Field(..., alias="fathmm-MKL_coding_rankscore")
+    fathmm_MKL_coding_pred: str = Field(..., alias="fathmm-MKL_coding_pred")
+    fathmm_MKL_coding_group: str = Field(..., alias="fathmm-MKL_coding_group")
+    fathmm_XF_coding_score: float = Field(..., alias="fathmm-XF_coding_score")
+    fathmm_XF_coding_rankscore: float = Field(..., alias="fathmm-XF_coding_rankscore")
+    fathmm_XF_coding_pred: str = Field(..., alias="fathmm-XF_coding_pred")
+    Eigen_raw_coding: float = Field(..., alias="Eigen-raw_coding")
+    Eigen_raw_coding_rankscore: float = Field(..., alias="Eigen-raw_coding_rankscore")
+    Eigen_phred_coding: float = Field(..., alias="Eigen-phred_coding")
+    Eigen_PC_raw_coding: float = Field(..., alias="Eigen-PC-raw_coding")
+    Eigen_PC_raw_coding_rankscore: float = Field(..., alias="Eigen-PC-raw_coding_rankscore")
+    Eigen_PC_phred_coding: float = Field(..., alias="Eigen-PC-phred_coding")
     GenoCanyon_score: float
     GenoCanyon_rankscore: float
     integrated_fitCons_score: float
@@ -340,17 +338,17 @@ class Dbnsfp(BaseModel):
     GM12878_fitCons_score: float
     GM12878_fitCons_rankscore: float
     GM12878_confidence_value: int
-    H1_hESC_fitCons_score: float = Field(..., alias='H1-hESC_fitCons_score')
-    H1_hESC_fitCons_rankscore: float = Field(..., alias='H1-hESC_fitCons_rankscore')
-    H1_hESC_confidence_value: int = Field(..., alias='H1-hESC_confidence_value')
+    H1_hESC_fitCons_score: float = Field(..., alias="H1-hESC_fitCons_score")
+    H1_hESC_fitCons_rankscore: float = Field(..., alias="H1-hESC_fitCons_rankscore")
+    H1_hESC_confidence_value: int = Field(..., alias="H1-hESC_confidence_value")
     HUVEC_fitCons_score: float
     HUVEC_fitCons_rankscore: float
     HUVEC_confidence_value: int
     LINSIGHT: None
     LINSIGHT_rankscore: None
-    GERP___NR: float = Field(..., alias='GERP++_NR')
-    GERP___RS: float = Field(..., alias='GERP++_RS')
-    GERP___RS_rankscore: float = Field(..., alias='GERP++_RS_rankscore')
+    GERP___NR: float = Field(..., alias="GERP++_NR")
+    GERP___RS: float = Field(..., alias="GERP++_RS")
+    GERP___RS_rankscore: float = Field(..., alias="GERP++_RS_rankscore")
     phyloP100way_vertebrate: float
     phyloP100way_vertebrate_rankscore: float
     phyloP470way_mammalian: float
@@ -368,18 +366,18 @@ class Dbnsfp(BaseModel):
     SiPhy_29way_logOdds_rankscore: float
     bStatistic: int
     bStatistic_converted_rankscore: float
-    field_1000Gp3_AC: int = Field(..., alias='1000Gp3_AC')
-    field_1000Gp3_AF: float = Field(..., alias='1000Gp3_AF')
-    field_1000Gp3_AFR_AC: int = Field(..., alias='1000Gp3_AFR_AC')
-    field_1000Gp3_AFR_AF: float = Field(..., alias='1000Gp3_AFR_AF')
-    field_1000Gp3_EUR_AC: int = Field(..., alias='1000Gp3_EUR_AC')
-    field_1000Gp3_EUR_AF: float = Field(..., alias='1000Gp3_EUR_AF')
-    field_1000Gp3_AMR_AC: int = Field(..., alias='1000Gp3_AMR_AC')
-    field_1000Gp3_AMR_AF: float = Field(..., alias='1000Gp3_AMR_AF')
-    field_1000Gp3_EAS_AC: int = Field(..., alias='1000Gp3_EAS_AC')
-    field_1000Gp3_EAS_AF: int = Field(..., alias='1000Gp3_EAS_AF')
-    field_1000Gp3_SAS_AC: int = Field(..., alias='1000Gp3_SAS_AC')
-    field_1000Gp3_SAS_AF: float = Field(..., alias='1000Gp3_SAS_AF')
+    field_1000Gp3_AC: int = Field(..., alias="1000Gp3_AC")
+    field_1000Gp3_AF: float = Field(..., alias="1000Gp3_AF")
+    field_1000Gp3_AFR_AC: int = Field(..., alias="1000Gp3_AFR_AC")
+    field_1000Gp3_AFR_AF: float = Field(..., alias="1000Gp3_AFR_AF")
+    field_1000Gp3_EUR_AC: int = Field(..., alias="1000Gp3_EUR_AC")
+    field_1000Gp3_EUR_AF: float = Field(..., alias="1000Gp3_EUR_AF")
+    field_1000Gp3_AMR_AC: int = Field(..., alias="1000Gp3_AMR_AC")
+    field_1000Gp3_AMR_AF: float = Field(..., alias="1000Gp3_AMR_AF")
+    field_1000Gp3_EAS_AC: int = Field(..., alias="1000Gp3_EAS_AC")
+    field_1000Gp3_EAS_AF: int = Field(..., alias="1000Gp3_EAS_AF")
+    field_1000Gp3_SAS_AC: int = Field(..., alias="1000Gp3_SAS_AC")
+    field_1000Gp3_SAS_AF: float = Field(..., alias="1000Gp3_SAS_AF")
     TWINSUK_AC: int
     TWINSUK_AF: float
     ALSPAC_AC: int
@@ -1123,7 +1121,7 @@ class UcscConservationItem(BaseModel):
     records: List[Record]
 
 
-class Result(BaseModel):
+class VariantResult(BaseModel):
     cadd: Cadd
     dbsnp: Dbsnp
     dbnsfp: Dbnsfp
@@ -1136,7 +1134,7 @@ class Result(BaseModel):
     clinvar: None
 
 
-class Model(BaseModel):
+class AnnonarsVariantResponse(BaseModel):
     server_version: str
     query: Query
-    result: Result
+    result: VariantResult

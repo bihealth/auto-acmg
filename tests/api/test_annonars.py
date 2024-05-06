@@ -1,7 +1,7 @@
 import responses
 
 from src.api.annonars import AnnonarsClient
-from src.defs.annonars import AnnonarsRangeResponse
+from src.defs.annonars_range import AnnonarsRangeResponse
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from tests.utils import get_json_object
