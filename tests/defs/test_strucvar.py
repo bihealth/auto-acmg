@@ -26,9 +26,7 @@ def test_strucvar_initialization():
 
 def test_strucvar_initialization_user_representation():
     """Test StrucVar initialization with custom user representation."""
-    variant = StrucVar(
-        StrucVarType.DEL, GenomeRelease.GRCh37, "chr1", 100, 200, user_repr="1:100-200"
-    )
+    variant = StrucVar(StrucVarType.DEL, GenomeRelease.GRCh37, "chr1", 100, 200, user_repr="1:100-200")
     assert variant.user_repr == "1:100-200"
 
 

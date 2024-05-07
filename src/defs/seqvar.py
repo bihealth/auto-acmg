@@ -30,9 +30,7 @@ REGEX_RELAXED_SPDI = re.compile(
 #: Regular expression for dbSNP
 REGEX_DBSNP_ID = re.compile(r"^rs\d+$", re.IGNORECASE)
 #: Regular expression for ClinVar
-REGEX_CLINVAR_ID = re.compile(
-    r"^(?P<accession>(?:RCV|VCV)\d{9})(?:\.(?P<version>\d+))?$", re.IGNORECASE
-)
+REGEX_CLINVAR_ID = re.compile(r"^(?P<accession>(?:RCV|VCV)\d{9})(?:\.(?P<version>\d+))?$", re.IGNORECASE)
 
 
 class SeqVar:
@@ -53,9 +51,7 @@ class SeqVar:
         self.delete = delete.upper()
         self.insert = insert.upper()
         self.user_repr = (
-            user_repr
-            if user_repr
-            else f"{genome_release.name}-{self.chrom}-{pos}-{delete}-{insert}"
+            user_repr if user_repr else f"{genome_release.name}-{self.chrom}-{pos}-{delete}-{insert}"
         )
 
     def _normalize_chromosome(self, chrom: str) -> str:
@@ -139,9 +135,7 @@ class SeqVarResolver:
             raise ParseError(f"Unable to parse colon/hyphen separated seqvar: {value}")
 
         genome_build_value = match.group("genome_build")
-        genome_build = (
-            GenomeRelease[genome_build_value] if genome_build_value else default_genome_release
-        )
+        genome_build = GenomeRelease[genome_build_value] if genome_build_value else default_genome_release
         chrom = self._normalize_chrom(match.group("chrom"))
         pos = int(match.group("pos"))
         delete = match.group("delete").upper()

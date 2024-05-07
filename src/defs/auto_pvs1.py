@@ -142,9 +142,7 @@ SeqvarConsequenceMapping: Dict[str, SeqVarConsequence] = {
 
 
 #: Mapping of PVS1 prediction path to description for sequence variant
-PVS1PredictionPathMapping: Dict[
-    Union[PVS1PredictionSeqVarPath, PVS1PredictionStrucVarPath], str
-] = {
+PVS1PredictionPathMapping: Dict[Union[PVS1PredictionSeqVarPath, PVS1PredictionStrucVarPath], str] = {
     PVS1PredictionSeqVarPath.NotSet: "Not Set",
     PVS1PredictionSeqVarPath.PTEN: "Special guideline for PTEN -> Predicted to undergo NMD",
     PVS1PredictionSeqVarPath.NF1: (
@@ -154,8 +152,7 @@ PVS1PredictionPathMapping: Dict[
         "Predicted to undergo NMD -> Exon is absent from biologically-relevant transcript(s)"
     ),
     PVS1PredictionSeqVarPath.NF3: (
-        "Not predicted to undergo NMD -> "
-        "Truncated/altered region is critical to protein function"
+        "Not predicted to undergo NMD -> " "Truncated/altered region is critical to protein function"
     ),
     PVS1PredictionSeqVarPath.NF4: (
         "Not predicted to undergo NMD -> "

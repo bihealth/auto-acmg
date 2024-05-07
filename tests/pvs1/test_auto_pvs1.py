@@ -3,10 +3,10 @@ from unittest.mock import Mock
 import pytest
 from typer.testing import CliRunner
 
-from src.defs.autopvs1 import PVS1PredictionStrucVarPath
+from src.defs.auto_pvs1 import PVS1PredictionStrucVarPath
 from src.defs.genome_builds import GenomeRelease
-from src.defs.seqvar import SeqVar, SeqVarResolver
-from src.defs.strucvar import StrucVar, StrucVarResolver, StrucVarType
+from src.defs.seqvar import SeqVar
+from src.defs.strucvar import StrucVar, StrucVarType
 from src.pvs1.auto_pvs1 import AutoPVS1
 from src.pvs1.seqvar_pvs1 import PVS1Prediction, PVS1PredictionSeqVarPath, SeqVarPVS1
 from src.pvs1.strucvar_pvs1 import StrucVarPVS1
@@ -16,9 +16,7 @@ runner = CliRunner()
 
 @pytest.fixture
 def mock_seqvar():
-    return SeqVar(
-        genome_release=GenomeRelease.GRCh38, chrom="1", pos=100000, delete="A", insert="T"
-    )
+    return SeqVar(genome_release=GenomeRelease.GRCh38, chrom="1", pos=100000, delete="A", insert="T")
 
 
 @pytest.fixture

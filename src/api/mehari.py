@@ -46,9 +46,7 @@ class MehariClient:
             logger.exception("Validation failed: {}", e)
             return None
 
-    def get_gene_transcripts(
-        self, hgnc_id: str, genome_build: GenomeRelease
-    ) -> GeneTranscripts | None:
+    def get_gene_transcripts(self, hgnc_id: str, genome_build: GenomeRelease) -> GeneTranscripts | None:
         """ "
         Get transcripts for a gene.
 

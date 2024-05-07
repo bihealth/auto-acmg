@@ -1,11 +1,10 @@
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.api.annonars import AnnonarsClient
 from src.api.mehari import MehariClient
-from src.defs.annonars import AnnonarsRangeResponse
-from src.defs.autopvs1 import (
+from src.defs.annonars_range import AnnonarsRangeResponse
+from src.defs.auto_pvs1 import (
     AlteredRegionMode,
     PVS1Prediction,
     PVS1PredictionSeqVarPath,
@@ -31,16 +30,12 @@ def ts_helper(seqvar):
 
 @pytest.fixture
 def seqvar_transcripts():
-    return TranscriptsSeqVar.model_validate(
-        get_json_object("mehari/mehari_seqvar_success.json")
-    ).result
+    return TranscriptsSeqVar.model_validate(get_json_object("mehari/mehari_seqvar_success.json")).result
 
 
 @pytest.fixture
 def gene_transcripts():
-    return GeneTranscripts.model_validate(
-        get_json_object("mehari/mehari_genes_success.json")
-    ).transcripts
+    return GeneTranscripts.model_validate(get_json_object("mehari/mehari_genes_success.json")).transcripts
 
 
 @pytest.fixture
@@ -278,9 +273,7 @@ def test_critical4protein_function(
         (100, 100, 0),  # Test more pathogenic variants than total variants
     ],
 )
-def test_critical4protein_function_failure(
-    seqvar, cds_pos, pathogenic_variants, total_variants, monkeypatch
-):
+def test_critical4protein_function_failure(seqvar, cds_pos, pathogenic_variants, total_variants, monkeypatch):
     """Test the _critical4protein_function method."""
     # Create a mock list of Exons
     exons = [MagicMock(spec=Exon)]
@@ -459,15 +452,9 @@ def test_alternative_start_codon_invalid():
     """Test the _alternative_start_codon method."""
     hgvs = "NM_000"
     cds_info = {
-        "NM_000001": MockCdsInfo(
-            start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
-        ),
-        "NM_000002": MockCdsInfo(
-            start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
-        ),
-        "NM_000003": MockCdsInfo(
-            start_codon=200, stop_codon=1000, cds_start=200, cds_end=1000, exons=[]
-        ),
+        "NM_000001": MockCdsInfo(start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]),
+        "NM_000002": MockCdsInfo(start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]),
+        "NM_000003": MockCdsInfo(start_codon=200, stop_codon=1000, cds_start=200, cds_end=1000, exons=[]),
     }
     with pytest.raises(ValueError):
         SeqVarPVS1Helper._alternative_start_codon(hgvs, cds_info)  # type: ignore
@@ -498,9 +485,7 @@ def test_get_ts_info_success(ts_helper):
     ).transcripts
     ts_helper.consequence = SeqVarConsequence.InitiationCodon
 
-    seqvar_transcript, gene_transcript, seqvar_ts_info, gene_ts_info, consequence = (
-        ts_helper.get_ts_info()
-    )
+    seqvar_transcript, gene_transcript, seqvar_ts_info, gene_ts_info, consequence = ts_helper.get_ts_info()
 
     assert seqvar_transcript is not None
     assert gene_transcript is not None
@@ -511,9 +496,7 @@ def test_get_ts_info_success(ts_helper):
 
 def test_get_ts_info_failure(ts_helper):
     """Test get_ts_info method with a failed response."""
-    seqvar_transcript, gene_transcript, seqvar_ts_info, gene_ts_info, consequence = (
-        ts_helper.get_ts_info()
-    )
+    seqvar_transcript, gene_transcript, seqvar_ts_info, gene_ts_info, consequence = ts_helper.get_ts_info()
 
     assert seqvar_transcript is None
     assert gene_transcript is None
@@ -547,9 +530,7 @@ def test_initialize_success(
 
 @patch.object(MehariClient, "get_seqvar_transcripts")
 @patch.object(MehariClient, "get_gene_transcripts")
-def test_initialize_failure(
-    mock_get_gene_transcripts, mock_get_seqvar_transcripts, seqvar, ts_helper
-):
+def test_initialize_failure(mock_get_gene_transcripts, mock_get_seqvar_transcripts, seqvar, ts_helper):
     # Mock failed responses
     mock_get_seqvar_transcripts.return_value = None
     mock_get_gene_transcripts.return_value = None
@@ -627,16 +608,10 @@ def test_get_consequence_none_input():
 )
 def test_choose_transcript_success(hgvss, gene_ts_file, seqvar_ts_file, expected_hgvs, ts_helper):
     """Test choose_transcript method."""
-    ts_helper.seqvar_ts_info = TranscriptsSeqVar.model_validate(
-        get_json_object(seqvar_ts_file)
-    ).result
-    ts_helper.gene_ts_info = GeneTranscripts.model_validate(
-        get_json_object(gene_ts_file)
-    ).transcripts
+    ts_helper.seqvar_ts_info = TranscriptsSeqVar.model_validate(get_json_object(seqvar_ts_file)).result
+    ts_helper.gene_ts_info = GeneTranscripts.model_validate(get_json_object(gene_ts_file)).transcripts
 
-    seqvar_ts, gene_ts = ts_helper._choose_transcript(
-        hgvss, ts_helper.seqvar_ts_info, ts_helper.gene_ts_info
-    )
+    seqvar_ts, gene_ts = ts_helper._choose_transcript(hgvss, ts_helper.seqvar_ts_info, ts_helper.gene_ts_info)
     assert seqvar_ts.feature_id == expected_hgvs
 
 
@@ -649,16 +624,10 @@ def test_choose_transcript_success(hgvss, gene_ts_file, seqvar_ts_file, expected
 )
 def test_choose_transcript_invalid(hgvss, gene_ts_file, seqvar_ts_file, ts_helper):
     """Test choose_transcript method."""
-    ts_helper.seqvar_ts_info = TranscriptsSeqVar.model_validate(
-        get_json_object(seqvar_ts_file)
-    ).result
-    ts_helper.gene_ts_info = GeneTranscripts.model_validate(
-        get_json_object(gene_ts_file)
-    ).transcripts
+    ts_helper.seqvar_ts_info = TranscriptsSeqVar.model_validate(get_json_object(seqvar_ts_file)).result
+    ts_helper.gene_ts_info = GeneTranscripts.model_validate(get_json_object(gene_ts_file)).transcripts
 
-    seqvar_ts, gene_ts = ts_helper._choose_transcript(
-        hgvss, ts_helper.seqvar_ts_info, ts_helper.gene_ts_info
-    )
+    seqvar_ts, gene_ts = ts_helper._choose_transcript(hgvss, ts_helper.seqvar_ts_info, ts_helper.gene_ts_info)
     assert seqvar_ts == None
 
 
