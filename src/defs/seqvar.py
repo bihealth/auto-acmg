@@ -50,7 +50,9 @@ class SeqVar:
         self.pos = pos
         self.delete = delete.upper()
         self.insert = insert.upper()
-        self.user_repr = user_repr if user_repr else f"{genome_release.name}-{self.chrom}-{pos}-{delete}-{insert}"
+        self.user_repr = (
+            user_repr if user_repr else f"{genome_release.name}-{self.chrom}-{pos}-{delete}-{insert}"
+        )
 
     def _normalize_chromosome(self, chrom: str) -> str:
         """Normalize the chromosome name."""
@@ -97,7 +99,9 @@ class SeqVarResolver:
             raise InvalidPos(f"Invalid position: {variant.pos}")
 
         stop_pos = variant.pos + len(variant.delete) - 1
-        chrom_lengths = CHROM_LENGTHS_37 if variant.genome_release == GenomeRelease.GRCh37 else CHROM_LENGTHS_38
+        chrom_lengths = (
+            CHROM_LENGTHS_37 if variant.genome_release == GenomeRelease.GRCh37 else CHROM_LENGTHS_38
+        )
 
         if stop_pos > chrom_lengths.get(variant.chrom, 0):
             raise InvalidPos(f"Invalid position: {variant.pos}")

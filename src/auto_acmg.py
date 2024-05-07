@@ -4,7 +4,7 @@ from typing import Optional
 
 from loguru import logger
 
-from src.auto_ps1 import AutoPS1PM5
+from src.auto_ps1_pm5 import AutoPS1PM5
 from src.defs.auto_pvs1 import (
     PVS1Prediction,
     PVS1PredictionPathMapping,
@@ -68,7 +68,9 @@ class AutoACMG:
             logger.exception("Failed to resolve sequence variant, trying structural variant.")
             try:
                 strucvar_resolver = StrucVarResolver()
-                strucvar: StrucVar = strucvar_resolver.resolve_strucvar(self.variant_name, self.genome_release)
+                strucvar: StrucVar = strucvar_resolver.resolve_strucvar(
+                    self.variant_name, self.genome_release
+                )
                 logger.debug("Resolved structural variant: {}", strucvar)
                 return strucvar
             except ParseError as e:
@@ -132,19 +134,20 @@ class AutoACMG:
                 ps1pm5 = AutoPS1PM5(self.seqvar, self.genome_release)
                 prediction = ps1pm5.predict()
                 if not prediction:
-                    logger.error("Failed to predict PS1&PM5 criteria. Unexpected error occurred.")
-                    return
-                self.seqvar_ps1, self.seqvar_pm5 = prediction.PS1, prediction.PM5
-                logger.info(
-                    "PS1 prediction for {}: {}.\n" "PM5 prediction: {}.",
-                    self.seqvar.user_repr,
-                    self.seqvar_ps1,
-                    self.seqvar_pm5,
-                )
+                    logger.error("Failed to predict PS1&PM5 criteria.")
+                else:
+                    self.seqvar_ps1, self.seqvar_pm5 = prediction.PS1, prediction.PM5
+                    logger.info(
+                        "PS1 prediction for {}: {}.\n" "PM5 prediction: {}.",
+                        self.seqvar.user_repr,
+                        self.seqvar_ps1,
+                        self.seqvar_pm5,
+                    )
             except Exception as e:
                 logger.error("Failed to predict PS1 criteria. Error: {}", e)
 
         elif isinstance(variant, StrucVar):
+            logger.info("Currently only PVS1 prediction is implemented for structural variants!")
             logger.info(
                 "Classifying ACMG criteria for structural variant {}, genome release: {}.",
                 variant.user_repr,

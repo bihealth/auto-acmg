@@ -14,6 +14,7 @@ If you want to **use** auto-acmg, the best place is to start at :ref:`dev_quicks
 
    acmg_seqvars_details
    acmg_seqvars_criteria
+   acmg_seqvars_implementation
    acmg_pvs1
    acmg_pvs1_algorithm_details
 

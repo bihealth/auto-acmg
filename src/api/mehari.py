@@ -61,7 +61,11 @@ class MehariClient:
             GenomeRelease.GRCh37: "GENOME_BUILD_GRCH37",
             GenomeRelease.GRCh38: "GENOME_BUILD_GRCH38",
         }
-        url = f"{self.api_base_url}/genes/txs?" f"hgncId={hgnc_id}" f"&genomeBuild={genome_build_mapping[genome_build]}"
+        url = (
+            f"{self.api_base_url}/genes/txs?"
+            f"hgncId={hgnc_id}"
+            f"&genomeBuild={genome_build_mapping[genome_build]}"
+        )
         logger.debug("GET request to: {}", url)
         response = requests.get(url)
         try:

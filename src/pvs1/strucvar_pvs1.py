@@ -90,7 +90,10 @@ class StrucVarPVS1(StrucVarPVS1Helper):
                     self.prediction = PVS1Prediction.PVS1_Strong
                     self.prediction_path = PVS1PredictionStrucVarPath.DEL4
                 else:
-                    if self._lof_is_frequent_in_population() or not self._in_biologically_relevant_transcript():
+                    if (
+                        self._lof_is_frequent_in_population()
+                        or not self._in_biologically_relevant_transcript()
+                    ):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionStrucVarPath.DEL5_1
                     else:
@@ -105,7 +108,10 @@ class StrucVarPVS1(StrucVarPVS1Helper):
                     self.prediction = PVS1Prediction.PVS1_Strong
                     self.prediction_path = PVS1PredictionStrucVarPath.DEL8
                 else:
-                    if self._lof_is_frequent_in_population() or not self._in_biologically_relevant_transcript():
+                    if (
+                        self._lof_is_frequent_in_population()
+                        or not self._in_biologically_relevant_transcript()
+                    ):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionStrucVarPath.DEL5_2
                     else:

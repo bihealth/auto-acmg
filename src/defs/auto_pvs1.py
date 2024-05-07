@@ -309,9 +309,15 @@ PVS1PredictionPathMapping: Dict[Union[PVS1PredictionSeqVarPath, PVS1PredictionSt
         "Single to multi exon deletion preserves reading frame -> "
         "Truncated/altered region is critical to protein function"
     ),
-    PVS1PredictionStrucVarPath.DUP1: ("Proven in tandem -> " "Reading frame disrupted and NMD predicted to occur"),
-    PVS1PredictionStrucVarPath.DUP2_1: ("Proven in tandem -> " "No or unknown impact on reading frame and NMD"),
-    PVS1PredictionStrucVarPath.DUP2_2: ("Presumed in tandem -> " "No or unknown impact on reading frame and NMD"),
+    PVS1PredictionStrucVarPath.DUP1: (
+        "Proven in tandem -> " "Reading frame disrupted and NMD predicted to occur"
+    ),
+    PVS1PredictionStrucVarPath.DUP2_1: (
+        "Proven in tandem -> " "No or unknown impact on reading frame and NMD"
+    ),
+    PVS1PredictionStrucVarPath.DUP2_2: (
+        "Presumed in tandem -> " "No or unknown impact on reading frame and NMD"
+    ),
     PVS1PredictionStrucVarPath.DUP3: (
         "Proven in tandem -> " "Reading frame presumed disrupted and NMD predicted to occur"
     ),

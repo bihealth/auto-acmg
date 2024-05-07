@@ -4,6 +4,8 @@ import pytest
 from typer.testing import CliRunner
 
 from src.auto_acmg import AutoACMG
+from src.auto_ps1_pm5 import AutoPS1PM5
+from src.defs.auto_acmg import PS1PM5
 from src.defs.exceptions import ParseError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar, SeqVarResolver
@@ -53,6 +55,14 @@ def mock_auto_pvs1_success(monkeypatch):
 
 
 @pytest.fixture
+def mock_auto_ps1_pm5_success(monkeypatch):
+    mock_ps1_pm5 = Mock(AutoPS1PM5)
+    mock_ps1_pm5.predict.return_value = PS1PM5()
+    monkeypatch.setattr("src.auto_acmg.AutoPS1PM5", lambda *args, **kwargs: mock_ps1_pm5)
+    return mock_ps1_pm5
+
+
+@pytest.fixture
 def mock_auto_pvs1_failure(monkeypatch):
     mock_pvs1 = Mock(AutoPVS1)
     mock_pvs1.predict.return_value = (None, None)
@@ -81,12 +91,15 @@ def test_auto_acmg_resolve_sequence_variant_failure(mock_seqvar_resolver_failure
     assert variant is None
 
 
-def test_auto_acmg_predict_seqvar_success(mock_seqvar_resolver, mock_auto_pvs1_success, mock_seqvar):
+def test_auto_acmg_predict_seqvar_success(
+    mock_seqvar_resolver, mock_auto_pvs1_success, mock_auto_ps1_pm5_success, mock_seqvar
+):
     """Test the predict method for a sequence variant with a successful response."""
     auto_acmg = AutoACMG("NM_000038.3:c.797G>A", GenomeRelease.GRCh38)
     with runner.isolated_filesystem():
         auto_acmg.predict()
     assert mock_auto_pvs1_success.predict.called
+    assert mock_auto_ps1_pm5_success.predict.called
 
 
 def test_auto_acmg_predict_seqvar_resolve_failure(mock_seqvar_resolver_failure, mock_auto_pvs1_failure):

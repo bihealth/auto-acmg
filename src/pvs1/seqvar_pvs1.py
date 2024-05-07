@@ -25,7 +25,9 @@ class SeqVarPVS1Helper:
     """Helper methods for PVS1 criteria for sequence variants."""
 
     @staticmethod
-    def _choose_hgvs_p(hgvs: str, seqvar_ts: TranscriptSeqvar, seqvar_transcripts: List[TranscriptSeqvar]) -> str:
+    def _choose_hgvs_p(
+        hgvs: str, seqvar_ts: TranscriptSeqvar, seqvar_transcripts: List[TranscriptSeqvar]
+    ) -> str:
         """Choose the most suitable protein HGVS notation.
 
         This method chooses the most suitable protein HGVS notation for the sequence variant based
@@ -106,7 +108,9 @@ class SeqVarPVS1Helper:
         return termination
 
     @staticmethod
-    def _calculate_altered_region(cds_pos: int, exons: List[Exon], mode: AlteredRegionMode) -> Tuple[int, int]:
+    def _calculate_altered_region(
+        cds_pos: int, exons: List[Exon], mode: AlteredRegionMode
+    ) -> Tuple[int, int]:
         """Calculates the altered region's start and end positions.
 
         Args:
@@ -623,7 +627,9 @@ class SeqVarTranscriptsHelper:
             if transcript.seqvar and transcript.gene:
                 if "ManeSelect" in transcript.seqvar.feature_tag:
                     mane_transcripts.append(hgvs)
-                cds_sizes = [exon.altEndI - exon.altStartI for exon in transcript.gene.genomeAlignments[0].exons]
+                cds_sizes = [
+                    exon.altEndI - exon.altStartI for exon in transcript.gene.genomeAlignments[0].exons
+                ]
                 exon_lengths[hgvs] = sum(cds_sizes)
 
         # Choose the most suitable transcript
@@ -707,7 +713,11 @@ class SeqVarPVS1(SeqVarPVS1Helper):
             self._consequence,
         ) = seqvar_transcript_helper.get_ts_info()
 
-        if not self._seqvar_transcript or not self._gene_transcript or self._consequence == SeqVarConsequence.NotSet:
+        if (
+            not self._seqvar_transcript
+            or not self._gene_transcript
+            or self._consequence == SeqVarConsequence.NotSet
+        ):
             logger.error("Transcript data is not set. Cannot initialize the PVS1 class.")
             raise AlgorithmError("Transcript data is not set. Cannot initialize the PVS1 class.")
 
@@ -720,7 +730,9 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         self.transcript_tags = self._seqvar_transcript.feature_tag
         self.exons = self._gene_transcript.genomeAlignments[0].exons
         self.cds_pos = (
-            self._seqvar_transcript.cds_pos.ord if isinstance(self._seqvar_transcript.cds_pos, CdsPos) else None
+            self._seqvar_transcript.cds_pos.ord
+            if isinstance(self._seqvar_transcript.cds_pos, CdsPos)
+            else None
         )
         self.cds_info = {
             ts.id: CdsInfo(
@@ -741,7 +753,11 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         and prediction path is stored in the prediction and prediction_path attributes.
         """
         logger.debug("Verifying the PVS1 criteria.")
-        if not self._seqvar_transcript or not self._gene_transcript or self._consequence == SeqVarConsequence.NotSet:
+        if (
+            not self._seqvar_transcript
+            or not self._gene_transcript
+            or self._consequence == SeqVarConsequence.NotSet
+        ):
             logger.error("Transcript data is not set. Did you forget to initialize the class?")
             raise AlgorithmError("Transcript data is not set. Did you forget to initialize the class?")
 

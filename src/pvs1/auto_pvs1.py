@@ -39,7 +39,9 @@ class AutoPVS1:
 
     def predict(
         self,
-    ) -> Tuple[PVS1Prediction, Union[PVS1PredictionSeqVarPath, PVS1PredictionStrucVarPath]] | Tuple[None, None]:
+    ) -> (
+        Tuple[PVS1Prediction, Union[PVS1PredictionSeqVarPath, PVS1PredictionStrucVarPath]] | Tuple[None, None]
+    ):
         """Runs the prediction algorithm to assess the PVS1 criteria for the resolved variant.
 
         This method resolves the variant and then, based on the type of variant, predicts its
