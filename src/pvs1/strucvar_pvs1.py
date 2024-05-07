@@ -2,7 +2,7 @@
 
 from loguru import logger
 
-from src.defs.autopvs1 import PVS1Prediction, PVS1PredictionStrucVarPath
+from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionStrucVarPath
 from src.defs.strucvar import StrucVar, StrucVarType
 
 

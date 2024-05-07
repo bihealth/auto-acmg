@@ -6,7 +6,6 @@ from typing_extensions import Annotated
 
 from src.auto_acmg import AutoACMG
 from src.defs.genome_builds import GenomeRelease
-from src.pvs1.auto_pvs1 import AutoPVS1
 
 app = typer.Typer()
 

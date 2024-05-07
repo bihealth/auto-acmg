@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 
-class Query(BaseModel):
+class RangeQuery(BaseModel):
     genome_release: str
     chromosome: str
     start: int
@@ -172,5 +172,5 @@ class AnnonarsRangeResult(BaseModel):
 
 class AnnonarsRangeResponse(BaseModel):
     server_version: str
-    query: Query
+    query: RangeQuery
     result: AnnonarsRangeResult
