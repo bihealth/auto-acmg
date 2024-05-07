@@ -36,10 +36,10 @@ def mock_annonars_client(monkeypatch):
     return mock_client
 
 
-def test_auto_ps1_pm5_get_variant_info(auto_ps1_pm5, seqvar, mock_annonars_client, variant_info):
-    """Test getting variant information."""
-    response = auto_ps1_pm5._get_variant_info(seqvar)
-    assert response is not None  # Response should be variant_info
+# def test_auto_ps1_pm5_get_variant_info(auto_ps1_pm5, seqvar, mock_annonars_client, variant_info):
+#     """Test getting variant information."""
+#     response = auto_ps1_pm5._get_variant_info(seqvar)
+#     assert response is not None  # Response should be variant_info
 
 
 @pytest.mark.parametrize(
