@@ -1,4 +1,4 @@
-"""Implementation of PS1 prediction for sequence variants."""
+"""Implementation of PS1 and PM5 rules for sequence variants."""
 
 import re
 from typing import Optional
@@ -21,7 +21,7 @@ REGEX_HGVSP = re.compile(r"p\.(\D+)(\d+)(\D+)")
 
 
 class AutoPS1PM5:
-    """Predicts PS1 criteria for sequence variants."""
+    """Predicts PS1 and PM5 criteria for sequence variants."""
 
     def __init__(self, seqvar: SeqVar, genome_release: GenomeRelease, *, config: Optional[Config] = None):
         #: Configuration to use.

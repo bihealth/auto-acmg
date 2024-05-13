@@ -17,3 +17,15 @@ PS1 and PM5
     :undoc-members:
     :show-inheritance:
     :private-members:
+
+
+-----------
+PM4 and BP3
+-----------
+
+.. automodule:: src.auto_pm4_bp3
+    :members:
+    :inherited-members:
+    :undoc-members:
+    :show-inheritance:
+    :private-members:

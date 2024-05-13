@@ -6,7 +6,7 @@
           "type": "debugpy",
           "request": "launch",
           "module": "src.cli",
-          "args": ["chr6:160585140:T:G", "--genome-release", "grch38"],
+          "args": ["NM_000277.1(PAH):c.208_210delTCT", "--genome-release", "grch37"],
           "console": "integratedTerminal"
       }
   ]

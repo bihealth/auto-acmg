@@ -1,8 +1,5 @@
 Useful links:
 https://jmg.bmj.com/content/jmedgenet/58/8/547/DC1/embed/inline-supplementary-material-1.xlsx?download=true
-https://oup.silverchair-cdn.com/oup/backfile/Content_public/Journal/bioinformatics/40/3/10.1093_bioinformatics_btae114/1/btae114_supplementary_data.zip?Expires=1717725944&Signature=igypTOQsDnvPUA9x9C5HEPoLsr8Y-~XtIS5ng2d0QZ5VtMECpwXkZJf5Xz19MPM9fb3292NhupQP3J0kPkoFdDrExG6IY3pTOVWRpwXjTlmPbF3Z5n9WS3PanynlyT9VvR3-IFzFKS6B~FD7w-8wPKjPSHYwr23edOzSCt4d~W~YkRYHTd3KCNHzIFjSHfN1BZHoduWecVX0NHGVmC~P0Yop1kK7JXi8QJStCs1BMkHTvATjG0IMs9B5~QbN4TeOWYBhrxNhsV5KjvKPYvADz9Q7GsymzuDmYyqgbP7qXJiaRlw3SNn3f7yFqs1GsrZoUfE9MsYuHqKhp7pYc1mtIg__&Key-Pair-Id=APKAIE5G5CRDK6RD3PGA
-https://jmg.bmj.com/content/58/8/547
-https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1009785
 
 
 
@@ -136,3 +133,8 @@ NM_000546.5:c.-28-5118_672+241dup (Exon 2-6 duplication)   (Gene TP53)   (From R
 - presumed in tandem -> no info on RF and NMD:
 
 - provem NOT in tandem:
+
+
+# PM4
+NM_000277.1(PAH):c.967_969delACA  (p.Thr323del)
+NM_000277.1(PAH):c.208_210delTCT
