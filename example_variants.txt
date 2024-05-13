@@ -1,10 +1,9 @@
-Pending:
-13-113803407-G-A / grch37 (F10)
-4-113568536-G-GA / grch37 (LARP7)
-6-24302274-T-C / grch37 (DCDC2)
-X-102884958-T-TTCGGAGGAGCAGTCC / grch37 (TCEAL1, ?orig=NM_004780.3(TCEAL1):c.124_138dup)
-chr7-140753336-A-C / grch38 (BRAF)
-chr16-53767042-T-C / grch38 (FTO)
+Useful links:
+https://jmg.bmj.com/content/jmedgenet/58/8/547/DC1/embed/inline-supplementary-material-1.xlsx?download=true
+https://oup.silverchair-cdn.com/oup/backfile/Content_public/Journal/bioinformatics/40/3/10.1093_bioinformatics_btae114/1/btae114_supplementary_data.zip?Expires=1717725944&Signature=igypTOQsDnvPUA9x9C5HEPoLsr8Y-~XtIS5ng2d0QZ5VtMECpwXkZJf5Xz19MPM9fb3292NhupQP3J0kPkoFdDrExG6IY3pTOVWRpwXjTlmPbF3Z5n9WS3PanynlyT9VvR3-IFzFKS6B~FD7w-8wPKjPSHYwr23edOzSCt4d~W~YkRYHTd3KCNHzIFjSHfN1BZHoduWecVX0NHGVmC~P0Yop1kK7JXi8QJStCs1BMkHTvATjG0IMs9B5~QbN4TeOWYBhrxNhsV5KjvKPYvADz9Q7GsymzuDmYyqgbP7qXJiaRlw3SNn3f7yFqs1GsrZoUfE9MsYuHqKhp7pYc1mtIg__&Key-Pair-Id=APKAIE5G5CRDK6RD3PGA
+https://jmg.bmj.com/content/58/8/547
+https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1009785
+
 
 
 Frameshift/Nonsense:
@@ -31,6 +30,7 @@ NM_004360.3:c.1792C>T (p.Arg598Ter)   (Gene: CDH1)   (From Recommendation 07.09.
 
 
 - not undergo NMD -> critical for protein function:
+13-113803407-G-A / grch37 (F10)
 NM_004360.3:c.2506G>T (p.Glu836Ter)   (Gene: CDH1)   (From Recommendation 07.09.2018)
 NM_000314.6:c.1003C>T (p.Arg335Ter)   (Gene: PTEN)   (From Recommendation 07.09.2018)   ### Debug
 
@@ -46,6 +46,7 @@ NM_000218.2c.1986C>G (p.Tyr662Ter)   (Gene: KCNQ1)  (Note: PM4)   (From Recommen
 
 Splice sites:
 - exon skipping or cryptic splice site disrupts RF AND undergo NMD -> biological relevant:
+6-24302274-T-C / grch37 (DCDC2)
 NM_000441.1:c.919-2A>G (p.?)   (Gene SLC26A4)   (From Recommendation 07.09.2018)
 NM_000314.6:c.493-2A>G (p.?)   (Gene PTEN)   (From Recommendation 07.09.2018)
 NM_004360.3:c.1565+1G>A (p.?)   (Gene CDH1)   (From Recommendation 07.09.2018)
