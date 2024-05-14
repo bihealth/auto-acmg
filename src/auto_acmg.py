@@ -132,52 +132,43 @@ class AutoACMG:
             try:
                 logger.info("Predicting PS1 and PM5.")
                 ps1pm5 = AutoPS1PM5(self.seqvar, self.genome_release)
-                prediction = ps1pm5.predict()
-                if not prediction:
+                ps1_pm5_prediction = ps1pm5.predict()
+                if not ps1_pm5_prediction:
                     logger.error("Failed to predict PS1&PM5 criteria.")
                 else:
-<<<<<<< Updated upstream
-                    self.seqvar_ps1, self.seqvar_pm5 = prediction.PS1, prediction.PM5
-=======
                     self.seqvar_ps1, self.seqvar_pm5 = (
                         ps1_pm5_prediction.PS1,
                         ps1_pm5_prediction.PM5,
                     )
->>>>>>> Stashed changes
                     logger.info(
                         "PS1 prediction for {}: {}.\n" "PM5 prediction: {}.",
                         self.seqvar.user_repr,
                         self.seqvar_ps1,
                         self.seqvar_pm5,
                     )
-<<<<<<< Updated upstream
-            except Exception as e:
-                logger.error("Failed to predict PS1 criteria. Error: {}", e)
-=======
             except AutoAcmgBaseException as e:
                 logger.error("Failed to predict PS1 and PM5 criteria. Error: {}", e)
 
             # PM4 and BP3
-            try:
-                logger.info("Predicting PM4 and BP3.")
-                pm4bp3 = AutoPM4BP3(self.seqvar, self.genome_release)
-                pm4_bp3_prediction = pm4bp3.predict()
-                if not pm4_bp3_prediction:
-                    logger.error("Failed to predict PM4&BP3 criteria.")
-                else:
-                    self.seqvar_pm4, self.seqvar_bp3 = (
-                        pm4_bp3_prediction.PM4,
-                        pm4_bp3_prediction.BP3,
-                    )
-                    logger.info(
-                        "PM4 prediction for {}: {}.\n" "BP3 prediction: {}.",
-                        self.seqvar.user_repr,
-                        self.seqvar_pm4,
-                        self.seqvar_bp3,
-                    )
-            except AutoAcmgBaseException as e:
-                logger.error("Failed to predict PM4 and BP3 criteria. Error: {}", e)
->>>>>>> Stashed changes
+            # try:
+            #     logger.info("Predicting PM4 and BP3.")
+            #     pm4bp3 = AutoPM4BP3(self.seqvar, self.genome_release)
+            #     pm4_bp3_prediction = pm4bp3.predict()
+            #     if not pm4_bp3_prediction:
+            #         logger.error("Failed to predict PM4&BP3 criteria.")
+            #     else:
+            #         self.seqvar_pm4, self.seqvar_bp3 = (
+            #             pm4_bp3_prediction.PM4,
+            #             pm4_bp3_prediction.BP3,
+            #         )
+            #         logger.info(
+            #             "PM4 prediction for {}: {}.\n" "BP3 prediction: {}.",
+            #             self.seqvar.user_repr,
+            #             self.seqvar_pm4,
+            #             self.seqvar_bp3,
+            #         )
+            # except AutoAcmgBaseException as e:
+            #     logger.error("Failed to predict PM4 and BP3 criteria. Error: {}", e)
 
         elif isinstance(variant, StrucVar):
             logger.info("Currently only PVS1 prediction is implemented for structural variants!")
