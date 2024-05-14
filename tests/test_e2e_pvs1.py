@@ -6,7 +6,7 @@ from typing import Any, List, Tuple
 import pytest
 
 from src.auto_acmg import AutoACMG
-from src.core.config import HelperConfig
+from src.core.config import Config
 from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionSeqVarPath
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
@@ -29,14 +29,14 @@ def pvs1_seqvar_test_helper(
     genome_release: GenomeRelease,
     expected_prediction: PVS1Prediction,
     expected_path: PVS1PredictionSeqVarPath,
-    helper_config: HelperConfig,
+    config: Config,
 ):
     # first, resolve variant
-    auto_acmg = AutoACMG(variant_name, genome_release)
+    auto_acmg = AutoACMG(variant_name, genome_release, config=config)
     variant = auto_acmg.resolve_variant()
     assert isinstance(variant, SeqVar)
     # then, predict PVS1
-    pvs1 = AutoPVS1(variant, genome_release, helper_config=helper_config)
+    pvs1 = AutoPVS1(variant, genome_release, config=config)
     result = pvs1.predict()
     assert result == (expected_prediction, expected_path)
 
@@ -51,10 +51,10 @@ def test_pvs1_seqvar_csv(
     genome_release: GenomeRelease,
     expected_prediction: PVS1Prediction,
     expected_path: PVS1PredictionSeqVarPath,
-    helper_config: HelperConfig,
+    config: Config,
 ):
     """Test PVS1 predictions, variants read from CSV file."""
-    pvs1_seqvar_test_helper(variant_name, genome_release, expected_prediction, expected_path, helper_config)
+    pvs1_seqvar_test_helper(variant_name, genome_release, expected_prediction, expected_path, config)
 
 
 @pytest.mark.remote
@@ -74,7 +74,7 @@ def test_pvs1_seqvar_inline(
     genome_release: GenomeRelease,
     expected_prediction: PVS1Prediction,
     expected_path: PVS1PredictionSeqVarPath,
-    helper_config: HelperConfig,
+    config: Config,
 ):
     """Test PVS1 predictions, variants defined inline."""
-    pvs1_seqvar_test_helper(variant_name, genome_release, expected_prediction, expected_path, helper_config)
+    pvs1_seqvar_test_helper(variant_name, genome_release, expected_prediction, expected_path, config)

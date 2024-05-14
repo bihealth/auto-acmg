@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.core.config import HelperConfig
+from src.core.config import Config
 
 
 @pytest.fixture
@@ -11,5 +11,5 @@ def api_base_url() -> str:
 
 
 @pytest.fixture
-def helper_config(api_base_url: str) -> HelperConfig:
-    return HelperConfig(api_base_url=api_base_url)
+def config(api_base_url: str) -> Config:
+    return Config(api_base_url=api_base_url)

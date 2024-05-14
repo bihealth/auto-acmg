@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 from src.api.annonars import AnnonarsClient
 from src.api.mehari import MehariClient
-from src.core.config import HelperConfig
+from src.core.config import Config
 from src.defs.auto_pvs1 import (
     AlteredRegionMode,
     CdsInfo,
@@ -31,8 +31,8 @@ from src.defs.seqvar import SeqVar
 class SeqVarPVS1Helper:
     """Helper methods for PVS1 criteria for sequence variants."""
 
-    def __init__(self, *, config: Optional[HelperConfig] = None):
-        self.config: HelperConfig = config or HelperConfig()
+    def __init__(self, *, config: Optional[Config] = None):
+        self.config: Config = config or Config()
         self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
 
     @staticmethod
@@ -499,8 +499,8 @@ class SeqVarPVS1Helper:
 class SeqVarTranscriptsHelper:
     """Transcript information for a sequence variant."""
 
-    def __init__(self, seqvar: SeqVar, *, config: Optional[HelperConfig] = None):
-        self.config: HelperConfig = config or HelperConfig()
+    def __init__(self, seqvar: SeqVar, *, config: Optional[Config] = None):
+        self.config: Config = config or Config()
         self.seqvar: SeqVar = seqvar
 
         # Attributes to be set
@@ -662,9 +662,9 @@ class SeqVarTranscriptsHelper:
 class SeqVarPVS1(SeqVarPVS1Helper):
     """Handles the PVS1 criteria assessment for sequence variants."""
 
-    def __init__(self, seqvar: SeqVar, *, config: Optional[HelperConfig] = None):
+    def __init__(self, seqvar: SeqVar, *, config: Optional[Config] = None):
         #: Configuration to use.
-        self.config: HelperConfig = config or HelperConfig()
+        self.config: Config = config or Config()
         # Attributes to be set
         self.seqvar = seqvar
         # Attributes to be computed

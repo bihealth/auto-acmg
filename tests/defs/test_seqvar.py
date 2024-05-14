@@ -10,7 +10,7 @@ from src.defs.seqvar import SeqVar, SeqVarResolver
 
 @pytest.fixture
 def seqvar_resolver():
-    return SeqVarResolver()
+    return SeqVarResolver(config=None)
 
 
 # ===== SeqVar tests =====
@@ -43,10 +43,9 @@ def test_seqvar_initialization_user_representation():
         ("X", "X"),
     ],
 )
-def test_seqvar_normalize_chromosome(input_chrom, expected_normalized_chrom):
+def test_seqvar_normalize_chromosome(input_chrom, expected_normalized_chrom, seqvar_resolver):
     """Test SeqVar._normalize_chromosome method."""
-    resolver = SeqVarResolver()
-    assert resolver._normalize_chrom(input_chrom) == expected_normalized_chrom
+    assert seqvar_resolver._normalize_chrom(input_chrom) == expected_normalized_chrom
 
 
 # ===== SeqVarResolver tests =====

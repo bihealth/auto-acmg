@@ -6,7 +6,7 @@ from typing import Optional
 from loguru import logger
 
 from src.api.annonars import AnnonarsClient
-from src.core.config import HelperConfig
+from src.core.config import Config
 from src.defs.annonars_variant import AnnonarsVariantResponse, VariantResult
 from src.defs.auto_acmg import PS1PM5, AminoAcid
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
@@ -23,11 +23,9 @@ REGEX_HGVSP = re.compile(r"p\.(\D+)(\d+)(\D+)")
 class AutoPS1PM5:
     """Predicts PS1 criteria for sequence variants."""
 
-    def __init__(
-        self, seqvar: SeqVar, genome_release: GenomeRelease, *, config: Optional[HelperConfig] = None
-    ):
+    def __init__(self, seqvar: SeqVar, genome_release: GenomeRelease, *, config: Optional[Config] = None):
         #: Configuration to use.
-        self.config = config or HelperConfig()
+        self.config = config or Config()
         # Attributes to be set
         self.seqvar = seqvar
         self.genome_release = genome_release

@@ -5,6 +5,7 @@ from typing import Optional
 from loguru import logger
 
 from src.auto_ps1_pm5 import AutoPS1PM5
+from src.core.config import Config
 from src.defs.auto_pvs1 import (
     PVS1Prediction,
     PVS1PredictionPathMapping,
@@ -30,13 +31,21 @@ class AutoACMG:
         genome_release (GenomeRelease): The genome release version, defaults to GRCh38.
     """
 
-    def __init__(self, variant_name: str, genome_release: GenomeRelease = GenomeRelease.GRCh38):
+    def __init__(
+        self,
+        variant_name: str,
+        genome_release: GenomeRelease = GenomeRelease.GRCh38,
+        *,
+        config: Optional[Config] = None,
+    ):
         """Initializes the AutoACMG with the specified variant and genome release.
 
         Args:
             variant_name: The name or identifier of the variant.
             genome_release (Optional): The genome release version, such as GRCh38 or GRCh37.
         """
+        #: Configuration to use.
+        self.config = config or Config()
         self.variant_name = variant_name
         self.genome_release = genome_release
         logger.debug(
@@ -60,14 +69,14 @@ class AutoACMG:
         """
         logger.debug("Resolving variant: {}", self.variant_name)
         try:
-            seqvar_resolver = SeqVarResolver()
+            seqvar_resolver = SeqVarResolver(config=self.config)
             seqvar: SeqVar = seqvar_resolver.resolve_seqvar(self.variant_name, self.genome_release)
             logger.debug("Resolved sequence variant: {}", seqvar)
             return seqvar
         except ParseError:
             logger.exception("Failed to resolve sequence variant, trying structural variant.")
             try:
-                strucvar_resolver = StrucVarResolver()
+                strucvar_resolver = StrucVarResolver(config=self.config)
                 strucvar: StrucVar = strucvar_resolver.resolve_strucvar(
                     self.variant_name, self.genome_release
                 )
@@ -110,7 +119,7 @@ class AutoACMG:
             # PVS1
             try:
                 logger.info("Predicting PVS1.")
-                pvs1 = AutoPVS1(self.seqvar, self.genome_release)
+                pvs1 = AutoPVS1(self.seqvar, self.genome_release, config=self.config)
                 seqvar_prediction, seqvar_prediction_path = pvs1.predict()
                 if seqvar_prediction is None or seqvar_prediction_path is None:
                     logger.error("Failed to predict PVS1 criteria.")
@@ -131,7 +140,7 @@ class AutoACMG:
             # PS1 and PM5
             try:
                 logger.info("Predicting PS1 and PM5.")
-                ps1pm5 = AutoPS1PM5(self.seqvar, self.genome_release)
+                ps1pm5 = AutoPS1PM5(self.seqvar, self.genome_release, config=self.config)
                 ps1_pm5_prediction = ps1pm5.predict()
                 if not ps1_pm5_prediction:
                     logger.error("Failed to predict PS1&PM5 criteria.")

@@ -1,8 +1,7 @@
 from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict, model_validator, root_validator
+from pydantic import BaseModel, ConfigDict, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing_extensions import Self
 
 
 class Settings(BaseSettings):
@@ -25,8 +24,8 @@ class Settings(BaseSettings):
 settings = Settings(_env_file=".env", _env_file_encoding="utf-8")  # type: ignore[call-arg]
 
 
-class HelperConfig(BaseModel):
-    """Configuration for ``HelperConfig``."""
+class Config(BaseModel):
+    """Configuration for ``Config``."""
 
     model_config = ConfigDict(frozen=True)
 

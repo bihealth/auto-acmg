@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock
 
 import pytest
 from typer.testing import CliRunner
@@ -22,33 +22,33 @@ def mock_seqvar():
 
 @pytest.fixture
 def mock_seqvar_resolver(monkeypatch):
-    mock_resolver = Mock(SeqVarResolver)
+    mock_resolver = MagicMock(SeqVarResolver)
     mock_resolver.resolve_seqvar.return_value = SeqVar(
         genome_release=GenomeRelease.GRCh38, chrom="1", pos=100000, delete="A", insert="T"
     )
-    monkeypatch.setattr("src.auto_acmg.SeqVarResolver", lambda: mock_resolver)
+    monkeypatch.setattr("src.auto_acmg.SeqVarResolver", lambda *args, **kwargs: mock_resolver)
     return mock_resolver
 
 
 @pytest.fixture
 def mock_seqvar_resolver_parse_error(monkeypatch):
-    mock_resolver = Mock(SeqVarResolver)
+    mock_resolver = MagicMock(SeqVarResolver)
     mock_resolver.resolve_seqvar.side_effect = ParseError("Invalid variant format")
-    monkeypatch.setattr("src.auto_acmg.SeqVarResolver", lambda: mock_resolver)
+    monkeypatch.setattr("src.auto_acmg.SeqVarResolver", lambda *args, **kwargs: mock_resolver)
     return mock_resolver
 
 
 @pytest.fixture
 def mock_seqvar_resolver_failure(monkeypatch):
-    mock_resolver = Mock(SeqVarResolver)
+    mock_resolver = MagicMock(SeqVarResolver)
     mock_resolver.resolve_seqvar.return_value = None
-    monkeypatch.setattr("src.auto_acmg.SeqVarResolver", lambda: mock_resolver)
+    monkeypatch.setattr("src.auto_acmg.SeqVarResolver", lambda *args, **kwargs: mock_resolver)
     return mock_resolver
 
 
 @pytest.fixture
 def mock_auto_pvs1_success(monkeypatch):
-    mock_pvs1 = Mock(AutoPVS1)
+    mock_pvs1 = MagicMock(AutoPVS1)
     mock_pvs1.predict.return_value = (PVS1Prediction.PVS1, PVS1PredictionSeqVarPath.NF1)
     monkeypatch.setattr("src.auto_acmg.AutoPVS1", lambda *args, **kwargs: mock_pvs1)
     return mock_pvs1
@@ -56,7 +56,7 @@ def mock_auto_pvs1_success(monkeypatch):
 
 @pytest.fixture
 def mock_auto_pvs1_failure(monkeypatch):
-    mock_pvs1 = Mock(AutoPVS1)
+    mock_pvs1 = MagicMock(AutoPVS1)
     mock_pvs1.predict.side_effect = AutoAcmgBaseException("An error occurred")
     monkeypatch.setattr("src.auto_acmg.AutoPVS1", lambda *args, **kwargs: mock_pvs1)
     return mock_pvs1
@@ -64,7 +64,7 @@ def mock_auto_pvs1_failure(monkeypatch):
 
 @pytest.fixture
 def mock_auto_ps1_pm5_success(monkeypatch):
-    mock_ps1_pm5 = Mock(AutoPS1PM5)
+    mock_ps1_pm5 = MagicMock(AutoPS1PM5)
     mock_ps1_pm5.predict.return_value = PS1PM5()
     monkeypatch.setattr("src.auto_acmg.AutoPS1PM5", lambda *args, **kwargs: mock_ps1_pm5)
     return mock_ps1_pm5
@@ -72,7 +72,7 @@ def mock_auto_ps1_pm5_success(monkeypatch):
 
 @pytest.fixture
 def mock_auto_ps1_pm5_failure(monkeypatch):
-    mock_ps1_pm5 = Mock(AutoPS1PM5)
+    mock_ps1_pm5 = MagicMock(AutoPS1PM5)
     mock_ps1_pm5.predict.side_effect = AutoAcmgBaseException("An error occurred")
     monkeypatch.setattr("src.auto_acmg.AutoPS1PM5", lambda *args, **kwargs: mock_ps1_pm5)
     return mock_ps1_pm5

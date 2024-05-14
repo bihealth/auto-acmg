@@ -4,7 +4,7 @@ from typing import Optional, Tuple, Union
 
 from loguru import logger
 
-from src.core.config import HelperConfig
+from src.core.config import Config
 from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionSeqVarPath, PVS1PredictionStrucVarPath
 from src.defs.exceptions import AutoAcmgBaseException, AutoPVS1Error
 from src.defs.genome_builds import GenomeRelease
@@ -30,7 +30,7 @@ class AutoPVS1:
         variant: SeqVar | StrucVar,
         genome_release: GenomeRelease = GenomeRelease.GRCh38,
         *,
-        helper_config: Optional[HelperConfig] = None,
+        config: Optional[Config] = None,
     ):
         """Initializes the AutoPVS1 with the specified variant and genome release.
 
@@ -39,7 +39,7 @@ class AutoPVS1:
             genome_release (Optional): The genome release version, such as GRCh38 or GRCh37.
         """
         #: Configuration to use.
-        self.helper_config = helper_config or HelperConfig()
+        self.config = config or Config()
         self.variant = variant
         self.genome_release = genome_release
 
@@ -62,7 +62,7 @@ class AutoPVS1:
             self.seqvar_prediction_path: PVS1PredictionSeqVarPath = PVS1PredictionSeqVarPath.NotSet
 
             try:
-                seqvar_pvs1 = SeqVarPVS1(self.seqvar, config=self.helper_config)
+                seqvar_pvs1 = SeqVarPVS1(self.seqvar, config=self.config)
                 seqvar_pvs1.initialize()
                 seqvar_pvs1.verify_PVS1()
                 self.seqvar_prediction, self.seqvar_prediction_path = seqvar_pvs1.get_prediction()

@@ -4,7 +4,7 @@ import re
 from typing import Optional
 
 from src.api.dotty import DottyClient
-from src.core.config import HelperConfig
+from src.core.config import Config
 from src.defs.exceptions import AutoAcmgBaseException, InvalidPos, ParseError
 from src.defs.genome_builds import (
     CHROM_LENGTHS_37,
@@ -84,8 +84,8 @@ class SeqVar:
 class SeqVarResolver:
     """The class to resolve sequence variants."""
 
-    def __init__(self, *, config: Optional[HelperConfig] = None):
-        self.config = config or HelperConfig()
+    def __init__(self, *, config: Optional[Config] = None):
+        self.config = config or Config()
         self.dotty_client = DottyClient(api_base_url=self.config.api_base_url_dotty)
 
     def _validate_seqvar(self, variant: SeqVar) -> SeqVar:
