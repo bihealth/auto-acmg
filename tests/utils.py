@@ -1,8 +1,12 @@
 """Helper functions for the tests."""
 
+import csv
 import json
 import os
-from typing import Any, Dict
+from typing import Any, Dict, List, Tuple
+
+from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionSeqVarPath
+from src.defs.genome_builds import GenomeRelease
 
 
 def get_json_object(file_name: str) -> Dict[str, Any]:
@@ -24,3 +28,24 @@ def get_json_object(file_name: str) -> Dict[str, Any]:
         json_object = json.load(file)
 
     return json_object
+
+
+def load_test_data(
+    path: str,
+) -> List[Tuple[str, GenomeRelease, PVS1Prediction, PVS1PredictionSeqVarPath]]:
+    """Load CSV test data/."""
+    result = []
+    with open(path, "rt") as inputf:
+        reader = csv.DictReader(inputf)
+        for record in reader:
+            if record["section"].startswith("#"):
+                continue
+            result.append(
+                (
+                    record["variant_name"],
+                    GenomeRelease[record["genome_release"]],
+                    PVS1Prediction[record["expected_prediction"]],
+                    PVS1PredictionSeqVarPath[record["expected_path"]],
+                )
+            )
+    return result

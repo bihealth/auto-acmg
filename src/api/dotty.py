@@ -1,5 +1,7 @@
 """Dotty API client."""
 
+from typing import Optional
+
 import requests
 from loguru import logger
 from pydantic import ValidationError
@@ -13,8 +15,8 @@ DOTTI_API_BASE_URL = f"{settings.API_REEV_URL}/dotty"
 
 
 class DottyClient:
-    def __init__(self, api_base_url: str = DOTTI_API_BASE_URL):
-        self.api_base_url = api_base_url
+    def __init__(self, *, api_base_url: Optional[str] = None):
+        self.api_base_url = api_base_url or DOTTI_API_BASE_URL
 
     def to_spdi(self, query: str, assembly: GenomeRelease = GenomeRelease.GRCh38) -> DottySpdiResponse | None:
         """

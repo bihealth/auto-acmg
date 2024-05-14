@@ -6,23 +6,30 @@ from typing import Optional
 from loguru import logger
 
 from src.api.annonars import AnnonarsClient
+from src.core.config import Config
 from src.defs.annonars_variant import AnnonarsVariantResponse, VariantResult
 from src.defs.auto_acmg import PS1PM5, AminoAcid
-from src.defs.exceptions import AlgorithmError
+from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 
 #: DNA bases
 DNA_BASES = ["A", "C", "G", "T"]
 
+#: Regular expression for parsing pHGVSp
+REGEX_HGVSP = re.compile(r"p\.(\D+)(\d+)(\D+)")
+
 
 class AutoPS1PM5:
     """Predicts PS1 criteria for sequence variants."""
 
-    def __init__(self, seqvar: SeqVar, genome_release: GenomeRelease):
+    def __init__(self, seqvar: SeqVar, genome_release: GenomeRelease, *, config: Optional[Config] = None):
+        #: Configuration to use.
+        self.config = config or Config()
+        # Attributes to be set
         self.seqvar = seqvar
         self.genome_release = genome_release
-        self.annonars_client = AnnonarsClient()
+        self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
         self.prediction: PS1PM5 | None = None
 
     def _get_variant_info(self, seqvar: SeqVar) -> Optional[AnnonarsVariantResponse]:
@@ -34,7 +41,7 @@ class AutoPS1PM5:
         try:
             logger.debug("Getting variant information for {}.", seqvar)
             return self.annonars_client.get_variant_info(seqvar)
-        except Exception as e:
+        except AutoAcmgBaseException as e:
             logger.error("Failed to get variant information. Error: {}", e)
             return None
 
@@ -49,14 +56,12 @@ class AutoPS1PM5:
             AminoAcid: The new amino acid if the pHGVSp is valid, None otherwise.
         """
         try:
-            match = re.match(r"p\.(\D+)(\d+)(\D+)", pHGVSp)
+            match = re.match(REGEX_HGVSP, pHGVSp)
             if match:
-                # original_aa = AminoAcid[match.group(1)].value
-                # position = int(match.group(2))
                 return AminoAcid[match.group(3)]
             else:
                 return None
-        except Exception:
+        except AutoAcmgBaseException:
             logger.debug("Invalid pHGVSp: {}", pHGVSp)
             return None
 
@@ -109,15 +114,17 @@ class AutoPS1PM5:
 
             primary_info = self._get_variant_info(self.seqvar)
             if not primary_info or not primary_info.result.dbnsfp or not primary_info.result.dbnsfp.HGVSp_VEP:
-                raise AlgorithmError("No valid primary variant information for PS1/PM5 prediction.")
+                raise MissingDataError("No valid primary variant information for PS1/PM5 prediction.")
 
             primary_aa_change = self._parse_HGVSp(primary_info.result.dbnsfp.HGVSp_VEP)
             if not primary_aa_change:
                 raise AlgorithmError("No valid primary amino acid change for PS1/PM5 prediction.")
 
             for alt_base in DNA_BASES:
+                # Skip the same base insert
                 if alt_base == self.seqvar.insert:
-                    continue  # Skip the same base insert
+                    continue
+
                 alt_seqvar = SeqVar(
                     genome_release=self.genome_release,
                     chrom=self.seqvar.chrom,
@@ -136,7 +143,7 @@ class AutoPS1PM5:
                                 True  # Different amino acid change at same residue, pathogenic
                             )
 
-        except Exception as e:
+        except AutoAcmgBaseException as e:
             logger.error("Error occurred during PS1/PM5 prediction. Error: {}", e)
             self.prediction = None
 

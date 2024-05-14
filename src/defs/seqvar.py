@@ -4,7 +4,8 @@ import re
 from typing import Optional
 
 from src.api.dotty import DottyClient
-from src.defs.exceptions import InvalidPos, ParseError
+from src.core.config import Config
+from src.defs.exceptions import AutoAcmgBaseException, InvalidPos, ParseError
 from src.defs.genome_builds import (
     CHROM_LENGTHS_37,
     CHROM_LENGTHS_38,
@@ -82,6 +83,10 @@ class SeqVar:
 
 class SeqVarResolver:
     """The class to resolve sequence variants."""
+
+    def __init__(self, *, config: Optional[Config] = None):
+        self.config = config or Config()
+        self.dotty_client = DottyClient(api_base_url=self.config.api_base_url_dotty)
 
     def _validate_seqvar(self, variant: SeqVar) -> SeqVar:
         """Validate the sequence variant position.
@@ -222,11 +227,10 @@ class SeqVarResolver:
             raise ParseError(f"Invalid position: {e}")
 
         try:
-            dotty_client = DottyClient()
             if genome_release is None:
-                spdi = dotty_client.to_spdi(value)
+                spdi = self.dotty_client.to_spdi(value)
             else:
-                spdi = dotty_client.to_spdi(value, assembly=genome_release)
+                spdi = self.dotty_client.to_spdi(value, assembly=genome_release)
             if spdi is not None and spdi.success and spdi.value is not None:
                 return SeqVar(
                     genome_release=GenomeRelease[spdi.value.assembly],
@@ -238,5 +242,5 @@ class SeqVarResolver:
                 )
             else:
                 raise ParseError(f"Unable to resolve seqvar: {value}")
-        except Exception as e:
+        except AutoAcmgBaseException as e:
             raise ParseError(f"Unable to resolve seqvar. The error was: {e}")

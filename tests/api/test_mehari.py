@@ -1,6 +1,8 @@
+import pytest
 import responses
 
 from src.api.mehari import MehariClient
+from src.defs.exceptions import MehariException
 from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import GeneTranscripts, TranscriptsSeqVar
 from src.defs.seqvar import SeqVar
@@ -62,8 +64,8 @@ def test_get_seqvar_transcripts_500():
     )
 
     client = MehariClient(api_base_url="https://example.com/mehari")
-    response = client.get_seqvar_transcripts(example_seqvar)
-    assert response == None
+    with pytest.raises(MehariException):
+        client.get_seqvar_transcripts(example_seqvar)
 
 
 @responses.activate
@@ -94,8 +96,8 @@ def test_get_gene_transcripts_failure():
     )
 
     client = MehariClient(api_base_url="https://example.com/mehari")
-    response = client.get_gene_transcripts(example_hgnc_id, GenomeRelease.GRCh38)
-    assert response == None
+    with pytest.raises(MehariException):
+        client.get_gene_transcripts(example_hgnc_id, GenomeRelease.GRCh38)
 
 
 @responses.activate
@@ -108,5 +110,5 @@ def test_get_gene_transcripts_500():
     )
 
     client = MehariClient(api_base_url="https://example.com/mehari")
-    response = client.get_gene_transcripts(example_hgnc_id, GenomeRelease.GRCh38)
-    assert response == None
+    with pytest.raises(MehariException):
+        client.get_gene_transcripts(example_hgnc_id, GenomeRelease.GRCh38)

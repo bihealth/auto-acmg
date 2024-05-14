@@ -11,9 +11,12 @@ help:
 	@echo "  format          Format source code"
 	@echo "  lint            Run lint checks"
 	@echo "  example_run     Run example"
-	@echo "  run						 Run the application"
+	@echo "  run			 Run the application"
+	@echo "  test-remote     Run remote tests"
 	@echo "  test            Run tests"
-	@echo "  ci-test         Run tests in CI"
+	@echo "  test-all        Run all tests"
+	@echo "  ci-unit-test    Run unit tests in CI"
+	@echo "  ci-e2e-test     Run end-to-end tests in CI"
 	@echo "  ci              Install dependencies, run lints and tests"
 	@echo "  docs            Generate the documentation"
 	@echo "  ci-docs		 Generate the documentation in CI"
@@ -30,12 +33,12 @@ ci-docs-deps:
 
 .PHONY: format
 format:	\
-	format-isort \
-	format-black
+	format-black \
+	format-isort
 
 .PHONY: format-isort
 format-isort:
-	pipenv run isort --profile=black $(DIRS_PYTHON)
+	pipenv run isort --profile=black --line-length 110 $(DIRS_PYTHON)
 
 .PHONY: format-black
 format-black:
@@ -43,14 +46,14 @@ format-black:
 
 .PHONY: lint
 lint: \
-	lint-isort \
 	lint-black \
+	lint-isort \
 	lint-flake8 \
 	lint-mypy
 
 .PHONY: lint-isort
 lint-isort:
-	pipenv run isort --profile=black --check-only --diff $(DIRS_PYTHON)
+	pipenv run isort --profile=black --line-length 110 --check-only --diff $(DIRS_PYTHON)
 
 .PHONY: lint-black
 lint-black:
@@ -77,23 +80,38 @@ else
 	pipenv run python -m src.cli "$(VAR)"
 endif
 
+.PHONY: test-remote
+test-remote:
+	pipenv run pytest \
+		-m "remote" \
+		tests/
+
 .PHONY: test
 test:
-	pipenv run pytest tests/
-
-.PHONY: ci-test
-ci-test:
 	pipenv run pytest \
+		-m "not remote" \
+		tests/
+
+.PHONY: test-all
+test-all:
+	pipenv run pytest \
+		tests/
+
+.PHONY: ci-unit-test
+ci-unit-test:
+	pipenv run pytest \
+		-m "not remote" \
 		--cov-report term-missing \
 		--cov-report lcov \
 		--cov=src \
 		tests/
 
-.PHONY: ci
-ci: \
-	deps \
-	lint \
-	ci-test
+.PHONY: ci-e2e-test
+ci-e2e-test:
+	pipenv run pytest \
+		-m "remote" \
+		--capture=no \
+		tests/
 
 .PHONY: docs
 docs:
