@@ -659,26 +659,7 @@ class SeqVarTranscriptsHelper:
 
 
 class SeqVarPVS1(SeqVarPVS1Helper):
-    """Handles the PVS1 criteria assessment for sequence variants.
-
-    Attributes:
-        seqvar (SeqVar): The sequence variant being analyzed.
-        _seqvar_transcript (TranscriptSeqvar | None): Associated transcript of the sequence variant.
-        _gene_transcript (TranscriptGene | None): Associated gene transcript.
-        _all_seqvar_ts (List[TranscriptSeqvar]): All sequence variant transcripts.
-        _all_gene_ts (List[TranscriptGene]): All gene transcripts.
-        _consequence (SeqVarConsequence): Consequence of the sequence variant.
-        HGVS (str): HGVS notation of the gene.
-        pHGVS (str): Protein HGVS notation.
-        tHGVS (str): Transcript HGVS notation.
-        HGNC_id (str): HGNC identifier for the gene.
-        transcript_tags (List[str]): Tags associated with the transcript.
-        exons (List[Exon]): List of exons from the gene transcript.
-        cds_pos (int | None): Position of the coding sequence.
-        cds_info (Dict[str, CdsInfo]): CDS information for all transcripts.
-        prediction (PVS1Prediction): Prediction result based on PVS1 criteria.
-        prediction_path (PVS1PredictionSeqVarPath): Pathway leading to the prediction decision.
-    """
+    """Handles the PVS1 criteria assessment for sequence variants."""
 
     def __init__(self, seqvar: SeqVar, *, config: Optional[HelperConfig] = None):
         #: Configuration to use.
@@ -712,6 +693,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         predictions.
         """
         logger.debug("Setting up the SeqVarPVS1 class.")
+        logger.info("Config: {}", self.config)
         # Fetch transcript data
         seqvar_transcript_helper = SeqVarTranscriptsHelper(self.seqvar)
         seqvar_transcript_helper.initialize()

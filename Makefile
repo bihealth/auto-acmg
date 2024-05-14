@@ -110,6 +110,7 @@ ci-unit-test:
 ci-e2e-test:
 	pipenv run pytest \
 		-m "remote" \
+		--capture=no \
 		tests/
 
 .PHONY: docs
