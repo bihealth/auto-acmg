@@ -1,0 +1,25 @@
+section,variant_name,genome_release,expected_prediction,expected_path,comment
+#   PVS,,,,,
+##  PVS1 / Frameshift Nonsense,,,,,
+### PVS1 / Frameshift Nonsense / Nonsense-Mediated Decay -> biologically relevant,,,,,
+,4-113568536-G-GA,GRCh37,PVS1,NF1,Gene: LARP7
+,NM_004360.3:c.1085delT,GRCh37,PVS1,NF1,Gene: CDH1; p.Val362GlyfsTer31; From Recommendation 07.09.2018
+,NM_000152.4:c.525delT,GRCh37,PVS1,NF1,Gene: GAA; p.Glu176ArgfsTer45; From Recommendation 07.09.2018
+,NM_000152.4:c.1987delC,GRCh37,PVS1,NF1,Gene: GAA; p.Gln663SerfsTer33; From Recommendation 07.09.2018
+,NM_000152.4:c.2706delG,GRCh37,PVS1,NF1,Gene: GAA; p.Lys903ArgfsTer2; From Recommendation 07.09.2018
+,NM_000218.2:c.567dupG,GRCh37,PVS1,NF1,Gene: KCNQ1; p.Arg190AlafsTer14; From Recommendation 07.09.2018
+,NM_000218.2:c.1343dupC,GRCh37,PVS1,NF1,Gene: KCNQ1; p.Glu449ArgfsTer14; From Recommendation 07.09.2018
+,NM_000441.1:c.365dupT,GRCh37,PVS1,NF1,Gene: SLC26A4; p.Pro123SerfsTer4; From Recommendation 07.09.2018
+,NM_206933.2:c.4338_4339delCT,GRCh37,PVS1,NF1,Gene: USH2A; p.Cys1447GlnfsTer29; From Recommendation 07.09.2018
+,NM_206933.2:c.4510dupA,GRCh37,PVS1,NF1,Gene: USH2A; p.Arg1504LysfsTer26; From Recommendation 07.09.2018
+,NM_004004.5:c.235delC,GRCh37,PVS1,NF1,Gene: GJB2; p.Leu79CysfsTer3; From Recommendation 07.09.2018
+,NM_004004.5:c.35delG,GRCh37,PVS1,NF1,Gene: GJB2; p.Gly12ValfsTer2; From Recommendation 07.09.2018
+,NM_004004.5:c.167delT,GRCh37,PVS1,NF1,Gene: GJB2; p.Leu56ArgfsTer26; From Recommendation 07.09.2018
+,NM_000277.1:c.822_832del,GRCh37,PVS1,NF1,Gene: PAH; p.Lys274AsnfsTer5; From Recommendation 07.09.2018
+,NM_000277.2:c.632delC,GRCh37,PVS1,NF1,Gene: PAH; p.Pro211HisfsTer130; From Recommendation 07.09.2018
+,NM_000314.6:c.50_51delAA,GRCh37,PVS1,NF1,Gene: PTEN; p.Gln17ArgfsTer26; From Recommendation 07.09.2018
+,NM_000277.2:c.47_48del,GRCh37,PVS1,NF1,Gene: PAH; p.Ser16Ter; From Recommendation 07.09.2018
+,NM_000277.2:c.1147C>T,GRCh37,PVS1,NF1,Gene: PAH; p.Gln383Ter; From Recommendation 07.09.2018
+,NM_004360.3:c.1792C>T,GRCh37,PVS1,NF1,Gene: CDH1; p.Arg598Ter; From Recommendation 07.09.2018
+### PVS1 / Frameshift Nonsense / NMD Escape -> critical for protein function,,,,,
+,13-113803407-G-A,GRCh37,PVS1,NF1,Gene: F10

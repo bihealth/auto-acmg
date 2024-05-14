@@ -1,37 +1,57 @@
 """Custom exceptions for the project."""
 
 
-class ParseError(Exception):
+class AutoAcmgBaseException(Exception):
+    """Base class for exceptions."""
+
+
+class ApiCallException(AutoAcmgBaseException):
+    pass
+
+
+class AnnonarsException(ApiCallException):
+    pass
+
+
+class MehariException(ApiCallException):
+    pass
+
+
+class ParseError(AutoAcmgBaseException):
     """Exception for parsing errors."""
 
     pass
 
 
-class InvalidGenomeBuild(Exception):
+class InvalidGenomeBuild(AutoAcmgBaseException):
     """Exception for invalid genome build."""
 
     pass
 
 
-class InvalidPos(Exception):
+class InvalidPos(AutoAcmgBaseException):
     """Exception for invalid position."""
 
     pass
 
 
-class MappingError(Exception):
+class MappingError(AutoAcmgBaseException):
     """Exception for errors in mapping chromosomes or genome builds."""
 
     pass
 
 
-class InvalidAPIResposeError(Exception):
+class InvalidAPIResposeError(AutoAcmgBaseException):
     """Exception for API errors."""
 
     pass
 
 
-class AlgorithmError(Exception):
+class AlgorithmError(AutoAcmgBaseException):
     """Exception for algorithm errors."""
 
     pass
+
+
+class AutoPVS1Error(AutoAcmgBaseException):
+    """Exception for AutoPVS1 errors."""

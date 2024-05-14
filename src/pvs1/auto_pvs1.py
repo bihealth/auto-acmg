@@ -1,14 +1,12 @@
 """Implementations of the PVS1 algorithm."""
 
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 from loguru import logger
 
-from src.defs.auto_pvs1 import (
-    PVS1Prediction,
-    PVS1PredictionSeqVarPath,
-    PVS1PredictionStrucVarPath,
-)
+from src.core.config import HelperConfig
+from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionSeqVarPath, PVS1PredictionStrucVarPath
+from src.defs.exceptions import AutoAcmgBaseException, AutoPVS1Error
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.defs.strucvar import StrucVar
@@ -27,21 +25,27 @@ class AutoPVS1:
         genome_release (GenomeRelease): The genome release version, defaults to GRCh38.
     """
 
-    def __init__(self, variant: SeqVar | StrucVar, genome_release: GenomeRelease = GenomeRelease.GRCh38):
+    def __init__(
+        self,
+        variant: SeqVar | StrucVar,
+        genome_release: GenomeRelease = GenomeRelease.GRCh38,
+        *,
+        helper_config: Optional[HelperConfig] = None,
+    ):
         """Initializes the AutoPVS1 with the specified variant and genome release.
 
         Args:
             variant_name: The name or identifier of the variant.
             genome_release (Optional): The genome release version, such as GRCh38 or GRCh37.
         """
+        #: Configuration to use.
+        self.helper_config = helper_config or HelperConfig()
         self.variant = variant
         self.genome_release = genome_release
 
     def predict(
         self,
-    ) -> (
-        Tuple[PVS1Prediction, Union[PVS1PredictionSeqVarPath, PVS1PredictionStrucVarPath]] | Tuple[None, None]
-    ):
+    ) -> Tuple[PVS1Prediction, Union[PVS1PredictionSeqVarPath, PVS1PredictionStrucVarPath]]:
         """Runs the prediction algorithm to assess the PVS1 criteria for the resolved variant.
 
         This method resolves the variant and then, based on the type of variant, predicts its
@@ -58,14 +62,14 @@ class AutoPVS1:
             self.seqvar_prediction_path: PVS1PredictionSeqVarPath = PVS1PredictionSeqVarPath.NotSet
 
             try:
-                seqvar_pvs1 = SeqVarPVS1(self.seqvar)
+                seqvar_pvs1 = SeqVarPVS1(self.seqvar, config=self.helper_config)
                 seqvar_pvs1.initialize()
                 seqvar_pvs1.verify_PVS1()
                 self.seqvar_prediction, self.seqvar_prediction_path = seqvar_pvs1.get_prediction()
                 return self.seqvar_prediction, self.seqvar_prediction_path
-            except Exception as e:
+            except AutoAcmgBaseException as e:
                 logger.exception("Error occurred: {}", e)
-                return None, None
+                raise AutoPVS1Error("Error occurred while predicting PVS1.") from e
 
         elif isinstance(self.variant, StrucVar):
             self.strucvar: StrucVar = self.variant
@@ -78,6 +82,9 @@ class AutoPVS1:
                 strucvar_pvs1.verify_PVS1()
                 self.strucvar_prediction, self.strucvar_prediction_path = strucvar_pvs1.get_prediction()
                 return self.strucvar_prediction, self.strucvar_prediction_path
-            except Exception as e:
+            except AutoAcmgBaseException as e:
                 logger.exception("Error occurred: {}", e)
-                return None, None
+                raise AutoPVS1Error("Error occurred while predicting PVS1.") from e
+
+        else:
+            raise AutoPVS1Error("Invalid variant type provided for PVS1 prediction.")

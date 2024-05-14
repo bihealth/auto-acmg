@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from src.core.config import settings
 from src.defs.annonars_range import AnnonarsRangeResponse
 from src.defs.annonars_variant import AnnonarsVariantResponse
+from src.defs.exceptions import AnnonarsException
 from src.defs.seqvar import SeqVar
 
 #: Annonars API base URL
@@ -19,9 +20,7 @@ class AnnonarsClient:
     def __init__(self, api_base_url: str = ANNONARS_API_BASE_URL):
         self.api_base_url = api_base_url
 
-    def get_variant_from_range(
-        self, seqvar: SeqVar, start: int, stop: int
-    ) -> Optional[AnnonarsRangeResponse]:
+    def get_variant_from_range(self, seqvar: SeqVar, start: int, stop: int) -> AnnonarsRangeResponse:
         """Pull all variants within a range.
 
         Args:
@@ -46,10 +45,10 @@ class AnnonarsClient:
             return AnnonarsRangeResponse.model_validate(response.json())
         except requests.RequestException as e:
             logger.exception("Request failed: {}", e)
-            return None
+            raise AnnonarsException("Failed to get variant information.") from e
         except ValidationError as e:
             logger.exception("Validation failed: {}", e)
-            return None
+            raise AnnonarsException("Annonars returned non-validating data.") from e
 
     def get_variant_info(self, seqvar: SeqVar) -> Optional[AnnonarsVariantResponse]:
         """Get variant information from Annonars.
@@ -75,7 +74,7 @@ class AnnonarsClient:
             return AnnonarsVariantResponse.model_validate(response.json())
         except requests.RequestException as e:
             logger.exception("Request failed: {}", e)
-            return None
+            raise AnnonarsException("Failed to get variant information.") from e
         except ValidationError as e:
             logger.exception("Validation failed: {}", e)
-            return None
+            raise AnnonarsException("Annonars returned non-validating data.") from e

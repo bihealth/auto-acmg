@@ -4,7 +4,7 @@ import re
 from typing import Optional
 
 from src.api.dotty import DottyClient
-from src.defs.exceptions import InvalidPos, ParseError
+from src.defs.exceptions import AutoAcmgBaseException, InvalidPos, ParseError
 from src.defs.genome_builds import (
     CHROM_LENGTHS_37,
     CHROM_LENGTHS_38,
@@ -238,5 +238,5 @@ class SeqVarResolver:
                 )
             else:
                 raise ParseError(f"Unable to resolve seqvar: {value}")
-        except Exception as e:
+        except AutoAcmgBaseException as e:
             raise ParseError(f"Unable to resolve seqvar. The error was: {e}")

@@ -5,6 +5,7 @@ from loguru import logger
 from typing_extensions import Annotated
 
 from src.auto_acmg import AutoACMG
+from src.defs.exceptions import AutoAcmgBaseException
 from src.defs.genome_builds import GenomeRelease
 
 app = typer.Typer()
@@ -53,7 +54,7 @@ def classify(
 
         auto_acmg = AutoACMG(variant, genome_release_enum)
         auto_acmg.predict()
-    except Exception as e:
+    except AutoAcmgBaseException as e:
         logger.error("Error occurred: {}", e)
 
 

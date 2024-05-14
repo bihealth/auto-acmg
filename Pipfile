@@ -12,6 +12,7 @@ responses = "*"
 typer = "*"
 setuptools = "*"
 loguru = "*"
+typing-extensions = "*"
 
 [dev-packages]
 mypy = "*"

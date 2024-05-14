@@ -8,7 +8,7 @@ from loguru import logger
 from src.api.annonars import AnnonarsClient
 from src.defs.annonars_variant import AnnonarsVariantResponse, VariantResult
 from src.defs.auto_acmg import PS1PM5, AminoAcid
-from src.defs.exceptions import AlgorithmError
+from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 
@@ -34,7 +34,7 @@ class AutoPS1PM5:
         try:
             logger.debug("Getting variant information for {}.", seqvar)
             return self.annonars_client.get_variant_info(seqvar)
-        except Exception as e:
+        except AutoAcmgBaseException as e:
             logger.error("Failed to get variant information. Error: {}", e)
             return None
 
@@ -56,7 +56,7 @@ class AutoPS1PM5:
                 return AminoAcid[match.group(3)]
             else:
                 return None
-        except Exception:
+        except AutoAcmgBaseException:
             logger.debug("Invalid pHGVSp: {}", pHGVSp)
             return None
 
@@ -136,7 +136,7 @@ class AutoPS1PM5:
                                 True  # Different amino acid change at same residue, pathogenic
                             )
 
-        except Exception as e:
+        except AutoAcmgBaseException as e:
             logger.error("Error occurred during PS1/PM5 prediction. Error: {}", e)
             self.prediction = None
 

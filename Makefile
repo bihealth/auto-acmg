@@ -30,12 +30,12 @@ ci-docs-deps:
 
 .PHONY: format
 format:	\
-	format-isort \
-	format-black
+	format-black \
+	format-isort
 
 .PHONY: format-isort
 format-isort:
-	pipenv run isort --profile=black $(DIRS_PYTHON)
+	pipenv run isort --profile=black --line-length 110 $(DIRS_PYTHON)
 
 .PHONY: format-black
 format-black:
@@ -43,14 +43,14 @@ format-black:
 
 .PHONY: lint
 lint: \
-	lint-isort \
 	lint-black \
+	lint-isort \
 	lint-flake8 \
 	lint-mypy
 
 .PHONY: lint-isort
 lint-isort:
-	pipenv run isort --profile=black --check-only --diff $(DIRS_PYTHON)
+	pipenv run isort --profile=black --line-length 110 --check-only --diff $(DIRS_PYTHON)
 
 .PHONY: lint-black
 lint-black:
@@ -77,13 +77,27 @@ else
 	pipenv run python -m src.cli "$(VAR)"
 endif
 
+.PHONY: test-remote
+test-remote:
+	pipenv run pytest \
+		-m "remote" \
+		tests/
+
+.PHONY: test-all
+test-all:
+	pipenv run pytest \
+		tests/
+
 .PHONY: test
 test:
-	pipenv run pytest tests/
+	pipenv run pytest \
+		-m "not remote" \
+		tests/
 
 .PHONY: ci-test
 ci-test:
 	pipenv run pytest \
+		-m "not remote" \
 		--cov-report term-missing \
 		--cov-report lcov \
 		--cov=src \

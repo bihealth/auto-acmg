@@ -1,12 +1,14 @@
 """PVS1 criteria for Sequence Variants (SeqVar)."""
 
 import re
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from loguru import logger
+from pydantic import BaseModel
 
 from src.api.annonars import AnnonarsClient
 from src.api.mehari import MehariClient
+from src.core.config import HelperConfig
 from src.defs.auto_pvs1 import (
     AlteredRegionMode,
     CdsInfo,
@@ -16,7 +18,7 @@ from src.defs.auto_pvs1 import (
     SeqvarConsequenceMapping,
     TranscriptInfo,
 )
-from src.defs.exceptions import AlgorithmError, InvalidAPIResposeError
+from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, InvalidAPIResposeError
 from src.defs.mehari import CdsPos, Exon, TranscriptGene, TranscriptSeqvar
 from src.defs.seqvar import SeqVar
 
@@ -339,7 +341,7 @@ class SeqVarPVS1Helper:
                 return True
             else:
                 return False
-        except Exception as e:
+        except AutoAcmgBaseException as e:
             logger.error("Failed to predict criticality for variant. Error: {}", e)
             raise AlgorithmError("Failed to predict criticality for variant. Error: {}", e)
 
@@ -385,7 +387,7 @@ class SeqVarPVS1Helper:
                 return True
             else:
                 return False
-        except Exception as e:
+        except AutoAcmgBaseException as e:
             logger.error("Failed to predict LoF frequency for variant. Error: {}", e)
             raise AlgorithmError("Failed to predict LoF frequency for variant. Error: {}", e)
 
@@ -491,7 +493,8 @@ class SeqVarPVS1Helper:
 class SeqVarTranscriptsHelper:
     """Transcript information for a sequence variant."""
 
-    def __init__(self, seqvar: SeqVar):
+    def __init__(self, seqvar: SeqVar, *, config: Optional[HelperConfig] = None):
+        self.config: HelperConfig = config or HelperConfig()
         self.seqvar: SeqVar = seqvar
 
         # Attributes to be set
@@ -532,7 +535,7 @@ class SeqVarTranscriptsHelper:
         """Get all transcripts for the given sequence variant from Mehari."""
         try:
             # Get transcripts from Mehari
-            mehari_client = MehariClient()
+            mehari_client = MehariClient(api_base_url=self.config.api_base_url_mehari)
             response_seqvar = mehari_client.get_seqvar_transcripts(self.seqvar)
             if not response_seqvar:
                 self.seqvar_ts_info = []
@@ -569,7 +572,7 @@ class SeqVarTranscriptsHelper:
                 self.gene_transcript = None
                 self.consequence = SeqVarConsequence.NotSet
 
-        except Exception as e:
+        except AutoAcmgBaseException as e:
             logger.error("Failed to get transcripts for the sequence variant. Error: {}", e)
             raise AlgorithmError("Failed to get transcripts for the sequence variant. Error: {}", e)
 
@@ -672,7 +675,9 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         prediction_path (PVS1PredictionSeqVarPath): Pathway leading to the prediction decision.
     """
 
-    def __init__(self, seqvar: SeqVar):
+    def __init__(self, seqvar: SeqVar, *, config: Optional[HelperConfig] = None):
+        #: Configuration to use.
+        self.config: HelperConfig = config or HelperConfig()
         # Attributes to be set
         self.seqvar = seqvar
 

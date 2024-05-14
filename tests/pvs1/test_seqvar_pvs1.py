@@ -4,12 +4,7 @@ import pytest
 
 from src.api.mehari import MehariClient
 from src.defs.annonars_range import AnnonarsRangeResponse
-from src.defs.auto_pvs1 import (
-    AlteredRegionMode,
-    PVS1Prediction,
-    PVS1PredictionSeqVarPath,
-    SeqVarConsequence,
-)
+from src.defs.auto_pvs1 import AlteredRegionMode, PVS1Prediction, PVS1PredictionSeqVarPath, SeqVarConsequence
 from src.defs.exceptions import AlgorithmError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import Exon, GeneTranscripts, TranscriptsSeqVar

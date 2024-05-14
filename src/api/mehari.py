@@ -1,10 +1,13 @@
 """Mehari API client."""
 
+from typing import Optional
+
 import requests
 from loguru import logger
 from pydantic import ValidationError
 
 from src.core.config import settings
+from src.defs.exceptions import MehariException
 from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import GeneTranscripts, TranscriptsSeqVar
 from src.defs.seqvar import SeqVar
@@ -14,10 +17,10 @@ MEHARI_API_BASE_URL = f"{settings.API_REEV_URL}/mehari"
 
 
 class MehariClient:
-    def __init__(self, api_base_url: str = MEHARI_API_BASE_URL):
-        self.api_base_url = api_base_url
+    def __init__(self, *, api_base_url: Optional[str] = None):
+        self.api_base_url = api_base_url or MEHARI_API_BASE_URL
 
-    def get_seqvar_transcripts(self, seqvar: SeqVar) -> TranscriptsSeqVar | None:
+    def get_seqvar_transcripts(self, seqvar: SeqVar) -> TranscriptsSeqVar:
         """
         Get transcripts for a sequence variant.
 
@@ -41,12 +44,12 @@ class MehariClient:
             return TranscriptsSeqVar.model_validate(response.json())
         except requests.RequestException as e:
             logger.exception("Request failed: {}", e)
-            return None
+            raise MehariException("Request failed") from e
         except ValidationError as e:
             logger.exception("Validation failed: {}", e)
-            return None
+            raise MehariException("Mehari API returned invalid data") from e
 
-    def get_gene_transcripts(self, hgnc_id: str, genome_build: GenomeRelease) -> GeneTranscripts | None:
+    def get_gene_transcripts(self, hgnc_id: str, genome_build: GenomeRelease) -> GeneTranscripts:
         """ "
         Get transcripts for a gene.
 
@@ -73,7 +76,7 @@ class MehariClient:
             return GeneTranscripts.model_validate(response.json())
         except requests.RequestException as e:
             logger.exception("Request failed: {}", e)
-            return None
+            raise MehariException("Request failed") from e
         except ValidationError as e:
             logger.exception("Validation failed: {}", e)
-            return None
+            raise MehariException("Mehari API returned invalid data") from e
