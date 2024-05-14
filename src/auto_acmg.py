@@ -164,7 +164,7 @@ class AutoACMG:
             # PM4 and BP3
             try:
                 logger.info("Predicting PM4 and BP3.")
-                pm4bp3 = AutoPM4BP3(self.seqvar, self.genome_release)
+                pm4bp3 = AutoPM4BP3(self.seqvar, self.genome_release, config=self.config)
                 pm4_bp3_prediction = pm4bp3.predict()
                 if not pm4_bp3_prediction:
                     logger.error("Failed to predict PM4&BP3 criteria.")
@@ -176,7 +176,7 @@ class AutoACMG:
                         self.seqvar_pm4,
                         self.seqvar_bp3,
                     )
-            except Exception as e:
+            except AutoAcmgBaseException as e:
                 logger.error("Failed to predict PM4 and BP3 criteria. Error: {}", e)
 
         elif isinstance(variant, StrucVar):

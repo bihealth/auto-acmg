@@ -5,9 +5,10 @@ from typing import Optional
 from loguru import logger
 
 from src.api.annonars import AnnonarsClient
+from src.core.config import Config
 from src.defs.annonars_variant import AnnonarsVariantResponse
 from src.defs.auto_acmg import PM4BP3
-from src.defs.exceptions import AlgorithmError
+from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 
@@ -15,10 +16,12 @@ from src.defs.seqvar import SeqVar
 class AutoPM4BP3:
     """Predicts PM4 and BP3 criteria for sequence variants."""
 
-    def __init__(self, seqvar: SeqVar, genome_release: GenomeRelease):
+    def __init__(self, seqvar: SeqVar, genome_release: GenomeRelease, *, config: Optional[Config] = None):
+        #: Configuration to use.
+        self.config = config or Config()
         self.seqvar = seqvar
         self.genome_release = genome_release
-        self.annonars_client = AnnonarsClient()
+        self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
         self.prediction: PM4BP3 | None = None
 
     def _get_variant_info(self, seqvar: SeqVar) -> Optional[AnnonarsVariantResponse]:
@@ -30,7 +33,7 @@ class AutoPM4BP3:
         try:
             logger.debug("Getting variant information for {}.", seqvar)
             return self.annonars_client.get_variant_info(seqvar)
-        except Exception as e:
+        except AutoAcmgBaseException as e:
             logger.error("Failed to get variant information. Error: {}", e)
             return None
 
@@ -79,7 +82,7 @@ class AutoPM4BP3:
 
             primary_info = self._get_variant_info(self.seqvar)
             if not primary_info:
-                raise AlgorithmError("No valid primary information.")
+                raise MissingDataError("No valid primary information.")
 
             # Stop-loss variants are considered as PM4
             if primary_info.result.cadd and primary_info.result.cadd.ConsDetail == "stop_loss":
@@ -96,7 +99,7 @@ class AutoPM4BP3:
                     self.prediction.PM4 = False
                     self.prediction.BP3 = True
 
-        except Exception as e:
+        except AutoAcmgBaseException as e:
             logger.error("Failed to predict PM4 and BP3 criteria. Error: {}", e)
             self.prediction = None
 
