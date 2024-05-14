@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from src.api.annonars import AnnonarsClient
 from src.api.mehari import MehariClient
 from src.defs.annonars_range import AnnonarsRangeResponse
 from src.defs.auto_pvs1 import AlteredRegionMode, PVS1Prediction, PVS1PredictionSeqVarPath, SeqVarConsequence
@@ -31,16 +32,6 @@ def seqvar_transcripts():
 @pytest.fixture
 def gene_transcripts():
     return GeneTranscripts.model_validate(get_json_object("mehari/mehari_genes_success.json")).transcripts
-
-
-@pytest.fixture
-def mock_annonars_client(monkeypatch):
-    mock_client = MagicMock()
-    mock_client.get_variant_from_range.return_value = AnnonarsRangeResponse.model_validate(
-        get_json_object("annonars/annonars_range_success.json")
-    )
-    monkeypatch.setattr("src.pvs1.seqvar_pvs1.AnnonarsClient", lambda *args, **kwargs: mock_client)
-    return mock_client
 
 
 #: Mock the Exon class
@@ -149,11 +140,20 @@ def test_calculate_altered_region(cds_pos, exons, mode, expected_result):
     assert result == expected_result
 
 
-# TODO: Fix the test
-# def test_count_pathogenic_variants(seqvar, mock_annonars_client):
-#     """Test the _count_pathogenic_variants method."""
-#     result = SeqVarPVS1Helper()._count_pathogenic_variants(seqvar, 1, 2)  # The range is mocked
-#     assert result == (0, 0)  # Something is wrong with the mocked data
+@pytest.mark.parametrize(
+    "annonars_range_response, expected_result",
+    [
+        ("annonars/NM_000152.4:c.1A>G_annonars_range.json", (501, 2205)),
+    ],
+)
+def test_count_pathogenic_variants(annonars_range_response, expected_result, seqvar):
+    """Test the _count_pathogenic_variants method."""
+    with patch.object(AnnonarsClient, "get_variant_from_range") as mock_get_variant_from_range:
+        mock_get_variant_from_range.return_value = AnnonarsRangeResponse.model_validate(
+            get_json_object(annonars_range_response)
+        )
+        result = SeqVarPVS1Helper()._count_pathogenic_variants(seqvar, 1, 1000)
+        assert result == expected_result
 
 
 @pytest.mark.parametrize(
@@ -181,14 +181,22 @@ def test_get_consequence(value, expected_result):
     assert result == expected_result
 
 
-# TODO: Fix the test
-def test_count_lof_variants(seqvar, mock_annonars_client):
-    """Test the _count_lof_variants method."""
-    result = SeqVarPVS1Helper()._count_lof_variants(seqvar, 1, 2)  # The range is mocked
-    assert result == (0, 0)  # Something is wrong with the mocked data
+@pytest.mark.parametrize(
+    "annonars_range_response, expected_result",
+    [
+        ("annonars/NM_000152.4:c.1A>G_annonars_range.json", (56, 158)),
+    ],
+)
+def test_count_lof_variants(annonars_range_response, expected_result, seqvar):
+    """Test the _count_pathogenic_variants method."""
+    with patch.object(AnnonarsClient, "get_variant_from_range") as mock_get_variant_from_range:
+        mock_get_variant_from_range.return_value = AnnonarsRangeResponse.model_validate(
+            get_json_object(annonars_range_response)
+        )
+        result = SeqVarPVS1Helper()._count_lof_variants(seqvar, 1, 1000)
+        assert result == expected_result
 
 
-# TODO: Check if the exon number is correct
 @pytest.mark.parametrize(
     "exons, pHGVS, hgnc_id, expected_result",
     [
@@ -346,7 +354,6 @@ def test_lof_is_frequent_in_population(
         mock_count_lof_variants.assert_called_once_with(seqvar, 1, 1000)  # The range is mocked
 
 
-# TODO: Check if the exon number is correct
 @pytest.mark.parametrize(
     "exons, pHGVS, expected_result",
     [
