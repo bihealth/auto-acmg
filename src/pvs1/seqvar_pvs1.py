@@ -693,9 +693,9 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         predictions.
         """
         logger.debug("Setting up the SeqVarPVS1 class.")
-        logger.info("Config: {}", self.config)
+        # logger.info("Config: {}", self.config)
         # Fetch transcript data
-        seqvar_transcript_helper = SeqVarTranscriptsHelper(self.seqvar)
+        seqvar_transcript_helper = SeqVarTranscriptsHelper(self.seqvar, config=self.config)
         seqvar_transcript_helper.initialize()
         (
             self._seqvar_transcript,
