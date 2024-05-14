@@ -27,7 +27,7 @@ jobs:
       - name: Lint source code
         run: make lint
 
-  Unit Test:
+  Unit-Test:
     runs-on: ubuntu-latest
     needs:
       - Lint
@@ -63,7 +63,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: bihealth/auto-acmg
 
-  End2End Test:
+  End2End-Test:
     runs-on: ubuntu-latest
     needs:
       - Lint
