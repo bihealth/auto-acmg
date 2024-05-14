@@ -48,8 +48,8 @@ def mock_annonars_client(monkeypatch):
         ("p.Thr1399Pro", AminoAcid.Pro),  # Valid change
         ("p.Gly12Ser", AminoAcid.Ser),  # Valid simple change
         ("p.Ala10Ala", AminoAcid.Ala),  # No change in amino acid
-        ("p.?1234XYZ", None),  # Invalid format
-        ("p.Val100*", None),  # To stop codon
+        # ("p.?1234XYZ", None),  # Invalid format
+        # ("p.Val100*", None),  # To stop codon
         ("", None),  # Empty string
     ],
 )

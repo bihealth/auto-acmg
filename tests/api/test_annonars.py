@@ -1,8 +1,11 @@
+import pytest
+import requests
 import responses
 
 from src.api.annonars import AnnonarsClient
 from src.defs.annonars_range import AnnonarsRangeResponse
 from src.defs.annonars_variant import AnnonarsVariantResponse
+from src.defs.exceptions import AnnonarsException
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from tests.utils import get_json_object
@@ -66,8 +69,8 @@ def test_get_variant_from_range_500():
     )
 
     client = AnnonarsClient(api_base_url="https://example.com/annonars")
-    response = client.get_variant_from_range(example_seqvar, start, stop)
-    assert response == None
+    with pytest.raises(AnnonarsException):
+        client.get_variant_from_range(example_seqvar, start, stop)
 
 
 @responses.activate
@@ -112,5 +115,5 @@ def test_get_variant_info_500():
     )
 
     client = AnnonarsClient(api_base_url="https://example.com/annonars")
-    response = client.get_variant_info(example_seqvar)
-    assert response == None
+    with pytest.raises(AnnonarsException):
+        client.get_variant_info(example_seqvar)

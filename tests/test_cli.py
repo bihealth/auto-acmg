@@ -1,4 +1,5 @@
 import io
+from typing import Type
 from unittest.mock import patch
 
 import pytest
@@ -6,6 +7,7 @@ from loguru import logger
 from typer.testing import CliRunner
 
 from src.cli import app
+from src.defs.exceptions import AutoAcmgBaseException
 
 #: Create a test runner
 runner = CliRunner()
@@ -32,14 +34,15 @@ def mock_auto_acmg_predict_success():
 
 
 @pytest.fixture
-def mock_auto_acmg_predict_failure():
+def mock_auto_acmg_predict_failure(request: pytest.FixtureRequest):
     """Fixture to mock AutoPVS1 predict method with a failure response."""
+    exception: Type[Exception] = request.param
     with patch("src.auto_acmg.AutoACMG.predict") as mock_predict:
-        mock_predict.side_effect = Exception("An error occurred")
+        mock_predict.side_effect = exception("An error occurred")
         yield mock_predict
 
 
-def test_classify_command_success(mock_auto_acmg_predict_success, loguru_capture):
+def test_classify_success(mock_auto_acmg_predict_success, loguru_capture):
     """Test the 'classify' command with a mocked success response from AutoACMG.predict."""
     result = runner.invoke(app, ["NM_000038.3:c.797G>A", "--genome-release", "GRCh38"])
     log_output = loguru_capture.getvalue()
@@ -47,12 +50,22 @@ def test_classify_command_success(mock_auto_acmg_predict_success, loguru_capture
     assert "" in log_output
 
 
-def test_classify_command_failure(mock_auto_acmg_predict_failure, loguru_capture):
-    """Test the 'classify' command with a mocked failure response from AutoACMG.predict."""
+@pytest.mark.parametrize("mock_auto_acmg_predict_failure", [AutoAcmgBaseException], indirect=True)
+def test_classify_auto_acmg_failure(mock_auto_acmg_predict_failure, loguru_capture):
+    """Test the 'classify' command with a mocked failure response from AutoACMG.predict using AutoAcmgBaseException."""
     result = runner.invoke(app, ["NM_000038.3:c.797G>A", "--genome-release", "GRCh38"])
     log_output = loguru_capture.getvalue()
     assert result.exit_code == 0
-    assert "Error" in log_output
+    assert "Error occurred" in log_output
+
+
+@pytest.mark.parametrize("mock_auto_acmg_predict_failure", [ValueError], indirect=True)
+def test_classify_unpredicted_error(mock_auto_acmg_predict_failure, loguru_capture):
+    """Test the 'classify' command with an unpredicted error using ValueError."""
+    result = runner.invoke(app, ["NM_000038.3:c.797G>A", "--genome-release", "GRCh38"])
+    log_output = loguru_capture.getvalue()
+    assert result.exit_code == 1
+    assert "Error occurred" not in log_output
 
 
 def test_classify_invalid_genome_release(loguru_capture):
@@ -60,4 +73,4 @@ def test_classify_invalid_genome_release(loguru_capture):
     result = runner.invoke(app, ["NM_000038.3:c.797G>A", "--genome-release", "InvalidRelease"])
     log_output = loguru_capture.getvalue()
     assert result.exit_code == 0
-    assert "Invalid genome release" in log_output
+    assert "Invalid genome release: InvalidRelease" in log_output
