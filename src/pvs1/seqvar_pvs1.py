@@ -31,6 +31,10 @@ from src.defs.seqvar import SeqVar
 class SeqVarPVS1Helper:
     """Helper methods for PVS1 criteria for sequence variants."""
 
+    def __init__(self, *, config: Optional[HelperConfig] = None):
+        self.config: HelperConfig = config or HelperConfig()
+        self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
+
     @staticmethod
     def _choose_hgvs_p(
         hgvs: str, seqvar_ts: TranscriptSeqvar, seqvar_transcripts: List[TranscriptSeqvar]
@@ -159,8 +163,7 @@ class SeqVarPVS1Helper:
             logger.debug("Altered region: {} - {}", start_pos, end_pos)
             return start_pos, end_pos
 
-    @staticmethod
-    def _count_pathogenic_variants(seqvar: SeqVar, start_pos: int, end_pos: int) -> Tuple[int, int]:
+    def _count_pathogenic_variants(self, seqvar: SeqVar, start_pos: int, end_pos: int) -> Tuple[int, int]:
         """Counts pathogenic variants in the specified range.
 
         Args:
@@ -175,8 +178,7 @@ class SeqVarPVS1Helper:
             InvalidAPIResposeError: If the API response is invalid or cannot be processed.
         """
         logger.debug("Counting pathogenic variants in the range {} - {}.", start_pos, end_pos)
-        annonars_client = AnnonarsClient()
-        response = annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
+        response = self.annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
         if response and response.result.clinvar:
             pathogenic_variants = [
                 v
@@ -222,8 +224,7 @@ class SeqVarPVS1Helper:
             Tuple[int, int]: The number of frequent LoF variants and the total number of LoF variants.
         """
         logger.debug("Counting LoF variants in the range {} - {}.", start_pos, end_pos)
-        annonars_client = AnnonarsClient()
-        response = annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
+        response = self.annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
         if response and response.result.gnomad_genomes:
             frequent_lof_variants = 0
             lof_variants = 0
@@ -666,7 +667,6 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         self.config: HelperConfig = config or HelperConfig()
         # Attributes to be set
         self.seqvar = seqvar
-
         # Attributes to be computed
         self._seqvar_transcript: TranscriptSeqvar | None = None
         self._gene_transcript: TranscriptGene | None = None
@@ -681,7 +681,6 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         self.exons: List[Exon] = []
         self.cds_pos: int | None = None
         self.cds_info: Dict[str, CdsInfo] = {}
-
         # Prediction attributes
         self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
         self.prediction_path: PVS1PredictionSeqVarPath = PVS1PredictionSeqVarPath.NotSet
@@ -693,7 +692,6 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         predictions.
         """
         logger.debug("Setting up the SeqVarPVS1 class.")
-        # logger.info("Config: {}", self.config)
         # Fetch transcript data
         seqvar_transcript_helper = SeqVarTranscriptsHelper(self.seqvar, config=self.config)
         seqvar_transcript_helper.initialize()

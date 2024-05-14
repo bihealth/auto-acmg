@@ -6,6 +6,7 @@ from typing import Optional
 from loguru import logger
 
 from src.api.annonars import AnnonarsClient
+from src.core.config import HelperConfig
 from src.defs.annonars_variant import AnnonarsVariantResponse, VariantResult
 from src.defs.auto_acmg import PS1PM5, AminoAcid
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
@@ -22,10 +23,15 @@ REGEX_HGVSP = re.compile(r"p\.(\D+)(\d+)(\D+)")
 class AutoPS1PM5:
     """Predicts PS1 criteria for sequence variants."""
 
-    def __init__(self, seqvar: SeqVar, genome_release: GenomeRelease):
+    def __init__(
+        self, seqvar: SeqVar, genome_release: GenomeRelease, *, config: Optional[HelperConfig] = None
+    ):
+        #: Configuration to use.
+        self.config = config or HelperConfig()
+        # Attributes to be set
         self.seqvar = seqvar
         self.genome_release = genome_release
-        self.annonars_client = AnnonarsClient()
+        self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
         self.prediction: PS1PM5 | None = None
 
     def _get_variant_info(self, seqvar: SeqVar) -> Optional[AnnonarsVariantResponse]:
