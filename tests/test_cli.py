@@ -60,8 +60,8 @@ def test_classify_auto_acmg_failure(mock_auto_acmg_predict_failure, loguru_captu
 
 
 @pytest.mark.parametrize("mock_auto_acmg_predict_failure", [ValueError], indirect=True)
-def test_classify_unpredicted_error(mock_auto_acmg_predict_failure, loguru_capture):
-    """Test the 'classify' command with an unpredicted error using ValueError."""
+def test_classify_generic_exception(mock_auto_acmg_predict_failure, loguru_capture):
+    """Test the 'classify' command with a generic exception using ValueError."""
     result = runner.invoke(app, ["NM_000038.3:c.797G>A", "--genome-release", "GRCh38"])
     log_output = loguru_capture.getvalue()
     assert result.exit_code == 1

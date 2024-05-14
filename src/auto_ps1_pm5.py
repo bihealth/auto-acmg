@@ -15,6 +15,9 @@ from src.defs.seqvar import SeqVar
 #: DNA bases
 DNA_BASES = ["A", "C", "G", "T"]
 
+#: Regular expression for parsing pHGVSp
+REGEX_HGVSP = re.compile(r"p\.(\D+)(\d+)(\D+)")
+
 
 class AutoPS1PM5:
     """Predicts PS1 criteria for sequence variants."""
@@ -49,15 +52,16 @@ class AutoPS1PM5:
             AminoAcid: The new amino acid if the pHGVSp is valid, None otherwise.
         """
         try:
-            match = re.match(r"p\.(\D+)(\d+)(\D+)", pHGVSp)
+            match = re.match(REGEX_HGVSP, pHGVSp)
             if match:
-                # original_aa = AminoAcid[match.group(1)].value
-                # position = int(match.group(2))
                 return AminoAcid[match.group(3)]
             else:
                 return None
         except AutoAcmgBaseException:
             logger.debug("Invalid pHGVSp: {}", pHGVSp)
+            return None
+        except KeyError:
+            logger.debug("Invalid amino acid from pHGVSp: {}", pHGVSp)
             return None
 
     @staticmethod
@@ -116,8 +120,10 @@ class AutoPS1PM5:
                 raise AlgorithmError("No valid primary amino acid change for PS1/PM5 prediction.")
 
             for alt_base in DNA_BASES:
+                # Skip the same base insert
                 if alt_base == self.seqvar.insert:
-                    continue  # Skip the same base insert
+                    continue
+
                 alt_seqvar = SeqVar(
                     genome_release=self.genome_release,
                     chrom=self.seqvar.chrom,

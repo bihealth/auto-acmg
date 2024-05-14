@@ -1,6 +1,9 @@
 from enum import Enum
+from typing import Any
 
 from pydantic import BaseModel
+
+from src.defs.exceptions import AutoAcmgBaseException
 
 
 class AminoAcid(Enum):

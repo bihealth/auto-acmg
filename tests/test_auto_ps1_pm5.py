@@ -2,10 +2,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from src.api.annonars import AnnonarsClient
 from src.auto_ps1_pm5 import AutoPS1PM5
 from src.defs.annonars_variant import AnnonarsVariantResponse
 from src.defs.auto_acmg import AminoAcid
-from src.defs.exceptions import AlgorithmError
+from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from tests.utils import get_json_object
@@ -26,20 +27,35 @@ def auto_ps1_pm5(seqvar):
     return AutoPS1PM5(seqvar, GenomeRelease.GRCh38)
 
 
-@pytest.fixture
-def mock_annonars_client(monkeypatch):
-    mock_client = MagicMock()
-    mock_client.get_variant_info.return_value = AnnonarsVariantResponse.model_validate(
-        get_json_object("annonars/annonars_variant_success.json")
-    )
-    monkeypatch.setattr("src.auto_ps1_pm5.AnnonarsClient", lambda *args, **kwargs: mock_client)
-    return mock_client
+@patch.object(AnnonarsClient, "get_variant_info")
+def test_auto_ps1_pm5_get_variant_info(mock_get_variant_info, variant_info, seqvar):
+    """Test getting variant information."""
+    mock_get_variant_info.return_value = variant_info
+
+    auto_ps1_pm5 = AutoPS1PM5(seqvar=seqvar, genome_release=GenomeRelease.GRCh38)
+    response = auto_ps1_pm5._get_variant_info(auto_ps1_pm5.seqvar)
+    assert response is not None
+    assert response == variant_info
 
 
-# def test_auto_ps1_pm5_get_variant_info(auto_ps1_pm5, seqvar, mock_annonars_client, variant_info):
-#     """Test getting variant information."""
-#     response = auto_ps1_pm5._get_variant_info(seqvar)
-#     assert response is not None  # Response should be variant_info
+@patch.object(AnnonarsClient, "get_variant_info")
+def test_auto_ps1_pm5_get_variant_info_none(mock_get_variant_info, seqvar):
+    """Test getting variant information returns None."""
+    mock_get_variant_info.return_value = None
+
+    auto_ps1_pm5 = AutoPS1PM5(seqvar=seqvar, genome_release=GenomeRelease.GRCh38)
+    response = auto_ps1_pm5._get_variant_info(auto_ps1_pm5.seqvar)
+    assert response is None
+
+
+@patch.object(AnnonarsClient, "get_variant_info")
+def test_auto_ps1_pm5_get_variant_info_auto_acmg_exception(mock_get_variant_info, seqvar):
+    """Test getting variant information raises AutoAcmgBaseException."""
+    mock_get_variant_info.side_effect = AutoAcmgBaseException("An error occurred")
+
+    auto_ps1_pm5 = AutoPS1PM5(seqvar=seqvar, genome_release=GenomeRelease.GRCh38)
+    response = auto_ps1_pm5._get_variant_info(auto_ps1_pm5.seqvar)
+    assert response is None
 
 
 @pytest.mark.parametrize(
@@ -48,8 +64,8 @@ def mock_annonars_client(monkeypatch):
         ("p.Thr1399Pro", AminoAcid.Pro),  # Valid change
         ("p.Gly12Ser", AminoAcid.Ser),  # Valid simple change
         ("p.Ala10Ala", AminoAcid.Ala),  # No change in amino acid
-        # ("p.?1234XYZ", None),  # Invalid format
-        # ("p.Val100*", None),  # To stop codon
+        ("p.?1234XYZ", None),  # Invalid format
+        ("p.Val100*", None),  # To stop codon
         ("", None),  # Empty string
     ],
 )
