@@ -6,7 +6,7 @@ from typer.testing import CliRunner
 from src.auto_acmg import AutoACMG
 from src.auto_ps1_pm5 import AutoPS1PM5
 from src.defs.auto_acmg import PS1PM5
-from src.defs.exceptions import ParseError
+from src.defs.exceptions import AutoAcmgBaseException, ParseError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar, SeqVarResolver
 from src.pvs1.auto_pvs1 import AutoPVS1
@@ -55,6 +55,14 @@ def mock_auto_pvs1_success(monkeypatch):
 
 
 @pytest.fixture
+def mock_auto_pvs1_failure(monkeypatch):
+    mock_pvs1 = Mock(AutoPVS1)
+    mock_pvs1.predict.side_effect = AutoAcmgBaseException("An error occurred")
+    monkeypatch.setattr("src.auto_acmg.AutoPVS1", lambda *args, **kwargs: mock_pvs1)
+    return mock_pvs1
+
+
+@pytest.fixture
 def mock_auto_ps1_pm5_success(monkeypatch):
     mock_ps1_pm5 = Mock(AutoPS1PM5)
     mock_ps1_pm5.predict.return_value = PS1PM5()
@@ -63,11 +71,11 @@ def mock_auto_ps1_pm5_success(monkeypatch):
 
 
 @pytest.fixture
-def mock_auto_pvs1_failure(monkeypatch):
-    mock_pvs1 = Mock(AutoPVS1)
-    mock_pvs1.predict.return_value = (None, None)
-    monkeypatch.setattr("src.auto_acmg.AutoPVS1", lambda *args, **kwargs: mock_pvs1)
-    return mock_pvs1
+def mock_auto_ps1_pm5_failure(monkeypatch):
+    mock_ps1_pm5 = Mock(AutoPS1PM5)
+    mock_ps1_pm5.predict.side_effect = AutoAcmgBaseException("An error occurred")
+    monkeypatch.setattr("src.auto_acmg.AutoPS1PM5", lambda *args, **kwargs: mock_ps1_pm5)
+    return mock_ps1_pm5
 
 
 def test_auto_acmg_resolve_sequence_variant_success(mock_seqvar_resolver, mock_seqvar):
@@ -111,7 +119,9 @@ def test_auto_acmg_predict_seqvar_resolve_failure(mock_seqvar_resolver_failure, 
     assert not mock_auto_pvs1_failure.predict.called
 
 
-def test_auto_acmg_predict_seqvar_failure(mock_seqvar_resolver, mock_auto_pvs1_failure, mock_seqvar):
+def test_auto_acmg_predict_seqvar_pvs1_failure(
+    mock_seqvar_resolver, mock_auto_pvs1_failure, mock_auto_ps1_pm5_success, mock_seqvar
+):
     """Test the predict method for a sequence variant with a failure response."""
     auto_acmg = AutoACMG("NM_000038.3:c.797G>A", GenomeRelease.GRCh38)
     with runner.isolated_filesystem():
@@ -120,3 +130,18 @@ def test_auto_acmg_predict_seqvar_failure(mock_seqvar_resolver, mock_auto_pvs1_f
     assert mock_auto_pvs1_failure.predict.called
     assert auto_acmg.seqvar == mock_seqvar
     assert auto_acmg.seqvar_pvs1_prediction_path == PVS1PredictionSeqVarPath.NotSet
+
+
+def test_auto_acmg_predict_seqvar_ps1_pm5_failure(
+    mock_seqvar_resolver, mock_auto_pvs1_success, mock_auto_ps1_pm5_failure, mock_seqvar
+):
+    """Test the predict method for a sequence variant with a failure response."""
+    auto_acmg = AutoACMG("NM_000038.3:c.797G>A", GenomeRelease.GRCh38)
+    with runner.isolated_filesystem():
+        auto_acmg.predict()
+    assert mock_seqvar_resolver.resolve_seqvar.called
+    assert mock_auto_pvs1_success.predict.called
+    assert mock_auto_ps1_pm5_failure.predict.called
+    assert auto_acmg.seqvar == mock_seqvar
+    assert auto_acmg.seqvar_ps1 is None
+    assert auto_acmg.seqvar_pm5 is None
