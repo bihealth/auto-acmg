@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, EnumMeta
 from typing import Any
 
 from pydantic import BaseModel
@@ -6,7 +6,16 @@ from pydantic import BaseModel
 from src.defs.exceptions import AutoAcmgBaseException
 
 
-class AminoAcid(Enum):
+class AutoAcmgBaseEnumMeta(EnumMeta):
+    def __getitem__(cls, name: Any) -> Any:
+        """Override __getitem__ to raise an AutoAcmgBaseException if the KeyError is raised."""
+        try:
+            return super().__getitem__(name)
+        except KeyError:
+            raise AutoAcmgBaseException(f"Invalid {cls.__name__} value: {name}")
+
+
+class AminoAcid(Enum, metaclass=AutoAcmgBaseEnumMeta):
     """Amino acid enumeration."""
 
     Ala = "A"

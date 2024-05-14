@@ -60,9 +60,6 @@ class AutoPS1PM5:
         except AutoAcmgBaseException:
             logger.debug("Invalid pHGVSp: {}", pHGVSp)
             return None
-        except KeyError:
-            logger.debug("Invalid amino acid from pHGVSp: {}", pHGVSp)
-            return None
 
     @staticmethod
     def _is_pathogenic(variant_info: VariantResult) -> bool:

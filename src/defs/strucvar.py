@@ -4,6 +4,7 @@ import re
 from enum import Enum, auto
 from typing import Optional
 
+from src.defs.auto_acmg import AutoAcmgBaseEnumMeta
 from src.defs.exceptions import InvalidPos, ParseError
 from src.defs.genome_builds import CHROM_LENGTHS_37, CHROM_LENGTHS_38, GenomeRelease
 
@@ -20,7 +21,7 @@ REGEX_CNV_HYPHEN = re.compile(
 )
 
 
-class StrucVarType(Enum):
+class StrucVarType(Enum, metaclass=AutoAcmgBaseEnumMeta):
     """Enumeration for structural variant type."""
 
     DEL = auto()

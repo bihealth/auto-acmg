@@ -3,10 +3,11 @@ from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
+from src.defs.auto_acmg import AutoAcmgBaseEnumMeta
 from src.defs.mehari import Exon, TranscriptGene, TranscriptSeqvar
 
 
-class AlteredRegionMode(Enum):
+class AlteredRegionMode(Enum, metaclass=AutoAcmgBaseEnumMeta):
     """Enumeration for altered region mode."""
 
     Downstream = auto()
@@ -31,7 +32,7 @@ class CdsInfo(BaseModel):
 
 
 #: Enumeration for sequence variant consequence
-class SeqVarConsequence(Enum):
+class SeqVarConsequence(Enum, metaclass=AutoAcmgBaseEnumMeta):
     """Consequence of a sequence variant."""
 
     NonsenseFrameshift = auto()
@@ -41,7 +42,7 @@ class SeqVarConsequence(Enum):
 
 
 #: Enumeration for PVS1 prediction status
-class PVS1Prediction(Enum):
+class PVS1Prediction(Enum, metaclass=AutoAcmgBaseEnumMeta):
     """PVS1 prediction."""
 
     NotSet = auto()
@@ -53,7 +54,7 @@ class PVS1Prediction(Enum):
 
 
 #: Enumeration for PVS1 prediction path for sequence variant
-class PVS1PredictionSeqVarPath(Enum):
+class PVS1PredictionSeqVarPath(Enum, metaclass=AutoAcmgBaseEnumMeta):
     """PVS1 prediction path."""
 
     NotSet = auto()
@@ -80,7 +81,7 @@ class PVS1PredictionSeqVarPath(Enum):
 
 
 #: Enumeration for PVS1 prediction path for structural variant
-class PVS1PredictionStrucVarPath(Enum):
+class PVS1PredictionStrucVarPath(Enum, metaclass=AutoAcmgBaseEnumMeta):
     """PVS1 prediction path for structure variants."""
 
     NotSet = auto()
