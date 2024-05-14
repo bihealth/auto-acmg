@@ -18,7 +18,12 @@ from src.defs.auto_pvs1 import (
     SeqvarConsequenceMapping,
     TranscriptInfo,
 )
-from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, InvalidAPIResposeError
+from src.defs.exceptions import (
+    AlgorithmError,
+    AutoAcmgBaseException,
+    InvalidAPIResposeError,
+    MissingDataError,
+)
 from src.defs.mehari import CdsPos, Exon, TranscriptGene, TranscriptSeqvar
 from src.defs.seqvar import SeqVar
 
@@ -332,7 +337,7 @@ class SeqVarPVS1Helper:
         logger.debug("Checking if the altered region is critical for the protein function.")
         if not cds_pos:
             logger.error("CDS position is not available. Cannot determine criticality.")
-            raise AlgorithmError("CDS position is not available. Cannot determine criticality.")
+            raise MissingDataError("CDS position is not available. Cannot determine criticality.")
 
         start_pos, end_pos = self._calculate_altered_region(cds_pos, exons, AlteredRegionMode.Downstream)
         try:
@@ -343,7 +348,7 @@ class SeqVarPVS1Helper:
                 return False
         except AutoAcmgBaseException as e:
             logger.error("Failed to predict criticality for variant. Error: {}", e)
-            raise AlgorithmError("Failed to predict criticality for variant. Error: {}", e)
+            raise AlgorithmError("Failed to predict criticality for variant.") from e
 
     def _lof_is_frequent_in_population(self, seqvar: SeqVar, cds_pos: int | None, exons: List[Exon]) -> bool:
         """Checks if the Loss-of-Function (LoF) variants in the exon are frequent in the general
@@ -378,7 +383,7 @@ class SeqVarPVS1Helper:
         logger.debug("Checking if LoF variants are frequent in the general population.")
         if not cds_pos:
             logger.error("CDS position is not available. Cannot determine LoF frequency.")
-            raise AlgorithmError("CDS position is not available. Cannot determine LoF frequency.")
+            raise MissingDataError("CDS position is not available. Cannot determine LoF frequency.")
 
         start_pos, end_pos = self._calculate_altered_region(cds_pos, exons, AlteredRegionMode.Exon)
         try:
@@ -389,7 +394,7 @@ class SeqVarPVS1Helper:
                 return False
         except AutoAcmgBaseException as e:
             logger.error("Failed to predict LoF frequency for variant. Error: {}", e)
-            raise AlgorithmError("Failed to predict LoF frequency for variant. Error: {}", e)
+            raise AlgorithmError("Failed to predict LoF frequency for variant.") from e
 
     @staticmethod
     def _lof_removes_more_then_10_percent_of_protein(pHGVS: str, exons: List[Exon]) -> bool:
@@ -470,7 +475,7 @@ class SeqVarPVS1Helper:
         logger.debug("Checking if the variant introduces an alternative start codon.")
         if hgvs not in cds_info:
             logger.error("Main transcript ID {} not found in the dataset.", hgvs)
-            raise ValueError(f"Main transcript ID {hgvs} not found in the dataset.")
+            raise MissingDataError(f"Main transcript ID {hgvs} not found in the dataset.")
 
         main_start_codon, main_cds_start = cds_info[hgvs].start_codon, cds_info[hgvs].cds_start
         # Check if other transcripts have alternative start codons
@@ -574,7 +579,7 @@ class SeqVarTranscriptsHelper:
 
         except AutoAcmgBaseException as e:
             logger.error("Failed to get transcripts for the sequence variant. Error: {}", e)
-            raise AlgorithmError("Failed to get transcripts for the sequence variant. Error: {}", e)
+            raise AlgorithmError("Failed to get transcripts for the sequence variant.") from e
 
     @staticmethod
     def _get_consequence(seqvar_transcript: TranscriptSeqvar | None) -> SeqVarConsequence:
@@ -724,7 +729,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
             or self._consequence == SeqVarConsequence.NotSet
         ):
             logger.error("Transcript data is not set. Cannot initialize the PVS1 class.")
-            raise AlgorithmError("Transcript data is not set. Cannot initialize the PVS1 class.")
+            raise MissingDataError("Transcript data is not set. Cannot initialize the PVS1 class.")
 
         # Set attributes
         logger.debug("Setting up the attributes for the PVS1 class.")

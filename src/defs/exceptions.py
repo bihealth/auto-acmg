@@ -43,3 +43,7 @@ class AlgorithmError(AutoAcmgBaseException):
 
 class AutoPVS1Error(AutoAcmgBaseException):
     pass
+
+
+class MissingDataError(AutoAcmgBaseException):
+    pass

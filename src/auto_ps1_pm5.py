@@ -8,7 +8,7 @@ from loguru import logger
 from src.api.annonars import AnnonarsClient
 from src.defs.annonars_variant import AnnonarsVariantResponse, VariantResult
 from src.defs.auto_acmg import PS1PM5, AminoAcid
-from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException
+from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 
@@ -110,7 +110,7 @@ class AutoPS1PM5:
 
             primary_info = self._get_variant_info(self.seqvar)
             if not primary_info or not primary_info.result.dbnsfp or not primary_info.result.dbnsfp.HGVSp_VEP:
-                raise AlgorithmError("No valid primary variant information for PS1/PM5 prediction.")
+                raise MissingDataError("No valid primary variant information for PS1/PM5 prediction.")
 
             primary_aa_change = self._parse_HGVSp(primary_info.result.dbnsfp.HGVSp_VEP)
             if not primary_aa_change:
