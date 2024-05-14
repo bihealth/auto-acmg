@@ -11,32 +11,10 @@ from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionSeqVarPath
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.pvs1.auto_pvs1 import AutoPVS1
+from tests.utils import load_test_data
 
 #: Type for PVS1 test data.
 Pvs1TestData = List[Tuple[str, GenomeRelease, PVS1Prediction, PVS1PredictionSeqVarPath]]
-
-
-def load_test_data(
-    path: str,
-) -> List[Tuple[str, GenomeRelease, PVS1Prediction, PVS1PredictionSeqVarPath]]:
-    """Load CSV test data/."""
-    result = []
-    with open(path, "rt") as inputf:
-        reader = csv.DictReader(inputf)
-        for record in reader:
-            if record["section"].startswith("#"):
-                continue
-            result.append(
-                (
-                    record["variant_name"],
-                    GenomeRelease[record["genome_release"]],
-                    PVS1Prediction[record["expected_prediction"]],
-                    PVS1PredictionSeqVarPath[record["expected_path"]],
-                )
-            )
-    return result
-
-
 #: Test data.
 PVS1_TEST_DATA: Pvs1TestData = load_test_data("tests/assets/e2e_variants/pvs1.csv")
 
