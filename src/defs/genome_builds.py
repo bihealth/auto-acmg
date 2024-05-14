@@ -1,13 +1,13 @@
 """Genome build information and operations."""
 
-from enum import Enum, auto
+from enum import auto
 
-from src.defs.auto_acmg import AutoAcmgBaseEnumMeta
+from src.defs.auto_acmg import AutoAcmgBaseEnum
 from src.defs.exceptions import MappingError
 
 
 #: Enumeration for genome release
-class GenomeRelease(Enum, metaclass=AutoAcmgBaseEnumMeta):
+class GenomeRelease(AutoAcmgBaseEnum):
     """Enumeration for allowed genome release values."""
 
     GRCh37 = auto()

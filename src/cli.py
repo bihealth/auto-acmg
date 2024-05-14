@@ -45,12 +45,6 @@ def classify(
     try:
         genome_release_enum = GenomeRelease.from_string(genome_release)
         if not genome_release_enum:
-            # raise ValueError(
-            #     (
-            #         f"Invalid genome release: {genome_release}. "
-            #         f"Please use one of {', '.join(ALLOWED_GENOME_RELEASES)}."
-            #     )
-            # )
             logger.error(
                 (
                     f"Invalid genome release: {genome_release}. "

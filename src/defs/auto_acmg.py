@@ -15,7 +15,16 @@ class AutoAcmgBaseEnumMeta(EnumMeta):
             raise AutoAcmgBaseException(f"Invalid {cls.__name__} value: {name}")
 
 
-class AminoAcid(Enum, metaclass=AutoAcmgBaseEnumMeta):
+class AutoAcmgBaseEnum(Enum, metaclass=AutoAcmgBaseEnumMeta):
+    """Base enumeration for ACMG criteria."""
+
+    @classmethod
+    def _missing_(cls, value: Any) -> Any:
+        """Override _missing_ to raise an AutoAcmgBaseException if the ValueError is raised."""
+        raise AutoAcmgBaseException(f"Invalid {cls.__name__} value: {value}")
+
+
+class AminoAcid(AutoAcmgBaseEnum):
     """Amino acid enumeration."""
 
     Ala = "A"
