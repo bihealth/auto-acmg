@@ -5,6 +5,7 @@ from loguru import logger
 from typing_extensions import Annotated
 
 from src.auto_acmg import AutoACMG
+from src.defs.exceptions import AutoAcmgBaseException, InvalidGenomeBuild
 from src.defs.genome_builds import GenomeRelease
 
 app = typer.Typer()
@@ -44,16 +45,17 @@ def classify(
     try:
         genome_release_enum = GenomeRelease.from_string(genome_release)
         if not genome_release_enum:
-            raise ValueError(
+            logger.error(
                 (
                     f"Invalid genome release: {genome_release}. "
                     f"Please use one of {', '.join(ALLOWED_GENOME_RELEASES)}."
                 )
             )
+            raise InvalidGenomeBuild("Invalid genome release")
 
         auto_acmg = AutoACMG(variant, genome_release_enum)
         auto_acmg.predict()
-    except Exception as e:
+    except AutoAcmgBaseException as e:
         logger.error("Error occurred: {}", e)
 
 

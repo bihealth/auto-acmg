@@ -20,9 +20,7 @@ def test_annonars_range_response_model(json_file):
 
 @pytest.mark.parametrize(
     "json_file",
-    [
-        "annonars/annonars_variant_success.json",
-    ],
+    ["annonars/annonars_variant_success.json", "annonars/larp7_variant.json"],
 )
 def test_annonars_variant_response_model(json_file):
     """Test AnnonarsVariantResponse model for various example responses."""

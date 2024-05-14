@@ -22,3 +22,7 @@ classifiers = [
 Homepage = "https://github.com/bihealth/auto-acmg"
 Documentation = "https://auto-acmg.readthedocs.io/en/latest"
 
+[tool.pytest.ini_options]
+markers = [
+    "remote: marks test as calling to API at https://reev.bihealth.org",
+]

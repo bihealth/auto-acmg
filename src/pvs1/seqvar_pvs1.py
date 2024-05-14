@@ -1,12 +1,14 @@
 """PVS1 criteria for Sequence Variants (SeqVar)."""
 
 import re
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from loguru import logger
+from pydantic import BaseModel
 
 from src.api.annonars import AnnonarsClient
 from src.api.mehari import MehariClient
+from src.core.config import Config
 from src.defs.auto_pvs1 import (
     AlteredRegionMode,
     CdsInfo,
@@ -16,13 +18,22 @@ from src.defs.auto_pvs1 import (
     SeqvarConsequenceMapping,
     TranscriptInfo,
 )
-from src.defs.exceptions import AlgorithmError, InvalidAPIResposeError
+from src.defs.exceptions import (
+    AlgorithmError,
+    AutoAcmgBaseException,
+    InvalidAPIResposeError,
+    MissingDataError,
+)
 from src.defs.mehari import CdsPos, Exon, TranscriptGene, TranscriptSeqvar
 from src.defs.seqvar import SeqVar
 
 
 class SeqVarPVS1Helper:
     """Helper methods for PVS1 criteria for sequence variants."""
+
+    def __init__(self, *, config: Optional[Config] = None):
+        self.config: Config = config or Config()
+        self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
 
     @staticmethod
     def _choose_hgvs_p(
@@ -152,8 +163,7 @@ class SeqVarPVS1Helper:
             logger.debug("Altered region: {} - {}", start_pos, end_pos)
             return start_pos, end_pos
 
-    @staticmethod
-    def _count_pathogenic_variants(seqvar: SeqVar, start_pos: int, end_pos: int) -> Tuple[int, int]:
+    def _count_pathogenic_variants(self, seqvar: SeqVar, start_pos: int, end_pos: int) -> Tuple[int, int]:
         """Counts pathogenic variants in the specified range.
 
         Args:
@@ -168,8 +178,7 @@ class SeqVarPVS1Helper:
             InvalidAPIResposeError: If the API response is invalid or cannot be processed.
         """
         logger.debug("Counting pathogenic variants in the range {} - {}.", start_pos, end_pos)
-        annonars_client = AnnonarsClient()
-        response = annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
+        response = self.annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
         if response and response.result.clinvar:
             pathogenic_variants = [
                 v
@@ -215,8 +224,7 @@ class SeqVarPVS1Helper:
             Tuple[int, int]: The number of frequent LoF variants and the total number of LoF variants.
         """
         logger.debug("Counting LoF variants in the range {} - {}.", start_pos, end_pos)
-        annonars_client = AnnonarsClient()
-        response = annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
+        response = self.annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
         if response and response.result.gnomad_genomes:
             frequent_lof_variants = 0
             lof_variants = 0
@@ -330,7 +338,7 @@ class SeqVarPVS1Helper:
         logger.debug("Checking if the altered region is critical for the protein function.")
         if not cds_pos:
             logger.error("CDS position is not available. Cannot determine criticality.")
-            raise AlgorithmError("CDS position is not available. Cannot determine criticality.")
+            raise MissingDataError("CDS position is not available. Cannot determine criticality.")
 
         start_pos, end_pos = self._calculate_altered_region(cds_pos, exons, AlteredRegionMode.Downstream)
         try:
@@ -339,9 +347,9 @@ class SeqVarPVS1Helper:
                 return True
             else:
                 return False
-        except Exception as e:
+        except AutoAcmgBaseException as e:
             logger.error("Failed to predict criticality for variant. Error: {}", e)
-            raise AlgorithmError("Failed to predict criticality for variant. Error: {}", e)
+            raise AlgorithmError("Failed to predict criticality for variant.") from e
 
     def _lof_is_frequent_in_population(self, seqvar: SeqVar, cds_pos: int | None, exons: List[Exon]) -> bool:
         """Checks if the Loss-of-Function (LoF) variants in the exon are frequent in the general
@@ -376,7 +384,7 @@ class SeqVarPVS1Helper:
         logger.debug("Checking if LoF variants are frequent in the general population.")
         if not cds_pos:
             logger.error("CDS position is not available. Cannot determine LoF frequency.")
-            raise AlgorithmError("CDS position is not available. Cannot determine LoF frequency.")
+            raise MissingDataError("CDS position is not available. Cannot determine LoF frequency.")
 
         start_pos, end_pos = self._calculate_altered_region(cds_pos, exons, AlteredRegionMode.Exon)
         try:
@@ -385,9 +393,9 @@ class SeqVarPVS1Helper:
                 return True
             else:
                 return False
-        except Exception as e:
+        except AutoAcmgBaseException as e:
             logger.error("Failed to predict LoF frequency for variant. Error: {}", e)
-            raise AlgorithmError("Failed to predict LoF frequency for variant. Error: {}", e)
+            raise AlgorithmError("Failed to predict LoF frequency for variant.") from e
 
     @staticmethod
     def _lof_removes_more_then_10_percent_of_protein(pHGVS: str, exons: List[Exon]) -> bool:
@@ -468,7 +476,7 @@ class SeqVarPVS1Helper:
         logger.debug("Checking if the variant introduces an alternative start codon.")
         if hgvs not in cds_info:
             logger.error("Main transcript ID {} not found in the dataset.", hgvs)
-            raise ValueError(f"Main transcript ID {hgvs} not found in the dataset.")
+            raise MissingDataError(f"Main transcript ID {hgvs} not found in the dataset.")
 
         main_start_codon, main_cds_start = cds_info[hgvs].start_codon, cds_info[hgvs].cds_start
         # Check if other transcripts have alternative start codons
@@ -491,7 +499,8 @@ class SeqVarPVS1Helper:
 class SeqVarTranscriptsHelper:
     """Transcript information for a sequence variant."""
 
-    def __init__(self, seqvar: SeqVar):
+    def __init__(self, seqvar: SeqVar, *, config: Optional[Config] = None):
+        self.config: Config = config or Config()
         self.seqvar: SeqVar = seqvar
 
         # Attributes to be set
@@ -532,7 +541,7 @@ class SeqVarTranscriptsHelper:
         """Get all transcripts for the given sequence variant from Mehari."""
         try:
             # Get transcripts from Mehari
-            mehari_client = MehariClient()
+            mehari_client = MehariClient(api_base_url=self.config.api_base_url_mehari)
             response_seqvar = mehari_client.get_seqvar_transcripts(self.seqvar)
             if not response_seqvar:
                 self.seqvar_ts_info = []
@@ -569,9 +578,9 @@ class SeqVarTranscriptsHelper:
                 self.gene_transcript = None
                 self.consequence = SeqVarConsequence.NotSet
 
-        except Exception as e:
+        except AutoAcmgBaseException as e:
             logger.error("Failed to get transcripts for the sequence variant. Error: {}", e)
-            raise AlgorithmError("Failed to get transcripts for the sequence variant. Error: {}", e)
+            raise AlgorithmError("Failed to get transcripts for the sequence variant.") from e
 
     @staticmethod
     def _get_consequence(seqvar_transcript: TranscriptSeqvar | None) -> SeqVarConsequence:
@@ -651,31 +660,13 @@ class SeqVarTranscriptsHelper:
 
 
 class SeqVarPVS1(SeqVarPVS1Helper):
-    """Handles the PVS1 criteria assessment for sequence variants.
+    """Handles the PVS1 criteria assessment for sequence variants."""
 
-    Attributes:
-        seqvar (SeqVar): The sequence variant being analyzed.
-        _seqvar_transcript (TranscriptSeqvar | None): Associated transcript of the sequence variant.
-        _gene_transcript (TranscriptGene | None): Associated gene transcript.
-        _all_seqvar_ts (List[TranscriptSeqvar]): All sequence variant transcripts.
-        _all_gene_ts (List[TranscriptGene]): All gene transcripts.
-        _consequence (SeqVarConsequence): Consequence of the sequence variant.
-        HGVS (str): HGVS notation of the gene.
-        pHGVS (str): Protein HGVS notation.
-        tHGVS (str): Transcript HGVS notation.
-        HGNC_id (str): HGNC identifier for the gene.
-        transcript_tags (List[str]): Tags associated with the transcript.
-        exons (List[Exon]): List of exons from the gene transcript.
-        cds_pos (int | None): Position of the coding sequence.
-        cds_info (Dict[str, CdsInfo]): CDS information for all transcripts.
-        prediction (PVS1Prediction): Prediction result based on PVS1 criteria.
-        prediction_path (PVS1PredictionSeqVarPath): Pathway leading to the prediction decision.
-    """
-
-    def __init__(self, seqvar: SeqVar):
+    def __init__(self, seqvar: SeqVar, *, config: Optional[Config] = None):
+        #: Configuration to use.
+        self.config: Config = config or Config()
         # Attributes to be set
         self.seqvar = seqvar
-
         # Attributes to be computed
         self._seqvar_transcript: TranscriptSeqvar | None = None
         self._gene_transcript: TranscriptGene | None = None
@@ -690,7 +681,6 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         self.exons: List[Exon] = []
         self.cds_pos: int | None = None
         self.cds_info: Dict[str, CdsInfo] = {}
-
         # Prediction attributes
         self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
         self.prediction_path: PVS1PredictionSeqVarPath = PVS1PredictionSeqVarPath.NotSet
@@ -703,7 +693,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         """
         logger.debug("Setting up the SeqVarPVS1 class.")
         # Fetch transcript data
-        seqvar_transcript_helper = SeqVarTranscriptsHelper(self.seqvar)
+        seqvar_transcript_helper = SeqVarTranscriptsHelper(self.seqvar, config=self.config)
         seqvar_transcript_helper.initialize()
         (
             self._seqvar_transcript,
@@ -719,7 +709,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
             or self._consequence == SeqVarConsequence.NotSet
         ):
             logger.error("Transcript data is not set. Cannot initialize the PVS1 class.")
-            raise AlgorithmError("Transcript data is not set. Cannot initialize the PVS1 class.")
+            raise MissingDataError("Transcript data is not set. Cannot initialize the PVS1 class.")
 
         # Set attributes
         logger.debug("Setting up the attributes for the PVS1 class.")
