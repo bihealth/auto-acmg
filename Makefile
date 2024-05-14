@@ -11,9 +11,12 @@ help:
 	@echo "  format          Format source code"
 	@echo "  lint            Run lint checks"
 	@echo "  example_run     Run example"
-	@echo "  run						 Run the application"
+	@echo "  run			 Run the application"
+	@echo "  test-remote     Run remote tests"
 	@echo "  test            Run tests"
-	@echo "  ci-test         Run tests in CI"
+	@echo "  test-all        Run all tests"
+	@echo "  ci-unit-test    Run unit tests in CI"
+	@echo "  ci-e2e-test     Run end-to-end tests in CI"
 	@echo "  ci              Install dependencies, run lints and tests"
 	@echo "  docs            Generate the documentation"
 	@echo "  ci-docs		 Generate the documentation in CI"
@@ -83,19 +86,19 @@ test-remote:
 		-m "remote" \
 		tests/
 
-.PHONY: test-all
-test-all:
-	pipenv run pytest \
-		tests/
-
 .PHONY: test
 test:
 	pipenv run pytest \
 		-m "not remote" \
 		tests/
 
-.PHONY: ci-test
-ci-test:
+.PHONY: test-all
+test-all:
+	pipenv run pytest \
+		tests/
+
+.PHONY: ci-unit-test
+ci-unit-test:
 	pipenv run pytest \
 		-m "not remote" \
 		--cov-report term-missing \
@@ -103,11 +106,11 @@ ci-test:
 		--cov=src \
 		tests/
 
-.PHONY: ci
-ci: \
-	deps \
-	lint \
-	ci-test
+.PHONY: ci-e2e-test
+ci-e2e-test:
+	pipenv run pytest \
+		-m "remote" \
+		tests/
 
 .PHONY: docs
 docs:

@@ -17,7 +17,7 @@ section,variant_name,genome_release,expected_prediction,expected_path,comment
 ,NM_004004.5:c.167delT,GRCh37,PVS1,NF1,Gene: GJB2; p.Leu56ArgfsTer26; From Recommendation 07.09.2018
 ,NM_000277.1:c.822_832del,GRCh37,PVS1,NF1,Gene: PAH; p.Lys274AsnfsTer5; From Recommendation 07.09.2018
 ,NM_000277.2:c.632delC,GRCh37,PVS1,NF1,Gene: PAH; p.Pro211HisfsTer130; From Recommendation 07.09.2018
-,NM_000314.6:c.50_51delAA,GRCh37,PVS1,NF1,Gene: PTEN; p.Gln17ArgfsTer26; From Recommendation 07.09.2018
+,NM_000314.6:c.50_51delAA,GRCh37,PVS1,PTEN,Gene: PTEN; p.Gln17ArgfsTer26; From Recommendation 07.09.2018
 ,NM_000277.2:c.47_48del,GRCh37,PVS1,NF1,Gene: PAH; p.Ser16Ter; From Recommendation 07.09.2018
 ,NM_000277.2:c.1147C>T,GRCh37,PVS1,NF1,Gene: PAH; p.Gln383Ter; From Recommendation 07.09.2018
 ,NM_004360.3:c.1792C>T,GRCh37,PVS1,NF1,Gene: CDH1; p.Arg598Ter; From Recommendation 07.09.2018
