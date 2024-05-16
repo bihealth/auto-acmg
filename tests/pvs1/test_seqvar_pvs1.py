@@ -170,11 +170,14 @@ def test_count_pathogenic_variants(annonars_range_response, expected_result, seq
                 "stop_gained",
             ],
         ),
-        (SeqVarConsequence.InitiationCodon, [
-            "upstream_gene_variant",
-            "downstream_gene_variant",
-            "initiator_codon_variant",
-            ]),
+        (
+            SeqVarConsequence.InitiationCodon,
+            [
+                "upstream_gene_variant",
+                "downstream_gene_variant",
+                "initiator_codon_variant",
+            ],
+        ),
         (
             SeqVarConsequence.SpliceSites,
             ["splice_region_variant", "splice_donor_variant", "splice_acceptor_variant"],
