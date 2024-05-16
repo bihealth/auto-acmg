@@ -1,16 +1,23 @@
-from unittest.mock import Mock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from src.api.dotty import DottyClient
+from src.defs.dotty import DottySpdiResponse
 from src.defs.exceptions import InvalidPos, ParseError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar, SeqVarResolver
+from tests.utils import get_json_object
 
 
 @pytest.fixture
 def seqvar_resolver():
     return SeqVarResolver(config=None)
+
+
+@pytest.fixture
+def dotty_response_success():
+    return DottySpdiResponse.model_validate(get_json_object("dotty/dotty_spdi_success.json"))
 
 
 # ===== SeqVar tests =====
@@ -155,54 +162,19 @@ def test_parse_canonical_spdi_seqvar_fail(seqvar_resolver, value):
         seqvar_resolver._parse_canonical_spdi_seqvar(value)
 
 
-# TODO: Fix the following tests, where DottyClient is mocked
-# # Mocking DottyClient's response
-# @pytest.fixture
-# def mock_dotty_client(monkeypatch):
-#     mock_client = Mock(spec=DottyClient)
-#     mock_spdi = Mock()
-#     mock_spdi.success = True
-#     mock_spdi.value = Mock(
-#         assembly="GRCh38",
-#         contig="1",
-#         pos=100,
-#         reference_deleted="A",
-#         alternate_inserted="T"
-#     )
-#     mock_client.to_spdi.return_value = mock_spdi
-#     monkeypatch.setattr("src.sequence_variant.DottyClient", lambda: mock_client)
-#     return mock_client
+@patch.object(DottyClient, "to_spdi")
+def test_resolve_seqvar_success(mock_to_spdi, seqvar_resolver, dotty_response_success):
+    mock_to_spdi.return_value = dotty_response_success
+    variant = seqvar_resolver.resolve_seqvar("Example.3:c.1085delT", GenomeRelease.GRCh38)
+    assert variant.genome_release == GenomeRelease.GRCh37
+    assert variant.chrom == "4"
+    assert variant.pos == 113568536
+    assert variant.delete == "G"
+    assert variant.insert == "GA"
 
-# def test_resolve_parse_error(seqvar_resolver):
-#     with pytest.raises(ParseError):
-#         seqvar_resolver.resolve_seqvar("invalid_variant_representation", GenomeRelease.GRCh38)
 
-# @pytest.mark.parametrize(
-#     "value, genome_release, expected",
-#     [
-#         ("GRCh38-1-100-A-T", GenomeRelease.GRCh38, SeqVar(GenomeRelease.GRCh38, "1", 100, "A", "T")),
-#         ("NC_000001.11:200:G:C", GenomeRelease.GRCh38, SeqVar(GenomeRelease.GRCh38, "1", 200, "G", "C")),
-#         # Add dbSNP ID that DottyClient can resolve
-#         ("rs123456", GenomeRelease.GRCh38, SeqVar(GenomeRelease.GRCh38, "1", 100, "A", "T", "rs123456")),
-#     ],
-# )
-# def test_resolve_seqvar_success(value, genome_release, expected, mock_dotty_client, seqvar_resolver):
-#     variant = seqvar_resolver.resolve_seqvar(value, genome_release)
-#     assert variant.genome_release == expected.genome_release
-#     assert variant.chrom == expected.chrom
-#     assert variant.pos == expected.pos
-#     assert variant.delete == expected.delete
-#     assert variant.insert == expected.insert
-#     assert variant.user_repr == expected.user_repr
-
-# @pytest.mark.parametrize(
-#     "value, genome_release",
-#     [
-#         ("invalid_format", GenomeRelease.GRCh38),  # Unsupported format
-#         ("NC_000999.1:100:A:T", GenomeRelease.GRCh38),  # Non-existent NC sequence
-#         # Add any other cases that should fail
-#     ],
-# )
-# def test_resolve_seqvar_failure(value, genome_release, seqvar_resolver):
-#     with pytest.raises(ParseError):
-#         seqvar_resolver.resolve_seqvar(value, genome_release)
+@patch.object(DottyClient, "to_spdi")
+def test_resolve_seqvar_failure(mock_to_spdi, seqvar_resolver):
+    mock_to_spdi.side_effect = MagicMock(success=False)
+    with pytest.raises(ParseError):
+        seqvar_resolver.resolve_seqvar("Example.3:c.1085delT", GenomeRelease.GRCh38)
