@@ -40,9 +40,6 @@ NM_000314.6:c.1003C>T (p.Arg335Ter)   (Gene: PTEN)   (From Recommendation 07.09.
 - not undergo NMD -> not critical for protein function -> rare in general population -> removes >10% of protein:
 
 - not undergo NMD -> not critical for protein function -> rare in general population -> removes <10% of protein:
-NM_000314.6:c.1134_1135insCTGG (p.Tyr379LeufsTer4)   (Gene: PTEN)  (Note: PM4)   (From Recommendation 07.09.2018)   ### Debug
-NM_000152.4:c.2842_2483insT (p.Leu948SerfsTer70)   (Gene: GAA)  (Note: PM4)   (From Recommendation 07.09.2018)   ### Debug
-
 
 Splice sites:
 - exon skipping or cryptic splice site disrupts RF AND undergo NMD -> biological relevant:
@@ -140,3 +137,5 @@ NM_000546.5:c.-28-5118_672+241dup (Exon 2-6 duplication)   (Gene TP53)   (From R
 
 PM4:
 NC_000011.10:2847957:C:G === NM_000218.2:c.1986C>G (p.Tyr662Ter)   (Gene: KCNQ1)  (Note: PM4)   (From Recommendation 07.09.2018)
+NM_000314.6:c.1134_1135insCTGG (p.Tyr379LeufsTer4)   (Gene: PTEN)  (Note: PM4)   (From Recommendation 07.09.2018)   ### Debug
+NM_000152.4:c.2842_2483insT (p.Leu948SerfsTer70)   (Gene: GAA)  (Note: PM4)   (From Recommendation 07.09.2018)   ### Debug

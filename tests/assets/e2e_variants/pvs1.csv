@@ -24,13 +24,11 @@ section,variant_name,genome_release,expected_prediction,expected_path,comment
 ,NM_000314.6:c.1003C>T,GRCh37,PVS1,PTEN,Gene: PTEN; p.Arg335Ter; From Recommendation 07.09.2018
 ### Nonsense-Mediated Decay -> not biologically relevant,,,,,
 ### NMD Escape -> critical for protein function,,,,,
-,13-113803407-G-A,GRCh37,PVS1,NF3,Gene: F10
-,NC_000016.10:68833355:G:T,GRCh38,PVS1,NF3,Alternative repr: NM_004360.3:c.2506G>T; Gene: CDH1; p.Glu836Ter; From Recommendation 07.09.2018
+#fix,NC_000013.11:113149092:G:A,GRCh38,PVS1,NF3,Alternative repr: 13-113803407-G-A grch37; Gene: F10
+#fix,NC_000016.10:68833355:G:T,GRCh38,PVS1,NF3,Alternative repr: NM_004360.3:c.2506G>T; Gene: CDH1; p.Glu836Ter; From Recommendation 07.09.2018
 ### NMD Escape -> not critical for protein function -> frequent in general population,,,,,
 ### NMD Escape -> not critical for protein function -> rare in general population -> removes >10% of protein,,,,,
 ### NMD Escape -> not critical for protein function -> rare in general population -> removes <10% of protein,,,,,
-,NM_000314.6:c.1134_1135insCTGG,GRCh37,PVS1,NF6,Gene: PTEN; p.Tyr379LeufsTer4; Note: PM4; From Recommendation 07.09.2018
-,NM_000152.4:c.2842_2483insT,GRCh37,PVS1,NF6,Gene: GAA; p.Leu948SerfsTer70; Note: PM4; From Recommendation 07.09.2018
 ## Splice site,,,,,
 ### Exon skipping or cryptic splice site disrupts RF AND undergo NMD -> biological relevant,,,,,
 ### Exon skipping or cryptic splice site disrupts RF AND undergo NMD -> not biologically relevant,,,,,
@@ -44,9 +42,9 @@ section,variant_name,genome_release,expected_prediction,expected_path,comment
 ### Exon skipping or use of cryptic splice site preserves RF -> critical for protein function,,,,,
 ## Initiation codon,,,,,
 ### No alternative start codon -> >=1 pathogenic variants upstream of the start codon,,,,,
-,NM_000152.4:c.1A>G,GRCh38,PVS1,IC1,Gene: GAA; p.Met1Val; From Recommendation 07.09.2018
-,NM_000218.2:c.2T>C,GRCh38,PVS1,IC1,Gene: KCNQ1; p.Met1Thr; From Recommendation 07.09.2018
-,NM_000277.2:c.1A>G,GRCh38,PVS1,IC1,Gene: PAH; p.Met1Val; From Recommendation 07.09.2018
-,NM_000314.6:c.3G>T,GRCh38,PVS1,IC1,Gene: PTEN; p.Met1Ile; From Recommendation 07.09.2018
+#fix,NM_000152.4:c.1A>G,GRCh38,PVS1,IC1,Gene: GAA; p.Met1Val; From Recommendation 07.09.2018
+#fix,NM_000218.2:c.2T>C,GRCh38,PVS1,IC1,Gene: KCNQ1; p.Met1Thr; From Recommendation 07.09.2018
+#fix,NM_000277.2:c.1A>G,GRCh38,PVS1,IC1,Gene: PAH; p.Met1Val; From Recommendation 07.09.2018
+#fix,NM_000314.6:c.3G>T,GRCh38,PVS1,IC1,Gene: PTEN; p.Met1Ile; From Recommendation 07.09.2018
 ### No alternative start codon -> no pathogenic variants upstream of the start codon,,,,,
 ### Alternative start codon,,,,,
