@@ -258,7 +258,10 @@ def test_calculate_5_prime_UTR_length(gene_transcripts_file, transcript_id, expe
     ],
 )
 def test_undergo_nmd(gene_transcripts_file, transcript_id, tHGVS, hgnc_id, expected_result):
-    """Test the _undergo_nmd method."""
+    """
+    Test the _undergo_nmd method. Note, that we don't mock the `_get_variant_position` and
+    `_calculate_5_prime_UTR_length` methods.
+    """
     gene_transcripts = GeneTranscripts.model_validate(get_json_object(gene_transcripts_file)).transcripts
     for transcript in gene_transcripts:
         tsx = transcript if transcript.id == transcript_id else None
