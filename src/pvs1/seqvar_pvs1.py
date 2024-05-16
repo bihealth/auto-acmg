@@ -12,6 +12,7 @@ from src.core.config import Config
 from src.defs.auto_pvs1 import (
     AlteredRegionMode,
     CdsInfo,
+    GenomicStrand,
     PVS1Prediction,
     PVS1PredictionSeqVarPath,
     SeqVarConsequence,
@@ -257,7 +258,7 @@ class SeqVarPVS1Helper:
         return position
 
     @staticmethod
-    def _calculate_5_prime_UTR(exons: List[Exon], cds_start: int) -> int:
+    def _calculate_5_prime_UTR(exons: List[Exon], cds_start: int, cds_end: int, strand: GenomicStrand) -> int:
         """Calculates the length of the 5' UTR region.
 
         Args:
@@ -266,73 +267,73 @@ class SeqVarPVS1Helper:
         Returns:
             int: The length of the 5' UTR region.
         """
+        logger.debug("Calculating the length of the 5' UTR region. Strand: {}", strand)
         utr_length = 0
-        for exon in exons:
-            if exon.altStartI < cds_start and exon.altEndI < cds_start:
-                utr_length += exon.altEndI - exon.altStartI
-            elif exon.altStartI < cds_start < exon.altEndI:
-                utr_length += cds_start - exon.altStartI
-                break
+        if strand == GenomicStrand.Plus:
+            for exon in exons:
+                if exon.altStartI < cds_start and exon.altEndI < cds_start:
+                    utr_length += exon.altEndI - exon.altStartI
+                elif exon.altStartI < cds_start < exon.altEndI:
+                    utr_length += cds_start - exon.altStartI
+                    break
+        elif strand == GenomicStrand.Minus:
+            for exon in exons[::-1]:  # Reverse the exons
+                if exon.altStartI > cds_end and exon.altEndI > cds_end:
+                    utr_length += exon.altEndI - exon.altStartI
+                elif exon.altStartI < cds_end < exon.altEndI:
+                    utr_length += exon.altEndI - cds_end
+                    break
         return utr_length
 
-    def _undergo_nmd(self, exons: List[Exon], tHGVS: str, hgnc_id: str, cds_start: int) -> bool:
+    def _undergo_nmd(
+        self,
+        exons: List[Exon],
+        tHGVS: str,
+        hgnc_id: str,
+        cds_start: int,
+        cds_end: int,
+        strand: Optional[GenomicStrand],
+    ) -> bool:
         """Classifies if the variant undergoes Nonsense-mediated decay (NMD)."""
         logger.debug("Checking if the variant undergoes NMD.")
         if hgnc_id == "HGNC:4284":  # Hearing Loss Guidelines GJB2
             logger.debug("Variant is in the GJB2 gene. Predicted to undergo NMD.")
             return True
-        new_stop_codon = self._get_variant_position(tHGVS)
-        tx_sizes = [exon.altCdsEndI - exon.altCdsStartI for exon in exons]
-        if len(tx_sizes) <= 1:
-            logger.debug("Only one (or 0) exon. Predicted to undergo NMD.")
-            return False
-        five_prime_UTR = self._calculate_5_prime_UTR(exons, cds_start)
-        nmd_cutoff = sum(tx_sizes[:-1]) - min(50, tx_sizes[-2])
-        logger.debug(
-            "New stop codon (*3) + 5' UTR length: {} + {} = {}, NMD cutoff: {}.",
-            new_stop_codon * 3,
-            five_prime_UTR,
-            new_stop_codon * 3 + five_prime_UTR,
-            nmd_cutoff,
-        )
-        return new_stop_codon * 3 + five_prime_UTR <= nmd_cutoff
-
-    # def _undergo_nmd_old(self, exons: List[Exon], pHGVS: str, hgnc_id: str) -> bool:
-    #     """Classifies if the variant undergoes Nonsense-mediated decay (NMD).
-
-    #     Note:
-    #         Rule:
-    #             If the variant is located in the last exon or in the last 50 nucleotides of the
-    #             penultimate exon, it is NOT predicted to undergo NMD.
-
-    #         Important:
-    #             For the GJB2 gene (HGNC:4284), the variant is always predicted to undergo NMD.
-
-    #     Args:
-    #         exons: A list of exons of the gene.
-    #         pHGVS: A string containing the protein HGVS notation.
-    #         hgnc_id: The HGNC ID of the gene.
-
-    #     Returns:
-    #         bool: True if the variant is predicted to undergo NMD, False otherwise.
-    #     """
-    #     logger.debug("Checking if the variant undergoes NMD.")
-    #     new_stop_codon = self._get_pHGVS_termination(pHGVS)
-    #     cds_sizes = [exon.altEndI - exon.altStartI for exon in exons]
-    #     if hgnc_id == "HGNC:4284":  # Hearing Loss Guidelines GJB2
-    #         logger.debug("Variant is in the GJB2 gene. Predicted to undergo NMD.")
-    #         return True
-    #     elif len(cds_sizes) <= 1:
-    #         logger.debug("Only one (or 0) exon. Predicted to undergo NMD.")
-    #         return False
-    #     else:
-    #         nmd_cutoff = sum(cds_sizes[:-1]) - min(50, cds_sizes[-2])
-    #         logger.debug(
-    #             "New stop codon (*3): {}, NMD cutoff: {}.",
-    #             new_stop_codon * 3,
-    #             nmd_cutoff,
-    #         )
-    #         return new_stop_codon * 3 <= nmd_cutoff
+        if not strand:
+            logger.error("Strand information is not available. Cannot determine NMD.")
+            raise MissingDataError("Strand information is not available. Cannot determine NMD.")
+        if strand == GenomicStrand.Plus:
+            new_stop_codon = self._get_variant_position(tHGVS)
+            tx_sizes = [exon.altCdsEndI - exon.altCdsStartI + 1 for exon in exons]
+            if len(tx_sizes) <= 1:
+                logger.debug("Only one (or 0) exon. Predicted to undergo NMD.")
+                return False
+            five_prime_UTR = self._calculate_5_prime_UTR(exons, cds_start, cds_end, strand)
+            nmd_cutoff = sum(tx_sizes[:-1]) - min(50, tx_sizes[-2])
+            logger.debug(
+                "New stop codon + 5' UTR length: {} + {} = {}, NMD cutoff: {}.",
+                new_stop_codon,
+                five_prime_UTR,
+                new_stop_codon + five_prime_UTR,
+                nmd_cutoff,
+            )
+            return new_stop_codon + five_prime_UTR <= nmd_cutoff
+        elif strand == GenomicStrand.Minus:
+            new_stop_codon = self._get_variant_position(tHGVS)
+            tx_sizes = [exon.altCdsEndI - exon.altCdsStartI + 1 for exon in exons[::-1]]  # Reverse the exons
+            if len(tx_sizes) <= 1:
+                logger.debug("Only one (or 0) exon. Predicted to undergo NMD.")
+                return False
+            five_prime_UTR = self._calculate_5_prime_UTR(exons, cds_start, cds_end, strand)
+            nmd_cutoff = sum(tx_sizes[:-1]) - min(50, tx_sizes[-2])
+            logger.debug(
+                "New stop codon + 5' UTR length: {} + {} = {}, NMD cutoff: {}.",
+                new_stop_codon,
+                five_prime_UTR,
+                new_stop_codon + five_prime_UTR,
+                nmd_cutoff,
+            )
+            return new_stop_codon + five_prime_UTR <= nmd_cutoff
 
     @staticmethod
     def _in_biologically_relevant_transcript(transcript_tags: List[str]) -> bool:
@@ -733,6 +734,9 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         self.exons: List[Exon] = []
         self.cds_pos: int | None = None
         self.cds_info: Dict[str, CdsInfo] = {}
+        self.cds_start: int = 0
+        self.cds_end: int = 0
+        self.strand: Optional[GenomicStrand] = None
         # Prediction attributes
         self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
         self.prediction_path: PVS1PredictionSeqVarPath = PVS1PredictionSeqVarPath.NotSet
@@ -787,6 +791,8 @@ class SeqVarPVS1(SeqVarPVS1Helper):
             for ts in self._all_gene_ts
         }
         self.cds_start = self._gene_transcript.genomeAlignments[0].cdsStart
+        self.cds_end = self._gene_transcript.genomeAlignments[0].cdsEnd
+        self.strand = GenomicStrand.from_string(self._gene_transcript.genomeAlignments[0].strand)
         logger.debug("SeqVarPVS1 initialized successfully.")
 
     def verify_PVS1(self):
@@ -811,7 +817,9 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                     self.prediction_path = PVS1PredictionSeqVarPath.PTEN
                     return
 
-            if self._undergo_nmd(self.exons, self.tHGVS, self.HGNC_id, self.cds_start):
+            if self._undergo_nmd(
+                self.exons, self.tHGVS, self.HGNC_id, self.cds_start, self.cds_end, self.strand
+            ):
                 if self._in_biologically_relevant_transcript(self.transcript_tags):
                     self.prediction = PVS1Prediction.PVS1
                     self.prediction_path = PVS1PredictionSeqVarPath.NF1
@@ -838,7 +846,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
 
         elif self._consequence == SeqVarConsequence.SpliceSites:
             if self._exon_skipping_or_cryptic_ss_disruption() and self._undergo_nmd(
-                self.exons, self.tHGVS, self.HGNC_id, self.cds_start
+                self.exons, self.tHGVS, self.HGNC_id, self.cds_start, self.cds_end, self.strand
             ):
                 if self._in_biologically_relevant_transcript(self.transcript_tags):
                     self.prediction = PVS1Prediction.PVS1
@@ -847,7 +855,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                     self.prediction = PVS1Prediction.NotPVS1
                     self.prediction_path = PVS1PredictionSeqVarPath.SS2
             elif self._exon_skipping_or_cryptic_ss_disruption() and not self._undergo_nmd(
-                self.exons, self.tHGVS, self.HGNC_id, self.cds_start
+                self.exons, self.tHGVS, self.HGNC_id, self.cds_start, self.cds_end, self.strand
             ):
                 if self._critical4protein_function(self.seqvar, self.cds_pos, self.exons):
                     self.prediction = PVS1Prediction.PVS1_Strong

@@ -14,6 +14,26 @@ class AlteredRegionMode(AutoAcmgBaseEnum):
     Exon = auto()
 
 
+class GenomicStrand(AutoAcmgBaseEnum):
+    """Enumeration for genomic strand."""
+
+    Plus = auto()
+    Minus = auto()
+
+    @staticmethod
+    def from_string(value: str):
+        """Converts string to enum member if possible, otherwise returns None."""
+        strand_mapping = {
+            "STRAND_PLUS": "Plus",
+            "STRAND_MINUS": "Minus",
+        }
+        value_mapped = strand_mapping.get(value, value)
+        for member in GenomicStrand:
+            if member.name == value_mapped:
+                return member
+        return None
+
+
 class TranscriptInfo(BaseModel):
     """Information about a transcript."""
 

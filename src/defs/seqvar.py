@@ -173,7 +173,7 @@ class SeqVarResolver:
             raise ParseError(f"Unable to parse canonical SPDI variant: {value}")
 
         sequence = match.group("sequence").upper()
-        pos = int(match.group("pos"))
+        pos = int(match.group("pos")) + 1  # SPDI is 0-based
         delete = match.group("delete").upper()
         insert = match.group("insert").upper()
 
