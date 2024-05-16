@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Tuple
 
 from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionSeqVarPath
 from src.defs.genome_builds import GenomeRelease
+from src.defs.mehari import Exon
 
 
 def get_json_object(file_name: str) -> Dict[str, Any]:

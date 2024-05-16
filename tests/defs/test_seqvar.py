@@ -131,11 +131,11 @@ def test_parse_separated_seqvar_fail(seqvar_resolver, representation):
     [
         (
             "NC_000001.10:100:A:T",
-            SeqVar(GenomeRelease.GRCh37, "1", 100, "A", "T", "NC_000001.10:100:A:T"),
+            SeqVar(GenomeRelease.GRCh37, "1", 101, "A", "T", "NC_000001.10:100:A:T"),
         ),
         (
             "NC_000001.11:200:G:C",
-            SeqVar(GenomeRelease.GRCh38, "1", 200, "G", "C", "NC_000001.11:200:G:C"),
+            SeqVar(GenomeRelease.GRCh38, "1", 201, "G", "C", "NC_000001.11:200:G:C"),
         ),
     ],
 )

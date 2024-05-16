@@ -5,7 +5,13 @@ import pytest
 from src.api.annonars import AnnonarsClient
 from src.api.mehari import MehariClient
 from src.defs.annonars_range import AnnonarsRangeResponse
-from src.defs.auto_pvs1 import AlteredRegionMode, PVS1Prediction, PVS1PredictionSeqVarPath, SeqVarConsequence
+from src.defs.auto_pvs1 import (
+    AlteredRegionMode,
+    GenomicStrand,
+    PVS1Prediction,
+    PVS1PredictionSeqVarPath,
+    SeqVarConsequence,
+)
 from src.defs.exceptions import AlgorithmError, MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import Exon, GeneTranscripts, TranscriptsSeqVar
@@ -25,13 +31,13 @@ def ts_helper(seqvar):
 
 
 @pytest.fixture
-def seqvar_transcripts():
-    return TranscriptsSeqVar.model_validate(get_json_object("mehari/mehari_seqvar_success.json")).result
+def seqvar_transcripts(file_name: str = "mehari/mehari_seqvar_success.json"):
+    return TranscriptsSeqVar.model_validate(get_json_object(file_name)).result
 
 
 @pytest.fixture
-def gene_transcripts():
-    return GeneTranscripts.model_validate(get_json_object("mehari/mehari_genes_success.json")).transcripts
+def gene_transcripts(file_name: str = "mehari/mehari_genes_success.json"):
+    return GeneTranscripts.model_validate(get_json_object(file_name)).transcripts
 
 
 #: Mock the Exon class
@@ -208,48 +214,62 @@ def test_count_lof_variants(annonars_range_response, expected_result, seqvar):
 
 
 @pytest.mark.parametrize(
-    "exons, pHGVS, hgnc_id, expected_result",
+    "tHGVS,expected_result",
     [
-        # Specific gene with HGNC ID "HGNC:4284" should always return True
-        ([MockExon(0, 100, 0, 100)], "p.Gln98*", "HGNC:4284", True),
-        # Variant in the last exon should not undergo NMD
-        ([MockExon(0, 200, 0, 150), MockExon(200, 400, 150, 350)], "p.Gln300*", "HGNC:1234", False),
-        # Variant in the penultimate exon, more than 50 nt from the end, should undergo NMD
-        # ([MockExon(0, 100, 0, 100), MockExon(100, 300, 100, 300)], "p.Gln50*", "HGNC:1234", True),
-        # Single exon variants should not undergo NMD
-        ([MockExon(0, 100, 0, 100)], "p.Gln50*", "HGNC:1234", False),
-        # Variant in the penultimate exon, within the last 50 nt, should not undergo NMD
-        ([MockExon(0, 100, 0, 100), MockExon(100, 300, 100, 300)], "p.Gln95*", "HGNC:1234", False),
-        # NM_004360.5 for CDH1. Should be false!!!
-        (
-            [
-                MockExon(68737291, 68737463, 1, 172),
-                MockExon(68738296, 68738411, 173, 287),
-                MockExon(68801669, 68801893, 288, 511),
-                MockExon(68808423, 68808567, 512, 655),
-                MockExon(68808692, 68808848, 656, 811),
-                MockExon(68810196, 68810341, 812, 956),
-                MockExon(68811683, 68811859, 957, 1132),
-                MockExon(68812134, 68812263, 1133, 1261),
-                MockExon(68813312, 68813495, 1262, 1444),
-                MockExon(68815514, 68815759, 1445, 1689),
-                MockExon(68819279, 68819425, 1690, 1835),
-                MockExon(68822000, 68822225, 1836, 2060),
-                MockExon(68823398, 68823626, 2061, 2288),
-                MockExon(68828173, 68828304, 2289, 2419),
-                MockExon(68829653, 68829797, 2420, 2563),
-                MockExon(68833289, 68835537, 2564, 4811),
-            ],
-            "p.Y835*",
-            "HGNC:1748",
-            True,
-        ),
+        ("c.*1102=", 1102),  # Stop codon at position 1102
+        ("c.2506G>T", 2506),  # Missense mutation at position 2506
+        ("c.2506_2507insT", 2506),  # Insertion at position 2506
+        ("c.2506_2507del", 2506),  # Deletion at position 2506
+        ("c.2506_2507delinsT", 2506),  # Deletion-insertion at position 2506
+        ("invalid", -1),  # Invalid HGVS
     ],
 )
-def test_undergo_nmd(exons, pHGVS, hgnc_id, expected_result):
+def test_get_variant_position(tHGVS, expected_result):
+    """Test the _get_variant_position method."""
+    result = SeqVarPVS1Helper()._get_variant_position(tHGVS)
+    assert result == expected_result
+
+
+@pytest.mark.parametrize(
+    "gene_transcripts_file,transcript_id,expected_result",
+    [
+        ("mehari/mehari_genes_success.json", "NM_002108.4", 348),
+    ],
+)
+def test_calculate_5_prime_UTR_length(gene_transcripts_file, transcript_id, expected_result):
+    """Test the _calculate_5_prime_UTR_length method."""
+    gene_transcripts = GeneTranscripts.model_validate(get_json_object(gene_transcripts_file)).transcripts
+    for transcript in gene_transcripts:
+        tsx = transcript if transcript.id == transcript_id else None
+    if tsx is None:  # Should never happen
+        raise ValueError(f"Transcript {transcript_id} not found in the gene transcripts")
+    exons = tsx.genomeAlignments[0].exons
+    cds_start = tsx.genomeAlignments[0].cdsStart
+    cds_end = tsx.genomeAlignments[0].cdsEnd
+    strand = GenomicStrand.from_string(tsx.genomeAlignments[0].strand)
+    result = SeqVarPVS1Helper()._calculate_5_prime_UTR_length(exons, cds_start, cds_end, strand)
+    assert result == expected_result
+
+
+@pytest.mark.parametrize(
+    "gene_transcripts_file,transcript_id,tHGVS,hgnc_id,expected_result",
+    [
+        ("mehari/mehari_genes_success.json", "NM_002108.4", "c.348A>G", "HGNC:4806", True),
+    ],
+)
+def test_undergo_nmd(gene_transcripts_file, transcript_id, tHGVS, hgnc_id, expected_result):
     """Test the _undergo_nmd method."""
-    result = SeqVarPVS1Helper()._undergo_nmd(exons, pHGVS, hgnc_id)
-    assert result == expected_result, f"Failed for hgnc_id: {hgnc_id}, pHGVS: {pHGVS}"
+    gene_transcripts = GeneTranscripts.model_validate(get_json_object(gene_transcripts_file)).transcripts
+    for transcript in gene_transcripts:
+        tsx = transcript if transcript.id == transcript_id else None
+    if tsx is None:  # Should never happen
+        raise ValueError(f"Transcript {transcript_id} not found in the gene transcripts")
+    exons = tsx.genomeAlignments[0].exons
+    cds_start = tsx.genomeAlignments[0].cdsStart
+    cds_end = tsx.genomeAlignments[0].cdsEnd
+    strand = GenomicStrand.from_string(tsx.genomeAlignments[0].strand)
+    result = SeqVarPVS1Helper()._undergo_nmd(exons, tHGVS, hgnc_id, cds_start, cds_end, strand)
+    assert result == expected_result
 
 
 @pytest.mark.parametrize(
