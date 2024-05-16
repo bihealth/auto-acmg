@@ -107,6 +107,7 @@ def test_choose_hgvs_p(main_hgvs, main_hgvs_p, transcripts_data, expected_result
         ("p.Tyr10Ter", 10),
         ("p.Gln98*", 98),
         ("p.Ala586Gly", -1),  # No frameshift or termination codon
+        ("'NM_000218.3:p.Y662S'", -1),  # Missense mutation
     ],
 )
 def test_get_pHGVS_termination(pHGVS, expected_termination):
@@ -144,6 +145,7 @@ def test_calculate_altered_region(cds_pos, exons, mode, expected_result):
     "annonars_range_response, expected_result",
     [
         ("annonars/NM_000152.4:c.1A>G_annonars_range.json", (501, 2205)),
+        ("annonars/CDH1_range.json", (0, 2)),
     ],
 )
 def test_count_pathogenic_variants(annonars_range_response, expected_result, seqvar):
@@ -185,6 +187,7 @@ def test_get_consequence(value, expected_result):
     "annonars_range_response, expected_result",
     [
         ("annonars/NM_000152.4:c.1A>G_annonars_range.json", (56, 158)),
+        ("annonars/CDH1_range.json", (0, 0)),
     ],
 )
 def test_count_lof_variants(annonars_range_response, expected_result, seqvar):
@@ -210,6 +213,30 @@ def test_count_lof_variants(annonars_range_response, expected_result, seqvar):
         ([MockExon(0, 100, 0, 100)], "p.Gln50*", "HGNC:1234", False),
         # Variant in the penultimate exon, within the last 50 nt, should not undergo NMD
         ([MockExon(0, 100, 0, 100), MockExon(100, 300, 100, 300)], "p.Gln95*", "HGNC:1234", False),
+        # NM_004360.5 for CDH1. Should be false!!!
+        (
+            [
+                MockExon(68737291, 68737463, 1, 172),
+                MockExon(68738296, 68738411, 173, 287),
+                MockExon(68801669, 68801893, 288, 511),
+                MockExon(68808423, 68808567, 512, 655),
+                MockExon(68808692, 68808848, 656, 811),
+                MockExon(68810196, 68810341, 812, 956),
+                MockExon(68811683, 68811859, 957, 1132),
+                MockExon(68812134, 68812263, 1133, 1261),
+                MockExon(68813312, 68813495, 1262, 1444),
+                MockExon(68815514, 68815759, 1445, 1689),
+                MockExon(68819279, 68819425, 1690, 1835),
+                MockExon(68822000, 68822225, 1836, 2060),
+                MockExon(68823398, 68823626, 2061, 2288),
+                MockExon(68828173, 68828304, 2289, 2419),
+                MockExon(68829653, 68829797, 2420, 2563),
+                MockExon(68833289, 68835537, 2564, 4811),
+            ],
+            "p.Y835*",
+            "HGNC:1748",
+            True,
+        ),
     ],
 )
 def test_undergo_nmd(exons, pHGVS, hgnc_id, expected_result):
@@ -243,6 +270,7 @@ def test_in_biologically_relevant_transcript(transcript_tags, expected_result):
         (100, 3, 100, False),  # Test pathogenic variants do not exceed the threshold
         (100, 0, 0, False),  # Test no variants are found
         (100, 0, 100, False),  # Test no pathogenic variants are found
+        (100, 0, 0, False),  # Test no variants are found
     ],
 )
 def test_critical4protein_function(
@@ -273,7 +301,7 @@ def test_critical4protein_function(
     "cds_pos, pathogenic_variants, total_variants",
     [
         (None, 0, 0),  # Test with no cds_pos
-        # (100, 100, 0),  # Test more pathogenic variants than total variants. Raises ZeroDivisionError
+        # (100, 100, 0),  # Test more pathogenic variants than total variants. Can never happen
     ],
 )
 def test_critical4protein_function_failure(seqvar, cds_pos, pathogenic_variants, total_variants, monkeypatch):
@@ -294,31 +322,6 @@ def test_critical4protein_function_failure(seqvar, cds_pos, pathogenic_variants,
 
 
 @pytest.mark.parametrize(
-    "cds_pos, frequent_lof_variants, lof_variants",
-    [
-        (None, 0, 0),  # Test case where cds_pos is None
-        # (100, 20, 0),  # Test case where more frequent LoF variants than total LoF variants. Raises ZeroDivisionError
-    ],
-)
-def test_lof_is_frequent_in_population_failure(
-    seqvar, cds_pos, frequent_lof_variants, lof_variants, monkeypatch
-):
-    # Create a mock list of Exons
-    exons = [MagicMock(spec=Exon)]
-    # Mocking _calculate_altered_region to return a controlled range
-    mock_calculate = MagicMock(return_value=(1, 1000))  # The range is mocked
-    monkeypatch.setattr(SeqVarPVS1Helper, "_calculate_altered_region", mock_calculate)
-    # Mocking _count_lof_variants to return controlled counts of frequent and total LoF variants
-    mock_count_lof_variants = MagicMock(return_value=(frequent_lof_variants, lof_variants))
-    monkeypatch.setattr(SeqVarPVS1Helper, "_count_lof_variants", mock_count_lof_variants)
-
-    # Run the method under test
-    with pytest.raises(MissingDataError):
-        helper = SeqVarPVS1Helper()
-        helper._lof_is_frequent_in_population(seqvar, cds_pos, exons)  # type: ignore
-
-
-@pytest.mark.parametrize(
     "cds_pos, frequent_lof_variants, lof_variants, expected_result",
     [
         (100, 11, 100, True),  # Test case where frequent LoF variants exceed the 10% threshold
@@ -328,6 +331,8 @@ def test_lof_is_frequent_in_population_failure(
             100,
             False,
         ),  # Test case where frequent LoF variants do not exceed the 10% threshold
+        (100, 0, 0, False),  # Test case where no LoF variants are found
+        (100, 0, 100, False),  # Test case where no frequent LoF variants are found
         (100, 0, 0, False),  # Test case where no LoF variants are found
     ],
 )
@@ -352,6 +357,31 @@ def test_lof_is_frequent_in_population(
     if cds_pos is not None:
         mock_calculate.assert_called_once_with(cds_pos, exons, AlteredRegionMode.Exon)
         mock_count_lof_variants.assert_called_once_with(seqvar, 1, 1000)  # The range is mocked
+
+
+@pytest.mark.parametrize(
+    "cds_pos, frequent_lof_variants, lof_variants",
+    [
+        (None, 0, 0),  # Test case where cds_pos is None
+        # (100, 20, 0),  # Test case where more frequent LoF variants than total LoF variants. Can never happen
+    ],
+)
+def test_lof_is_frequent_in_population_failure(
+    seqvar, cds_pos, frequent_lof_variants, lof_variants, monkeypatch
+):
+    # Create a mock list of Exons
+    exons = [MagicMock(spec=Exon)]
+    # Mocking _calculate_altered_region to return a controlled range
+    mock_calculate = MagicMock(return_value=(1, 1000))  # The range is mocked
+    monkeypatch.setattr(SeqVarPVS1Helper, "_calculate_altered_region", mock_calculate)
+    # Mocking _count_lof_variants to return controlled counts of frequent and total LoF variants
+    mock_count_lof_variants = MagicMock(return_value=(frequent_lof_variants, lof_variants))
+    monkeypatch.setattr(SeqVarPVS1Helper, "_count_lof_variants", mock_count_lof_variants)
+
+    # Run the method under test
+    with pytest.raises(MissingDataError):
+        helper = SeqVarPVS1Helper()
+        helper._lof_is_frequent_in_population(seqvar, cds_pos, exons)  # type: ignore
 
 
 @pytest.mark.parametrize(

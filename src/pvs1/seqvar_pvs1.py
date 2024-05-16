@@ -343,7 +343,9 @@ class SeqVarPVS1Helper:
         start_pos, end_pos = self._calculate_altered_region(cds_pos, exons, AlteredRegionMode.Downstream)
         try:
             pathogenic_variants, total_variants = self._count_pathogenic_variants(seqvar, start_pos, end_pos)
-            if pathogenic_variants > 5 and pathogenic_variants / total_variants > 0.05:
+            if total_variants == 0:  # Avoid division by zero
+                return False
+            if pathogenic_variants / total_variants > 0.05:
                 return True
             else:
                 return False
@@ -389,7 +391,9 @@ class SeqVarPVS1Helper:
         start_pos, end_pos = self._calculate_altered_region(cds_pos, exons, AlteredRegionMode.Exon)
         try:
             frequent_lof_variants, lof_variants = self._count_lof_variants(seqvar, start_pos, end_pos)
-            if frequent_lof_variants > 0 and frequent_lof_variants / lof_variants > 0.1:
+            if lof_variants == 0:  # Avoid division by zero
+                return False
+            if frequent_lof_variants / lof_variants > 0.1:
                 return True
             else:
                 return False
@@ -665,6 +669,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
     def __init__(self, seqvar: SeqVar, *, config: Optional[Config] = None):
         #: Configuration to use.
         self.config: Config = config or Config()
+        self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
         # Attributes to be set
         self.seqvar = seqvar
         # Attributes to be computed
@@ -709,7 +714,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
             or self._consequence == SeqVarConsequence.NotSet
         ):
             logger.error("Transcript data is not set. Cannot initialize the PVS1 class.")
-            raise MissingDataError("Transcript data is not set. Cannot initialize the PVS1 class.")
+            raise MissingDataError("Transcript data is not fully set. Cannot initialize the PVS1 class.")
 
         # Set attributes
         logger.debug("Setting up the attributes for the PVS1 class.")
