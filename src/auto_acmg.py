@@ -112,7 +112,9 @@ class AutoACMG:
             )
             self.seqvar: SeqVar = variant
             self.seqvar_pvs1_prediction: PVS1Prediction = PVS1Prediction.NotSet
-            self.seqvar_pvs1_prediction_path: PVS1PredictionSeqVarPath = PVS1PredictionSeqVarPath.NotSet
+            self.seqvar_pvs1_prediction_path: PVS1PredictionSeqVarPath = (
+                PVS1PredictionSeqVarPath.NotSet
+            )
             self.seqvar_ps1: Optional[bool] = None
             self.seqvar_pm5: Optional[bool] = None
 

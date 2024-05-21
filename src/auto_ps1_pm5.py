@@ -23,7 +23,9 @@ REGEX_HGVSP = re.compile(r"p\.(\D+)(\d+)(\D+)")
 class AutoPS1PM5:
     """Predicts PS1 criteria for sequence variants."""
 
-    def __init__(self, seqvar: SeqVar, genome_release: GenomeRelease, *, config: Optional[Config] = None):
+    def __init__(
+        self, seqvar: SeqVar, genome_release: GenomeRelease, *, config: Optional[Config] = None
+    ):
         #: Configuration to use.
         self.config = config or Config()
         # Attributes to be set
@@ -113,8 +115,14 @@ class AutoPS1PM5:
             self.prediction = PS1PM5()
 
             primary_info = self._get_variant_info(self.seqvar)
-            if not primary_info or not primary_info.result.dbnsfp or not primary_info.result.dbnsfp.HGVSp_VEP:
-                raise MissingDataError("No valid primary variant information for PS1/PM5 prediction.")
+            if (
+                not primary_info
+                or not primary_info.result.dbnsfp
+                or not primary_info.result.dbnsfp.HGVSp_VEP
+            ):
+                raise MissingDataError(
+                    "No valid primary variant information for PS1/PM5 prediction."
+                )
 
             primary_aa_change = self._parse_HGVSp(primary_info.result.dbnsfp.HGVSp_VEP)
             if not primary_aa_change:

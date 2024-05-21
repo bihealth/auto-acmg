@@ -19,7 +19,9 @@ def seqvar():
 
 @pytest.fixture
 def variant_info():
-    return AnnonarsVariantResponse.model_validate(get_json_object("annonars/annonars_variant_success.json"))
+    return AnnonarsVariantResponse.model_validate(
+        get_json_object("annonars/annonars_variant_success.json")
+    )
 
 
 @pytest.fixture

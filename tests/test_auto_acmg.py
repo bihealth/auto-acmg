@@ -17,7 +17,9 @@ runner = CliRunner()
 
 @pytest.fixture
 def mock_seqvar():
-    return SeqVar(genome_release=GenomeRelease.GRCh38, chrom="1", pos=100000, delete="A", insert="T")
+    return SeqVar(
+        genome_release=GenomeRelease.GRCh38, chrom="1", pos=100000, delete="A", insert="T"
+    )
 
 
 @pytest.fixture
@@ -110,7 +112,9 @@ def test_auto_acmg_predict_seqvar_success(
     assert mock_auto_ps1_pm5_success.predict.called
 
 
-def test_auto_acmg_predict_seqvar_resolve_failure(mock_seqvar_resolver_failure, mock_auto_pvs1_failure):
+def test_auto_acmg_predict_seqvar_resolve_failure(
+    mock_seqvar_resolver_failure, mock_auto_pvs1_failure
+):
     """Test the predict method for a sequence variant with a failure response due to resolve method."""
     auto_acmg = AutoACMG("NM_000038.3:c.797G>A", GenomeRelease.GRCh38)
     with runner.isolated_filesystem():

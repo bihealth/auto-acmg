@@ -14,6 +14,26 @@ class AlteredRegionMode(AutoAcmgBaseEnum):
     Exon = auto()
 
 
+class GenomicStrand(AutoAcmgBaseEnum):
+    """Enumeration for genomic strand."""
+
+    Plus = auto()
+    Minus = auto()
+
+    @staticmethod
+    def from_string(value: str):
+        """Converts string to enum member if possible, otherwise returns None."""
+        strand_mapping = {
+            "STRAND_PLUS": "Plus",
+            "STRAND_MINUS": "Minus",
+        }
+        value_mapped = strand_mapping.get(value, value)
+        for member in GenomicStrand:
+            if member.name == value_mapped:
+                return member
+        return None
+
+
 class TranscriptInfo(BaseModel):
     """Information about a transcript."""
 
@@ -143,7 +163,9 @@ SeqvarConsequenceMapping: Dict[str, SeqVarConsequence] = {
 
 
 #: Mapping of PVS1 prediction path to description for sequence variant
-PVS1PredictionPathMapping: Dict[Union[PVS1PredictionSeqVarPath, PVS1PredictionStrucVarPath], str] = {
+PVS1PredictionPathMapping: Dict[
+    Union[PVS1PredictionSeqVarPath, PVS1PredictionStrucVarPath], str
+] = {
     PVS1PredictionSeqVarPath.NotSet: "Not Set",
     PVS1PredictionSeqVarPath.PTEN: "Special guideline for PTEN -> Predicted to undergo NMD",
     PVS1PredictionSeqVarPath.NF1: (
@@ -153,7 +175,8 @@ PVS1PredictionPathMapping: Dict[Union[PVS1PredictionSeqVarPath, PVS1PredictionSt
         "Predicted to undergo NMD -> Exon is absent from biologically-relevant transcript(s)"
     ),
     PVS1PredictionSeqVarPath.NF3: (
-        "Not predicted to undergo NMD -> " "Truncated/altered region is critical to protein function"
+        "Not predicted to undergo NMD -> "
+        "Truncated/altered region is critical to protein function"
     ),
     PVS1PredictionSeqVarPath.NF4: (
         "Not predicted to undergo NMD -> "

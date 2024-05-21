@@ -51,7 +51,9 @@ class StrucVar:
         self.start = start
         self.stop = stop
         self.user_repr = (
-            user_repr if user_repr else f"{sv_type.name}-{genome_release.name}-{self.chrom}-{start}-{stop}"
+            user_repr
+            if user_repr
+            else f"{sv_type.name}-{genome_release.name}-{self.chrom}-{start}-{stop}"
         )
 
     def _normalize_chromosome(self, chrom: str) -> str:

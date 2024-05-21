@@ -28,7 +28,7 @@ def test_get_seqvar_transcripts_success():
     mock_response = get_json_object("mehari/mehari_seqvar_success.json")
     responses.add(
         responses.GET,
-        f"https://example.com/mehari/seqvars/csq?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&position={example_seqvar.pos}&reference={example_seqvar.insert}&alternative={example_seqvar.delete}",
+        f"https://example.com/mehari/seqvars/csq?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&position={example_seqvar.pos}&reference={example_seqvar.delete}&alternative={example_seqvar.insert}",
         json=mock_response,
         status=200,
     )
@@ -44,7 +44,7 @@ def test_get_seqvar_transcripts_failure():
     mock_response = get_json_object("mehari/mehari_seqvar_failure.json")
     responses.add(
         responses.GET,
-        f"https://example.com/mehari/seqvars/csq?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&position={example_seqvar.pos}&reference={example_seqvar.insert}&alternative={example_seqvar.delete}",
+        f"https://example.com/mehari/seqvars/csq?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&position={example_seqvar.pos}&reference={example_seqvar.delete}&alternative={example_seqvar.insert}",
         json=mock_response,
         status=200,
     )
@@ -59,7 +59,7 @@ def test_get_seqvar_transcripts_500():
     """Test get_transcripts method with a 500 response."""
     responses.add(
         responses.GET,
-        f"https://example.com/mehari/seqvars/csq?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&position={example_seqvar.pos}&reference={example_seqvar.insert}&alternative={example_seqvar.delete}",
+        f"https://example.com/mehari/seqvars/csq?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&position={example_seqvar.pos}&reference={example_seqvar.delete}&alternative={example_seqvar.insert}",
         status=500,
     )
 
