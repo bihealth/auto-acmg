@@ -289,7 +289,6 @@ class SeqVarPVS1Helper:
                 "Failed to get variant from range. No gnomAD genomes data."
             )
 
-    # TODO: Add Regex for frameshift and premature termination codon variants
     @staticmethod
     def _get_variant_position(tHGVS: str) -> int:
         """Get the variant position from a transcript HGVS notation.
@@ -604,7 +603,6 @@ class SeqVarPVS1Helper:
     @staticmethod
     def _exon_skipping_or_cryptic_ss_disruption() -> bool:
         """Check if the variant causes exon skipping or cryptic splice site disruption."""
-        # TODO: Implement this method
         return False
 
     # TODO: Ask Manuel about the implementation of this method
@@ -651,7 +649,6 @@ class SeqVarPVS1Helper:
     @staticmethod
     def _upstream_pathogenic_variant() -> bool:
         """Check if the transcript has an upstream pathogenic variant(s)."""
-        # TODO: Implement this method
         return False
 
 
