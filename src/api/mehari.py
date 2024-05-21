@@ -34,8 +34,8 @@ class MehariClient:
             f"genome_release={seqvar.genome_release.name.lower()}"
             f"&chromosome={seqvar.chrom}"
             f"&position={seqvar.pos}"
-            f"&reference={seqvar.insert}"
-            f"&alternative={seqvar.delete}"
+            f"&reference={seqvar.delete}"
+            f"&alternative={seqvar.insert}"
         )
         logger.debug("GET request to: {}", url)
         response = requests.get(url)

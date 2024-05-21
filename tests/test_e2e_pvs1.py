@@ -54,7 +54,9 @@ def test_pvs1_seqvar_csv(
     config: Config,
 ):
     """Test PVS1 predictions, variants read from CSV file."""
-    pvs1_seqvar_test_helper(variant_name, genome_release, expected_prediction, expected_path, config)
+    pvs1_seqvar_test_helper(
+        variant_name, genome_release, expected_prediction, expected_path, config
+    )
 
 
 @pytest.mark.remote
@@ -77,4 +79,6 @@ def test_pvs1_seqvar_inline(
     config: Config,
 ):
     """Test PVS1 predictions, variants defined inline."""
-    pvs1_seqvar_test_helper(variant_name, genome_release, expected_prediction, expected_path, config)
+    pvs1_seqvar_test_helper(
+        variant_name, genome_release, expected_prediction, expected_path, config
+    )

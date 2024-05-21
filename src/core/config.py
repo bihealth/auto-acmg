@@ -7,7 +7,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Settings for the autopvs1 CLI."""
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", case_sensitive=True)
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=True
+    )
 
     # --- app-specific settings ---
 
@@ -48,5 +50,7 @@ class Config(BaseModel):
         if isinstance(data, dict):
             data["api_base_url"] = data.get("api_base_url", settings.API_REEV_URL)
             for key in ("annonars", "mehari", "dotty"):
-                data[f"api_base_url_{key}"] = data.get(f"api_base_url_{key}", f"{data['api_base_url']}/{key}")
+                data[f"api_base_url_{key}"] = data.get(
+                    f"api_base_url_{key}", f"{data['api_base_url']}/{key}"
+                )
         return data

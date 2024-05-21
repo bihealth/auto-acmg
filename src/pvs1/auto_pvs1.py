@@ -80,7 +80,9 @@ class AutoPVS1:
                 strucvar_pvs1 = StrucVarPVS1(self.strucvar)
                 strucvar_pvs1.initialize()
                 strucvar_pvs1.verify_PVS1()
-                self.strucvar_prediction, self.strucvar_prediction_path = strucvar_pvs1.get_prediction()
+                self.strucvar_prediction, self.strucvar_prediction_path = (
+                    strucvar_pvs1.get_prediction()
+                )
                 return self.strucvar_prediction, self.strucvar_prediction_path
             except AutoAcmgBaseException as e:
                 logger.exception("Error occurred: {}", e)
