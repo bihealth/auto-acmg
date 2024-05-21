@@ -38,11 +38,11 @@ format:	\
 
 .PHONY: format-isort
 format-isort:
-	pipenv run isort --profile=black --line-length 110 $(DIRS_PYTHON)
+	pipenv run isort --profile=black --line-length 100 $(DIRS_PYTHON)
 
 .PHONY: format-black
 format-black:
-	pipenv run black --line-length 110 $(DIRS_PYTHON)
+	pipenv run black --line-length 100 $(DIRS_PYTHON)
 
 .PHONY: lint
 lint: \
@@ -53,15 +53,15 @@ lint: \
 
 .PHONY: lint-isort
 lint-isort:
-	pipenv run isort --profile=black --line-length 110 --check-only --diff $(DIRS_PYTHON)
+	pipenv run isort --profile=black --line-length 100 --check-only --diff $(DIRS_PYTHON)
 
 .PHONY: lint-black
 lint-black:
-	pipenv run black --check --line-length 110 --diff $(DIRS_PYTHON)
+	pipenv run black --check --line-length 100 --diff $(DIRS_PYTHON)
 
 .PHONY: lint-flake8
 flake8:
-	pipenv run flake8 --max-line-length 110 $(DIRS_PYTHON)
+	pipenv run flake8 --max-line-length 100 $(DIRS_PYTHON)
 
 .PHONY: lint-mypy
 lint-mypy:

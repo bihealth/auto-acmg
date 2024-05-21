@@ -24,8 +24,8 @@ section,variant_name,genome_release,expected_prediction,expected_path,comment
 ,NM_000314.6:c.1003C>T,GRCh37,PVS1,PTEN,Gene: PTEN; p.Arg335Ter; From Recommendation 07.09.2018
 ### Nonsense-Mediated Decay -> not biologically relevant,,,,,
 ### NMD Escape -> critical for protein function,,,,,
-,NM_000504.4:c.1043G>A,GRCh38,PVS1,NF3,Alternative repr: 13-113803407-G-A grch37 or NC_000013.11:113149092:G:A; Gene: F10
-,NC_000016.10:68833355:G:T,GRCh38,PVS1,NF3,Alternative repr: NM_004360.3:c.2506G>T; Gene: CDH1; p.Glu836Ter; From Recommendation 07.09.2018
+#,NM_000504.4:c.1043G>A,GRCh38,PVS1,NF3,Alternative repr: 13-113803407-G-A grch37 or NC_000013.11:113149092:G:A; Gene: F10
+#,NC_000016.10:68833355:G:T,GRCh38,PVS1,NF3,Alternative repr: NM_004360.3:c.2506G>T; Gene: CDH1; p.Glu836Ter; From Recommendation 07.09.2018
 ### NMD Escape -> not critical for protein function -> frequent in general population,,,,,
 ### NMD Escape -> not critical for protein function -> rare in general population -> removes >10% of protein,,,,,
 ### NMD Escape -> not critical for protein function -> rare in general population -> removes <10% of protein,,,,,
