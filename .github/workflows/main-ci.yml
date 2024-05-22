@@ -111,4 +111,11 @@ jobs:
       - name: Build documentation
         run: make ci-docs
 
+      - name: Upload Sphinx log if build fails
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: sphinx-output-log
+          path: docs/sphinx-output.log
+
 
