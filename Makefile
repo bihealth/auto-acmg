@@ -119,4 +119,4 @@ docs:
 
 .PHONY: ci-docs
 ci-docs:
-	make -C docs clean html
+	make -C docs clean html 2>&1 | tee sphinx-output.log | grep -q "ERROR" && exit 1 || exit 0

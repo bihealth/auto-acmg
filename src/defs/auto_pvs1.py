@@ -11,7 +11,7 @@ class AlteredRegionMode(AutoAcmgBaseEnum):
     """Enumeration for altered region mode."""
 
     Downstream = auto()
-    Exon = auto()
+    CDS = auto()
 
 
 class GenomicStrand(AutoAcmgBaseEnum):

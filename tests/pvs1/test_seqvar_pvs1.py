@@ -123,27 +123,35 @@ def test_get_pHGVS_termination(pHGVS, expected_termination):
 
 
 @pytest.mark.parametrize(
-    "cds_pos,exons,mode,expected_result",
+    "cds_pos,exons,mode,strand,expected_result",
     [
-        (100, [MockExon(0, 100, 0, 100)], AlteredRegionMode.Downstream, (100, 100)),
-        (100, [MockExon(0, 100, 0, 100)], AlteredRegionMode.Exon, (100, 100)),
+        (
+            100,
+            [MockExon(0, 100, 0, 100)],
+            AlteredRegionMode.Downstream,
+            GenomicStrand.Plus,
+            (100, 100),
+        ),
+        (100, [MockExon(0, 100, 0, 100)], AlteredRegionMode.CDS, GenomicStrand.Plus, (100, 100)),
         (
             150,
             [MockExon(0, 100, 0, 100), MockExon(100, 200, 100, 200), MockExon(200, 300, 200, 300)],
             AlteredRegionMode.Downstream,
+            GenomicStrand.Plus,
             (150, 300),
         ),
         (
             150,
             [MockExon(0, 100, 0, 100), MockExon(100, 200, 100, 200), MockExon(200, 300, 200, 300)],
-            AlteredRegionMode.Exon,
+            AlteredRegionMode.CDS,
+            GenomicStrand.Plus,
             (150, 200),
         ),
     ],
 )
-def test_calculate_altered_region(cds_pos, exons, mode, expected_result):
+def test_calculate_altered_region(cds_pos, exons, mode, strand, expected_result):
     """Test the _calculate_altered_region method."""
-    result = SeqVarPVS1Helper._calculate_altered_region(cds_pos, exons, mode)
+    result = SeqVarPVS1Helper._calculate_altered_region(cds_pos, exons, mode, strand)
     assert result == expected_result
 
 
@@ -221,6 +229,13 @@ def test_count_lof_variants(annonars_range_response, expected_result, seqvar):
         ("c.2506_2507insT", 2506),  # Insertion at position 2506
         ("c.2506_2507del", 2506),  # Deletion at position 2506
         ("c.2506_2507delinsT", 2506),  # Deletion-insertion at position 2506
+        ("c.1234+5G>T", 1234),  # Intron mutation (splice site)
+        ("c.1234-1G>A", 1234),  # Intron mutation (splice site)
+        ("c.234_235del", 234),  # Deletion with range
+        ("c.234_235insA", 234),  # Insertion with range
+        ("c.234_235delinsA", 234),  # Deletion-insertion with range
+        ("c.234+5_234+7del", 234),  # Complex range with intron positions
+        ("c.234-5_234-7del", 234),  # Complex range with intron positions
         ("invalid", -1),  # Invalid HGVS
     ],
 )
@@ -331,18 +346,25 @@ def test_in_biologically_relevant_transcript(transcript_tags, expected_result):
     assert result == expected_result, f"Failed for transcript_tags: {transcript_tags}"
 
 
+# TODO: Rewrite this test
 @pytest.mark.parametrize(
-    "cds_pos, pathogenic_variants, total_variants, expected_result",
+    "cds_pos, pathogenic_variants, total_variants, strand, expected_result",
     [
-        (100, 6, 100, True),  # Test pathogenic variants exceed the threshold
-        (100, 3, 100, False),  # Test pathogenic variants do not exceed the threshold
-        (100, 0, 0, False),  # Test no variants are found
-        (100, 0, 100, False),  # Test no pathogenic variants are found
-        (100, 0, 0, False),  # Test no variants are found
+        (100, 6, 100, GenomicStrand.Plus, True),  # Test pathogenic variants exceed the threshold
+        (
+            100,
+            3,
+            100,
+            GenomicStrand.Plus,
+            False,
+        ),  # Test pathogenic variants do not exceed the threshold
+        (100, 0, 0, GenomicStrand.Plus, False),  # Test no variants are found
+        (100, 0, 100, GenomicStrand.Plus, False),  # Test no pathogenic variants are found
+        (100, 0, 0, GenomicStrand.Plus, False),  # Test no variants are found
     ],
 )
 def test_critical4protein_function(
-    seqvar, cds_pos, pathogenic_variants, total_variants, expected_result, monkeypatch
+    seqvar, cds_pos, pathogenic_variants, total_variants, strand, expected_result, monkeypatch
 ):
     """Test the _critical4protein_function method."""
     # Create a mock list of Exons
@@ -356,24 +378,24 @@ def test_critical4protein_function(
 
     # Run the method under test
     helper = SeqVarPVS1Helper()
-    result = helper._critical4protein_function(seqvar, cds_pos, exons)  # type: ignore
+    result = helper._critical4protein_function(seqvar, cds_pos, exons, strand)  # type: ignore
 
     # Assert the expected outcome
     assert result == expected_result
     if cds_pos is not None:
-        mock_calculate.assert_called_once_with(cds_pos, exons, AlteredRegionMode.Downstream)
+        mock_calculate.assert_called_once_with(cds_pos, exons, AlteredRegionMode.Downstream, strand)
         mock_count_pathogenic.assert_called_once_with(seqvar, 1, 1000)  # The range is mocked
 
 
 @pytest.mark.parametrize(
-    "cds_pos, pathogenic_variants, total_variants",
+    "cds_pos, pathogenic_variants, total_variants, strand",
     [
-        (None, 0, 0),  # Test with no cds_pos
+        (None, 0, 0, GenomicStrand.Plus),  # Test with no cds_pos
         # (100, 100, 0),  # Test more pathogenic variants than total variants. Can never happen
     ],
 )
 def test_critical4protein_function_failure(
-    seqvar, cds_pos, pathogenic_variants, total_variants, monkeypatch
+    seqvar, cds_pos, pathogenic_variants, total_variants, strand, monkeypatch
 ):
     """Test the _critical4protein_function method."""
     # Create a mock list of Exons
@@ -388,26 +410,39 @@ def test_critical4protein_function_failure(
     with pytest.raises(MissingDataError):
         # Run the method under test
         helper = SeqVarPVS1Helper()
-        helper._critical4protein_function(seqvar, cds_pos, exons)  # type: ignore
+        helper._critical4protein_function(seqvar, cds_pos, exons, strand)  # type: ignore
 
 
 @pytest.mark.parametrize(
-    "cds_pos, frequent_lof_variants, lof_variants, expected_result",
+    "cds_pos, frequent_lof_variants, lof_variants, strand, expected_result",
     [
-        (100, 11, 100, True),  # Test case where frequent LoF variants exceed the 10% threshold
+        (
+            100,
+            11,
+            100,
+            GenomicStrand.Plus,
+            True,
+        ),  # Test case where frequent LoF variants exceed the 10% threshold
         (
             100,
             5,
             100,
+            GenomicStrand.Plus,
             False,
         ),  # Test case where frequent LoF variants do not exceed the 10% threshold
-        (100, 0, 0, False),  # Test case where no LoF variants are found
-        (100, 0, 100, False),  # Test case where no frequent LoF variants are found
-        (100, 0, 0, False),  # Test case where no LoF variants are found
+        (100, 0, 0, GenomicStrand.Plus, False),  # Test case where no LoF variants are found
+        (
+            100,
+            0,
+            100,
+            GenomicStrand.Plus,
+            False,
+        ),  # Test case where no frequent LoF variants are found
+        (100, 0, 0, GenomicStrand.Plus, False),  # Test case where no LoF variants are found
     ],
 )
 def test_lof_is_frequent_in_population(
-    seqvar, cds_pos, frequent_lof_variants, lof_variants, expected_result, monkeypatch
+    seqvar, cds_pos, frequent_lof_variants, lof_variants, strand, expected_result, monkeypatch
 ):
     # Create a mock list of Exons
     exons = [MagicMock(spec=Exon)]
@@ -420,24 +455,24 @@ def test_lof_is_frequent_in_population(
 
     # Run the method under test
     helper = SeqVarPVS1Helper()
-    result = helper._lof_is_frequent_in_population(seqvar, cds_pos, exons)  # type: ignore
+    result = helper._lof_is_frequent_in_population(seqvar, cds_pos, exons, strand)  # type: ignore
 
     # Assert the expected outcome
     assert result == expected_result
     if cds_pos is not None:
-        mock_calculate.assert_called_once_with(cds_pos, exons, AlteredRegionMode.Exon)
+        mock_calculate.assert_called_once_with(cds_pos, exons, AlteredRegionMode.CDS, strand)
         mock_count_lof_variants.assert_called_once_with(seqvar, 1, 1000)  # The range is mocked
 
 
 @pytest.mark.parametrize(
-    "cds_pos, frequent_lof_variants, lof_variants",
+    "cds_pos, frequent_lof_variants, lof_variants, strand",
     [
-        (None, 0, 0),  # Test case where cds_pos is None
+        (None, 0, 0, GenomicStrand.Plus),  # Test case where cds_pos is None
         # (100, 20, 0),  # Test case where more frequent LoF variants than total LoF variants. Can never happen
     ],
 )
 def test_lof_is_frequent_in_population_failure(
-    seqvar, cds_pos, frequent_lof_variants, lof_variants, monkeypatch
+    seqvar, cds_pos, frequent_lof_variants, lof_variants, strand, monkeypatch
 ):
     # Create a mock list of Exons
     exons = [MagicMock(spec=Exon)]
@@ -451,30 +486,30 @@ def test_lof_is_frequent_in_population_failure(
     # Run the method under test
     with pytest.raises(MissingDataError):
         helper = SeqVarPVS1Helper()
-        helper._lof_is_frequent_in_population(seqvar, cds_pos, exons)  # type: ignore
+        helper._lof_is_frequent_in_population(seqvar, cds_pos, exons, strand)  # type: ignore
 
 
 @pytest.mark.parametrize(
-    "exons, pHGVS, expected_result",
+    "tHGVS, cds_length, expected_result",
     [
-        # ([MockExon(0, 300)], "p.Gln100*", True),  # Simple case where LoF removes more than 10% of a 100-codon protein
         (
-            [MockExon(0, 300)],
-            "p.Gln90*",
+            "c.100A>G",
+            100,
+            True,
+        ),  # Test case where the variant remove more than 10% of the protein
+        (
+            "c.100A>G",
+            1001,
             False,
-        ),  # LoF variant at codon 90, removes exactly 10% of a 100-codon protein
-        # ([MockExon(0, 300), MockExon(300, 900)], "p.Gln200fs*1", True),  # Frameshift early in the protein
-        ([MockExon(0, 900)], "p.Gln850*", False),  # Truncation removes less than 10% of the protein
-        ([MockExon(0, 100), MockExon(100, 500)], "p.Arg50X", True),  # Early nonsense mutation
-        ([MockExon(0, 500)], "p.Arg490Ter", False),  # Truncation very close to the end
+        ),  # Test case where the variant removes less than 10% of the protein
+        ("c.100A>G", -1, False),  # Test with unknown CDS length
+        ("", 100, False),  # Test with unknown tHGVS
     ],
 )
-def test_lof_removes_more_then_10_percent_of_protein(exons, pHGVS, expected_result):
+def test_lof_removes_more_then_10_percent_of_protein(tHGVS, cds_length, expected_result):
     """Test the _lof_removes_more_then_10_percent_of_protein method."""
-    result = SeqVarPVS1Helper._lof_removes_more_then_10_percent_of_protein(pHGVS, exons)
-    assert (
-        result == expected_result
-    ), f"Expected {expected_result} for pHGVS: {pHGVS} with exon lengths: {[exon.altEndI - exon.altStartI for exon in exons]}"
+    result = SeqVarPVS1Helper()._lof_removes_more_then_10_percent_of_protein(tHGVS, cds_length)
+    assert result == expected_result
 
 
 def test_exon_skipping_or_cryptic_ss_disruption():
@@ -568,9 +603,84 @@ def test_alternative_start_codon_invalid():
         SeqVarPVS1Helper._alternative_start_codon(hgvs, cds_info)  # type: ignore
 
 
-def test_upstream_pathogenic_variant():
-    """Test the _upstream_pathogenic_variant method."""
-    pass
+# TODO: Rewrite this test
+@pytest.mark.parametrize(
+    "cds_pos, exons, strand, pathogenic_variants, expected_result",
+    [
+        (
+            100,
+            [MagicMock(altStartI=1, altEndI=200, altCdsStartI=1, altCdsEndI=200)],
+            GenomicStrand.Plus,
+            1,
+            True,
+        ),  # Test pathogenic variants found
+        (
+            100,
+            [MagicMock(altStartI=1, altEndI=200, altCdsStartI=1, altCdsEndI=200)],
+            GenomicStrand.Plus,
+            0,
+            False,
+        ),  # Test no pathogenic variants found
+        (
+            100,
+            [MagicMock(altStartI=1, altEndI=200, altCdsStartI=1, altCdsEndI=200)],
+            GenomicStrand.Minus,
+            1,
+            True,
+        ),  # Test pathogenic variants found on minus strand
+        (
+            100,
+            [MagicMock(altStartI=1, altEndI=200, altCdsStartI=1, altCdsEndI=200)],
+            GenomicStrand.Minus,
+            0,
+            False,
+        ),  # Test no pathogenic variants found on minus strand
+    ],
+)
+def test_upstream_pathogenic_variants(
+    seqvar, cds_pos, exons, strand, pathogenic_variants, expected_result, monkeypatch
+):
+    """Test the _upstream_pathogenic_variants method."""
+    # Mocking _count_pathogenic_variants to return a controlled number of pathogenic variants
+    mock_count_pathogenic = MagicMock(return_value=(pathogenic_variants, 10))
+    monkeypatch.setattr(SeqVarPVS1Helper, "_count_pathogenic_variants", mock_count_pathogenic)
+
+    # Run the method under test
+    helper = SeqVarPVS1Helper()
+    result = helper._upstream_pathogenic_variants(seqvar, cds_pos, exons, strand)  # type: ignore
+
+    # Assert the expected outcome
+    assert result == expected_result
+    if cds_pos is not None:
+        mock_count_pathogenic.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "cds_pos, exons, strand, pathogenic_variants",
+    [
+        (
+            None,
+            [MagicMock(altStartI=1, altEndI=200, altCdsStartI=1, altCdsEndI=200)],
+            GenomicStrand.Plus,
+            1,
+        ),  # Test case where cds_pos is None
+        (
+            100,
+            [MagicMock(altStartI=1, altEndI=200, altCdsStartI=1, altCdsEndI=200)],
+            None,
+            1,
+        ),  # Test case where no strand is provided
+        (100, [], GenomicStrand.Plus, 1),  # Test case where no exons are found
+    ],
+)
+def test_upstream_pathogenic_variants_failure(seqvar, cds_pos, exons, strand, pathogenic_variants):
+    """Test the _upstream_pathogenic_variants method."""
+    # Mocking _count_pathogenic_variants to return a controlled number of pathogenic variants
+    mock_count_pathogenic = MagicMock(return_value=(pathogenic_variants, 10))
+    with pytest.raises(MissingDataError):
+        # Run the method under test
+        helper = SeqVarPVS1Helper()
+        helper._upstream_pathogenic_variants(seqvar, cds_pos, exons, strand)
 
 
 # === SeqVarTranscriptsHelper ===
