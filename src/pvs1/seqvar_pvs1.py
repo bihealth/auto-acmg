@@ -40,12 +40,13 @@ class SeqVarPVS1Helper:
     def _choose_hgvs_p(
         hgvs: str, seqvar_ts: TranscriptSeqvar, seqvar_transcripts: List[TranscriptSeqvar]
     ) -> str:
-        """Choose the most suitable protein HGVS notation.
+        """
+        Choose the most suitable protein HGVS notation.
 
         This method chooses the most suitable protein HGVS notation from available transcripts.
         The method is implemented as follows:
-            - If the pHGVS is available in the main transcript, return it.
-            - Else, choose the first transcript with a protein HGVS which is not empty.
+        - If the pHGVS is available in the main transcript, return it.
+        - Else, choose the first transcript with a protein HGVS which is not empty.
 
         Args:
             hgvs: The transcript HGVS notation.
@@ -69,18 +70,20 @@ class SeqVarPVS1Helper:
 
     @staticmethod
     def _get_pHGVS_termination(pHGVS: str) -> int:
-        """Gets the termination position from a protein HGVS (p.HGVS) notation.
+        """
+        Gets the termination position from a protein HGVS (p.HGVS) notation.
 
         This method extracts the termination position from the protein HGVS notation if the variant
         is a frameshift or a premature termination codon.
-        The method is implemented as follows:
-            - If the variant is a frameshift ("fs" in pHGVS), the termination position is calculated
-                by adding the frameshift position and the termination position.
-            - If the variant is a premature termination codon ("*", "X", or "Ter" in pHGVS), the
-                termination position is extracted from the pHGVS string.
+
+        Implementation of the rule:
+        - If the variant is a frameshift ("fs" in pHGVS), the termination position is calculated
+        by adding the frameshift position and the termination position.
+        - If the variant is a premature termination codon ("*", "X", or "Ter" in pHGVS), the
+        termination position is extracted from the pHGVS string.
 
         Note:
-            If the position is not found, returns -1.
+        If the position is not found, returns -1.
 
         Args:
             pHGVS: A string containing the protein HGVS notation.
@@ -118,16 +121,17 @@ class SeqVarPVS1Helper:
     def _calculate_altered_region(
         cds_pos: int, exons: List[Exon], mode: AlteredRegionMode, strand: GenomicStrand
     ) -> Tuple[int, int]:
-        """Calculates the altered region's start and end positions.
+        """
+        Calculates the altered region's start and end positions.
 
         This method calculates the start and end positions of the altered region based on the
         position of the variant in the coding sequence and the exons of the gene.
         The method is implemented as follows:
-            - If the mode is "Downstream", the altered region is calculated based on the position
-                of the variant in the coding sequence and the exons of the gene. The region is
-                calculated downstream from the variant based on the genomic strand.
-            - If the mode is "Exon", the altered region is calculated based on the position of the
-                variant in the coding sequence and the exons of the gene.
+        - If the mode is "Downstream", the altered region is calculated based on the position
+        of the variant in the coding sequence and the exons of the gene. The region is
+        calculated downstream from the variant based on the genomic strand.
+        - If the mode is "Exon", the altered region is calculated based on the position of the
+        variant in the coding sequence and the exons of the gene.
 
         Args:
             cds_pos: The position of the variant in the coding sequence.
@@ -186,7 +190,8 @@ class SeqVarPVS1Helper:
     def _count_pathogenic_variants(
         self, seqvar: SeqVar, start_pos: int, end_pos: int
     ) -> Tuple[int, int]:
-        """Counts pathogenic variants in the specified range.
+        """
+        Counts pathogenic variants in the specified range.
 
         The method retrieves variants from the specified range and iterates through the ClinVar data
         of each variant to count the number of pathogenic variants and the total number of variants.
@@ -227,7 +232,8 @@ class SeqVarPVS1Helper:
 
     @staticmethod
     def _get_consequence(val: SeqVarConsequence) -> List[str]:
-        """Get the VEP consequence of the sequence variant by value.
+        """
+        Get the VEP consequence of the sequence variant by value.
 
         Args:
             val: The value of the consequence.
@@ -238,7 +244,8 @@ class SeqVarPVS1Helper:
         return [key for key, value in SeqvarConsequenceMapping.items() if value == val]
 
     def _count_lof_variants(self, seqvar: SeqVar, start_pos: int, end_pos: int) -> Tuple[int, int]:
-        """Counts Loss-of-Function (LoF) variants in the specified range.
+        """
+        Counts Loss-of-Function (LoF) variants in the specified range.
 
         The method retrieves variants from the specified range and iterates through the available
         data of each variant. The method counts the number of LoF variants and the number of
@@ -291,7 +298,8 @@ class SeqVarPVS1Helper:
 
     @staticmethod
     def _get_variant_position(tHGVS: str) -> int:
-        """Get the variant position from a transcript HGVS notation.
+        """
+        Get the variant position from a transcript HGVS notation.
 
         This method extracts the variant position from the tHGVS notation.
         The method parses the tHGVS string using regular expressions and returns the position.
@@ -329,7 +337,8 @@ class SeqVarPVS1Helper:
     def _calculate_5_prime_UTR_length(
         exons: List[Exon], cds_start: int, cds_end: int, strand: GenomicStrand
     ) -> int:
-        """Calculates the length of the 5' UTR region.
+        """
+        Calculates the length of the 5' UTR region.
 
         The method iterates through the exons of the gene and adds the length of the exons to the
         offset position until the coding sequence start position is reached.
@@ -370,7 +379,8 @@ class SeqVarPVS1Helper:
         cds_end: int,
         strand: Optional[GenomicStrand],
     ) -> bool:
-        """Classifies if the variant undergoes Nonsense-mediated decay (NMD).
+        """
+        Classifies if the variant undergoes Nonsense-mediated decay (NMD).
 
         Implementation of the rule:
         The method checks if the variant is in the GJB2 gene and always predicts it to undergo NMD.
@@ -428,7 +438,8 @@ class SeqVarPVS1Helper:
 
     @staticmethod
     def _in_biologically_relevant_transcript(transcript_tags: List[str]) -> bool:
-        """Checks if the exon with SeqVar is in a biologically relevant transcript.
+        """
+        Checks if the exon with SeqVar is in a biologically relevant transcript.
 
         Implementation of the rule:
             If the variant is located in a transcript with a MANE Select tag, it is
@@ -450,24 +461,25 @@ class SeqVarPVS1Helper:
         exons: List[Exon],
         strand: Optional[GenomicStrand],
     ) -> bool:
-        """Checks if the truncated or altered region is critical for the protein function.
+        """
+        Checks if the truncated or altered region is critical for the protein function.
 
         This method assesses the impact of a sequence variant based on the presence of pathogenic
         variants downstream of the new stop codon, utilizing both experimental and clinical
         evidence.
+
         Implementation of the rule:
-            The method implements the rule by:
-            - Calculating the range of the altered region, based on the position of the variant in
-                the coding sequence and the exons of the gene.
-            - Fetching variants from the specified range of the altered region.
-            - Counting the number of pathogenic variants in that region, by iterating through
-                the clinvar data of each variant.
-            - Considering the region critical if the frequency of pathogenic variants exceeds 5%.
+        - Calculating the range of the altered region, based on the position of the variant in
+        the coding sequence and the exons of the gene.
+        - Fetching variants from the specified range of the altered region.
+        - Counting the number of pathogenic variants in that region, by iterating through
+        the clinvar data of each variant.
+        - Considering the region critical if the frequency of pathogenic variants exceeds 5%.
 
         Note:
-            The significance of a truncated or altered region is determined by the presence and
-            frequency of pathogenic variants downstream from the new stop codon. We use a threshold
-            of 5% to determine if the region is critical for the protein function.
+        The significance of a truncated or altered region is determined by the presence and
+        frequency of pathogenic variants downstream from the new stop codon. We use a threshold
+        of 5% to determine if the region is critical for the protein function.
 
         Args:
             seqvar: The sequence variant being analyzed.
@@ -520,23 +532,24 @@ class SeqVarPVS1Helper:
         exons: List[Exon],
         strand: Optional[GenomicStrand],
     ) -> bool:
-        """Checks if the Loss-of-Function (LoF) variants in the exon are frequent in the general
+        """
+        Checks if the Loss-of-Function (LoF) variants in the exon are frequent in the general
         population.
 
         This function determines the frequency of LoF variants within a specified genomic region and
         evaluates whether this frequency exceeds a defined threshold indicative of common occurrence
         in the general population.
+
         Implementation of the rule:
-            The function implements the rule by:
-            - Calculating the range of the altered region (coding sequence of the transcript).
-            - Counting the number of LoF variants and frequent LoF variants in that region.
-            - Considering the LoF variants frequent in the general population if the frequency
-                of "frequent" LoF variants exceeds 10%.
+        - Calculating the range of the altered region (coding sequence of the transcript).
+        - Counting the number of LoF variants and frequent LoF variants in that region.
+        - Considering the LoF variants frequent in the general population if the frequency
+        of "frequent" LoF variants exceeds 10%.
 
         Note:
-            A LoF variant is considered frequent if its occurrence in the general population
-            exceeds some threshold. We use a threshold of 0.1% to determine if the LoF variant is
-            frequent.
+        A LoF variant is considered frequent if its occurrence in the general population
+        exceeds some threshold. We use a threshold of 0.1% to determine if the LoF variant is
+        frequent.
 
         Args:
             seqvar: The sequence variant being analyzed.
@@ -575,7 +588,8 @@ class SeqVarPVS1Helper:
             raise AlgorithmError("Failed to predict LoF frequency for variant.") from e
 
     def _lof_removes_more_then_10_percent_of_protein(self, tHGVS: str, cds_length: int) -> bool:
-        """Check if the LoF variant removes more than 10% of the protein.
+        """
+        Check if the LoF variant removes more than 10% of the protein.
 
         Implementation of the rule:
             The rule is implemented by:
@@ -627,7 +641,8 @@ class SeqVarPVS1Helper:
     # TODO: Ask Manuel about the implementation of this method
     @staticmethod
     def _alternative_start_codon(hgvs: str, cds_info: Dict[str, CdsInfo]) -> bool:
-        """Check if the variant introduces an alternative start codon in other transcripts.
+        """
+        Check if the variant introduces an alternative start codon in other transcripts.
 
         Implementation of the rule:
             - Iterating through all transcripts and checking if the coding sequence start
@@ -672,13 +687,14 @@ class SeqVarPVS1Helper:
         exons: List[Exon],
         strand: Optional[GenomicStrand],
     ) -> bool:
-        """Look for pathogenic variants upstream of the closest potential in-frame start codon.
+        """
+        Look for pathogenic variants upstream of the closest potential in-frame start codon.
 
         The method checks for pathogenic variants upstream of the closest potential in-frame start
         codon. The method is implemented as follows:
-            - Find the closest potential in-frame start codon.
-            - Fetch and count pathogenic variants in the specified range.
-            - Return True if pathogenic variants are found, otherwise False.
+        - Find the closest potential in-frame start codon.
+        - Fetch and count pathogenic variants in the specified range.
+        - Return True if pathogenic variants are found, otherwise False.
 
         Args:
             seqvar: The sequence variant being analyzed.
