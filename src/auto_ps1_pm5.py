@@ -89,7 +89,8 @@ class AutoPS1PM5:
         return False
 
     def predict(self) -> Optional[PS1PM5]:
-        """Predicts the criteria PS1 and PM5 for the provided sequence variant.
+        """
+        Predicts the criteria PS1 and PM5 for the provided sequence variant.
 
         Note:
             Rule:
@@ -103,9 +104,9 @@ class AutoPS1PM5:
             - Iterating over all possible alternative bases & getting the alternative variant information.
             - Parsing the alternative amino acid change & checking if the alternative variant is pathogenic.
             - If the alternative variant is pathogenic and the amino acid change is the same as the primary variant,
-                then PS1 is set to True.
+            then PS1 is set to True.
             - If the alternative variant is pathogenic and the amino acid change is different from the primary variant,
-                then PM5 is set to True.
+            then PM5 is set to True.
 
         Returns:
             PS1PM5: The prediction result.
