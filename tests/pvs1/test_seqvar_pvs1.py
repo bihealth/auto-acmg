@@ -229,6 +229,13 @@ def test_count_lof_variants(annonars_range_response, expected_result, seqvar):
         ("c.2506_2507insT", 2506),  # Insertion at position 2506
         ("c.2506_2507del", 2506),  # Deletion at position 2506
         ("c.2506_2507delinsT", 2506),  # Deletion-insertion at position 2506
+        ("c.1234+5G>T", 1234),  # Intron mutation (splice site)
+        ("c.1234-1G>A", 1234),  # Intron mutation (splice site)
+        ("c.234_235del", 234),  # Deletion with range
+        ("c.234_235insA", 234),  # Insertion with range
+        ("c.234_235delinsA", 234),  # Deletion-insertion with range
+        ("c.234+5_234+7del", 234),  # Complex range with intron positions
+        ("c.234-5_234-7del", 234),  # Complex range with intron positions
         ("invalid", -1),  # Invalid HGVS
     ],
 )
@@ -596,9 +603,84 @@ def test_alternative_start_codon_invalid():
         SeqVarPVS1Helper._alternative_start_codon(hgvs, cds_info)  # type: ignore
 
 
-def test_upstream_pathogenic_variant():
-    """Test the _upstream_pathogenic_variant method."""
-    pass
+# TODO: Rewrite this test
+@pytest.mark.parametrize(
+    "cds_pos, exons, strand, pathogenic_variants, expected_result",
+    [
+        (
+            100,
+            [MagicMock(altStartI=1, altEndI=200, altCdsStartI=1, altCdsEndI=200)],
+            GenomicStrand.Plus,
+            1,
+            True,
+        ),  # Test pathogenic variants found
+        (
+            100,
+            [MagicMock(altStartI=1, altEndI=200, altCdsStartI=1, altCdsEndI=200)],
+            GenomicStrand.Plus,
+            0,
+            False,
+        ),  # Test no pathogenic variants found
+        (
+            100,
+            [MagicMock(altStartI=1, altEndI=200, altCdsStartI=1, altCdsEndI=200)],
+            GenomicStrand.Minus,
+            1,
+            True,
+        ),  # Test pathogenic variants found on minus strand
+        (
+            100,
+            [MagicMock(altStartI=1, altEndI=200, altCdsStartI=1, altCdsEndI=200)],
+            GenomicStrand.Minus,
+            0,
+            False,
+        ),  # Test no pathogenic variants found on minus strand
+    ],
+)
+def test_upstream_pathogenic_variants(
+    seqvar, cds_pos, exons, strand, pathogenic_variants, expected_result, monkeypatch
+):
+    """Test the _upstream_pathogenic_variants method."""
+    # Mocking _count_pathogenic_variants to return a controlled number of pathogenic variants
+    mock_count_pathogenic = MagicMock(return_value=(pathogenic_variants, 10))
+    monkeypatch.setattr(SeqVarPVS1Helper, "_count_pathogenic_variants", mock_count_pathogenic)
+
+    # Run the method under test
+    helper = SeqVarPVS1Helper()
+    result = helper._upstream_pathogenic_variants(seqvar, cds_pos, exons, strand)  # type: ignore
+
+    # Assert the expected outcome
+    assert result == expected_result
+    if cds_pos is not None:
+        mock_count_pathogenic.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "cds_pos, exons, strand, pathogenic_variants",
+    [
+        (
+            None,
+            [MagicMock(altStartI=1, altEndI=200, altCdsStartI=1, altCdsEndI=200)],
+            GenomicStrand.Plus,
+            1,
+        ),  # Test case where cds_pos is None
+        (
+            100,
+            [MagicMock(altStartI=1, altEndI=200, altCdsStartI=1, altCdsEndI=200)],
+            None,
+            1,
+        ),  # Test case where no strand is provided
+        (100, [], GenomicStrand.Plus, 1),  # Test case where no exons are found
+    ],
+)
+def test_upstream_pathogenic_variants_failure(seqvar, cds_pos, exons, strand, pathogenic_variants):
+    """Test the _upstream_pathogenic_variants method."""
+    # Mocking _count_pathogenic_variants to return a controlled number of pathogenic variants
+    mock_count_pathogenic = MagicMock(return_value=(pathogenic_variants, 10))
+    with pytest.raises(MissingDataError):
+        # Run the method under test
+        helper = SeqVarPVS1Helper()
+        helper._upstream_pathogenic_variants(seqvar, cds_pos, exons, strand)
 
 
 # === SeqVarTranscriptsHelper ===

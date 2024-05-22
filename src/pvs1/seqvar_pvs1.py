@@ -307,8 +307,10 @@ class SeqVarPVS1Helper:
         """
         logger.debug("Getting variant position from tHGVS: {}", tHGVS)
         patterns = [
-            re.compile(r"c\.\*(\d+)([\+\-]?\d+)?(\D+)?"),
-            re.compile(r"c\.([0-9]+)([\+\-]?\d+)?(\D+)?"),
+            re.compile(r"c\.(\d+)([\+\-]\d+)?(\D+)?"),  # General pattern
+            re.compile(r"c\.(\*\d+)([\+\-]\d+)?(\D+)?"),  # Patterns with *
+            re.compile(r"c\.(\d+_\d+)(\D+)?"),  # Patterns with range (e.g., c.123_456del)
+            re.compile(r"c\.\*(\d+)([\+\-]?\d+)?(\D+)?"),  # Patterns with *
         ]
 
         position = -1  # default position if no match found
@@ -316,7 +318,10 @@ class SeqVarPVS1Helper:
         for pattern in patterns:
             match = pattern.search(tHGVS)
             if match:
-                position = int(match.group(1))
+                # Extract numeric position ignoring other characters
+                numeric_part = re.findall(r"\d+", match.group(1))
+                if numeric_part:
+                    position = int(numeric_part[0])
                 break
         return position
 
@@ -477,10 +482,18 @@ class SeqVarPVS1Helper:
             InvalidAPIResponseError: If the API response is invalid or cannot be processed.
         """
         logger.debug("Checking if the altered region is critical for the protein function.")
-        if not cds_pos or not strand:
-            logger.error("CDS position or strand is not available. Cannot determine criticality.")
+        if not cds_pos or not strand or not exons:
+            logger.error(
+                (
+                    "CDS variant position, strand or exons are not available. "
+                    "Cannot determine criticality."
+                )
+            )
             raise MissingDataError(
-                "CDS position or strand is not available. Cannot determine criticality."
+                (
+                    "CDS variant position, strand or exons are not available. "
+                    "Cannot determine criticality."
+                )
             )
 
         start_pos, end_pos = self._calculate_altered_region(
@@ -587,14 +600,20 @@ class SeqVarPVS1Helper:
 
         if termination / cds_length > 0.1:
             logger.debug(
-                "LoF variant removes MORE than 10% of the protein lenght with termination position: {} and total length {}.",
+                (
+                    "LoF variant removes MORE than 10% of the protein lenght with termination "
+                    "position: {} and total length {}."
+                ),
                 termination,
                 cds_length,
             )
             return True
         else:
             logger.debug(
-                "LoF variant removes LESS than 10% of the protein lenght with termination position: {} and total length {}.",
+                (
+                    "LoF variant removes LESS than 10% of the protein lenght with termination "
+                    "position: {} and total length {}."
+                ),
                 termination,
                 cds_length,
             )
@@ -646,10 +665,67 @@ class SeqVarPVS1Helper:
                 break
         return alternative_starts
 
-    @staticmethod
-    def _upstream_pathogenic_variant() -> bool:
-        """Check if the transcript has an upstream pathogenic variant(s)."""
-        return False
+    def _upstream_pathogenic_variants(
+        self,
+        seqvar: SeqVar,
+        cds_pos: Optional[int],
+        exons: List[Exon],
+        strand: Optional[GenomicStrand],
+    ) -> bool:
+        """Look for pathogenic variants upstream of the closest potential in-frame start codon.
+
+        The method checks for pathogenic variants upstream of the closest potential in-frame start
+        codon. The method is implemented as follows:
+            - Find the closest potential in-frame start codon.
+            - Fetch and count pathogenic variants in the specified range.
+            - Return True if pathogenic variants are found, otherwise False.
+
+        Args:
+            seqvar: The sequence variant being analyzed.
+            cds_pos: The position of the variant in the coding sequence.
+            exons: A list of exons of the gene where the variant occurs.
+            strand: The genomic strand of the gene.
+
+        Returns:
+            bool: True if pathogenic variants are found upstream of the closest potential in-frame
+                start codon, False otherwise.
+        """
+        logger.debug(
+            "Checking for pathogenic variants upstream of the closest in-frame start codon."
+        )
+        if not cds_pos or not strand or not exons:
+            logger.error(
+                (
+                    "CDS variant position, strand or exons are not available. "
+                    "Cannot determine upstream pathogenic variants."
+                )
+            )
+            raise MissingDataError(
+                (
+                    "CDS variant position, strand or exons are not available. Cannot determine "
+                    "upstream pathogenic variants."
+                )
+            )
+
+        # Find the closest potential in-frame start codon
+        if strand == GenomicStrand.Plus:
+            start_pos = exons[0].altStartI
+            for exon in exons:
+                if exon.altCdsStartI <= cds_pos <= exon.altCdsEndI:
+                    start_pos = exon.altStartI
+                    break
+            end_pos = cds_pos
+        elif strand == GenomicStrand.Minus:
+            start_pos = cds_pos
+            end_pos = exons[-1].altEndI
+
+        # Fetch and count pathogenic variants in the specified range
+        try:
+            pathogenic_variants, _ = self._count_pathogenic_variants(seqvar, start_pos, end_pos)
+            return pathogenic_variants > 0
+        except AutoAcmgBaseException as e:
+            logger.error("Failed to check upstream pathogenic variants. Error: {}", e)
+            raise AlgorithmError("Failed to check upstream pathogenic variants.") from e
 
 
 class SeqVarTranscriptsHelper:
@@ -885,6 +961,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         self.HGNC_id = self._seqvar_transcript.gene_id
         self.transcript_tags = self._seqvar_transcript.feature_tag
         self.exons = self._gene_transcript.genomeAlignments[0].exons
+        # TODO: Ask Manuel if this is the same as tHGVS position
         self.cds_pos = (
             self._seqvar_transcript.cds_pos.ord
             if isinstance(self._seqvar_transcript.cds_pos, CdsPos)
@@ -1021,7 +1098,9 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                 self.prediction = PVS1Prediction.NotPVS1
                 self.prediction_path = PVS1PredictionSeqVarPath.IC3
             else:
-                if self._upstream_pathogenic_variant():
+                if self._upstream_pathogenic_variants(
+                    self.seqvar, self.cds_pos, self.exons, self.strand
+                ):
                     self.prediction = PVS1Prediction.PVS1_Moderate
                     self.prediction_path = PVS1PredictionSeqVarPath.IC1
                 else:
