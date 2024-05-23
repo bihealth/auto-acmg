@@ -638,7 +638,6 @@ class SeqVarPVS1Helper:
         """Check if the variant causes exon skipping or cryptic splice site disruption."""
         return False
 
-    # TODO: Ask Manuel about the implementation of this method
     @staticmethod
     def _alternative_start_codon(hgvs: str, cds_info: Dict[str, CdsInfo]) -> bool:
         """
@@ -977,7 +976,6 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         self.HGNC_id = self._seqvar_transcript.gene_id
         self.transcript_tags = self._seqvar_transcript.feature_tag
         self.exons = self._gene_transcript.genomeAlignments[0].exons
-        # TODO: Ask Manuel if this is the same as tHGVS position
         self.cds_pos = (
             self._seqvar_transcript.cds_pos.ord
             if isinstance(self._seqvar_transcript.cds_pos, CdsPos)
