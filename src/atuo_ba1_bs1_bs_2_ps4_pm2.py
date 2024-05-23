@@ -39,6 +39,7 @@ class AutoBA1BS1BS2PS4PM2:
             return self.annonars_client.get_variant_info(seqvar)
         except AutoAcmgBaseException as e:
             logger.error("Failed to get variant information. Error: {}", e)
+            return None
 
     def predict(self) -> Optional[BA1BS1BS2PS4PM2]:
         """
