@@ -25,7 +25,7 @@ from src.defs.exceptions import (
     InvalidAPIResposeError,
     MissingDataError,
 )
-from src.defs.mehari import CdsPos, Exon, TranscriptGene, TranscriptSeqvar
+from src.defs.mehari import CdsPos, Exon, ProteinPos, TranscriptGene, TranscriptSeqvar, TxPos
 from src.defs.seqvar import SeqVar
 
 
@@ -119,7 +119,7 @@ class SeqVarPVS1Helper:
 
     @staticmethod
     def _calculate_altered_region(
-        cds_pos: int, exons: List[Exon], mode: AlteredRegionMode, strand: GenomicStrand
+        var_pos: int, exons: List[Exon], strand: GenomicStrand
     ) -> Tuple[int, int]:
         """
         Calculates the altered region's start and end positions.
@@ -127,65 +127,24 @@ class SeqVarPVS1Helper:
         This method calculates the start and end positions of the altered region based on the
         position of the variant in the coding sequence and the exons of the gene.
         The method is implemented as follows:
-        - If the mode is "Downstream", the altered region is calculated based on the position
-        of the variant in the coding sequence and the exons of the gene. The region is
-        calculated downstream from the variant based on the genomic strand.
-        - If the mode is "Exon", the altered region is calculated based on the position of the
-        variant in the coding sequence and the exons of the gene.
+        - If the genomic strand is plus, the start position is the variant position, and the end
+        position is the last exon's end position.
+        - If the genomic strand is minus, the start position is the first exon's start position,
+        and the end position is the variant position.
 
         Args:
-            cds_pos: The position of the variant in the coding sequence.
+            var_pos: The position of the variant in the coding sequence.
             exons: A list of exons of the gene where the variant occurs.
-            mode: The mode to calculate the altered region.
             strand: The genomic strand of the gene.
 
         Returns:
             Tuple[int, int]: The start and end positions of the altered region.
         """
-        logger.debug(
-            "Calculating altered region for CDS position: {} for the mode: {}.", cds_pos, mode
-        )
-        if mode == AlteredRegionMode.Downstream:
-            if strand == GenomicStrand.Plus:
-                start_pos = exons[0].altStartI
-                for exon in exons:
-                    if exon.altCdsStartI <= cds_pos <= exon.altCdsEndI:
-                        start_pos = exon.altStartI + (cds_pos - exon.altCdsStartI)
-                        break
-                    if exon.altCdsEndI < cds_pos:
-                        start_pos = exon.altEndI + (cds_pos - exon.altCdsEndI)
-                end_pos = exons[-1].altEndI
-                logger.debug("Altered region: {} - {}", start_pos, end_pos)
-                return start_pos, end_pos
-            elif strand == GenomicStrand.Minus:
-                start_pos = exons[-1].altEndI
-                for exon in exons[::-1]:
-                    if exon.altCdsStartI <= cds_pos <= exon.altCdsEndI:
-                        start_pos = exon.altEndI - (cds_pos - exon.altCdsStartI)
-                        break
-                    if exon.altCdsStartI > cds_pos:
-                        start_pos = exon.altStartI - (cds_pos - exon.altCdsStartI)
-                end_pos = exons[0].altStartI
-                logger.debug("Altered region: {} - {}", start_pos, end_pos)
-                return start_pos, end_pos
-        elif mode == AlteredRegionMode.CDS:
-            # Get the range of the altered exon
-            start_pos = exons[0].altStartI
-            end_pos = exons[-1].altEndI
-            for exon in exons:
-                # Variant is in the exon
-                if exon.altCdsStartI <= cds_pos and exon.altCdsEndI >= cds_pos:
-                    start_pos = exon.altStartI + (cds_pos - exon.altCdsStartI)
-                    end_pos = exon.altEndI
-                    break
-                # Variant is in the intron
-                if exon.altCdsEndI < cds_pos:
-                    start_pos = exon.altEndI + (cds_pos - exon.altCdsEndI)
-                if exon.altCdsStartI > cds_pos:
-                    end_pos = exon.altStartI
-                    break
-            logger.debug("Altered region: {} - {}", start_pos, end_pos)
-            return start_pos, end_pos
+        logger.debug("Calculating altered region for variant position: {}.", var_pos)
+        start_pos = var_pos if strand == GenomicStrand.Plus else exons[0].altStartI
+        end_pos = exons[-1].altEndI if strand == GenomicStrand.Plus else var_pos
+        logger.debug("Altered region: {} - {}", start_pos, end_pos)
+        return start_pos, end_pos
 
     def _count_pathogenic_variants(
         self, seqvar: SeqVar, start_pos: int, end_pos: int
@@ -208,6 +167,11 @@ class SeqVarPVS1Helper:
             InvalidAPIResposeError: If the API response is invalid or cannot be processed.
         """
         logger.debug("Counting pathogenic variants in the range {} - {}.", start_pos, end_pos)
+        if end_pos < start_pos:
+            logger.error("End position is less than the start position.")
+            logger.debug("Positions given: {} - {}", start_pos, end_pos)
+            raise AlgorithmError("End position is less than the start position.")
+
         response = self.annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
         if response and response.result.clinvar:
             pathogenic_variants = [
@@ -266,6 +230,11 @@ class SeqVarPVS1Helper:
             Tuple[int, int]: The number of frequent LoF variants and the total number of LoF variants.
         """
         logger.debug("Counting LoF variants in the range {} - {}.", start_pos, end_pos)
+        if end_pos < start_pos:
+            logger.error("End position is less than the start position.")
+            logger.debug("Positions given: {} - {}", start_pos, end_pos)
+            raise AlgorithmError("End position is less than the start position.")
+
         response = self.annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
         if response and response.result.gnomad_genomes:
             frequent_lof_variants = 0
@@ -297,7 +266,7 @@ class SeqVarPVS1Helper:
             )
 
     @staticmethod
-    def _get_variant_position(tHGVS: str) -> int:
+    def _get_cds_position(tHGVS: str) -> int:
         """
         Get the variant position from a transcript HGVS notation.
 
@@ -370,25 +339,22 @@ class SeqVarPVS1Helper:
                     break
         return utr_length
 
+    @staticmethod
     def _undergo_nmd(
-        self,
-        exons: List[Exon],
-        tHGVS: str,
+        var_pos: int,
         hgnc_id: str,
-        cds_start: int,
-        cds_end: int,
         strand: Optional[GenomicStrand],
+        exons: List[Exon],
     ) -> bool:
         """
         Classifies if the variant undergoes Nonsense-mediated decay (NMD).
 
         Implementation of the rule:
         The method checks if the variant is in the GJB2 gene and always predicts it to undergo NMD.
-        If the variant is not in the GJB2 gene, the method calculates the new stop codon position
-        from the tHGVS notation and the length of the 5' UTR region. Next the NMD cutoff is
-        calculated as a sum of the transcript sizes minus the minimum of 50 or the size of the
-        penultimate exon. If the sum of the new stop codon position and the 5' UTR length is less
-        or equal to the NMD cutoff, the variant is predicted to undergo NMD.
+        If the variant is not in the GJB2 gene, the method checks if the new stop codon position
+        including the 5' UTR length is less or equal to the NMD cutoff, and if it is indeed less or
+        equal, the variant is predicted to undergo NMD. Otherwise, the variant is predicted to
+        escape NMD.
 
         Note:
             Rule:
@@ -398,12 +364,10 @@ class SeqVarPVS1Helper:
                 For the GJB2 gene (HGNC:4284), the variant is always predicted to undergo NMD.
 
         Args:
-            exons: A list of exons of the gene where the variant occurs.
-            tHGVS: The transcript HGVS notation.
-            hgnc_id: The HGNC gene ID.
-            cds_start: The start position of the coding sequence.
-            cds_end: The end position of the coding sequence.
+            var_pos: The position of the new stop codon !including the 5' UTR length!.
+            hgnc_id: The HGNC ID of the gene.
             strand: The genomic strand of the gene.
+            exons: A list of exons of the gene.
 
         Returns:
             bool: True if the variant undergoes NMD, False if variant escapes NMD.
@@ -412,29 +376,27 @@ class SeqVarPVS1Helper:
         if hgnc_id == "HGNC:4284":  # Hearing Loss Guidelines GJB2
             logger.debug("Variant is in the GJB2 gene. Predicted to undergo NMD.")
             return True
-        if not strand:
-            logger.error("Strand information is not available. Cannot determine NMD.")
-            raise MissingDataError("Strand information is not available. Cannot determine NMD.")
+        if not strand or not exons:
+            logger.error("Strand information or exons are not available. Cannot determine NMD.")
+            raise MissingDataError(
+                "Strand information or exons are not available. Cannot determine NMD."
+            )
 
-        new_stop_codon = self._get_variant_position(tHGVS)
         tx_sizes = [exon.altCdsEndI - exon.altCdsStartI + 1 for exon in exons]
         if strand == GenomicStrand.Minus:
             tx_sizes = tx_sizes[::-1]  # Reverse the exons
 
-        if len(tx_sizes) <= 1:
-            logger.debug("Only one (or 0) exon. Predicted to undergo NMD.")
+        if len(tx_sizes) == 1:
+            logger.debug("The only exon. Predicted to undergo NMD.")
             return False
 
-        five_prime_UTR = self._calculate_5_prime_UTR_length(exons, cds_start, cds_end, strand)
         nmd_cutoff = sum(tx_sizes[:-1]) - min(50, tx_sizes[-2])
         logger.debug(
-            "New stop codon + 5' UTR length: {} + {} = {}, NMD cutoff: {}.",
-            new_stop_codon,
-            five_prime_UTR,
-            new_stop_codon + five_prime_UTR,
+            "New stop codon: {}, NMD cutoff: {}.",
+            var_pos,
             nmd_cutoff,
         )
-        return new_stop_codon + five_prime_UTR <= nmd_cutoff
+        return var_pos <= nmd_cutoff
 
     @staticmethod
     def _in_biologically_relevant_transcript(transcript_tags: List[str]) -> bool:
@@ -457,7 +419,6 @@ class SeqVarPVS1Helper:
     def _critical4protein_function(
         self,
         seqvar: SeqVar,
-        cds_pos: int | None,
         exons: List[Exon],
         strand: Optional[GenomicStrand],
     ) -> bool:
@@ -494,24 +455,16 @@ class SeqVarPVS1Helper:
             InvalidAPIResponseError: If the API response is invalid or cannot be processed.
         """
         logger.debug("Checking if the altered region is critical for the protein function.")
-        if not cds_pos or not strand or not exons:
+        if not strand or not exons:
             logger.error(
-                (
-                    "CDS variant position, strand or exons are not available. "
-                    "Cannot determine criticality."
-                )
+                "Genomic strand or exons are not available. " "Cannot determine criticality."
             )
             raise MissingDataError(
-                (
-                    "CDS variant position, strand or exons are not available. "
-                    "Cannot determine criticality."
-                )
+                "Genomic strand or exons are not available. " "Cannot determine criticality."
             )
 
-        start_pos, end_pos = self._calculate_altered_region(
-            cds_pos, exons, AlteredRegionMode.Downstream, strand
-        )
         try:
+            start_pos, end_pos = self._calculate_altered_region(seqvar.pos, exons, strand)
             pathogenic_variants, total_variants = self._count_pathogenic_variants(
                 seqvar, start_pos, end_pos
             )
@@ -525,10 +478,31 @@ class SeqVarPVS1Helper:
             logger.error("Failed to predict criticality for variant. Error: {}", e)
             raise AlgorithmError("Failed to predict criticality for variant.") from e
 
+    @staticmethod
+    def _find_affected_exon_position(var_pos: int, exons: List[Exon]) -> Tuple[int, int]:
+        """
+        Find start and end positions of the affected exon.
+
+        Args:
+            var_pos: The position of the variant in the coding sequence.
+            exons: A list of exons of the gene where the variant occurs.
+
+        Returns:
+            Tuple[int, int]: The start and end positions of the affected exon.
+
+        Raises:
+            AlgorithmError: If the affected exon is not found.
+        """
+        logger.debug("Finding the affected exon position.")
+        for exon in exons:
+            if exon.altStartI <= var_pos <= exon.altEndI:
+                return exon.altStartI, exon.altEndI
+        logger.debug("Affected exon not found. Variant position: {}. Exons: {}", var_pos, exons)
+        raise AlgorithmError("Affected exon not found.")
+
     def _lof_is_frequent_in_population(
         self,
         seqvar: SeqVar,
-        cds_pos: int | None,
         exons: List[Exon],
         strand: Optional[GenomicStrand],
     ) -> bool:
@@ -553,7 +527,6 @@ class SeqVarPVS1Helper:
 
         Args:
             seqvar: The sequence variant being analyzed.
-            cds_pos: The position of the variant in the coding sequence.
             exons: A list of exons of the gene where the variant occurs.
             strand: The genomic strand of the gene.
 
@@ -564,16 +537,14 @@ class SeqVarPVS1Helper:
             InvalidAPIResponseError: If the API response is invalid or cannot be processed.
         """
         logger.debug("Checking if LoF variants are frequent in the general population.")
-        if not cds_pos or not strand:
-            logger.error("CDS position or strand is not available. Cannot determine LoF frequency.")
+        if not strand:
+            logger.error("Genomic strand is not available. Cannot determine LoF frequency.")
             raise MissingDataError(
-                "CDS or strand position is not available. Cannot determine LoF frequency."
+                "Genomic strand position is not available. Cannot determine LoF frequency."
             )
 
-        start_pos, end_pos = self._calculate_altered_region(
-            cds_pos, exons, AlteredRegionMode.CDS, strand
-        )
         try:
+            start_pos, end_pos = self._find_affected_exon_position(seqvar.pos, exons)
             frequent_lof_variants, lof_variants = self._count_lof_variants(
                 seqvar, start_pos, end_pos
             )
@@ -587,15 +558,13 @@ class SeqVarPVS1Helper:
             logger.error("Failed to predict LoF frequency for variant. Error: {}", e)
             raise AlgorithmError("Failed to predict LoF frequency for variant.") from e
 
-    def _lof_removes_more_then_10_percent_of_protein(self, tHGVS: str, cds_length: int) -> bool:
+    @staticmethod
+    def _lof_removes_more_then_10_percent_of_protein(prot_pos: int, prot_length: int) -> bool:
         """
         Check if the LoF variant removes more than 10% of the protein.
 
-        Implementation of the rule:
-            The rule is implemented by:
-            - Getting the variant position from the tHGVS notation.
-            - Calculating the percentage of the protein removed by the variant.
-            - Considering the LoF variant to remove more than 10% of the protein if the variant
+        The method checks if the LoF variant removes more than 10% of the protein based on the
+        position of the variant in the protein and the length of the protein.
 
         Note:
             Rule:
@@ -603,35 +572,14 @@ class SeqVarPVS1Helper:
                 removes more than 10% of the protein.
 
         Args:
-            tHGVS: A string containing the transcript HGVS notation.
-            cds_length: The length of the coding sequence.
+            prot_pos: The position of the variant in the protein.
+            prot_length: The length of the protein.
 
         Returns:
             bool: True if the LoF variant removes more than 10% of the protein, False otherwise.
         """
         logger.debug("Checking if the LoF variant removes more than 10% of the protein.")
-        termination = self._get_variant_position(tHGVS)
-
-        if termination / cds_length > 0.1:
-            logger.debug(
-                (
-                    "LoF variant removes MORE than 10% of the protein lenght with termination "
-                    "position: {} and total length {}."
-                ),
-                termination,
-                cds_length,
-            )
-            return True
-        else:
-            logger.debug(
-                (
-                    "LoF variant removes LESS than 10% of the protein lenght with termination "
-                    "position: {} and total length {}."
-                ),
-                termination,
-                cds_length,
-            )
-            return False
+        return prot_pos / prot_length > 0.1
 
     @staticmethod
     def _exon_skipping_or_cryptic_ss_disruption() -> bool:
@@ -639,7 +587,49 @@ class SeqVarPVS1Helper:
         return False
 
     @staticmethod
-    def _alternative_start_codon(hgvs: str, cds_info: Dict[str, CdsInfo]) -> bool:
+    def _closest_alternative_start_codon(cds_info: Dict[str, CdsInfo], hgvs: str) -> Optional[int]:
+        """
+        Calculate the closest potential start codon.
+
+        The method calculates the closest potential start codon based on the position of the variant
+        in the coding sequence and the CDS information of the gene.
+
+        Args:
+            cds_info: A dictionary containing the CDS information for all transcripts.
+            hgvs: The main transcript ID.
+
+        Returns:
+            Optional[int]: The position of the closest potential start codon, or None if not found.
+        """
+        logger.debug("Checking if the variant introduces an alternative start codon.")
+        if hgvs not in cds_info:  # Should never happen
+            logger.error("Main transcript ID {} not found in the transcripts data.", hgvs)
+            raise MissingDataError(f"Main transcript ID {hgvs} not found in the transcripts data.")
+
+        main_cds_start = (
+            cds_info[hgvs].cds_start
+            if cds_info[hgvs].cds_strand == GenomicStrand.Plus
+            else cds_info[hgvs].cds_end
+        )
+        main_strand = cds_info[hgvs].cds_strand
+
+        closest_alternative_start = None
+        for transcript_id, info in cds_info.items():
+            if transcript_id == hgvs:
+                continue
+            alt_cds_start = (
+                info.cds_start if info.cds_strand == GenomicStrand.Plus else info.cds_end
+            )
+            if alt_cds_start != main_cds_start and main_strand == info.cds_strand:
+                if (
+                    not closest_alternative_start  # New start codon found
+                    or alt_cds_start - main_cds_start
+                    < closest_alternative_start - main_cds_start  # Closer start codon found
+                ):
+                    closest_alternative_start = alt_cds_start
+        return closest_alternative_start
+
+    def _alternative_start_codon(self, cds_info: Dict[str, CdsInfo], hgvs: str) -> bool:
         """
         Check if the variant introduces an alternative start codon in other transcripts.
 
@@ -653,7 +643,6 @@ class SeqVarPVS1Helper:
                 If the variant introduces an alternative start codon in other transcripts, it is
                 considered to be non-pathogenic.
 
-
         Args:
             hgvs: The main transcript ID.
             cds_info: A dictionary containing the CDS information for all transcripts.
@@ -663,28 +652,16 @@ class SeqVarPVS1Helper:
                 False otherwise.
         """
         logger.debug("Checking if the variant introduces an alternative start codon.")
-        if hgvs not in cds_info:  # Should never happen
-            logger.error("Main transcript ID {} not found in the dataset.", hgvs)
-            raise MissingDataError(f"Main transcript ID {hgvs} not found in the dataset.")
-
-        main_start_codon, main_cds_start = cds_info[hgvs].start_codon, cds_info[hgvs].cds_start
-        # Check if other transcripts have alternative start codons
-        alternative_starts = False
-        for transcript_id, info in cds_info.items():
-            if transcript_id == hgvs:
-                continue
-            if info.start_codon != main_start_codon and info.cds_start != main_cds_start:
-                logger.debug("Alternative start codon found in transcript {}.", transcript_id)
-                alternative_starts = True
-                break
-        return alternative_starts
+        alt_start = self._closest_alternative_start_codon(cds_info, hgvs)
+        return alt_start is not None
 
     def _upstream_pathogenic_variants(
         self,
         seqvar: SeqVar,
-        cds_pos: Optional[int],
         exons: List[Exon],
         strand: Optional[GenomicStrand],
+        cds_info: Dict[str, CdsInfo],
+        hgvs: str,
     ) -> bool:
         """
         Look for pathogenic variants upstream of the closest potential in-frame start codon.
@@ -700,6 +677,8 @@ class SeqVarPVS1Helper:
             cds_pos: The position of the variant in the coding sequence.
             exons: A list of exons of the gene where the variant occurs.
             strand: The genomic strand of the gene.
+            cds_info: A dictionary containing the CDS information for all transcripts.
+            hgvs: The main transcript ID.
 
         Returns:
             bool: True if pathogenic variants are found upstream of the closest potential in-frame
@@ -708,31 +687,25 @@ class SeqVarPVS1Helper:
         logger.debug(
             "Checking for pathogenic variants upstream of the closest in-frame start codon."
         )
-        if not cds_pos or not strand or not exons:
-            logger.error(
-                (
-                    "CDS variant position, strand or exons are not available. "
-                    "Cannot determine upstream pathogenic variants."
-                )
-            )
-            raise MissingDataError(
-                (
-                    "CDS variant position, strand or exons are not available. Cannot determine "
-                    "upstream pathogenic variants."
-                )
-            )
 
-        # Find the closest potential in-frame start codon
+        if not strand:
+            logger.error("Strand is not available. Cannot determine upstream pathogenic variants.")
+            raise MissingDataError(
+                "Strand is not available. Cannot determine upstream pathogenic variants."
+            )
+        start_pos, end_pos = None, None
         if strand == GenomicStrand.Plus:
             start_pos = exons[0].altStartI
-            for exon in exons:
-                if exon.altCdsStartI <= cds_pos <= exon.altCdsEndI:
-                    start_pos = exon.altStartI
-                    break
-            end_pos = cds_pos
+            end_pos = self._closest_alternative_start_codon(cds_info, hgvs)
         elif strand == GenomicStrand.Minus:
-            start_pos = cds_pos
+            start_pos = self._closest_alternative_start_codon(cds_info, hgvs)
             end_pos = exons[-1].altEndI
+
+        if not start_pos or not end_pos:
+            logger.debug("No alternative start codon found. Skipping upstream pathogenic variants.")
+            raise AlgorithmError(
+                "No alternative start codon found. Skipping upstream pathogenic variants."
+            )
 
         # Fetch and count pathogenic variants in the specified range
         try:
@@ -925,16 +898,19 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         self._all_gene_ts: List[TranscriptGene] = []
         self._consequence: SeqVarConsequence = SeqVarConsequence.NotSet
         self.HGVS: str = ""
-        self.pHGVS: str = ""
-        self.tHGVS: str = ""
+        # self.pHGVS: str = ""
+        # self.tHGVS: str = ""
         self.HGNC_id: str = ""
         self.transcript_tags: List[str] = []
         self.exons: List[Exon] = []
-        self.cds_pos: int | None = None
+        # self.cds_pos: int = -1
+        self.tx_pos_utr: int = -1
+        self.prot_pos: int = -1
+        self.protein_length: int = -1
         self.cds_info: Dict[str, CdsInfo] = {}
-        self.cds_start: int = 0
-        self.cds_end: int = 0
-        self.cds_length: int = -1  # Avoid division by zero if not set
+        # self.cds_start: int = -1
+        # self.cds_end: int = -1
+        # self.cds_length: int = -1
         self.strand: Optional[GenomicStrand] = None
         # Prediction attributes
         self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
@@ -945,6 +921,10 @@ class SeqVarPVS1(SeqVarPVS1Helper):
 
         Fetches the transcript data and sets the attributes. Use this method before making
         predictions.
+
+        Raises:
+            MissingDataError: If the transcript data is not fully set or if some attributes could
+            not be set.
         """
         logger.debug("Setting up the SeqVarPVS1 class.")
         # Fetch transcript data
@@ -971,15 +951,30 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         # Set attributes
         logger.debug("Setting up the attributes for the PVS1 class.")
         self.HGVS = self._gene_transcript.id
-        self.pHGVS = self._choose_hgvs_p(self.HGVS, self._seqvar_transcript, self._all_seqvar_ts)
-        self.tHGVS = self._seqvar_transcript.hgvs_t if self._seqvar_transcript.hgvs_t else ""
+        # self.pHGVS = self._choose_hgvs_p(self.HGVS, self._seqvar_transcript, self._all_seqvar_ts)
+        # self.tHGVS = self._seqvar_transcript.hgvs_t if self._seqvar_transcript.hgvs_t else ""
         self.HGNC_id = self._seqvar_transcript.gene_id
         self.transcript_tags = self._seqvar_transcript.feature_tag
         self.exons = self._gene_transcript.genomeAlignments[0].exons
-        self.cds_pos = (
-            self._seqvar_transcript.cds_pos.ord
-            if isinstance(self._seqvar_transcript.cds_pos, CdsPos)
-            else None
+        # self.cds_pos = (
+        #     self._seqvar_transcript.cds_pos.ord
+        #     if isinstance(self._seqvar_transcript.cds_pos, CdsPos)
+        #     else -1
+        # )
+        self.tx_pos_utr = (
+            self._seqvar_transcript.tx_pos.ord
+            if isinstance(self._seqvar_transcript.tx_pos, TxPos)
+            else -1
+        )
+        self.prot_pos = (
+            self._seqvar_transcript.protein_pos.ord
+            if isinstance(self._seqvar_transcript.protein_pos, ProteinPos)
+            else -1
+        )
+        self.protein_length = (
+            self._seqvar_transcript.protein_pos.total
+            if isinstance(self._seqvar_transcript.protein_pos, ProteinPos)
+            else -1
         )
         self.cds_info = {
             ts.id: CdsInfo(
@@ -987,14 +982,41 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                 stop_codon=ts.stopCodon,
                 cds_start=ts.genomeAlignments[0].cdsStart,
                 cds_end=ts.genomeAlignments[0].cdsEnd,
+                cds_strand=GenomicStrand.from_string(ts.genomeAlignments[0].strand),
                 exons=ts.genomeAlignments[0].exons,
             )
             for ts in self._all_gene_ts
         }
-        self.cds_start = self._gene_transcript.genomeAlignments[0].cdsStart
-        self.cds_end = self._gene_transcript.genomeAlignments[0].cdsEnd
-        self.cds_length = self._gene_transcript.stopCodon - self._gene_transcript.startCodon
+        # self.cds_start = self._gene_transcript.genomeAlignments[0].cdsStart
+        # self.cds_end = self._gene_transcript.genomeAlignments[0].cdsEnd
+        # self.cds_length = self._gene_transcript.stopCodon - self._gene_transcript.startCodon
         self.strand = GenomicStrand.from_string(self._gene_transcript.genomeAlignments[0].strand)
+        if (
+            not self.exons
+            # or self.cds_pos == -1
+            or self.tx_pos_utr == -1
+            or self.prot_pos == -1
+            or self.protein_length == -1
+            # or self.cds_start == -1
+            # or self.cds_end == -1
+            # or self.cds_length == -1
+            or not self.strand
+        ):
+            logger.error("Some attributes are not set. Cannot initialize the PVS1 class.")
+            logger.debug(
+                "Exons: {}, CDS position: {}, TX position UTR: {}, Protein position: {}, "
+                "Protein length: {}, CDS start: {}, CDS end: {}, CDS length: {}, Strand: {}.",
+                self.exons,
+                # self.cds_pos,
+                self.tx_pos_utr,
+                self.prot_pos,
+                self.protein_length,
+                # self.cds_start,
+                # self.cds_end,
+                # self.cds_length,
+                self.strand,
+            )
+            raise MissingDataError("Some attributes are not set. Cannot initialize the PVS1 class.")
         logger.debug("SeqVarPVS1 initialized successfully.")
 
     def verify_PVS1(self):
@@ -1016,14 +1038,12 @@ class SeqVarPVS1(SeqVarPVS1Helper):
 
         if self._consequence == SeqVarConsequence.NonsenseFrameshift:
             if self.HGNC_id == "HGNC:9588":  # Follow guidelines for PTEN
-                if self._get_pHGVS_termination(self.pHGVS) < 374:
+                if self.prot_pos < 374:
                     self.prediction = PVS1Prediction.PVS1
                     self.prediction_path = PVS1PredictionSeqVarPath.PTEN
                     return
 
-            if self._undergo_nmd(
-                self.exons, self.tHGVS, self.HGNC_id, self.cds_start, self.cds_end, self.strand
-            ):
+            if self._undergo_nmd(self.tx_pos_utr, self.HGNC_id, self.strand, self.exons):
                 if self._in_biologically_relevant_transcript(self.transcript_tags):
                     self.prediction = PVS1Prediction.PVS1
                     self.prediction_path = PVS1PredictionSeqVarPath.NF1
@@ -1031,20 +1051,18 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                     self.prediction = PVS1Prediction.NotPVS1
                     self.prediction_path = PVS1PredictionSeqVarPath.NF2
             else:
-                if self._critical4protein_function(
-                    self.seqvar, self.cds_pos, self.exons, self.strand
-                ):
+                if self._critical4protein_function(self.seqvar, self.exons, self.strand):
                     self.prediction = PVS1Prediction.PVS1_Strong
                     self.prediction_path = PVS1PredictionSeqVarPath.NF3
                 else:
                     if self._lof_is_frequent_in_population(
-                        self.seqvar, self.cds_pos, self.exons, self.strand
+                        self.seqvar, self.exons, self.strand
                     ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionSeqVarPath.NF4
                     else:
                         if self._lof_removes_more_then_10_percent_of_protein(
-                            self.tHGVS, self.cds_length
+                            self.prot_pos, self.protein_length
                         ):
                             self.prediction = PVS1Prediction.PVS1_Strong
                             self.prediction_path = PVS1PredictionSeqVarPath.NF5
@@ -1054,7 +1072,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
 
         elif self._consequence == SeqVarConsequence.SpliceSites:
             if self._exon_skipping_or_cryptic_ss_disruption() and self._undergo_nmd(
-                self.exons, self.tHGVS, self.HGNC_id, self.cds_start, self.cds_end, self.strand
+                self.tx_pos_utr, self.HGNC_id, self.strand, self.exons
             ):
                 if self._in_biologically_relevant_transcript(self.transcript_tags):
                     self.prediction = PVS1Prediction.PVS1
@@ -1063,22 +1081,20 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                     self.prediction = PVS1Prediction.NotPVS1
                     self.prediction_path = PVS1PredictionSeqVarPath.SS2
             elif self._exon_skipping_or_cryptic_ss_disruption() and not self._undergo_nmd(
-                self.exons, self.tHGVS, self.HGNC_id, self.cds_start, self.cds_end, self.strand
+                self.tx_pos_utr, self.HGNC_id, self.strand, self.exons
             ):
-                if self._critical4protein_function(
-                    self.seqvar, self.cds_pos, self.exons, self.strand
-                ):
+                if self._critical4protein_function(self.seqvar, self.exons, self.strand):
                     self.prediction = PVS1Prediction.PVS1_Strong
                     self.prediction_path = PVS1PredictionSeqVarPath.SS3
                 else:
                     if self._lof_is_frequent_in_population(
-                        self.seqvar, self.cds_pos, self.exons, self.strand
+                        self.seqvar, self.exons, self.strand
                     ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionSeqVarPath.SS4
                     else:
                         if self._lof_removes_more_then_10_percent_of_protein(
-                            self.tHGVS, self.cds_length
+                            self.prot_pos, self.protein_length
                         ):
                             self.prediction = PVS1Prediction.PVS1_Strong
                             self.prediction_path = PVS1PredictionSeqVarPath.SS5
@@ -1086,20 +1102,18 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                             self.prediction = PVS1Prediction.PVS1_Moderate
                             self.prediction_path = PVS1PredictionSeqVarPath.SS6
             else:
-                if self._critical4protein_function(
-                    self.seqvar, self.cds_pos, self.exons, self.strand
-                ):
+                if self._critical4protein_function(self.seqvar, self.exons, self.strand):
                     self.prediction = PVS1Prediction.PVS1_Strong
                     self.prediction_path = PVS1PredictionSeqVarPath.SS10
                 else:
                     if self._lof_is_frequent_in_population(
-                        self.seqvar, self.cds_pos, self.exons, self.strand
+                        self.seqvar, self.exons, self.strand
                     ) or not self._in_biologically_relevant_transcript(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionSeqVarPath.SS7
                     else:
                         if self._lof_removes_more_then_10_percent_of_protein(
-                            self.tHGVS, self.cds_length
+                            self.prot_pos, self.protein_length
                         ):
                             self.prediction = PVS1Prediction.PVS1_Strong
                             self.prediction_path = PVS1PredictionSeqVarPath.SS8
@@ -1108,12 +1122,12 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                             self.prediction_path = PVS1PredictionSeqVarPath.SS9
 
         elif self._consequence == SeqVarConsequence.InitiationCodon:
-            if self._alternative_start_codon(self.HGVS, self.cds_info):
+            if self._alternative_start_codon(self.cds_info, self.HGVS):
                 self.prediction = PVS1Prediction.NotPVS1
                 self.prediction_path = PVS1PredictionSeqVarPath.IC3
             else:
                 if self._upstream_pathogenic_variants(
-                    self.seqvar, self.cds_pos, self.exons, self.strand
+                    self.seqvar, self.exons, self.strand, self.cds_info, self.HGVS
                 ):
                     self.prediction = PVS1Prediction.PVS1_Moderate
                     self.prediction_path = PVS1PredictionSeqVarPath.IC1

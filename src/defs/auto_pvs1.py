@@ -48,6 +48,7 @@ class CdsInfo(BaseModel):
     stop_codon: int
     cds_start: int
     cds_end: int
+    cds_strand: GenomicStrand
     exons: List[Exon]
 
 
