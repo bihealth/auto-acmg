@@ -3,3 +3,4 @@ sphinxcontrib-bibtex
 aiohttp
 pydantic_settings
 typer
+loguru
