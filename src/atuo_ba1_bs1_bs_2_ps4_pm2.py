@@ -48,6 +48,5 @@ class AutoBA1BS1BS2PS4PM2:
             BA1BS1BS2PS4PM2: The prediction result.
         """
 
-
         # Return the prediction result
         return self.prediction
