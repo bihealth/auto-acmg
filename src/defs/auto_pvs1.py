@@ -7,13 +7,6 @@ from src.defs.auto_acmg import AutoAcmgBaseEnum
 from src.defs.mehari import Exon, TranscriptGene, TranscriptSeqvar
 
 
-class AlteredRegionMode(AutoAcmgBaseEnum):
-    """Enumeration for altered region mode."""
-
-    Downstream = auto()
-    CDS = auto()
-
-
 class GenomicStrand(AutoAcmgBaseEnum):
     """Enumeration for genomic strand."""
 
@@ -48,6 +41,7 @@ class CdsInfo(BaseModel):
     stop_codon: int
     cds_start: int
     cds_end: int
+    cds_strand: GenomicStrand
     exons: List[Exon]
 
 
@@ -129,12 +123,16 @@ SeqvarConsequenceMapping: Dict[str, SeqVarConsequence] = {
     "intron_variant": SeqVarConsequence.NotSet,
     "upstream_gene_variant": SeqVarConsequence.InitiationCodon,
     "downstream_gene_variant": SeqVarConsequence.InitiationCodon,
+    "start_lost": SeqVarConsequence.InitiationCodon,
     "5_prime_utr_variant": SeqVarConsequence.NotSet,
     "5_prime_UTR_variant": SeqVarConsequence.NotSet,
     "3_prime_utr_variant": SeqVarConsequence.NonsenseFrameshift,
     "3_prime_UTR_variant": SeqVarConsequence.NonsenseFrameshift,
     "splice_region_variant": SeqVarConsequence.SpliceSites,  # Can affect splicing
     "splice_donor_variant": SeqVarConsequence.SpliceSites,  # Canonical splice site
+    "splice_donor_5th_base_variant": SeqVarConsequence.SpliceSites,  # Non-canonical splice site
+    "splice_donor_region_variant": SeqVarConsequence.SpliceSites,  # Non-canonical splice site
+    "splice_polypyrimidine_tract_variant": SeqVarConsequence.SpliceSites,  # Non-canonical splice site
     "splice_acceptor_variant": SeqVarConsequence.SpliceSites,  # Canonical splice site
     "frameshift_variant": SeqVarConsequence.NonsenseFrameshift,  # Loss of function
     "transcript_ablation": SeqVarConsequence.NotSet,  # Severe effect, but not specifically classified here
@@ -145,20 +143,30 @@ SeqvarConsequenceMapping: Dict[str, SeqVarConsequence] = {
     "stop_retained_variant": SeqVarConsequence.NotSet,
     "missense_variant": SeqVarConsequence.NotSet,  # Not loss of function in a direct way
     "initiator_codon_variant": SeqVarConsequence.InitiationCodon,  # Affects start codon
+    "start_retained_variant": SeqVarConsequence.InitiationCodon,  # Affects start codon
     "stop_gained": SeqVarConsequence.NonsenseFrameshift,  # Nonsense variant
     "stop_lost": SeqVarConsequence.NotSet,  # Could be significant, but not classified here as Nonsense/Frameshift
     "mature_mirna_variant": SeqVarConsequence.NotSet,
+    "mature_miRNA_variant": SeqVarConsequence.NotSet,
     "non_coding_exon_variant": SeqVarConsequence.NotSet,  # Impact unclear
     "nc_transcript_variant": SeqVarConsequence.NotSet,
     "incomplete_terminal_codon_variant": SeqVarConsequence.NotSet,  # Rarely significant
+    "NMD_transcript_variant": SeqVarConsequence.NotSet,  # Effect on NMD, not directly LOF
     "nmd_transcript_variant": SeqVarConsequence.NotSet,  # Effect on NMD, not directly LOF
     "coding_sequence_variant": SeqVarConsequence.NotSet,  # Ambiguous
+    "sequence_variant": SeqVarConsequence.NotSet,  # Ambiguous
     "tfbs_ablation": SeqVarConsequence.NotSet,  # Regulatory, not LOF
     "tfbs_amplification": SeqVarConsequence.NotSet,
     "tf_binding_site_variant": SeqVarConsequence.NotSet,
     "regulatory_region_ablation": SeqVarConsequence.NotSet,  # Regulatory, not LOF
     "regulatory_region_variant": SeqVarConsequence.NotSet,
     "regulatory_region_amplification": SeqVarConsequence.NotSet,
+    "feature_elongation": SeqVarConsequence.NotSet,  # Ambiguous
+    "feature_truncation": SeqVarConsequence.NotSet,  # Ambiguous
+    "protein_altering_variant": SeqVarConsequence.NotSet,  # Ambiguous
+    "non_coding_transcript_exon_variant": SeqVarConsequence.NotSet,  # Impact unclear
+    "non_coding_transcript_variant": SeqVarConsequence.NotSet,  # Impact unclear
+    "coding_transcript_variant": SeqVarConsequence.NotSet,  # Ambiguous
 }
 
 
