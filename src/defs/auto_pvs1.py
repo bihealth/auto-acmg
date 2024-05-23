@@ -7,13 +7,6 @@ from src.defs.auto_acmg import AutoAcmgBaseEnum
 from src.defs.mehari import Exon, TranscriptGene, TranscriptSeqvar
 
 
-class AlteredRegionMode(AutoAcmgBaseEnum):
-    """Enumeration for altered region mode."""
-
-    Downstream = auto()
-    CDS = auto()
-
-
 class GenomicStrand(AutoAcmgBaseEnum):
     """Enumeration for genomic strand."""
 

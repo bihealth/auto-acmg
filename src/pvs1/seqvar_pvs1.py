@@ -1,16 +1,14 @@
 """PVS1 criteria for Sequence Variants (SeqVar)."""
 
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from loguru import logger
-from pydantic import BaseModel
 
 from src.api.annonars import AnnonarsClient
 from src.api.mehari import MehariClient
 from src.core.config import Config
 from src.defs.auto_pvs1 import (
-    AlteredRegionMode,
     CdsInfo,
     GenomicStrand,
     PVS1Prediction,
@@ -25,7 +23,7 @@ from src.defs.exceptions import (
     InvalidAPIResposeError,
     MissingDataError,
 )
-from src.defs.mehari import CdsPos, Exon, ProteinPos, TranscriptGene, TranscriptSeqvar, TxPos
+from src.defs.mehari import Exon, ProteinPos, TranscriptGene, TranscriptSeqvar, TxPos
 from src.defs.seqvar import SeqVar
 
 
@@ -36,6 +34,7 @@ class SeqVarPVS1Helper:
         self.config: Config = config or Config()
         self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
 
+    # The method is outdated
     @staticmethod
     def _choose_hgvs_p(
         hgvs: str, seqvar_ts: TranscriptSeqvar, seqvar_transcripts: List[TranscriptSeqvar]
@@ -68,6 +67,7 @@ class SeqVarPVS1Helper:
                 return hgvs + ":" + transcript.hgvs_p
         return hgvs + ":p.?"
 
+    # The method is outdated
     @staticmethod
     def _get_pHGVS_termination(pHGVS: str) -> int:
         """
@@ -116,6 +116,82 @@ class SeqVarPVS1Helper:
             termination = -1
         logger.debug("Termination position: {}", termination)
         return termination
+
+    # The method is outdated
+    @staticmethod
+    def _get_cds_position(tHGVS: str) -> int:
+        """
+        Get the variant position from a transcript HGVS notation.
+
+        This method extracts the variant position from the tHGVS notation.
+        The method parses the tHGVS string using regular expressions and returns the position.
+
+        Note:
+            If the position is not found, returns -1.
+
+        Args:
+            tHGVS: A string containing the coding HGVS notation.
+
+        Returns:
+            int: The variant position extracted from the tHGVS string, or -1 if not found.
+        """
+        logger.debug("Getting variant position from tHGVS: {}", tHGVS)
+        patterns = [
+            re.compile(r"c\.(\d+)([\+\-]\d+)?(\D+)?"),  # General pattern
+            re.compile(r"c\.(\*\d+)([\+\-]\d+)?(\D+)?"),  # Patterns with *
+            re.compile(r"c\.(\d+_\d+)(\D+)?"),  # Patterns with range (e.g., c.123_456del)
+            re.compile(r"c\.\*(\d+)([\+\-]?\d+)?(\D+)?"),  # Patterns with *
+        ]
+
+        position = -1  # default position if no match found
+
+        for pattern in patterns:
+            match = pattern.search(tHGVS)
+            if match:
+                # Extract numeric position ignoring other characters
+                numeric_part = re.findall(r"\d+", match.group(1))
+                if numeric_part:
+                    position = int(numeric_part[0])
+                break
+        return position
+
+    # The method is outdated
+    @staticmethod
+    def _calculate_5_prime_UTR_length(
+        exons: List[Exon], cds_start: int, cds_end: int, strand: GenomicStrand
+    ) -> int:
+        """
+        Calculates the length of the 5' UTR region.
+
+        The method iterates through the exons of the gene and adds the length of the exons to the
+        offset position until the coding sequence start position is reached.
+
+        Args:
+            exons: A list of exons of the gene.
+            cds_start: The start position of the coding sequence.
+            cds_end: The end position of the coding sequence.
+            strand: The genomic strand of the gene.
+
+        Returns:
+            int: The length of the 5' UTR region.
+        """
+        logger.debug("Calculating the length of the 5' UTR region. Strand: {}", strand)
+        utr_length = 0
+        if strand == GenomicStrand.Plus:
+            for exon in exons:
+                if exon.altStartI < cds_start and exon.altEndI < cds_start:
+                    utr_length += exon.altEndI - exon.altStartI
+                elif exon.altStartI < cds_start < exon.altEndI:
+                    utr_length += cds_start - exon.altStartI
+                    break
+        elif strand == GenomicStrand.Minus:
+            for exon in exons[::-1]:
+                if exon.altStartI > cds_end and exon.altEndI > cds_end:
+                    utr_length += exon.altEndI - exon.altStartI
+                elif exon.altStartI < cds_end < exon.altEndI:
+                    utr_length += exon.altEndI - cds_end
+                    break
+        return utr_length
 
     @staticmethod
     def _calculate_altered_region(
@@ -264,80 +340,6 @@ class SeqVarPVS1Helper:
             raise InvalidAPIResposeError(
                 "Failed to get variant from range. No gnomAD genomes data."
             )
-
-    @staticmethod
-    def _get_cds_position(tHGVS: str) -> int:
-        """
-        Get the variant position from a transcript HGVS notation.
-
-        This method extracts the variant position from the tHGVS notation.
-        The method parses the tHGVS string using regular expressions and returns the position.
-
-        Note:
-            If the position is not found, returns -1.
-
-        Args:
-            tHGVS: A string containing the coding HGVS notation.
-
-        Returns:
-            int: The variant position extracted from the tHGVS string, or -1 if not found.
-        """
-        logger.debug("Getting variant position from tHGVS: {}", tHGVS)
-        patterns = [
-            re.compile(r"c\.(\d+)([\+\-]\d+)?(\D+)?"),  # General pattern
-            re.compile(r"c\.(\*\d+)([\+\-]\d+)?(\D+)?"),  # Patterns with *
-            re.compile(r"c\.(\d+_\d+)(\D+)?"),  # Patterns with range (e.g., c.123_456del)
-            re.compile(r"c\.\*(\d+)([\+\-]?\d+)?(\D+)?"),  # Patterns with *
-        ]
-
-        position = -1  # default position if no match found
-
-        for pattern in patterns:
-            match = pattern.search(tHGVS)
-            if match:
-                # Extract numeric position ignoring other characters
-                numeric_part = re.findall(r"\d+", match.group(1))
-                if numeric_part:
-                    position = int(numeric_part[0])
-                break
-        return position
-
-    @staticmethod
-    def _calculate_5_prime_UTR_length(
-        exons: List[Exon], cds_start: int, cds_end: int, strand: GenomicStrand
-    ) -> int:
-        """
-        Calculates the length of the 5' UTR region.
-
-        The method iterates through the exons of the gene and adds the length of the exons to the
-        offset position until the coding sequence start position is reached.
-
-        Args:
-            exons: A list of exons of the gene.
-            cds_start: The start position of the coding sequence.
-            cds_end: The end position of the coding sequence.
-            strand: The genomic strand of the gene.
-
-        Returns:
-            int: The length of the 5' UTR region.
-        """
-        logger.debug("Calculating the length of the 5' UTR region. Strand: {}", strand)
-        utr_length = 0
-        if strand == GenomicStrand.Plus:
-            for exon in exons:
-                if exon.altStartI < cds_start and exon.altEndI < cds_start:
-                    utr_length += exon.altEndI - exon.altStartI
-                elif exon.altStartI < cds_start < exon.altEndI:
-                    utr_length += cds_start - exon.altStartI
-                    break
-        elif strand == GenomicStrand.Minus:
-            for exon in exons[::-1]:
-                if exon.altStartI > cds_end and exon.altEndI > cds_end:
-                    utr_length += exon.altEndI - exon.altStartI
-                elif exon.altStartI < cds_end < exon.altEndI:
-                    utr_length += exon.altEndI - cds_end
-                    break
-        return utr_length
 
     @staticmethod
     def _undergo_nmd(
@@ -906,7 +908,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         # self.cds_pos: int = -1
         self.tx_pos_utr: int = -1
         self.prot_pos: int = -1
-        self.protein_length: int = -1
+        self.prot_length: int = -1
         self.cds_info: Dict[str, CdsInfo] = {}
         # self.cds_start: int = -1
         # self.cds_end: int = -1
@@ -971,7 +973,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
             if isinstance(self._seqvar_transcript.protein_pos, ProteinPos)
             else -1
         )
-        self.protein_length = (
+        self.prot_length = (
             self._seqvar_transcript.protein_pos.total
             if isinstance(self._seqvar_transcript.protein_pos, ProteinPos)
             else -1
@@ -996,7 +998,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
             # or self.cds_pos == -1
             or self.tx_pos_utr == -1
             or self.prot_pos == -1
-            or self.protein_length == -1
+            or self.prot_length == -1
             # or self.cds_start == -1
             # or self.cds_end == -1
             # or self.cds_length == -1
@@ -1010,7 +1012,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                 # self.cds_pos,
                 self.tx_pos_utr,
                 self.prot_pos,
-                self.protein_length,
+                self.prot_length,
                 # self.cds_start,
                 # self.cds_end,
                 # self.cds_length,
@@ -1062,7 +1064,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                         self.prediction_path = PVS1PredictionSeqVarPath.NF4
                     else:
                         if self._lof_removes_more_then_10_percent_of_protein(
-                            self.prot_pos, self.protein_length
+                            self.prot_pos, self.prot_length
                         ):
                             self.prediction = PVS1Prediction.PVS1_Strong
                             self.prediction_path = PVS1PredictionSeqVarPath.NF5
@@ -1094,7 +1096,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                         self.prediction_path = PVS1PredictionSeqVarPath.SS4
                     else:
                         if self._lof_removes_more_then_10_percent_of_protein(
-                            self.prot_pos, self.protein_length
+                            self.prot_pos, self.prot_length
                         ):
                             self.prediction = PVS1Prediction.PVS1_Strong
                             self.prediction_path = PVS1PredictionSeqVarPath.SS5
@@ -1113,7 +1115,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                         self.prediction_path = PVS1PredictionSeqVarPath.SS7
                     else:
                         if self._lof_removes_more_then_10_percent_of_protein(
-                            self.prot_pos, self.protein_length
+                            self.prot_pos, self.prot_length
                         ):
                             self.prediction = PVS1Prediction.PVS1_Strong
                             self.prediction_path = PVS1PredictionSeqVarPath.SS8
