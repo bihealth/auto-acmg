@@ -1,4 +1,4 @@
-"""Implementation of PS1 prediction for sequence variants."""
+"""Implementation of PS1 and PM5 prediction for sequence variants."""
 
 import re
 from typing import Optional
