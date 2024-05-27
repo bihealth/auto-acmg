@@ -57,11 +57,10 @@ class PS1PM5(BaseModel):
     PM5: bool = False
 
 
-class BA1BS1BS2PS4PM2(BaseModel):
-    """BA1, BS1, BS2, PS4, and PM2 criteria prediction."""
+class BA1BS1BS2PM2(BaseModel):
+    """BA1, BS1, BS2, and PM2 criteria prediction."""
 
     BA1: bool = False
     BS1: bool = False
     BS2: bool = False
-    PS4: bool = False
     PM2: bool = False

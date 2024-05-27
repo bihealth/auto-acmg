@@ -135,7 +135,13 @@ NM_000546.5:c.-28-5118_672+241dup (Exon 2-6 duplication)   (Gene TP53)   (From R
 - provem NOT in tandem:
 
 
+PS1:
+NM_004333.4(BRAF):c.739T>C  (p.Phe247Leu)   (Gene: BRAF)   (Note: PS1)   (From ClinGen)
+
 PM4:
 NC_000011.10:2847957:C:G === NM_000218.2:c.1986C>G (p.Tyr662Ter)   (Gene: KCNQ1)  (Note: PM4)   (From Recommendation 07.09.2018)
 NM_000314.6:c.1134_1135insCTGG (p.Tyr379LeufsTer4)   (Gene: PTEN)  (Note: PM4)   (From Recommendation 07.09.2018)   ### Debug
 NM_000152.4:c.2842_2483insT (p.Leu948SerfsTer70)   (Gene: GAA)  (Note: PM4)   (From Recommendation 07.09.2018)   ### Debug
+
+BA1:
+NM_000277.2(PAH):c.1278T>C
