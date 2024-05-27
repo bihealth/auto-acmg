@@ -4,9 +4,10 @@ import pytest
 from typer.testing import CliRunner
 
 from src.auto_acmg import AutoACMG
-from src.auto_ps1_pm5 import AutoPS1PM5
 from src.core.config import Config
-from src.defs.auto_acmg import PS1PM5
+from src.criteria.auto_criteria import AutoACMGCriteria
+from src.criteria.auto_ps1_pm5 import AutoPS1PM5
+from src.defs.auto_acmg import PS1PM5, ACMGCriteria
 from src.defs.exceptions import AutoAcmgBaseException, ParseError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar, SeqVarResolver
@@ -66,19 +67,19 @@ def mock_auto_pvs1_failure(monkeypatch):
 
 
 @pytest.fixture
-def mock_auto_ps1_pm5_success(monkeypatch):
-    mock_ps1_pm5 = MagicMock(AutoPS1PM5)
-    mock_ps1_pm5.predict.return_value = PS1PM5()
-    monkeypatch.setattr("src.auto_acmg.AutoPS1PM5", lambda *args, **kwargs: mock_ps1_pm5)
-    return mock_ps1_pm5
+def mock_auto_criteria_success(monkeypatch):
+    mock_criteria = MagicMock(AutoACMGCriteria)
+    mock_criteria.predict.return_value = ACMGCriteria()
+    monkeypatch.setattr("src.auto_acmg.AutoACMGCriteria", lambda *args, **kwargs: mock_criteria)
+    return mock_criteria
 
 
 @pytest.fixture
-def mock_auto_ps1_pm5_failure(monkeypatch):
-    mock_ps1_pm5 = MagicMock(AutoPS1PM5)
-    mock_ps1_pm5.predict.side_effect = AutoAcmgBaseException("An error occurred")
-    monkeypatch.setattr("src.auto_acmg.AutoPS1PM5", lambda *args, **kwargs: mock_ps1_pm5)
-    return mock_ps1_pm5
+def mock_auto_criteria_failure(monkeypatch):
+    mock_criteria = MagicMock(AutoACMGCriteria)
+    mock_criteria.predict.side_effect = AutoAcmgBaseException("An error occurred")
+    monkeypatch.setattr("src.auto_acmg.AutoACMGCriteria", lambda *args, **kwargs: mock_criteria)
+    return mock_criteria
 
 
 def test_auto_acmg_resolve_sequence_variant_success(
@@ -109,7 +110,7 @@ def test_auto_acmg_resolve_sequence_variant_failure(mock_seqvar_resolver_failure
 def test_auto_acmg_predict_seqvar_success(
     mock_seqvar_resolver,
     mock_auto_pvs1_success,
-    mock_auto_ps1_pm5_success,
+    mock_auto_criteria_success,
     mock_seqvar,
     config: Config,
 ):
@@ -118,11 +119,11 @@ def test_auto_acmg_predict_seqvar_success(
     with runner.isolated_filesystem():
         auto_acmg.predict()
     assert mock_auto_pvs1_success.predict.called
-    assert mock_auto_ps1_pm5_success.predict.called
+    assert mock_auto_criteria_success.predict.called
 
 
 def test_auto_acmg_predict_seqvar_resolve_failure(
-    mock_seqvar_resolver_failure, mock_auto_pvs1_failure, config: Config
+    mock_seqvar_resolver_failure, mock_auto_pvs1_failure, mock_auto_criteria_success, config: Config
 ):
     """Test the predict method for a sequence variant with a failure response due to resolve method."""
     auto_acmg = AutoACMG("NM_000038.3:c.797G>A", GenomeRelease.GRCh38, config=config)
@@ -132,10 +133,10 @@ def test_auto_acmg_predict_seqvar_resolve_failure(
     assert not mock_auto_pvs1_failure.predict.called
 
 
-def test_auto_acmg_predict_seqvar_pvs1_failure(
+def test_auto_acmg_predict_failure_pvs1(
     mock_seqvar_resolver,
     mock_auto_pvs1_failure,
-    mock_auto_ps1_pm5_success,
+    mock_auto_criteria_success,
     mock_seqvar,
     config: Config,
 ):
@@ -149,10 +150,10 @@ def test_auto_acmg_predict_seqvar_pvs1_failure(
     assert auto_acmg.seqvar_pvs1_prediction_path == PVS1PredictionSeqVarPath.NotSet
 
 
-def test_auto_acmg_predict_seqvar_ps1_pm5_failure(
+def test_auto_acmg_predict_failure_criteria(
     mock_seqvar_resolver,
     mock_auto_pvs1_success,
-    mock_auto_ps1_pm5_failure,
+    mock_auto_criteria_failure,
     mock_seqvar,
     config: Config,
 ):
@@ -162,7 +163,4 @@ def test_auto_acmg_predict_seqvar_ps1_pm5_failure(
         auto_acmg.predict()
     assert mock_seqvar_resolver.resolve_seqvar.called
     assert mock_auto_pvs1_success.predict.called
-    assert mock_auto_ps1_pm5_failure.predict.called
-    assert auto_acmg.seqvar == mock_seqvar
-    assert auto_acmg.seqvar_ps1 is None
-    assert auto_acmg.seqvar_pm5 is None
+    assert mock_auto_criteria_failure.predict.called

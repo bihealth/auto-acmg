@@ -50,11 +50,49 @@ class AminoAcid(AutoAcmgBaseEnum):
     Stop = "*"
 
 
+class ACMGCriteria(BaseModel):
+    """ACMG criteria prediction. Note: without PVS1."""
+
+    PS1: bool = False
+    PS2: bool = False
+    PS3: bool = False
+    PS4: bool = False
+    PM1: bool = False
+    PM2: bool = False
+    PM3: bool = False
+    PM4: bool = False
+    PM5: bool = False
+    PM6: bool = False
+    PP1: bool = False
+    PP2: bool = False
+    PP3: bool = False
+    PP4: bool = False
+    PP5: bool = False
+    BA1: bool = False
+    BS1: bool = False
+    BS2: bool = False
+    BS3: bool = False
+    BS4: bool = False
+    BP1: bool = False
+    BP2: bool = False
+    BP3: bool = False
+    BP4: bool = False
+    BP5: bool = False
+    BP6: bool = False
+
+
 class PS1PM5(BaseModel):
     """PS1 and PM5 criteria prediction."""
 
     PS1: bool = False
     PM5: bool = False
+
+
+class PM4BP3(BaseModel):
+    """PM4 and BP3 criteria prediction."""
+
+    PM4: bool = False
+    BP3: bool = False
 
 
 class BA1BS1BS2PM2(BaseModel):

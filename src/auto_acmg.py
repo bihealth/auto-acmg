@@ -4,15 +4,10 @@ from typing import Optional
 
 from loguru import logger
 
-from src.atuo_ba1_bs1_bs_2_pm2 import AutoBA1BS1BS2PM2
-from src.auto_ps1_pm5 import AutoPS1PM5
 from src.core.config import Config
-from src.defs.auto_pvs1 import (
-    PVS1Prediction,
-    PVS1PredictionPathMapping,
-    PVS1PredictionSeqVarPath,
-    PVS1PredictionStrucVarPath,
-)
+from src.criteria.auto_criteria import AutoACMGCriteria
+from src.defs.auto_acmg import ACMGCriteria
+from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionPathMapping, PVS1PredictionSeqVarPath
 from src.defs.exceptions import AutoAcmgBaseException, ParseError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar, SeqVarResolver
@@ -91,13 +86,19 @@ class AutoACMG:
             return None
 
     def predict(self):
-        """Runs the prediction algorithm to assess the PVS1 criteria for the resolved variant.
+        """
+        Predict ACMG criteria for the specified variant.
 
-        This method resolves the variant and then, based on the type of variant, predicts its
-        classification according to the PVS1 criteria. It handles both sequence and structural variants.
+        This method first resolves the variant, then predicts the PVS1 criterion for sequence
+        variants and other ACMG criteria.
+
+        Note:
+            The method can resolve both sequence and structural variants, but currently only
+            sequence variants are supported for ACMG criteria prediction.
 
         Raises:
-            Exception: Handles general exceptions that may occur during prediction and logs them.
+            Exception: Specific exceptions are caught and logged, but generic exceptions may be
+            raised if the prediction fails.
         """
         logger.info("Predicting ACMG criteria for variant: {}", self.variant_name)
         variant = self.resolve_variant()
@@ -116,8 +117,7 @@ class AutoACMG:
             self.seqvar_pvs1_prediction_path: PVS1PredictionSeqVarPath = (
                 PVS1PredictionSeqVarPath.NotSet
             )
-            self.seqvar_ps1: Optional[bool] = None
-            self.seqvar_pm5: Optional[bool] = None
+            self.seqvar_criteria: ACMGCriteria = ACMGCriteria()
 
             # PVS1
             try:
@@ -132,96 +132,60 @@ class AutoACMG:
                     self.seqvar_pvs1_prediction = seqvar_prediction
                     self.seqvar_pvs1_prediction_path = seqvar_prediction_path
                     logger.info(
-                        "PVS1 prediction for {}: {}.\n" "The prediction path is:\n{}.",
-                        self.seqvar.user_repr,
+                        "PVS1 prediction: {}.\nThe prediction path is:\n{}.",
                         self.seqvar_pvs1_prediction.name,
                         PVS1PredictionPathMapping[self.seqvar_pvs1_prediction_path],
                     )
             except AutoAcmgBaseException as e:
                 logger.error("Failed to predict PVS1 criteria. Error: {}", e)
 
-            # PS1 and PM5
+            # Other criteria
             try:
-                logger.info("Predicting PS1 and PM5.")
-                ps1pm5 = AutoPS1PM5(self.seqvar, self.genome_release, config=self.config)
-                ps1_pm5_prediction = ps1pm5.predict()
-                if not ps1_pm5_prediction:
-                    logger.error("Failed to predict PS1&PM5 criteria.")
-                else:
-                    self.seqvar_ps1, self.seqvar_pm5 = (
-                        ps1_pm5_prediction.PS1,
-                        ps1_pm5_prediction.PM5,
-                    )
-                    logger.info(
-                        "PS1 prediction for {}: {}.\n" "PM5 prediction: {}.",
-                        self.seqvar.user_repr,
-                        self.seqvar_ps1,
-                        self.seqvar_pm5,
-                    )
-            except AutoAcmgBaseException as e:
-                logger.error("Failed to predict PS1 and PM5 criteria. Error: {}", e)
-
-            # BA1, BS1, BS2, PM2
-            try:
-                logger.info("Predicting BA1, BS1, BS2, and PM2.")
-                ba1bs1bs2pm2 = AutoBA1BS1BS2PM2(
+                logger.info("Predicting other ACMG criteria.")
+                auto_criteria = AutoACMGCriteria(
                     self.seqvar, self.genome_release, config=self.config
                 )
-                ba1bs1bs2pm2_prediction = ba1bs1bs2pm2.predict()
-                if not ba1bs1bs2pm2_prediction:
-                    logger.error("Failed to predict BA1, BS1, BS2, and PM2 criteria.")
+                criteria_preciction = auto_criteria.predict()
+                if criteria_preciction is None:
+                    logger.error("Failed to predict other ACMG criteria.")
                 else:
-                    self.seqvar_ba1, self.seqvar_bs1, self.seqvar_bs2, self.seqvar_pm2 = (
-                        ba1bs1bs2pm2_prediction.BA1,
-                        ba1bs1bs2pm2_prediction.BS1,
-                        ba1bs1bs2pm2_prediction.BS2,
-                        ba1bs1bs2pm2_prediction.PM2,
-                    )
-                    logger.info(
-                        "BA1 prediction for {}: {}.\n"
-                        "BS1 prediction: {}.\n"
-                        "BS2 prediction: {}.\n"
-                        "PM2 prediction: {}.",
-                        self.seqvar.user_repr,
-                        self.seqvar_ba1,
-                        self.seqvar_bs1,
-                        self.seqvar_bs2,
-                        self.seqvar_pm2,
-                    )
+                    self.seqvar_criteria = criteria_preciction
+                    logger.info("Other ACMG criteria prediction:\n{}", self.seqvar_criteria)
             except AutoAcmgBaseException as e:
-                logger.error("Failed to predict BA1, BS1, BS2, and PM2 criteria. Error: {}", e)
+                logger.error("Failed to predict other ACMG criteria. Error: {}", e)
 
         elif isinstance(variant, StrucVar):
-            logger.info("Currently only PVS1 prediction is implemented for structural variants!")
-            logger.info(
-                "Classifying ACMG criteria for structural variant {}, genome release: {}.",
-                variant.user_repr,
-                self.genome_release.name,
-            )
-            # PVS1
-            try:
-                logger.info("Predicting PVS1.")
-                self.strucvar: StrucVar = variant
-                self.strucvar_prediction: PVS1Prediction = PVS1Prediction.NotSet  # type: ignore
-                self.strucvar_prediction_path: PVS1PredictionStrucVarPath = PVS1PredictionStrucVarPath.NotSet  # type: ignore
+            logger.info("Classification of structural variants is not implemented yet.")
+            # logger.info("Currently only PVS1 prediction is implemented for structural variants!")
+            # logger.info(
+            #     "Classifying ACMG criteria for structural variant {}, genome release: {}.",
+            #     variant.user_repr,
+            #     self.genome_release.name,
+            # )
+            # # PVS1
+            # try:
+            #     logger.info("Predicting PVS1.")
+            #     self.strucvar: StrucVar = variant
+            #     self.strucvar_prediction: PVS1Prediction = PVS1Prediction.NotSet  # type: ignore
+            #     self.strucvar_prediction_path: PVS1PredictionStrucVarPath = PVS1PredictionStrucVarPath.NotSet  # type: ignore
 
-                pvs1 = AutoPVS1(self.strucvar, self.genome_release)
-                strucvar_prediction, strucvar_prediction_path = pvs1.predict()
-                if strucvar_prediction is None or strucvar_prediction_path is None:
-                    logger.error("Failed to predict PVS1 criteria.")
-                    return
-                else:
-                    # Double check if the prediction path is indeed for structural variant
-                    assert isinstance(strucvar_prediction_path, PVS1PredictionStrucVarPath)
-                    self.strucvar_prediction = strucvar_prediction
-                    self.strucvar_prediction_path = strucvar_prediction_path
-                    logger.info(
-                        "PVS1 prediction for {}: {}.\n" "The prediction path is:\n{}.",
-                        self.strucvar.user_repr,
-                        self.strucvar_prediction.name,
-                        PVS1PredictionPathMapping[self.strucvar_prediction_path],
-                    )
-            except AutoAcmgBaseException as e:
-                logger.error("Failed to predict PVS1 criteria. Error: {}", e)
-                return
+            #     pvs1 = AutoPVS1(self.strucvar, self.genome_release)
+            #     strucvar_prediction, strucvar_prediction_path = pvs1.predict()
+            #     if strucvar_prediction is None or strucvar_prediction_path is None:
+            #         logger.error("Failed to predict PVS1 criteria.")
+            #         return
+            #     else:
+            #         # Double check if the prediction path is indeed for structural variant
+            #         assert isinstance(strucvar_prediction_path, PVS1PredictionStrucVarPath)
+            #         self.strucvar_prediction = strucvar_prediction
+            #         self.strucvar_prediction_path = strucvar_prediction_path
+            #         logger.info(
+            #             "PVS1 prediction for {}: {}.\n" "The prediction path is:\n{}.",
+            #             self.strucvar.user_repr,
+            #             self.strucvar_prediction.name,
+            #             PVS1PredictionPathMapping[self.strucvar_prediction_path],
+            #         )
+            # except AutoAcmgBaseException as e:
+            #     logger.error("Failed to predict PVS1 criteria. Error: {}", e)
+            #     return
         logger.info("ACMG criteria prediction completed.")
