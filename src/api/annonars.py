@@ -52,7 +52,7 @@ class AnnonarsClient:
             logger.exception("Validation failed: {}", e)
             raise AnnonarsException("Annonars returned non-validating data.") from e
 
-    def get_variant_info(self, seqvar: SeqVar) -> Optional[AnnonarsVariantResponse]:
+    def get_variant_info(self, seqvar: SeqVar) -> AnnonarsVariantResponse:
         """Get variant information from Annonars.
 
         Args:

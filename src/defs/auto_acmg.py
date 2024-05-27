@@ -55,3 +55,12 @@ class PS1PM5(BaseModel):
 
     PS1: bool = False
     PM5: bool = False
+
+
+class BA1BS1BS2PM2(BaseModel):
+    """BA1, BS1, BS2, and PM2 criteria prediction."""
+
+    BA1: bool = False
+    BS1: bool = False
+    BS2: bool = False
+    PM2: bool = False

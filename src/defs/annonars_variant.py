@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Any, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class VariantQuery(BaseModel):
@@ -15,6 +15,10 @@ class VariantQuery(BaseModel):
     pos: int
     reference: str
     alternative: str
+
+
+class GnomadExomes(BaseModel):
+    alleleCounts: List[AlleleCount]
 
 
 class Dbnsfp(BaseModel):
@@ -122,7 +126,7 @@ class VariantResult(BaseModel):
     dbnsfp: Optional[Dbnsfp] = None
     dbscsnv: Optional[Any] = None
     gnomad_mtdna: Optional[Any] = None
-    gnomad_exomes: Optional[Any] = None
+    gnomad_exomes: Optional[GnomadExomes] = None
     gnomad_genomes: Optional[GnomadGenomes] = None
     helixmtdb: Optional[Any] = None
     ucsc_conservation: Optional[Any] = None
