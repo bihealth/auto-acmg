@@ -28,8 +28,9 @@ class AutoPM4BP3:
 
     def _get_variant_info(self, seqvar: SeqVar) -> Optional[AnnonarsVariantResponse]:
         """Get variant information from Annonars.
+
         Returns:
-            dict: Annonars response.
+            AnnonarsVariantResponse: Annonars response.
         """
         try:
             logger.debug("Getting variant information for {}.", seqvar)
@@ -40,8 +41,10 @@ class AutoPM4BP3:
 
     def _in_repeat_region(self, variant_info: AnnonarsVariantResponse) -> bool:
         """Check if the variant is in a repeat region.
+
         Args:
             variant_info (AnnonarsVariantResponse): The variant information.
+
         Returns:
             bool: True if the variant is in a repeat region, False otherwise.
         """
@@ -49,8 +52,10 @@ class AutoPM4BP3:
 
     def _in_conserved_domain(self, variant_info: AnnonarsVariantResponse) -> bool:
         """Check if the variant is in a conserved domain.
+
         Args:
             variant_info (AnnonarsVariantResponse): The variant information.
+
         Returns:
             bool: True if the variant is in a conserved domain, False otherwise.
         """
@@ -58,16 +63,21 @@ class AutoPM4BP3:
 
     def predict(self) -> Optional[PM4BP3]:
         """Predicts PM4 and BP3 criteria for the provided sequence variant.
+
+        Implementation of the rule:
+        - If the variant is a stop-loss variant, PM4 is True and BP3 is False.
+        - If the variant is an in-frame deletion/insertion:
+        - If the variant is not in a repeat region and in a conserved domain, PM4 is True and BP3 is
+        False.
+        - If the variant is in a repeat region and not in a conserved domain, PM4 is False and BP3
+        is True.
+
         Note:
-            Rule:
-            PM4: Protein length changes due to in-frame deletions/insertions in a non-repeat region or stop-loss
-            variants.
+            Rules:
+            PM4: Protein length changes due to in-frame deletions/insertions in a non-repeat region
+            or stop-loss variants.
             BP3: In-frame deletions/insertions in a repetitive region without a known function.
-            Implementation:
-            - If the variant is a stop-loss variant, PM4 is True and BP3 is False.
-            - If the variant is an in-frame deletion/insertion:
-            - If the variant is not in a repeat region and in a conserved domain, PM4 is True and BP3 is False.
-            - If the variant is in a repeat region and not in a conserved domain, PM4 is False and BP3 is True.
+
         Returns:
             PM4BP3: PM4 and BP3 prediction.
         """

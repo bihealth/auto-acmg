@@ -21,7 +21,7 @@ REGEX_HGVSP = re.compile(r"p\.(\D+)(\d+)(\D+)")
 
 
 class AutoPS1PM5:
-    """Predicts PS1 criteria for sequence variants."""
+    """Predicts PS1 and PM5 criteria for sequence variants."""
 
     def __init__(
         self, seqvar: SeqVar, genome_release: GenomeRelease, *, config: Optional[Config] = None
@@ -38,7 +38,7 @@ class AutoPS1PM5:
         """Get variant information from Annonars.
 
         Returns:
-            dict: Annonars response.
+            AnnonarsVariantResponse: Annonars response.
         """
         try:
             logger.debug("Getting variant information for {}.", seqvar)
