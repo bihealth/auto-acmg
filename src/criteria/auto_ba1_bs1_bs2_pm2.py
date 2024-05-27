@@ -18,13 +18,18 @@ class AutoBA1BS1BS2PM2:
     """Predicts BA1, BS1, BS2, PM2 criteria for sequence variants."""
 
     def __init__(
-        self, seqvar: SeqVar, genome_release: GenomeRelease, *, config: Optional[Config] = None
+        self,
+        seqvar: SeqVar,
+        genome_release: GenomeRelease,
+        variant_info: VariantResult,
+        *,
+        config: Optional[Config] = None,
     ):
         #: Configuration to use.
         self.config = config or Config()
-        # Attributes to be set
         self.seqvar = seqvar
         self.genome_release = genome_release
+        self.variant_info = variant_info
         self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
         self.prediction: BA1BS1BS2PM2 | None = None
 
@@ -149,21 +154,16 @@ class AutoBA1BS1BS2PM2:
             BA1BS1BS2PM2: The prediction result.
         """
         try:
-            # Get variant information
-            variant_info = self._get_variant_info(self.seqvar)
-            if not variant_info:
-                raise MissingDataError("No variant information retrieved")
-
             # Instantiate the prediction result
             self.prediction = BA1BS1BS2PM2()
 
             # Evaluate each criterion
-            self.prediction.BA1 = self.evaluate_ba1(self.seqvar, variant_info.result)
+            self.prediction.BA1 = self.evaluate_ba1(self.seqvar, self.variant_info)
             self.prediction.BS1 = self.evaluate_bs1(
-                self.seqvar, variant_info.result, max_credible_freq=0.01
+                self.seqvar, self.variant_info, max_credible_freq=0.01
             )  # Adjust max_credible_freq as needed
-            self.prediction.BS2 = self.evaluate_bs2(variant_info.result)
-            self.prediction.PM2 = self.evaluate_pm2(self.seqvar, variant_info.result)
+            self.prediction.BS2 = self.evaluate_bs2(self.variant_info)
+            self.prediction.PM2 = self.evaluate_pm2(self.seqvar, self.variant_info)
         except AutoAcmgBaseException as e:
             logger.error("Error occurred during BA1, BS1, BS2, PM5 prediction. Error: {}", e)
             self.prediction = None

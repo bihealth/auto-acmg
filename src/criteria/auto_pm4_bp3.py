@@ -6,7 +6,7 @@ from loguru import logger
 
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config
-from src.defs.annonars_variant import AnnonarsVariantResponse
+from src.defs.annonars_variant import AnnonarsVariantResponse, VariantResult
 from src.defs.auto_acmg import PM4BP3
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
 from src.defs.genome_builds import GenomeRelease
@@ -17,12 +17,18 @@ class AutoPM4BP3:
     """Predicts PM4 and BP3 criteria for sequence variants."""
 
     def __init__(
-        self, seqvar: SeqVar, genome_release: GenomeRelease, *, config: Optional[Config] = None
+        self,
+        seqvar: SeqVar,
+        genome_release: GenomeRelease,
+        variant_info: VariantResult,
+        *,
+        config: Optional[Config] = None,
     ):
         #: Configuration to use.
         self.config = config or Config()
         self.seqvar = seqvar
         self.genome_release = genome_release
+        self.variant_info = variant_info
         self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
         self.prediction: PM4BP3 | None = None
 
@@ -39,22 +45,22 @@ class AutoPM4BP3:
             logger.error("Failed to get variant information. Error: {}", e)
             return None
 
-    def _in_repeat_region(self, variant_info: AnnonarsVariantResponse) -> bool:
+    def _in_repeat_region(self, variant_info: VariantResult) -> bool:
         """Check if the variant is in a repeat region.
 
         Args:
-            variant_info (AnnonarsVariantResponse): The variant information.
+            variant_info (VariantResult): The variant information.
 
         Returns:
             bool: True if the variant is in a repeat region, False otherwise.
         """
         return False
 
-    def _in_conserved_domain(self, variant_info: AnnonarsVariantResponse) -> bool:
+    def _in_conserved_domain(self, variant_info: VariantResult) -> bool:
         """Check if the variant is in a conserved domain.
 
         Args:
-            variant_info (AnnonarsVariantResponse): The variant information.
+            variant_info (VariantResult): The variant information.
 
         Returns:
             bool: True if the variant is in a conserved domain, False otherwise.
@@ -85,25 +91,24 @@ class AutoPM4BP3:
             # Initialize the prediction result
             self.prediction = PM4BP3()
 
-            primary_info = self._get_variant_info(self.seqvar)
-            if not primary_info:
+            if not self.variant_info:
                 raise MissingDataError("No valid primary information.")
 
             # Stop-loss variants are considered as PM4
-            if primary_info.result.cadd and primary_info.result.cadd.ConsDetail == "stop_loss":
+            if self.variant_info.cadd and self.variant_info.cadd.ConsDetail == "stop_loss":
                 self.prediction.PM4 = True
                 self.prediction.BP3 = False
-            elif primary_info.result.cadd and primary_info.result.cadd.ConsDetail in [
+            elif self.variant_info.cadd and self.variant_info.cadd.ConsDetail in [
                 "inframe_deletion",
                 "inframe_insertion",
             ]:
-                if not self._in_repeat_region(primary_info) and self._in_conserved_domain(
-                    primary_info
+                if not self._in_repeat_region(self.variant_info) and self._in_conserved_domain(
+                    self.variant_info
                 ):
                     self.prediction.PM4 = True
                     self.prediction.BP3 = False
-                elif self._in_repeat_region(primary_info) and not self._in_conserved_domain(
-                    primary_info
+                elif self._in_repeat_region(self.variant_info) and not self._in_conserved_domain(
+                    self.variant_info
                 ):
                     self.prediction.PM4 = False
                     self.prediction.BP3 = True

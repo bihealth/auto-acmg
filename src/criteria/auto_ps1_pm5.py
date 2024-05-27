@@ -24,13 +24,19 @@ class AutoPS1PM5:
     """Predicts PS1 and PM5 criteria for sequence variants."""
 
     def __init__(
-        self, seqvar: SeqVar, genome_release: GenomeRelease, *, config: Optional[Config] = None
+        self,
+        seqvar: SeqVar,
+        genome_release: GenomeRelease,
+        variant_info: VariantResult,
+        *,
+        config: Optional[Config] = None,
     ):
         #: Configuration to use.
         self.config = config or Config()
         # Attributes to be set
         self.seqvar = seqvar
         self.genome_release = genome_release
+        self.variant_info = variant_info
         self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
         self.prediction: PS1PM5 | None = None
 
@@ -116,17 +122,16 @@ class AutoPS1PM5:
             # Initialize the prediction result
             self.prediction = PS1PM5()
 
-            primary_info = self._get_variant_info(self.seqvar)
             if (
-                not primary_info
-                or not primary_info.result.dbnsfp
-                or not primary_info.result.dbnsfp.HGVSp_VEP
+                not self.variant_info
+                or not self.variant_info.dbnsfp
+                or not self.variant_info.dbnsfp.HGVSp_VEP
             ):
                 raise MissingDataError(
                     "No valid primary variant information for PS1/PM5 prediction."
                 )
 
-            primary_aa_change = self._parse_HGVSp(primary_info.result.dbnsfp.HGVSp_VEP)
+            primary_aa_change = self._parse_HGVSp(self.variant_info.dbnsfp.HGVSp_VEP)
             if not primary_aa_change:
                 raise AlgorithmError("No valid primary amino acid change for PS1/PM5 prediction.")
 
