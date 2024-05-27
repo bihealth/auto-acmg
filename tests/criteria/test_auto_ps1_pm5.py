@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.api.annonars import AnnonarsClient
-from src.auto_ps1_pm5 import AutoPS1PM5
+from src.criteria.auto_ps1_pm5 import AutoPS1PM5
 from src.defs.annonars_variant import AnnonarsVariantResponse
 from src.defs.auto_acmg import AminoAcid
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException

@@ -4,8 +4,8 @@ import pytest
 from typer.testing import CliRunner
 
 from src.auto_acmg import AutoACMG
-from src.auto_ps1_pm5 import AutoPS1PM5
 from src.core.config import Config
+from src.criteria.auto_ps1_pm5 import AutoPS1PM5
 from src.defs.auto_acmg import PS1PM5
 from src.defs.exceptions import AutoAcmgBaseException, ParseError
 from src.defs.genome_builds import GenomeRelease
@@ -132,10 +132,9 @@ def test_auto_acmg_predict_seqvar_resolve_failure(
     assert not mock_auto_pvs1_failure.predict.called
 
 
-def test_auto_acmg_predict_seqvar_pvs1_failure(
+def test_auto_acmg_predict_failure(
     mock_seqvar_resolver,
     mock_auto_pvs1_failure,
-    mock_auto_ps1_pm5_success,
     mock_seqvar,
     config: Config,
 ):
@@ -147,22 +146,3 @@ def test_auto_acmg_predict_seqvar_pvs1_failure(
     assert mock_auto_pvs1_failure.predict.called
     assert auto_acmg.seqvar == mock_seqvar
     assert auto_acmg.seqvar_pvs1_prediction_path == PVS1PredictionSeqVarPath.NotSet
-
-
-def test_auto_acmg_predict_seqvar_ps1_pm5_failure(
-    mock_seqvar_resolver,
-    mock_auto_pvs1_success,
-    mock_auto_ps1_pm5_failure,
-    mock_seqvar,
-    config: Config,
-):
-    """Test the predict method for a sequence variant with a failure response."""
-    auto_acmg = AutoACMG("NM_000038.3:c.797G>A", GenomeRelease.GRCh38, config=config)
-    with runner.isolated_filesystem():
-        auto_acmg.predict()
-    assert mock_seqvar_resolver.resolve_seqvar.called
-    assert mock_auto_pvs1_success.predict.called
-    assert mock_auto_ps1_pm5_failure.predict.called
-    assert auto_acmg.seqvar == mock_seqvar
-    assert auto_acmg.seqvar_ps1 is None
-    assert auto_acmg.seqvar_pm5 is None

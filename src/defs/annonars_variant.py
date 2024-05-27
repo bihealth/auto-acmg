@@ -17,6 +17,10 @@ class VariantQuery(BaseModel):
     alternative: str
 
 
+class Cadd(BaseModel):
+    ConsDetail: Optional[str] = None
+
+
 class GnomadExomes(BaseModel):
     alleleCounts: List[AlleleCount]
 
@@ -121,7 +125,7 @@ class ClinvarItem(BaseModel):
 
 
 class VariantResult(BaseModel):
-    cadd: Optional[Any] = None
+    cadd: Optional[Cadd] = None
     dbsnp: Optional[Any] = None
     dbnsfp: Optional[Dbnsfp] = None
     dbscsnv: Optional[Any] = None
