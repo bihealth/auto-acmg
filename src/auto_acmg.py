@@ -4,6 +4,7 @@ from typing import Optional
 
 from loguru import logger
 
+from src.atuo_ba1_bs1_bs_2_pm2 import AutoBA1BS1BS2PM2
 from src.auto_ps1_pm5 import AutoPS1PM5
 from src.core.config import Config
 from src.defs.auto_pvs1 import (
@@ -159,6 +160,36 @@ class AutoACMG:
                     )
             except AutoAcmgBaseException as e:
                 logger.error("Failed to predict PS1 and PM5 criteria. Error: {}", e)
+
+            # BA1, BS1, BS2, PM2
+            try:
+                logger.info("Predicting BA1, BS1, BS2, and PM2.")
+                ba1bs1bs2pm2 = AutoBA1BS1BS2PM2(
+                    self.seqvar, self.genome_release, config=self.config
+                )
+                ba1bs1bs2pm2_prediction = ba1bs1bs2pm2.predict()
+                if not ba1bs1bs2pm2_prediction:
+                    logger.error("Failed to predict BA1, BS1, BS2, and PM2 criteria.")
+                else:
+                    self.seqvar_ba1, self.seqvar_bs1, self.seqvar_bs2, self.seqvar_pm2 = (
+                        ba1bs1bs2pm2_prediction.BA1,
+                        ba1bs1bs2pm2_prediction.BS1,
+                        ba1bs1bs2pm2_prediction.BS2,
+                        ba1bs1bs2pm2_prediction.PM2,
+                    )
+                    logger.info(
+                        "BA1 prediction for {}: {}.\n"
+                        "BS1 prediction: {}.\n"
+                        "BS2 prediction: {}.\n"
+                        "PM2 prediction: {}.",
+                        self.seqvar.user_repr,
+                        self.seqvar_ba1,
+                        self.seqvar_bs1,
+                        self.seqvar_bs2,
+                        self.seqvar_pm2,
+                    )
+            except AutoAcmgBaseException as e:
+                logger.error("Failed to predict BA1, BS1, BS2, and PM2 criteria. Error: {}", e)
 
         elif isinstance(variant, StrucVar):
             logger.info("Currently only PVS1 prediction is implemented for structural variants!")

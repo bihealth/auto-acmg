@@ -1,4 +1,4 @@
-"""Implementation of PS1 prediction for sequence variants."""
+"""Implementation of PS1 and PM5 prediction for sequence variants."""
 
 import re
 from typing import Optional
@@ -58,6 +58,9 @@ class AutoPS1PM5:
             AminoAcid: The new amino acid if the pHGVSp is valid, None otherwise.
         """
         try:
+            # If multiple pHGVSp values are present, take the first one
+            if ";" in pHGVSp:
+                pHGVSp = pHGVSp.split(";")[0]
             match = re.match(REGEX_HGVSP, pHGVSp)
             if match:
                 return AminoAcid[match.group(3)]
@@ -77,28 +80,20 @@ class AutoPS1PM5:
         Returns:
             bool: True if the variant is pathogenic
         """
-        if (
-            variant_info.clinvar
-            and variant_info.clinvar.referenceAssertions
-            and variant_info.clinvar.referenceAssertions[0].clinicalSignificance
-        ):
-            return (
-                variant_info.clinvar.referenceAssertions[0].clinicalSignificance
-                == "CLINICAL_SIGNIFICANCE_PATHOGENIC"
-            )
+        if variant_info.clinvar and variant_info.clinvar.referenceAssertions:
+            for refAssertion in variant_info.clinvar.referenceAssertions:
+                if refAssertion.clinicalSignificance and refAssertion.clinicalSignificance in [
+                    "CLINICAL_SIGNIFICANCE_PATHOGENIC",
+                    "CLINICAL_SIGNIFICANCE_LIKELY_PATHOGENIC",
+                ]:
+                    return True
         return False
 
     def predict(self) -> Optional[PS1PM5]:
         """
         Predicts the criteria PS1 and PM5 for the provided sequence variant.
 
-        Note:
-            Rule:
-            PS1: Same amino acid change as a previously established pathogenic variant regardless of nucleotide change.
-            PM5: Novel missense change at an amino acid residue where a different missense change determined to be
-            pathogenic has been seen before.
-
-            Implementation:
+        Implementation of the rule PS1 and PM5:
             The method implements the rule by:
             - Getting the primary variant information & parsing the primary amino acid change.
             - Iterating over all possible alternative bases & getting the alternative variant information.
@@ -107,6 +102,12 @@ class AutoPS1PM5:
             then PS1 is set to True.
             - If the alternative variant is pathogenic and the amino acid change is different from the primary variant,
             then PM5 is set to True.
+
+        Note:
+            Rules:
+            PS1: Same amino acid change as a previously established pathogenic variant regardless of nucleotide change.
+            PM5: Novel missense change at an amino acid residue where a different missense change determined to be
+            pathogenic has been seen before.
 
         Returns:
             PS1PM5: The prediction result.
