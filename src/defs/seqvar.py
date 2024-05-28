@@ -111,7 +111,6 @@ class SeqVarResolver:
         chrom_lengths = (
             CHROM_LENGTHS_37 if variant.genome_release == GenomeRelease.GRCh37 else CHROM_LENGTHS_38
         )
-        print(variant.chrom)
         if stop_pos > chrom_lengths.get(variant.chrom, 0):
             raise InvalidPos(f"Invalid position: {variant.pos}")
 
@@ -122,7 +121,6 @@ class SeqVarResolver:
 
         Replaces 'chr' with '' and 'm' with 'mt'.
         """
-        print("value", value)
         return value.lower().replace("chr", "").replace("m", "mt").replace("mtt", "mt").upper()
 
     def _parse_separated_seqvar(
