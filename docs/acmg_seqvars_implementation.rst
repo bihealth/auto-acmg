@@ -39,3 +39,36 @@ BA1, BS1, BS2, PM2
     :undoc-members:
     :show-inheritance:
     :private-members:
+
+-----------
+PP2 and BP1
+-----------
+
+.. automodule:: src.criteria.auto_pp2_bp1
+    :members:
+    :inherited-members:
+    :undoc-members:
+    :show-inheritance:
+    :private-members:
+
+---
+PM1
+---
+
+.. automodule:: src.criteria.auto_pm1
+    :members:
+    :inherited-members:
+    :undoc-members:
+    :show-inheritance:
+    :private-members:
+
+---
+BP7
+---
+
+.. automodule:: src.criteria.auto_bp7
+    :members:
+    :inherited-members:
+    :undoc-members:
+    :show-inheritance:
+    :private-members:
