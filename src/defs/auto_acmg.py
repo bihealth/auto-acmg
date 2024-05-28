@@ -1,5 +1,5 @@
-from enum import Enum, EnumMeta
-from typing import Any
+from enum import Enum, EnumMeta, auto
+from typing import Any, List, Optional
 
 from pydantic import BaseModel
 
@@ -129,3 +129,52 @@ class PP3BP4(BaseModel):
 
     PP3: bool = False
     BP4: bool = False
+
+
+class ACMGPrediction(AutoAcmgBaseEnum):
+    """ACMG prediction enumeration."""
+
+    NotSet = auto()
+    Positive = auto()
+    Negative = auto()
+
+
+class CriteriaPrediction(BaseModel):
+    """Criteria prediction."""
+
+    name: str
+    prediction: ACMGPrediction = ACMGPrediction.NotSet
+    comment: str = ""
+
+
+class AutoACMGResult(BaseModel):
+    """Response of the ACMG criteria prediction."""
+
+    pvs1: CriteriaPrediction = CriteriaPrediction(name="PVS1")
+    ps1: CriteriaPrediction = CriteriaPrediction(name="PS1")
+    ps2: CriteriaPrediction = CriteriaPrediction(name="PS2")
+    ps3: CriteriaPrediction = CriteriaPrediction(name="PS3")
+    ps4: CriteriaPrediction = CriteriaPrediction(name="PS4")
+    pm1: CriteriaPrediction = CriteriaPrediction(name="PM1")
+    pm2: CriteriaPrediction = CriteriaPrediction(name="PM2")
+    pm3: CriteriaPrediction = CriteriaPrediction(name="PM3")
+    pm4: CriteriaPrediction = CriteriaPrediction(name="PM4")
+    pm5: CriteriaPrediction = CriteriaPrediction(name="PM5")
+    pm6: CriteriaPrediction = CriteriaPrediction(name="PM6")
+    pp1: CriteriaPrediction = CriteriaPrediction(name="PP1")
+    pp2: CriteriaPrediction = CriteriaPrediction(name="PP2")
+    pp3: CriteriaPrediction = CriteriaPrediction(name="PP3")
+    pp4: CriteriaPrediction = CriteriaPrediction(name="PP4")
+    pp5: CriteriaPrediction = CriteriaPrediction(name="PP5")
+    ba1: CriteriaPrediction = CriteriaPrediction(name="BA1")
+    bs1: CriteriaPrediction = CriteriaPrediction(name="BS1")
+    bs2: CriteriaPrediction = CriteriaPrediction(name="BS2")
+    bs3: CriteriaPrediction = CriteriaPrediction(name="BS3")
+    bs4: CriteriaPrediction = CriteriaPrediction(name="BS4")
+    bp1: CriteriaPrediction = CriteriaPrediction(name="BP1")
+    bp2: CriteriaPrediction = CriteriaPrediction(name="BP2")
+    bp3: CriteriaPrediction = CriteriaPrediction(name="BP3")
+    bp4: CriteriaPrediction = CriteriaPrediction(name="BP4")
+    bp5: CriteriaPrediction = CriteriaPrediction(name="BP5")
+    bp6: CriteriaPrediction = CriteriaPrediction(name="BP6")
+    bp7: CriteriaPrediction = CriteriaPrediction(name="BP7")
