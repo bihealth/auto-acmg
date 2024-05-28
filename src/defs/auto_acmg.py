@@ -102,3 +102,9 @@ class BA1BS1BS2PM2(BaseModel):
     BS1: bool = False
     BS2: bool = False
     PM2: bool = False
+
+
+class PM1(BaseModel):
+    """PM1 criteria prediction."""
+
+    PM1: bool = False
