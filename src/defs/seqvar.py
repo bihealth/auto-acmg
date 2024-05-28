@@ -61,7 +61,7 @@ class SeqVar:
 
     def _normalize_chromosome(self, chrom: str) -> str:
         """Normalize the chromosome name."""
-        return chrom.lower().replace("chr", "").replace("m", "mt").upper()
+        return chrom.lower().replace("chr", "").replace("m", "mt").replace("mtt", "mt").upper()
 
     def __repr__(self):
         """Return a user-friendly representation of the variant."""
@@ -111,7 +111,6 @@ class SeqVarResolver:
         chrom_lengths = (
             CHROM_LENGTHS_37 if variant.genome_release == GenomeRelease.GRCh37 else CHROM_LENGTHS_38
         )
-
         if stop_pos > chrom_lengths.get(variant.chrom, 0):
             raise InvalidPos(f"Invalid position: {variant.pos}")
 
@@ -122,7 +121,7 @@ class SeqVarResolver:
 
         Replaces 'chr' with '' and 'm' with 'mt'.
         """
-        return value.lower().replace("chr", "").replace("m", "mt").upper()
+        return value.lower().replace("chr", "").replace("m", "mt").replace("mtt", "mt").upper()
 
     def _parse_separated_seqvar(
         self, value: str, default_genome_release: GenomeRelease = GenomeRelease.GRCh38

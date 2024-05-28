@@ -11,12 +11,12 @@ from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionSeqVarPath
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.pvs1.auto_pvs1 import AutoPVS1
-from tests.utils import load_test_data
+from tests.utils import load_test_data_pvs1
 
 #: Type for PVS1 test data.
 Pvs1TestData = List[Tuple[str, GenomeRelease, PVS1Prediction, PVS1PredictionSeqVarPath]]
 #: Test data.
-PVS1_TEST_DATA: Pvs1TestData = load_test_data("tests/assets/e2e_variants/pvs1.csv")
+PVS1_TEST_DATA: Pvs1TestData = load_test_data_pvs1("tests/assets/e2e_variants/pvs1.csv")
 
 
 @pytest.mark.remote
