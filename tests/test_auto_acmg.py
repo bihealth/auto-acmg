@@ -5,9 +5,9 @@ from typer.testing import CliRunner
 
 from src.auto_acmg import AutoACMG
 from src.core.config import Config
-from src.criteria.auto_acmg import AutoACMGCriteria
+from src.criteria.auto_criteria import AutoACMGCriteria
 from src.criteria.auto_ps1_pm5 import AutoPS1PM5
-from src.defs.auto_acmg import PS1PM5, ACMGCriteria
+from src.defs.auto_acmg import PS1PM5, ACMGCriteria, AutoACMGResult
 from src.defs.exceptions import AutoAcmgBaseException, ParseError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar, SeqVarResolver
@@ -147,7 +147,7 @@ def test_auto_acmg_predict_failure_pvs1(
     assert mock_seqvar_resolver.resolve_seqvar.called
     assert mock_auto_pvs1_failure.predict.called
     assert auto_acmg.seqvar == mock_seqvar
-    assert auto_acmg.seqvar_pvs1_prediction_path == PVS1PredictionSeqVarPath.NotSet
+    assert auto_acmg.prediction is not None
 
 
 def test_auto_acmg_predict_failure_criteria(
@@ -164,3 +164,5 @@ def test_auto_acmg_predict_failure_criteria(
     assert mock_seqvar_resolver.resolve_seqvar.called
     assert mock_auto_pvs1_success.predict.called
     assert mock_auto_criteria_failure.predict.called
+    assert auto_acmg.seqvar == mock_seqvar
+    assert auto_acmg.prediction is not None
