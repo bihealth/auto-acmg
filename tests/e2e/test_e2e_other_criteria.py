@@ -59,24 +59,12 @@ def test_acmg_criteria_seqvar_csv(
 @pytest.mark.parametrize(
     "variant_name, genome_release, expected_prediction, comment",
     [
-        (
-            "3-178936091-C-T",
-            GenomeRelease.GRCh37,
-            ACMGCriteria(),
-            "Hotspot with 4 pathogenic variants",
-        ),
-        (
-            "7-140453136-C-T",
-            GenomeRelease.GRCh37,
-            ACMGCriteria(),
-            "UniProt domain with 2 pathogenic variants",
-        ),
-        (
-            "1-55516888-G-A",
-            GenomeRelease.GRCh37,
-            ACMGCriteria(),
-            "No hotspot or critical domain",
-        ),
+        # (
+        #     "3-178936091-C-T",
+        #     GenomeRelease.GRCh37,
+        #     ACMGCriteria(),
+        #     "Hotspot with 4 pathogenic variants",
+        # ),
     ],
 )
 def test_acmg_criteria_seqvar_inline(

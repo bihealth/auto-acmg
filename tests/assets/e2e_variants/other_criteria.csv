@@ -4,6 +4,6 @@ section,variant_name,genome_release,expected_prediction,comment
 # PM1,,,,
 ## Hotspot or critical domain,,,,
 ## PM1,,,,
-,3-178936091-C-T,GRCh37,,Hotspot with 4 pathogenic variants
-,7-140453136-C-T,GRCh37,,UniProt domain with 2 pathogenic variants
+,3-178936091-C-T,GRCh37,PM1,Hotspot with 4 pathogenic variants
+,7-140453136-C-T,GRCh37,PM1,UniProt domain with 2 pathogenic variants
 ,1-55516888-G-A,GRCh37,,No hotspot or critical domain

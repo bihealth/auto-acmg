@@ -6,7 +6,7 @@ from loguru import logger
 
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config
-from src.defs.annonars_range import VariantInfo
+from src.defs.annonars_variant import VariantResult
 from src.defs.auto_acmg import PM1
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, InvalidAPIResposeError
 from src.defs.genome_builds import GenomeRelease
@@ -20,7 +20,7 @@ class AutoPM1:
         self,
         seqvar: SeqVar,
         genome_release: GenomeRelease,
-        variant_info: VariantInfo,
+        variant_info: VariantResult,
         *,
         config: Config,
     ):
@@ -30,7 +30,7 @@ class AutoPM1:
         self.variant_info = variant_info
         self.annonars_client = AnnonarsClient(api_base_url=config.api_base_url_annonars)
         self.config = config
-        self.prediction: PM1 = PM1()
+        self.prediction: PM1 | None = None
 
     def _count_pathogenic_variants(
         self, seqvar: SeqVar, start_pos: int, end_pos: int
@@ -81,13 +81,14 @@ class AutoPM1:
             raise InvalidAPIResposeError("Failed to get variant from range. No ClinVar data.")
 
     @staticmethod
-    def _get_uniprot_domain(variant_info: VariantInfo) -> Optional[Tuple[int, int]]:
+    def _get_uniprot_domain(variant_info: VariantResult) -> Optional[Tuple[int, int]]:
         """Check if the variant is in a UniProt domain."""
         # TODO: Implement this method
         return None
 
-    def predict(self) -> PM1:
+    def predict(self) -> Optional[PM1]:
         """Predict PM1 criteria."""
+        self.prediction = PM1()
         try:
             if self.seqvar.chrom == "MT":
                 # skipped according to McCormick et al. (2020).
@@ -115,6 +116,6 @@ class AutoPM1:
             self.prediction.PM1 = False
         except AutoAcmgBaseException as e:
             logger.error("Error occurred during PM1 prediction. Error: {}", e)
-            self.prediction.PM1 = False
+            self.prediction = None
 
         return self.prediction

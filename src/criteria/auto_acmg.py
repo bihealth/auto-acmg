@@ -5,7 +5,9 @@ from loguru import logger
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config
 from src.criteria.auto_ba1_bs1_bs2_pm2 import AutoBA1BS1BS2PM2
+from src.criteria.auto_pm1 import AutoPM1
 from src.criteria.auto_pm4_bp3 import AutoPM4BP3
+from src.criteria.auto_pp2_bp1 import AutoPP2BP1
 from src.criteria.auto_ps1_pm5 import AutoPS1PM5
 from src.defs.annonars_variant import AnnonarsVariantResponse
 from src.defs.auto_acmg import ACMGCriteria
@@ -93,5 +95,30 @@ class AutoACMGCriteria:
                 self.prediction.PM2 = ba1bs1bs2pm2_prediction.PM2
         except AutoAcmgBaseException as e:
             logger.error("Failed to predict BA1, BS1, BS2, and PM2 criteria. Error: {}", e)
+
+        # PM1
+        try:
+            pm1 = AutoPM1(self.seqvar, self.genome_release, variant_info.result, config=self.config)
+            pm1_prediction = pm1.predict()
+            if not pm1_prediction:
+                logger.error("Failed to predict PM1 criteria.")
+            else:
+                self.prediction.PM1 = pm1_prediction.PM1
+        except AutoAcmgBaseException as e:
+            logger.error("Failed to predict PM1 criteria. Error: {}", e)
+
+        # PP2 and BP1
+        try:
+            pp2bp1 = AutoPP2BP1(
+                self.seqvar, self.genome_release, variant_info.result, config=self.config
+            )
+            pp2_bp1_prediction = pp2bp1.predict()
+            if not pp2_bp1_prediction:
+                logger.error("Failed to predict PP2 and BP1 criteria.")
+            else:
+                self.prediction.PP2 = pp2_bp1_prediction.PP2
+                self.prediction.BP1 = pp2_bp1_prediction.BP1
+        except AutoAcmgBaseException as e:
+            logger.error("Failed to predict PP2 and BP1 criteria. Error: {}", e)
 
         return self.prediction

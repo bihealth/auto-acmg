@@ -104,7 +104,7 @@ class AlleleCount(BaseModel):
     cohort: Optional[str] = None
 
 
-class VariantInfo(BaseModel):
+class VariantResult(BaseModel):
     variantType: str
     alleleType: str
     nAltAlleles: int
