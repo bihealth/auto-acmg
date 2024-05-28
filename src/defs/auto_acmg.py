@@ -79,6 +79,7 @@ class ACMGCriteria(BaseModel):
     BP4: bool = False
     BP5: bool = False
     BP6: bool = False
+    BP7: bool = False
 
 
 class PS1PM5(BaseModel):
@@ -115,3 +116,9 @@ class PP2BP1(BaseModel):
 
     PP2: bool = False
     BP1: bool = False
+
+
+class BP7(BaseModel):
+    """BP7 criteria prediction."""
+
+    BP7: bool = False
