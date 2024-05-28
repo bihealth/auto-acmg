@@ -5,9 +5,9 @@ from typing import List, Optional
 from loguru import logger
 
 from src.core.config import Config
-from src.criteria.auto_acmg import AutoACMGCriteria
-from src.defs.auto_acmg import ACMGPrediction, AutoACMGResult, CriteriaPrediction
-from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionPathMapping, PVS1PredictionSeqVarPath
+from src.criteria.auto_criteria import AutoACMGCriteria
+from src.defs.auto_acmg import ACMGPrediction, AutoACMGResult
+from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionPathMapping, PVS1PredictionStrucVarPath
 from src.defs.exceptions import AutoAcmgBaseException, ParseError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar, SeqVarResolver
@@ -211,36 +211,31 @@ class AutoACMG:
             return self.prediction
 
         elif isinstance(variant, StrucVar):
-            logger.info("Classification of structural variants is not implemented yet.")
-            # logger.info("Currently only PVS1 prediction is implemented for structural variants!")
+            logger.warning("Currently there's no prediction for structural variants!")
+            # logger.warning("Currently only PVS1 prediction is implemented for structural variants!")
             # logger.info(
             #     "Classifying ACMG criteria for structural variant {}, genome release: {}.",
             #     variant.user_repr,
             #     self.genome_release.name,
             # )
+            # self.strucvar: StrucVar = variant
+            # self.strucvar_prediction: PVS1Prediction = PVS1Prediction.NotSet  # type: ignore
+            # self.strucvar_prediction_path: PVS1PredictionStrucVarPath = PVS1PredictionStrucVarPath.NotSet  # type: ignore
+
             # # PVS1
             # try:
             #     logger.info("Predicting PVS1.")
-            #     self.strucvar: StrucVar = variant
-            #     self.strucvar_prediction: PVS1Prediction = PVS1Prediction.NotSet  # type: ignore
-            #     self.strucvar_prediction_path: PVS1PredictionStrucVarPath = PVS1PredictionStrucVarPath.NotSet  # type: ignore
-
             #     pvs1 = AutoPVS1(self.strucvar, self.genome_release)
             #     strucvar_prediction, strucvar_prediction_path = pvs1.predict()
             #     if strucvar_prediction is None or strucvar_prediction_path is None:
-            #         logger.error("Failed to predict PVS1 criteria.")
-            #         return
+            #         raise AutoAcmgBaseException(
+            #             "PVS1 prediction failed: prediction or prediction path is None."
+            #         )
             #     else:
-            #         # Double check if the prediction path is indeed for structural variant
-            #         assert isinstance(strucvar_prediction_path, PVS1PredictionStrucVarPath)
+            #         if strucvar_prediction == PVS1Prediction.NotSet:
+            #             raise AutoAcmgBaseException("PVS1 prediction failed: prediction NotSet.")
             #         self.strucvar_prediction = strucvar_prediction
             #         self.strucvar_prediction_path = strucvar_prediction_path
-            #         logger.info(
-            #             "PVS1 prediction for {}: {}.\n" "The prediction path is:\n{}.",
-            #             self.strucvar.user_repr,
-            #             self.strucvar_prediction.name,
-            #             PVS1PredictionPathMapping[self.strucvar_prediction_path],
-            #         )
             # except AutoAcmgBaseException as e:
             #     logger.error("Failed to predict PVS1 criteria. Error: {}", e)
             #     return

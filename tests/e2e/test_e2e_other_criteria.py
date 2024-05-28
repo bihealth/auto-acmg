@@ -6,7 +6,7 @@ import pytest
 
 from src.auto_acmg import AutoACMG
 from src.core.config import Config
-from src.criteria.auto_acmg import AutoACMGCriteria
+from src.criteria.auto_criteria import AutoACMGCriteria
 from src.defs.auto_acmg import ACMGCriteria, AutoACMGResult
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
