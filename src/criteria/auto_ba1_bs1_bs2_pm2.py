@@ -132,7 +132,7 @@ class AutoBA1BS1BS2PM2:
 
     def predict(self) -> Optional[BA1BS1BS2PM2]:
         """
-        Predicts the BA1, BS1, BS2, PM5 criteria for the sequence variant.
+        Predicts the BA1, BS1, BS2, PM2 criteria for the sequence variant.
 
 
         Note:
@@ -165,7 +165,7 @@ class AutoBA1BS1BS2PM2:
             self.prediction.BS2 = self.evaluate_bs2(self.variant_info)
             self.prediction.PM2 = self.evaluate_pm2(self.seqvar, self.variant_info)
         except AutoAcmgBaseException as e:
-            logger.error("Error occurred during BA1, BS1, BS2, PM5 prediction. Error: {}", e)
+            logger.error("Error occurred during BA1, BS1, BS2, PM2 prediction. Error: {}", e)
             self.prediction = None
 
         # Return the prediction result

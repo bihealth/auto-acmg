@@ -14,6 +14,21 @@ from src.defs.seqvar import SeqVar, SeqVarResolver
 from src.defs.strucvar import StrucVar, StrucVarResolver
 from src.pvs1.auto_pvs1 import AutoPVS1
 
+#: Criteria, which have no automatic prediction yet.
+NOT_IMPLEMENTED_CRITERIA = [
+    "PS2",
+    "PS3",
+    "PS4",
+    "PM3",
+    "PM6",
+    "PP1",
+    "PP4",
+    "BS3",
+    "BS4",
+    "BP2",
+    "BP5",
+]
+
 
 class AutoACMG:
     """Class for predicting ACMG criteria.
@@ -151,6 +166,13 @@ class AutoACMG:
                 else:
                     self.seqvar_criteria = criteria_preciction
                     logger.info("Other ACMG criteria prediction:\n{}", self.seqvar_criteria)
+                    logger.warning(
+                        "Note, that PP5 and BP6 criteria are depricated and not predicted."
+                    )
+                    logger.warning(
+                        "Some criteria are not implemented yet. They are: {}",
+                        NOT_IMPLEMENTED_CRITERIA,
+                    )
             except AutoAcmgBaseException as e:
                 logger.error("Failed to predict other ACMG criteria. Error: {}", e)
 
