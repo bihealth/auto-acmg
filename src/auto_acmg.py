@@ -16,17 +16,17 @@ from src.pvs1.auto_pvs1 import AutoPVS1
 
 #: Criteria, which have no automatic prediction yet.
 NOT_IMPLEMENTED_CRITERIA = [
-    "PS2",
-    "PS3",
-    "PS4",
-    "PM3",
-    "PM6",
-    "PP1",
-    "PP4",
-    "BS3",
-    "BS4",
-    "BP2",
-    "BP5",
+    "PS2",   # De novo (both parents not tested)
+    "PS3",   # Well-established in vitro or in vivo functional studies
+    "PS4",   # Increased prevalence in affected individuals vs. controls
+    "PM3",   # Recessive disorder (zygosity unknown)
+    "PM6",   # Assumed de novo (both parents not tested)
+    "PP1",   # Cosegregation with disease in multiple affected family members
+    "PP4",   # Patient's phenotype or family history specificity
+    "BS3",   # Well-established in vitro or in vivo functional studies
+    "BS4",   # Lack of segregation in affected family members
+    "BP2",   # Observed in healthy individuals (zygosity unknown)
+    "BP5",   # Case with an alternate molecular basis for disease
 ]
 
 
