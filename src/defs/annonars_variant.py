@@ -19,6 +19,7 @@ class VariantQuery(BaseModel):
 
 class Cadd(BaseModel):
     ConsDetail: Optional[str] = None
+    PolyPhenVal: Optional[float] = None
 
 
 class GnomadExomes(BaseModel):

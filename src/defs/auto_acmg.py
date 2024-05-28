@@ -122,3 +122,10 @@ class BP7(BaseModel):
     """BP7 criteria prediction."""
 
     BP7: bool = False
+
+
+class PP3BP4(BaseModel):
+    """PP3 and BP4 criteria prediction."""
+
+    PP3: bool = False
+    BP4: bool = False

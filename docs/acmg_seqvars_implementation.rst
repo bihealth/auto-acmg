@@ -72,3 +72,14 @@ BP7
     :undoc-members:
     :show-inheritance:
     :private-members:
+
+-----------
+PP3 and BP4
+-----------
+
+.. automodule:: src.criteria.auto_pp3_bp4
+    :members:
+    :inherited-members:
+    :undoc-members:
+    :show-inheritance:
+    :private-members:
