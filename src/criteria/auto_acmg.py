@@ -9,6 +9,7 @@ from src.criteria.auto_bp7 import AutoBP7
 from src.criteria.auto_pm1 import AutoPM1
 from src.criteria.auto_pm4_bp3 import AutoPM4BP3
 from src.criteria.auto_pp2_bp1 import AutoPP2BP1
+from src.criteria.auto_pp3_bp4 import AutoPP3BP4
 from src.criteria.auto_ps1_pm5 import AutoPS1PM5
 from src.defs.annonars_variant import AnnonarsVariantResponse
 from src.defs.auto_acmg import ACMGCriteria
@@ -138,5 +139,20 @@ class AutoACMGCriteria:
                 self.prediction.BP7 = bp7_prediction.BP7
         except AutoAcmgBaseException as e:
             logger.error("Failed to predict BP7 criteria. Error: {}", e)
+
+        # PP3 and BP4
+        try:
+            logger.info("Predicting PP3 and BP4 criteria.")
+            pp3_bp4 = AutoPP3BP4(
+                self.seqvar, self.genome_release, variant_info.result, config=self.config
+            )
+            pp3_bp4_prediction = pp3_bp4.predict()
+            if not pp3_bp4_prediction:
+                logger.error("Failed to predict PP3 and BP4 criteria.")
+            else:
+                self.prediction.PP3 = pp3_bp4_prediction.PP3
+                self.prediction.BP4 = pp3_bp4_prediction.BP4
+        except AutoAcmgBaseException as e:
+            logger.error("Failed to predict PP3 and BP4 criteria. Error: {}", e)
 
         return self.prediction
