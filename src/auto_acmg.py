@@ -14,7 +14,6 @@ from src.defs.seqvar import SeqVar, SeqVarResolver
 from src.defs.strucvar import StrucVar, StrucVarResolver
 from src.pvs1.auto_pvs1 import AutoPVS1
 
-
 #: Pathogenic PVS1 predictions of sequence variants.
 PVS1_POSITIVE_SEQVAR_PREDICTIONS = [
     PVS1Prediction.PVS1,
@@ -109,7 +108,7 @@ class AutoACMG:
             logger.error("An unexpected error occurred: {}", e)
             return None
 
-    def predict(self):
+    def predict(self) -> Optional[AutoACMGResult]:
         """
         Predict ACMG criteria for the specified variant.
 
@@ -128,7 +127,7 @@ class AutoACMG:
         variant = self.resolve_variant()
         if not variant:
             logger.error("Failed to resolve variant: {}", self.variant_name)
-            return
+            return None
 
         if isinstance(variant, SeqVar):
             logger.info(
@@ -208,7 +207,8 @@ class AutoACMG:
             except AutoAcmgBaseException as e:
                 logger.error("Failed to predict other ACMG criteria. Error: {}", e)
 
-            logger.info("ACMG criteria prediction completed: {}", self.prediction.model_dump())
+            logger.info("ACMG criteria prediction completed.")
+            return self.prediction
 
         elif isinstance(variant, StrucVar):
             logger.info("Classification of structural variants is not implemented yet.")
@@ -245,6 +245,4 @@ class AutoACMG:
             #     logger.error("Failed to predict PVS1 criteria. Error: {}", e)
             #     return
 
-    def get_prediction(self):
-        """Get the prediction for the specified variant."""
-        return self.prediction
+        return None
