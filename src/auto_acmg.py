@@ -5,7 +5,7 @@ from typing import Optional
 from loguru import logger
 
 from src.core.config import Config
-from src.criteria.auto_criteria import AutoACMGCriteria
+from src.criteria.auto_acmg import AutoACMGCriteria
 from src.defs.auto_acmg import ACMGCriteria
 from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionPathMapping, PVS1PredictionSeqVarPath
 from src.defs.exceptions import AutoAcmgBaseException, ParseError

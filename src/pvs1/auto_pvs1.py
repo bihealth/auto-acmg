@@ -64,8 +64,7 @@ class AutoPVS1:
             try:
                 seqvar_pvs1 = SeqVarPVS1(self.seqvar, config=self.config)
                 seqvar_pvs1.initialize()
-                seqvar_pvs1.verify_PVS1()
-                self.seqvar_prediction, self.seqvar_prediction_path = seqvar_pvs1.get_prediction()
+                self.seqvar_prediction, self.seqvar_prediction_path = seqvar_pvs1.verify_PVS1()
                 return self.seqvar_prediction, self.seqvar_prediction_path
             except AutoAcmgBaseException as e:
                 logger.exception("Error occurred: {}", e)

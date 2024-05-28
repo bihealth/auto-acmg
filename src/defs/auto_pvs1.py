@@ -49,6 +49,7 @@ class CdsInfo(BaseModel):
 class SeqVarConsequence(AutoAcmgBaseEnum):
     """Consequence of a sequence variant."""
 
+    Missense = auto()
     NonsenseFrameshift = auto()
     SpliceSites = auto()
     InitiationCodon = auto()
@@ -141,7 +142,7 @@ SeqvarConsequenceMapping: Dict[str, SeqVarConsequence] = {
     "inframe_deletion": SeqVarConsequence.NotSet,  # Not necessarily loss of function
     "synonymous_variant": SeqVarConsequence.NotSet,  # Usually benign, but exceptions exist
     "stop_retained_variant": SeqVarConsequence.NotSet,
-    "missense_variant": SeqVarConsequence.NotSet,  # Not loss of function in a direct way
+    "missense_variant": SeqVarConsequence.Missense,  # Not loss of function in a direct way
     "initiator_codon_variant": SeqVarConsequence.InitiationCodon,  # Affects start codon
     "start_retained_variant": SeqVarConsequence.InitiationCodon,  # Affects start codon
     "stop_gained": SeqVarConsequence.NonsenseFrameshift,  # Nonsense variant

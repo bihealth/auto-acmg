@@ -5,7 +5,7 @@ from typer.testing import CliRunner
 
 from src.auto_acmg import AutoACMG
 from src.core.config import Config
-from src.criteria.auto_criteria import AutoACMGCriteria
+from src.criteria.auto_acmg import AutoACMGCriteria
 from src.criteria.auto_ps1_pm5 import AutoPS1PM5
 from src.defs.auto_acmg import PS1PM5, ACMGCriteria
 from src.defs.exceptions import AutoAcmgBaseException, ParseError
