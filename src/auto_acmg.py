@@ -14,6 +14,21 @@ from src.defs.seqvar import SeqVar, SeqVarResolver
 from src.defs.strucvar import StrucVar, StrucVarResolver
 from src.pvs1.auto_pvs1 import AutoPVS1
 
+#: Criteria, which have no automatic prediction yet.
+NOT_IMPLEMENTED_CRITERIA = [
+    "PS2",   # De novo (both parents not tested)
+    "PS3",   # Well-established in vitro or in vivo functional studies
+    "PS4",   # Increased prevalence in affected individuals vs. controls
+    "PM3",   # Recessive disorder (zygosity unknown)
+    "PM6",   # Assumed de novo (both parents not tested)
+    "PP1",   # Cosegregation with disease in multiple affected family members
+    "PP4",   # Patient's phenotype or family history specificity
+    "BS3",   # Well-established in vitro or in vivo functional studies
+    "BS4",   # Lack of segregation in affected family members
+    "BP2",   # Observed in healthy individuals (zygosity unknown)
+    "BP5",   # Case with an alternate molecular basis for disease
+]
+
 
 class AutoACMG:
     """Class for predicting ACMG criteria.
@@ -151,6 +166,13 @@ class AutoACMG:
                 else:
                     self.seqvar_criteria = criteria_preciction
                     logger.info("Other ACMG criteria prediction:\n{}", self.seqvar_criteria)
+                    logger.warning(
+                        "Note, that PP5 and BP6 criteria are depricated and not predicted."
+                    )
+                    logger.warning(
+                        "Some criteria are not implemented yet. They are: {}",
+                        NOT_IMPLEMENTED_CRITERIA,
+                    )
             except AutoAcmgBaseException as e:
                 logger.error("Failed to predict other ACMG criteria. Error: {}", e)
 
