@@ -4,15 +4,16 @@ from typing import List, Tuple
 
 import pytest
 
-from src.auto_acmg import AutoACMG, AutoACMGCriteria
+from src.auto_acmg import AutoACMG
 from src.core.config import Config
-from src.defs.auto_acmg import ACMGCriteria
+from src.criteria.auto_acmg import AutoACMGCriteria
+from src.defs.auto_acmg import ACMGCriteria, AutoACMGResult
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from tests.utils import load_test_data
 
 #: Type for ACMG criteria test data.
-AcmgTestData = List[Tuple[str, GenomeRelease, ACMGCriteria, str]]
+AcmgTestData = List[Tuple[str, GenomeRelease, AutoACMGResult, str]]
 #: Test data.
 ACMG_TEST_DATA: AcmgTestData = load_test_data("tests/assets/e2e_variants/other_criteria.csv")
 

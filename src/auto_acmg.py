@@ -1,12 +1,12 @@
 """Implementations of the PVS1 algorithm."""
 
-from typing import Optional
+from typing import List, Optional
 
 from loguru import logger
 
 from src.core.config import Config
 from src.criteria.auto_acmg import AutoACMGCriteria
-from src.defs.auto_acmg import ACMGCriteria
+from src.defs.auto_acmg import ACMGPrediction, AutoACMGResult, CriteriaPrediction
 from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionPathMapping, PVS1PredictionSeqVarPath
 from src.defs.exceptions import AutoAcmgBaseException, ParseError
 from src.defs.genome_builds import GenomeRelease
@@ -14,8 +14,17 @@ from src.defs.seqvar import SeqVar, SeqVarResolver
 from src.defs.strucvar import StrucVar, StrucVarResolver
 from src.pvs1.auto_pvs1 import AutoPVS1
 
+
+#: Pathogenic PVS1 predictions of sequence variants.
+PVS1_POSITIVE_SEQVAR_PREDICTIONS = [
+    PVS1Prediction.PVS1,
+    PVS1Prediction.PVS1_Strong,
+    PVS1Prediction.PVS1_Moderate,
+    PVS1Prediction.PVS1_Supporting,
+]
+
 #: Criteria, which have no automatic prediction yet.
-NOT_IMPLEMENTED_CRITERIA = [
+NOT_IMPLEMENTED_CRITERIA: List[str] = [
     "PS2",  # De novo (both parents not tested)
     "PS3",  # Well-established in vitro or in vivo functional studies
     "PS4",  # Increased prevalence in affected individuals vs. controls
@@ -128,11 +137,31 @@ class AutoACMG:
                 self.genome_release.name,
             )
             self.seqvar: SeqVar = variant
-            self.seqvar_pvs1_prediction: PVS1Prediction = PVS1Prediction.NotSet
-            self.seqvar_pvs1_prediction_path: PVS1PredictionSeqVarPath = (
-                PVS1PredictionSeqVarPath.NotSet
+            self.prediction: AutoACMGResult = AutoACMGResult()
+
+            # PP5 and BP6 criteria
+            self.prediction.pp5.prediction = ACMGPrediction.NotSet
+            self.prediction.pp5.comment = "PP5 prediction is deprecated."
+            self.prediction.bp6.prediction = ACMGPrediction.NotSet
+            self.prediction.bp6.comment = "BP6 prediction is deprecated."
+            logger.warning("Note, that PP5 and BP6 criteria are depricated and not predicted.")
+
+            # Not implemented criteria
+            for crit in NOT_IMPLEMENTED_CRITERIA:
+                setattr(
+                    getattr(self.prediction, crit.lower()),
+                    "prediction",
+                    ACMGPrediction.NotSet,
+                )
+                setattr(
+                    getattr(self.prediction, crit.lower()),
+                    "comment",
+                    f"{crit} prediction is not implemented.",
+                )
+            logger.warning(
+                "Some criteria are not implemented yet: {}",
+                NOT_IMPLEMENTED_CRITERIA,
             )
-            self.seqvar_criteria: ACMGCriteria = ACMGCriteria()
 
             # PVS1
             try:
@@ -140,18 +169,24 @@ class AutoACMG:
                 pvs1 = AutoPVS1(self.seqvar, self.genome_release, config=self.config)
                 seqvar_prediction, seqvar_prediction_path = pvs1.predict()
                 if seqvar_prediction is None or seqvar_prediction_path is None:
-                    logger.error("Failed to predict PVS1 criteria.")
+                    raise AutoAcmgBaseException(
+                        "PVS1 prediction failed: prediction or prediction path is None."
+                    )
                 else:
-                    # Double check if the prediction path is indeed for sequence variant
-                    assert isinstance(seqvar_prediction_path, PVS1PredictionSeqVarPath)
-                    self.seqvar_pvs1_prediction = seqvar_prediction
-                    self.seqvar_pvs1_prediction_path = seqvar_prediction_path
-                    logger.info(
-                        "PVS1 prediction: {}.\nThe prediction path is:\n{}.",
-                        self.seqvar_pvs1_prediction.name,
-                        PVS1PredictionPathMapping[self.seqvar_pvs1_prediction_path],
+                    if seqvar_prediction == PVS1Prediction.NotSet:
+                        raise AutoAcmgBaseException("PVS1 prediction failed: prediction NotSet.")
+                    self.prediction.pvs1.prediction = (
+                        ACMGPrediction.Positive
+                        if seqvar_prediction in PVS1_POSITIVE_SEQVAR_PREDICTIONS
+                        else ACMGPrediction.Negative
+                    )
+                    self.prediction.pvs1.comment = (
+                        f"PVS1 strength: {seqvar_prediction.name}. "
+                        f"PVS1 prediction path: {PVS1PredictionPathMapping[seqvar_prediction_path]}."
                     )
             except AutoAcmgBaseException as e:
+                self.prediction.pvs1.prediction = ACMGPrediction.NotSet
+                self.prediction.pvs1.comment = "PVS1 prediction failed."
                 logger.error("Failed to predict PVS1 criteria. Error: {}", e)
 
             # Other criteria
@@ -162,19 +197,18 @@ class AutoACMG:
                 )
                 criteria_preciction = auto_criteria.predict()
                 if criteria_preciction is None:
-                    logger.error("Failed to predict other ACMG criteria.")
+                    raise AutoAcmgBaseException("Other ACMG criteria prediction failed.")
                 else:
-                    self.seqvar_criteria = criteria_preciction
-                    logger.info("Other ACMG criteria prediction:\n{}", self.seqvar_criteria)
-                    logger.warning(
-                        "Note, that PP5 and BP6 criteria are depricated and not predicted."
-                    )
-                    logger.warning(
-                        "Some criteria are not implemented yet. They are: {}",
-                        NOT_IMPLEMENTED_CRITERIA,
-                    )
+                    for criteria, prediction in criteria_preciction.model_dump().items():
+                        setattr(
+                            getattr(self.prediction, criteria.lower()),
+                            "prediction",
+                            ACMGPrediction.Positive if prediction else ACMGPrediction.Negative,
+                        )
             except AutoAcmgBaseException as e:
                 logger.error("Failed to predict other ACMG criteria. Error: {}", e)
+
+            logger.info("ACMG criteria prediction completed: {}", self.prediction.model_dump())
 
         elif isinstance(variant, StrucVar):
             logger.info("Classification of structural variants is not implemented yet.")
@@ -210,4 +244,7 @@ class AutoACMG:
             # except AutoAcmgBaseException as e:
             #     logger.error("Failed to predict PVS1 criteria. Error: {}", e)
             #     return
-        logger.info("ACMG criteria prediction completed.")
+
+    def get_prediction(self):
+        """Get the prediction for the specified variant."""
+        return self.prediction
