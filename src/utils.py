@@ -1,15 +1,155 @@
 """Utility functions for the AutoACMG and AutoPVS1."""
 
+import itertools
+import re
 from typing import Dict, List, Optional, Tuple
 
+from biocommons.seqrepo import SeqRepo  # type: ignore
 from loguru import logger
 
+from lib.maxentpy import maxent
+from lib.maxentpy.maxent import load_matrix3, load_matrix5
+from src.api.annonars import AnnonarsClient
 from src.api.mehari import MehariClient
 from src.core.config import Config
+from src.defs.annonars_variant import VariantResult
+from src.defs.auto_acmg import SpliceType
 from src.defs.auto_pvs1 import SeqVarConsequence, SeqvarConsequenceMapping, TranscriptInfo
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException
+from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import TranscriptGene, TranscriptSeqvar
 from src.defs.seqvar import SeqVar
+
+
+class SplicingPrediction:
+    def __init__(self, seqvar: SeqVar, *, config: Optional[Config] = None):
+        self.donor_threshold = 3
+        self.acceptor_threshold = 3
+        self.percent_threshold = 0.7
+        self.seqvar = seqvar
+        self.config: Config = config or Config()
+        self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
+        self.sr = SeqRepo(self.config.seqrepo_data_dir)
+
+        self.maxentscore_ref = -1.00
+        self.maxentscore_alt = -1.00
+        self.maxent_foldchange = 1.00
+        self.matrix5 = load_matrix5()
+        self.matrix3 = load_matrix3()
+
+    def get_sequence(self, chrom: str, start: int, end: int) -> str:
+        """Retrieve the sequence for the specified range."""
+        try:
+            seq = self.sr[chrom][start:end]
+            return seq
+        except Exception as e:
+            logger.error("Failed to get sequence for {}:{}-{}. Error: {}", chrom, start, end, e)
+            raise AlgorithmError("Failed to get sequence for the specified range.") from e
+
+    def _calculate_maxentscore(
+        self, refseq: str, altseq: str, splice_type: str
+    ) -> Tuple[float, float, float]:
+        """
+        --- Calculate the maxentscan socre ---
+        When a mutation occurs, if the WT score is above the threshold and
+        the score variation (between WT and Mutant) is under -10% for HSF (-30% for MaxEnt)
+        we consider that the mutation breaks the splice site.
+        In the other case, if the WT score is under the threshold and
+        the score variation is above +10% for HSF (+30% for MaxEnt) we consider that
+        the mutation creates a new splice site.
+        """
+        maxentscore_ref = maxentscore_alt = -1.00
+        if splice_type == "donor":
+            if len(refseq) == 9:
+                maxentscore_ref = maxent.score5(refseq, matrix=self.matrix5)
+            if len(altseq) == 9:
+                maxentscore_alt = maxent.score5(altseq, matrix=self.matrix5)
+        elif splice_type == "acceptor":
+            if len(refseq) == 23:
+                maxentscore_ref = maxent.score3(refseq, matrix=self.matrix3)
+            if len(altseq) == 23:
+                maxentscore_alt = maxent.score3(altseq, matrix=self.matrix3)
+
+        maxent_foldchange = maxentscore_alt / maxentscore_ref
+
+        return round(maxentscore_ref, 2), round(maxentscore_alt, 2), round(maxent_foldchange, 2)
+
+    def get_cryptic_ss(
+        self, chrom: str, position: int, refseq: str, splice_type: SpliceType
+    ) -> List[Tuple[int, str, float]]:
+        """
+        Get cryptic splice sites around the variant position.
+
+        Args:
+            chrom: The chromosome where the sequence is located.
+            position: The position of the sequence variant.
+            refseq: The reference sequence in the specified region.
+            splice_type: The type of splice site, either "donor" or "acceptor".
+
+        Returns:
+            List[Tuple[int, str, float]]: List of cryptic splice sites with position, context, and score.
+        """
+        if splice_type == SpliceType.Unknown:
+            logger.warning("Unknown splice type. Cannot predict cryptic splice sites.")
+            return []
+
+        refscore = self.maxentscore_ref
+        search_flank = 20  # Flank size for checking positions around the variant
+        cryptic_sites = []
+
+        for offset in range(-search_flank, search_flank + 1):
+            pos = position + offset
+            if splice_type == SpliceType.Donor:
+                splice_context = self.get_sequence(chrom, pos, pos + 9)
+                alt_index = position - pos - 1
+                if 0 < alt_index < 9:
+                    splice_context = (
+                        splice_context[:alt_index]
+                        + self.seqvar.insert
+                        + splice_context[
+                            alt_index + len(self.seqvar.insert) : 9 - len(self.seqvar.insert)
+                        ]
+                    )
+                if len(splice_context) == 9:
+                    maxentscore = maxent.score5(splice_context, matrix=self.matrix5)
+                else:
+                    maxentscore = 0
+                if (
+                    splice_context[3:5] in ["GT", refseq[3:5]]
+                    and maxentscore > 1
+                    and (
+                        maxentscore >= self.donor_threshold
+                        or maxentscore / refscore >= self.percent_threshold
+                    )
+                ):
+                    cryptic_sites.append((pos, splice_context, maxentscore))
+
+            elif splice_type == SpliceType.Acceptor:
+                splice_context = self.get_sequence(chrom, pos, pos + 23)
+                alt_index = position - pos - 1
+                if 0 < alt_index < 23:
+                    splice_context = (
+                        splice_context[:alt_index]
+                        + self.seqvar.insert
+                        + splice_context[
+                            alt_index + len(self.seqvar.insert) : 23 - len(self.seqvar.insert)
+                        ]
+                    )
+                if len(splice_context) == 23:
+                    maxentscore = maxent.score3(splice_context, matrix=self.matrix3)
+                else:
+                    maxentscore = 0
+                if (
+                    splice_context[18:20] in ["AG", refseq[18:20]]
+                    and maxentscore > 1
+                    and (
+                        maxentscore >= self.acceptor_threshold
+                        or maxentscore / refscore >= self.percent_threshold
+                    )
+                ):
+                    cryptic_sites.append((pos, splice_context, maxentscore))
+
+        return cryptic_sites
 
 
 class SeqVarTranscriptsHelper:

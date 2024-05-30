@@ -7,6 +7,7 @@ from loguru import logger
 
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config
+from src.defs.auto_acmg import SpliceType
 from src.defs.auto_pvs1 import (
     CdsInfo,
     GenomicStrand,
@@ -23,7 +24,7 @@ from src.defs.exceptions import (
 )
 from src.defs.mehari import Exon, ProteinPos, TranscriptGene, TranscriptSeqvar, TxPos
 from src.defs.seqvar import SeqVar
-from src.utils import SeqVarTranscriptsHelper
+from src.utils import SeqVarTranscriptsHelper, SplicingPrediction
 
 
 class SeqVarPVS1Helper:
@@ -583,8 +584,72 @@ class SeqVarPVS1Helper:
         return prot_pos / prot_length > 0.1
 
     @staticmethod
-    def _exon_skipping_or_cryptic_ss_disruption() -> bool:
+    def _skipping_exon_pos(seqvar: SeqVar, exons: List[Exon]) -> Tuple[int, int]:
+        """
+        Calculate the length of the exon skipping region.
+
+        The method calculates the length of the exon skipping region based on the position of the
+        variant in the coding sequence and the exons of the gene.
+
+        Args:
+            seqvar: The sequence variant being analyzed.
+            exons: A list of exons of the gene where the variant occurs.
+
+        Returns:
+            int: The length of the exon skipping region.
+        """
+        logger.debug("Calculating the length of the exon skipping region.")
+        start_pos, end_pos = None, None
+        for exon in exons:
+            if exon.altStartI <= seqvar.pos <= exon.altEndI:
+                start_pos = exon.altStartI
+                end_pos = exon.altEndI
+                break
+        if not start_pos or not end_pos:
+            logger.error("Exon not found. Variant position: {}. Exons: {}", seqvar.pos, exons)
+            raise AlgorithmError("Exon not found.")
+        return start_pos, end_pos
+
+    def _exon_skipping_or_cryptic_ss_disruption(
+        self, seqvar: SeqVar, exons: List[Exon], consequences: List[str]
+    ) -> bool:
         """Check if the variant causes exon skipping or cryptic splice site disruption."""
+        logger.debug(
+            "Checking if the variant causes exon skipping or cryptic splice site disruption."
+        )
+        start_pos, end_pos = self._skipping_exon_pos(seqvar, exons)
+        if (end_pos - start_pos) % 3 != 0:
+            logger.debug("Exon length is not a multiple of 3. Predicted to cause exon skipping.")
+            return True
+
+        # Cryptic splice site disruption
+        chrom = seqvar.chrom
+        position = seqvar.pos
+        sp = SplicingPrediction(seqvar)
+        refseq = sp.get_sequence(chrom, position - 20, position + 20)
+
+        # Determine the splice type
+        splice_type = SpliceType.Unknown
+        for consequence in consequences:
+            match consequence:
+                case "splice_acceptor_variant":
+                    splice_type = SpliceType.Acceptor
+                case "splice_donor_variant":
+                    splice_type = SpliceType.Donor
+                case _:
+                    continue
+        if splice_type == SpliceType.Unknown:
+            logger.debug("Splice type is unknown. Cannot predict cryptic splice site disruption.")
+            raise AlgorithmError(
+                "Splice type is unknown. Cannot predict cryptic splice site disruption."
+            )
+
+        cryptic_sites = sp.get_cryptic_ss(chrom, position, refseq, splice_type)
+        if len(cryptic_sites) > 0:
+            for site in cryptic_sites:
+                if abs(site[0] - position) % 3 != 0:
+                    logger.debug("Cryptic splice site disruption predicted.")
+                    return True
         return False
 
     @staticmethod
@@ -733,6 +798,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         self._all_gene_ts: List[TranscriptGene] = []
         self._consequence: SeqVarConsequence = SeqVarConsequence.NotSet
         self.HGVS: str = ""
+        self.consequence: str = ""
         # self.pHGVS: str = ""
         # self.tHGVS: str = ""
         self.HGNC_id: str = ""
@@ -785,6 +851,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
 
         # Set attributes
         logger.debug("Setting up the attributes for the PVS1 class.")
+        self.consequences = self._seqvar_transcript.consequences
         self.HGVS = self._gene_transcript.id
         # self.pHGVS = self._choose_hgvs_p(self.HGVS, self._seqvar_transcript, self._all_seqvar_ts)
         # self.tHGVS = self._seqvar_transcript.hgvs_t if self._seqvar_transcript.hgvs_t else ""
@@ -910,18 +977,18 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                             self.prediction_path = PVS1PredictionSeqVarPath.NF6
 
         elif self._consequence == SeqVarConsequence.SpliceSites:
-            if self._exon_skipping_or_cryptic_ss_disruption() and self._undergo_nmd(
-                self.tx_pos_utr, self.HGNC_id, self.strand, self.exons
-            ):
+            if self._exon_skipping_or_cryptic_ss_disruption(
+                self.seqvar, self.exons, self.consequences
+            ) and self._undergo_nmd(self.tx_pos_utr, self.HGNC_id, self.strand, self.exons):
                 if self._in_biologically_relevant_transcript(self.transcript_tags):
                     self.prediction = PVS1Prediction.PVS1
                     self.prediction_path = PVS1PredictionSeqVarPath.SS1
                 else:
                     self.prediction = PVS1Prediction.NotPVS1
                     self.prediction_path = PVS1PredictionSeqVarPath.SS2
-            elif self._exon_skipping_or_cryptic_ss_disruption() and not self._undergo_nmd(
-                self.tx_pos_utr, self.HGNC_id, self.strand, self.exons
-            ):
+            elif self._exon_skipping_or_cryptic_ss_disruption(
+                self.seqvar, self.exons, self.consequences
+            ) and not self._undergo_nmd(self.tx_pos_utr, self.HGNC_id, self.strand, self.exons):
                 if self._critical4protein_function(self.seqvar, self.exons, self.strand):
                     self.prediction = PVS1Prediction.PVS1_Strong
                     self.prediction_path = PVS1PredictionSeqVarPath.SS3

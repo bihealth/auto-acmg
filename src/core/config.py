@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     #: Base URL to reev
     API_REEV_URL: str = ""
 
+    #: Path to seqrepo data directory
+    SEQREPO_DATA_DIR: str = ""
+
 
 settings = Settings(_env_file=".env", _env_file_encoding="utf-8")  # type: ignore[call-arg]
 
@@ -42,6 +45,9 @@ class Config(BaseModel):
     api_base_url_mehari: Optional[str] = None
     #: Base URL to dotty API.
     api_base_url_dotty: Optional[str] = None
+
+    #: Path to the seqrepo data directory.
+    seqrepo_data_dir: Optional[str] = settings.SEQREPO_DATA_DIR
 
     @model_validator(mode="before")
     @classmethod

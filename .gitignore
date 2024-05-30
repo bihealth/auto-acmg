@@ -24,7 +24,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# Track maxentpy package
+# lib/
 lib64/
 parts/
 sdist/

@@ -24,6 +24,15 @@ class AutoAcmgBaseEnum(Enum, metaclass=AutoAcmgBaseEnumMeta):
         raise AutoAcmgBaseException(f"Invalid {cls.__name__} value: {value}")
 
 
+class SpliceType(AutoAcmgBaseEnum):
+    """Splice type enumeration."""
+
+    Donor = "donor"
+    Acceptor = "acceptor"
+    # Region = "region"
+    Unknown = "unknown"
+
+
 class AminoAcid(AutoAcmgBaseEnum):
     """Amino acid enumeration."""
 
