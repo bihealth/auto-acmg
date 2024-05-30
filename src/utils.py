@@ -101,11 +101,11 @@ class SplicingPrediction:
         search_flank = 20  # Flank size for checking positions around the variant
         cryptic_sites = []
 
-        for offset in range(-search_flank, search_flank + 1):
+        for offset in range(-search_flank, search_flank):
             pos = self.seqvar.pos + offset
             if splice_type == SpliceType.Donor:
                 splice_context = self.get_sequence(pos, pos + 9)
-                alt_index = self.seqvar.pos - pos - 1
+                alt_index = self.seqvar.pos - pos
                 if 0 < alt_index < 9:
                     splice_context = (
                         splice_context[:alt_index]

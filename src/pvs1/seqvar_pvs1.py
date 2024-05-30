@@ -601,9 +601,8 @@ class SeqVarPVS1Helper:
         logger.debug("Calculating the length of the exon skipping region.")
         start_pos, end_pos = None, None
         for exon in exons:
-            if (
-                exon.altStartI - 20 <= seqvar.pos <= exon.altEndI + 20
-            ):  # 20 bp padding for intronic variants
+            # Include 9 nucleotides upstream and 23 nucleotides downstream of the exon
+            if exon.altStartI - 9 <= seqvar.pos <= exon.altEndI + 23:
                 start_pos = exon.altStartI
                 end_pos = exon.altEndI
                 break
