@@ -22,6 +22,8 @@ from src.defs.seqvar import SeqVar
 
 
 class SplicingPrediction:
+    """Splicing prediction for a sequence variant."""
+
     def __init__(self, seqvar: SeqVar, *, config: Optional[Config] = None):
         self.donor_threshold = 3
         self.acceptor_threshold = 3
@@ -37,8 +39,78 @@ class SplicingPrediction:
         self.matrix5 = load_matrix5()
         self.matrix3 = load_matrix3()
 
+    def _calculate_maxentscore(
+        self, refseq: str, altseq: str, splice_type: SpliceType
+    ) -> Tuple[float, float, float]:
+        """
+        Calculate the MaxEntScan score for the reference and alternative sequences.
+
+        When a mutation occurs, if the WT score is above the threshold and
+        the score variation (between WT and Mutant) is under -10% for HSF (-30% for MaxEnt)
+        we consider that the mutation breaks the splice site.
+        In the other case, if the WT score is under the threshold and
+        the score variation is above +10% for HSF (+30% for MaxEnt) we consider that
+        the mutation creates a new splice site.
+
+        Args:
+            refseq: The reference sequence.
+            altseq: The alternative sequence.
+            splice_type: The type of splice site, either "donor" or "acceptor".
+
+        Returns:
+            Tuple[float, float, float]: The MaxEntScan score for the reference sequence,
+            the alternative sequence, and the fold change.
+        """
+        if splice_type == SpliceType.Unknown:
+            logger.warning("Unknown splice type. Cannot calculate MaxEntScan score.")
+            return -1.00, -1.00, 1.00
+
+        maxentscore_ref, maxentscore_alt = -1.00, -1.00
+        if splice_type == SpliceType.Donor:
+            if len(refseq) == 9:
+                maxentscore_ref = maxent.score5(refseq, matrix=self.matrix5)
+            if len(altseq) == 9:
+                maxentscore_alt = maxent.score5(altseq, matrix=self.matrix5)
+        elif splice_type == SpliceType.Acceptor:
+            if len(refseq) == 23:
+                maxentscore_ref = maxent.score3(refseq, matrix=self.matrix3)
+            if len(altseq) == 23:
+                maxentscore_alt = maxent.score3(altseq, matrix=self.matrix3)
+
+        maxent_foldchange = maxentscore_alt / maxentscore_ref
+        return round(maxentscore_ref, 2), round(maxentscore_alt, 2), round(maxent_foldchange, 2)
+
+    def _initialize_maxentscore(self):
+        """Initialize the MaxEntScan scores for the sequence variant."""
+        # Get the reference sequence
+        # refseq = self.get_sequence(self.seqvar.pos - 1, self.seqvar.pos + 23)
+        # altseq = (
+        #     refseq[: self.seqvar.pos - 1]
+        #     + self.seqvar.insert
+        #     + refseq[self.seqvar.pos - 1 + len(self.seqvar.insert) :]
+        # )
+
+        # # Get the MaxEntScan scores for the reference sequence
+        # self.maxentscore_ref, self.maxentscore_alt, self.maxent_foldchange = self._calculate_maxentscore(
+        #     refseq, refseq, self.seqvar.splice_type
+        # )
+
     def get_sequence(self, start: int, end: int) -> str:
-        """Retrieve the sequence for the specified range."""
+        """
+        Retrieve the sequence for the specified range.
+        The reference sequence is chosen based on the chromosome and genome release from the
+        sequence variant, which was provided by the initialisation of the class.
+
+        Args:
+            start: The start position of the sequence.
+            end: The end position of the sequence.
+
+        Returns:
+            str: The sequence for the specified range.
+
+        Raises:
+            AlgorithmError: If the sequence cannot be retrieved.
+        """
         # Get the RefSeq chromosome name from the SeqVar chromosome
         if self.seqvar.genome_release == GenomeRelease.GRCh37:
             chrom = CHROM_REFSEQ_37[self.seqvar.chrom]
@@ -53,34 +125,6 @@ class SplicingPrediction:
         except Exception as e:
             logger.error("Failed to get sequence for {}:{}-{}. Error: {}", chrom, start, end, e)
             raise AlgorithmError("Failed to get sequence for the specified range.") from e
-
-    def _calculate_maxentscore(
-        self, refseq: str, altseq: str, splice_type: str
-    ) -> Tuple[float, float, float]:
-        """
-        --- Calculate the maxentscan socre ---
-        When a mutation occurs, if the WT score is above the threshold and
-        the score variation (between WT and Mutant) is under -10% for HSF (-30% for MaxEnt)
-        we consider that the mutation breaks the splice site.
-        In the other case, if the WT score is under the threshold and
-        the score variation is above +10% for HSF (+30% for MaxEnt) we consider that
-        the mutation creates a new splice site.
-        """
-        maxentscore_ref = maxentscore_alt = -1.00
-        if splice_type == "donor":
-            if len(refseq) == 9:
-                maxentscore_ref = maxent.score5(refseq, matrix=self.matrix5)
-            if len(altseq) == 9:
-                maxentscore_alt = maxent.score5(altseq, matrix=self.matrix5)
-        elif splice_type == "acceptor":
-            if len(refseq) == 23:
-                maxentscore_ref = maxent.score3(refseq, matrix=self.matrix3)
-            if len(altseq) == 23:
-                maxentscore_alt = maxent.score3(altseq, matrix=self.matrix3)
-
-        maxent_foldchange = maxentscore_alt / maxentscore_ref
-
-        return round(maxentscore_ref, 2), round(maxentscore_alt, 2), round(maxent_foldchange, 2)
 
     def get_cryptic_ss(self, refseq: str, splice_type: SpliceType) -> List[Tuple[int, str, float]]:
         """

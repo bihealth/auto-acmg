@@ -526,7 +526,6 @@ def test_skipping_exon_pos_invalid():
         SeqVarPVS1Helper()._skipping_exon_pos(seqvar, exons)  # type: ignore
 
 
-# Mocking the necessary methods
 @pytest.mark.parametrize(
     "skipping_exon_pos_output, consequences, cryptic_ss_output, expected",
     [
@@ -559,6 +558,7 @@ def test_skipping_exon_pos_invalid():
 def test_exon_skipping_or_cryptic_ss_disruption(
     seqvar, skipping_exon_pos_output, consequences, cryptic_ss_output, expected
 ):
+    """Test the _exon_skipping_or_cryptic_ss_disruption method."""
     exons = [MockExon(90, 120, 90, 120)]
     with patch.object(
         SeqVarPVS1Helper, "_skipping_exon_pos", return_value=skipping_exon_pos_output

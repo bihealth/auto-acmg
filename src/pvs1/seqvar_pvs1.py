@@ -586,17 +586,17 @@ class SeqVarPVS1Helper:
     @staticmethod
     def _skipping_exon_pos(seqvar: SeqVar, exons: List[Exon]) -> Tuple[int, int]:
         """
-        Calculate the length of the exon skipping region.
+        Calculate the length of the closest to the seqvar exon.
 
-        The method calculates the length of the exon skipping region based on the position of the
-        variant in the coding sequence and the exons of the gene.
+        The method calculates the length of the exon, which can be skipped due to the variant
+        consequences.
 
         Args:
             seqvar: The sequence variant being analyzed.
             exons: A list of exons of the gene where the variant occurs.
 
         Returns:
-            int: The length of the exon skipping region.
+            Tuple[int, int]: The start and end positions of the exon skipping region.
         """
         logger.debug("Calculating the length of the exon skipping region.")
         start_pos, end_pos = None, None
@@ -614,7 +614,32 @@ class SeqVarPVS1Helper:
     def _exon_skipping_or_cryptic_ss_disruption(
         self, seqvar: SeqVar, exons: List[Exon], consequences: List[str]
     ) -> bool:
-        """Check if the variant causes exon skipping or cryptic splice site disruption."""
+        """
+        Check if the variant causes exon skipping or cryptic splice site disruption.
+
+        The method checks if the variant causes exon skipping or cryptic splice site disruption
+        based on the position of the variant in the coding sequence and the exons of the gene.
+
+        Implementation of the rule:
+        - If the exon length is not a multiple of 3, the variant is predicted to cause exon
+        skipping.
+        - If the variant is a splice acceptor or donor variant, the method predicts cryptic splice
+        site disruption.
+
+        Note:
+            Rule:
+            If the variant causes exon skipping or cryptic splice site disruption, it is considered
+            to be pathogenic.
+
+        Args:
+            seqvar: The sequence variant being analyzed.
+            exons: A list of exons of the gene where the variant occurs.
+            consequences: A list of VEP consequences of the sequence variant.
+
+        Returns:
+            bool: True if the variant causes exon skipping or cryptic splice site disruption,
+                False if preserves reading frame.
+        """
         logger.debug(
             "Checking if the variant causes exon skipping or cryptic splice site disruption."
         )

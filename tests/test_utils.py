@@ -3,11 +3,13 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.api.mehari import MehariClient
+from src.defs.auto_acmg import SpliceType
 from src.defs.auto_pvs1 import GenomicStrand, SeqVarConsequence
 from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import GeneTranscripts, TranscriptsSeqVar
 from src.defs.seqvar import SeqVar
 from src.pvs1.seqvar_pvs1 import SeqVarTranscriptsHelper
+from src.utils import SplicingPrediction
 from tests.utils import get_json_object
 
 
@@ -53,6 +55,11 @@ class MockCdsInfo:
         self.cds_end = cds_end
         self.cds_strand = cds_strand
         self.exons = exons
+
+
+# === SplicingPrediction ===
+
+# TODO: Add tests for the SplicingPrediction class
 
 
 # === SeqVarTranscriptsHelper ===
