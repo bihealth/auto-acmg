@@ -601,7 +601,9 @@ class SeqVarPVS1Helper:
         logger.debug("Calculating the length of the exon skipping region.")
         start_pos, end_pos = None, None
         for exon in exons:
-            if exon.altStartI <= seqvar.pos <= exon.altEndI:
+            if (
+                exon.altStartI - 20 <= seqvar.pos <= exon.altEndI + 20
+            ):  # 20 bp padding for intronic variants
                 start_pos = exon.altStartI
                 end_pos = exon.altEndI
                 break
@@ -623,10 +625,8 @@ class SeqVarPVS1Helper:
             return True
 
         # Cryptic splice site disruption
-        chrom = seqvar.chrom
-        position = seqvar.pos
         sp = SplicingPrediction(seqvar)
-        refseq = sp.get_sequence(chrom, position - 20, position + 20)
+        refseq = sp.get_sequence(seqvar.pos - 20, seqvar.pos + 20)
 
         # Determine the splice type
         splice_type = SpliceType.Unknown
@@ -634,8 +634,10 @@ class SeqVarPVS1Helper:
             match consequence:
                 case "splice_acceptor_variant":
                     splice_type = SpliceType.Acceptor
+                    break
                 case "splice_donor_variant":
                     splice_type = SpliceType.Donor
+                    break
                 case _:
                     continue
         if splice_type == SpliceType.Unknown:
@@ -644,10 +646,10 @@ class SeqVarPVS1Helper:
                 "Splice type is unknown. Cannot predict cryptic splice site disruption."
             )
 
-        cryptic_sites = sp.get_cryptic_ss(chrom, position, refseq, splice_type)
+        cryptic_sites = sp.get_cryptic_ss(refseq, splice_type)
         if len(cryptic_sites) > 0:
             for site in cryptic_sites:
-                if abs(site[0] - position) % 3 != 0:
+                if abs(site[0] - seqvar.pos) % 3 != 0:
                     logger.debug("Cryptic splice site disruption predicted.")
                     return True
         return False
@@ -895,14 +897,14 @@ class SeqVarPVS1(SeqVarPVS1Helper):
         self.strand = GenomicStrand.from_string(self._gene_transcript.genomeAlignments[0].strand)
         if (
             not self.exons
-            # or self.cds_pos == -1
-            or self.tx_pos_utr == -1
-            or self.prot_pos == -1
-            or self.prot_length == -1
-            # or self.cds_start == -1
-            # or self.cds_end == -1
-            # or self.cds_length == -1
-            or not self.strand
+            # # or self.cds_pos == -1
+            # or self.tx_pos_utr == -1
+            # or self.prot_pos == -1
+            # or self.prot_length == -1
+            # # or self.cds_start == -1
+            # # or self.cds_end == -1
+            # # or self.cds_length == -1
+            # or not self.strand
         ):
             logger.error("Some attributes are not set. Cannot initialize the PVS1 class.")
             logger.debug(

@@ -16,7 +16,7 @@ from src.defs.annonars_variant import VariantResult
 from src.defs.auto_acmg import SpliceType
 from src.defs.auto_pvs1 import SeqVarConsequence, SeqvarConsequenceMapping, TranscriptInfo
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException
-from src.defs.genome_builds import GenomeRelease
+from src.defs.genome_builds import CHROM_REFSEQ_37, CHROM_REFSEQ_38, GenomeRelease
 from src.defs.mehari import TranscriptGene, TranscriptSeqvar
 from src.defs.seqvar import SeqVar
 
@@ -37,8 +37,16 @@ class SplicingPrediction:
         self.matrix5 = load_matrix5()
         self.matrix3 = load_matrix3()
 
-    def get_sequence(self, chrom: str, start: int, end: int) -> str:
+    def get_sequence(self, start: int, end: int) -> str:
         """Retrieve the sequence for the specified range."""
+        # Get the RefSeq chromosome name from the SeqVar chromosome
+        if self.seqvar.genome_release == GenomeRelease.GRCh37:
+            chrom = CHROM_REFSEQ_37[self.seqvar.chrom]
+        elif self.seqvar.genome_release == GenomeRelease.GRCh38:
+            chrom = CHROM_REFSEQ_38[self.seqvar.chrom]
+        else:
+            logger.error("Invalid genome release: {}", self.seqvar.genome_release)
+            raise AlgorithmError("Invalid genome release.")
         try:
             seq = self.sr[chrom][start:end]
             return seq
@@ -74,15 +82,11 @@ class SplicingPrediction:
 
         return round(maxentscore_ref, 2), round(maxentscore_alt, 2), round(maxent_foldchange, 2)
 
-    def get_cryptic_ss(
-        self, chrom: str, position: int, refseq: str, splice_type: SpliceType
-    ) -> List[Tuple[int, str, float]]:
+    def get_cryptic_ss(self, refseq: str, splice_type: SpliceType) -> List[Tuple[int, str, float]]:
         """
         Get cryptic splice sites around the variant position.
 
         Args:
-            chrom: The chromosome where the sequence is located.
-            position: The position of the sequence variant.
             refseq: The reference sequence in the specified region.
             splice_type: The type of splice site, either "donor" or "acceptor".
 
@@ -98,10 +102,10 @@ class SplicingPrediction:
         cryptic_sites = []
 
         for offset in range(-search_flank, search_flank + 1):
-            pos = position + offset
+            pos = self.seqvar.pos + offset
             if splice_type == SpliceType.Donor:
-                splice_context = self.get_sequence(chrom, pos, pos + 9)
-                alt_index = position - pos - 1
+                splice_context = self.get_sequence(pos, pos + 9)
+                alt_index = self.seqvar.pos - pos - 1
                 if 0 < alt_index < 9:
                     splice_context = (
                         splice_context[:alt_index]
@@ -125,8 +129,8 @@ class SplicingPrediction:
                     cryptic_sites.append((pos, splice_context, maxentscore))
 
             elif splice_type == SpliceType.Acceptor:
-                splice_context = self.get_sequence(chrom, pos, pos + 23)
-                alt_index = position - pos - 1
+                splice_context = self.get_sequence(pos, pos + 23)
+                alt_index = self.seqvar.pos - pos - 1
                 if 0 < alt_index < 23:
                     splice_context = (
                         splice_context[:alt_index]
