@@ -16,6 +16,7 @@ from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import Exon, GeneTranscripts, TranscriptsSeqVar
 from src.defs.seqvar import SeqVar
 from src.pvs1.seqvar_pvs1 import SeqVarPVS1, SeqVarPVS1Helper, SeqVarTranscriptsHelper
+from src.utils import SplicingPrediction
 from tests.utils import get_json_object
 
 
@@ -486,9 +487,97 @@ def test_lof_removes_more_then_10_percent_of_protein(prot_pos, prot_length, expe
     assert result == expected_result
 
 
-def test_exon_skipping_or_cryptic_ss_disruption():
-    """Test the _exon_skipping_or_cryptic_ss_disruption method."""
-    pass
+@pytest.mark.parametrize(
+    "seqvar, exons, expected_result",
+    [
+        (
+            SeqVar(GenomeRelease.GRCh38, "1", 50, "A", "T"),
+            [MockExon(2, 100, 0, 100)],
+            (2, 100),
+        ),  # One exon
+        (
+            SeqVar(GenomeRelease.GRCh38, "1", 150, "A", "T"),
+            [MockExon(0, 100, 0, 100), MockExon(100, 200, 100, 200)],
+            (100, 200),
+        ),  # Multiple exons
+        (
+            SeqVar(GenomeRelease.GRCh38, "1", 98, "A", "T"),
+            [MockExon(100, 200, 100, 200)],
+            (100, 200),
+        ),  # Upstream intron
+        (
+            SeqVar(GenomeRelease.GRCh38, "1", 220, "A", "T"),
+            [MockExon(100, 200, 100, 200)],
+            (100, 200),
+        ),  # Downstream intron
+    ],
+)
+def test_skipping_exon_pos(seqvar, exons, expected_result):
+    """Test the _skipping_exon_pos method."""
+    result = SeqVarPVS1Helper()._skipping_exon_pos(seqvar, exons)
+    assert result == expected_result
+
+
+def test_skipping_exon_pos_invalid():
+    """Test the _skipping_exon_pos method."""
+    seqvar = SeqVar(GenomeRelease.GRCh38, "1", 50, "A", "T")
+    exons = [MockExon(100, 200, 100, 200)]
+    with pytest.raises(AlgorithmError):
+        SeqVarPVS1Helper()._skipping_exon_pos(seqvar, exons)  # type: ignore
+
+
+# @pytest.mark.parametrize(
+#     "skipping_exon_pos_output, consequences, strand, cryptic_ss_output, expected",
+#     [
+#         (
+#             (90, 120),  # _skipping_exon_pos output
+#             ["splice_donor_variant"],  # consequences
+#             GenomicStrand.Plus,  # strand
+#             [(95, "some_seq", 5.0)],  # get_cryptic_ss output
+#             True,
+#         ),
+#         (
+#             (90, 123),
+#             ["splice_acceptor_variant"],
+#             GenomicStrand.Plus,
+#             [],
+#             False,
+#         ),
+#         (
+#             (90, 120),
+#             ["splice_donor_variant"],
+#             GenomicStrand.Minus,
+#             [(101, "some_seq", 5.0)],
+#             True,
+#         ),
+#         (
+#             (90, 120),
+#             ["splice_donor_variant"],
+#             GenomicStrand.Minus,
+#             [(103, "some_seq", 5.0)],
+#             False,
+#         ),
+#     ],
+# )
+# def test_exon_skipping_or_cryptic_ss_disruption(
+#     seqvar, skipping_exon_pos_output, consequences, strand, cryptic_ss_output, expected
+# ):
+#     """Test the _exon_skipping_or_cryptic_ss_disruption method."""
+#     exons = [MockExon(90, 120, 90, 120)]
+
+#     # Mock the SplicingPrediction class
+#     sp_mock = MagicMock()
+#     sp_mock.get_sequence.return_value = "some_sequence"
+#     sp_mock.get_cryptic_ss.return_value = cryptic_ss_output
+
+#     with patch.object(
+#         SeqVarPVS1Helper, "_skipping_exon_pos", return_value=skipping_exon_pos_output
+#     ):
+#         with patch("src.utils.SplicingPrediction", return_value=sp_mock):
+#             result = SeqVarPVS1Helper()._exon_skipping_or_cryptic_ss_disruption(
+#                 seqvar, exons, consequences, strand  # type: ignore
+#             )
+#             assert result == expected, f"Expected {expected}, but got {result}"
 
 
 @pytest.mark.parametrize(

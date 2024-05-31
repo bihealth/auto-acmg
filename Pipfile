@@ -13,6 +13,8 @@ typer = "*"
 setuptools = "*"
 loguru = "*"
 typing-extensions = "*"
+msgpack = "*"
+seqrepo = "*"
 
 [dev-packages]
 mypy = "*"
