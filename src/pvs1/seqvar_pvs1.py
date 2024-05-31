@@ -656,7 +656,7 @@ class SeqVarPVS1Helper:
             return True
 
         # Cryptic splice site disruption
-        sp = SplicingPrediction(seqvar, consequences=consequences, strand=strand)
+        sp = SplicingPrediction(seqvar, consequences=consequences, strand=strand, exons=exons)
         refseq = sp.get_sequence(seqvar.pos - 20, seqvar.pos + 20)
         splice_type = sp.determine_splice_type(consequences)
         cryptic_sites = sp.get_cryptic_ss(refseq, splice_type)

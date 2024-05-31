@@ -22,7 +22,7 @@ from src.defs.auto_pvs1 import (
 )
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException
 from src.defs.genome_builds import CHROM_REFSEQ_37, CHROM_REFSEQ_38, GenomeRelease
-from src.defs.mehari import TranscriptGene, TranscriptSeqvar
+from src.defs.mehari import Exon, TranscriptGene, TranscriptSeqvar
 from src.defs.seqvar import SeqVar
 
 
@@ -35,6 +35,7 @@ class SplicingPrediction:
         *,
         strand: GenomicStrand,
         consequences: List[str],
+        exons: List[Exon],
         config: Optional[Config] = None,
     ):
         self.donor_threshold = 3
@@ -42,6 +43,7 @@ class SplicingPrediction:
         self.percent_threshold = 0.7
         self.seqvar = seqvar
         self.strand = strand
+        self.exons = exons
         self.config: Config = config or Config()
         self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
         self.sr = SeqRepo(self.config.seqrepo_data_dir)
@@ -57,9 +59,73 @@ class SplicingPrediction:
 
     def _initialize_maxentscore(self):
         """Initialize the MaxEntScan scores for the sequence variant."""
-        # Get the reference sequence
-        refseq = self.get_sequence(self.seqvar.pos - 20, self.seqvar.pos + 20)
-        altseq = self.form_alt_seq(self.seqvar, refseq)
+        # Calculate the reference sequence by iterating through the exons
+        # and choosing the end position of the previous exon for Donor
+        # or the start position of the next exon for Acceptor.
+        # Get the reference sequence by choosing the 9 (3+6) nucleotides for Donor
+        # and 23 (3+20) nucleotides for Acceptor.
+        refseq = ""
+        refseq_start = 0
+        refseq_end = 0
+        if self.strand == GenomicStrand.Plus:
+            for i, exon in enumerate(self.exons):
+                if self.splice_type == SpliceType.Donor:
+                    if (
+                        exon.altEndI <= self.seqvar.pos
+                        and self.exons[i + 1].altStartI >= self.seqvar.pos
+                    ):
+                        refseq_start = exon.altEndI - 3
+                        refseq_end = exon.altEndI + 6
+                        refseq = self.get_sequence(refseq_start, refseq_end)
+                        break
+                elif self.splice_type == SpliceType.Acceptor:
+                    if exon.altStartI >= self.seqvar.pos:
+                        refseq_start = exon.altStartI - 3
+                        refseq_end = exon.altStartI + 20
+                        refseq = self.get_sequence(refseq_start, refseq_end)
+                        break
+        elif self.strand == GenomicStrand.Minus:
+            for i, exon in enumerate(self.exons):
+                if self.splice_type == SpliceType.Donor:
+                    if exon.altStartI >= self.seqvar.pos:
+                        refseq_start = exon.altStartI - 6
+                        refseq_end = exon.altStartI + 3
+                        refseq = self.get_sequence(refseq_start, refseq_end)
+                        refseq = self.reverse_complement(refseq)
+                        break
+                elif self.splice_type == SpliceType.Acceptor:
+                    if (
+                        exon.altEndI <= self.seqvar.pos
+                        and self.exons[i + 1].altStartI >= self.seqvar.pos
+                    ):
+                        refseq_start = exon.altEndI - 20
+                        refseq_end = exon.altEndI + 3
+                        refseq = self.get_sequence(refseq_start, refseq_end)
+                        refseq = self.reverse_complement(refseq)
+                        break
+
+        # Get the alternative sequence by inserting the variant nucleotide(s) into the reference
+        altseq = ""
+        altseq_index = self.seqvar.pos - refseq_start - 1
+        splice_length = 9 if self.splice_type == SpliceType.Donor else 23
+        for i in range(len(refseq)):
+            if len(altseq) == splice_length:
+                break
+            if i < altseq_index:
+                altseq += refseq[i]
+            elif i == altseq_index:
+                altseq += self.seqvar.insert
+                if len(altseq) == splice_length:
+                    break
+                elif len(altseq) > splice_length:
+                    altseq = altseq[:splice_length]
+                    break
+                # Add the remaining nucleotides from the reference sequence
+                else:
+                    for j in range(i + 1, len(refseq)):
+                        altseq += refseq[j]
+                        if len(altseq) == splice_length:
+                            break
 
         # Get the MaxEntScan scores for the reference sequence
         self.maxentscore_ref, self.maxentscore_alt, self.maxent_foldchange = (
@@ -121,15 +187,6 @@ class SplicingPrediction:
                 case _:
                     continue
         return splice_type
-
-    def form_alt_seq(self, seqvar: SeqVar, refseq: str) -> str:
-        """Form the alternative sequence for the sequence variant."""
-        altseq = (
-            refseq[: seqvar.pos - (seqvar.pos - 20) - 1]
-            + seqvar.insert
-            + refseq[seqvar.pos - (seqvar.pos - 20) + len(seqvar.insert) - 1 :]
-        )
-        return altseq
 
     @staticmethod
     def format_donor(raw_seq: str) -> str:
@@ -224,19 +281,31 @@ class SplicingPrediction:
             pos = self.seqvar.pos + offset
             if splice_type == SpliceType.Donor:
                 splice_context = self.get_sequence(pos, pos + 9)
-                alt_index = self.seqvar.pos - pos
-                if 0 < alt_index < 9:
-                    splice_context = (
-                        splice_context[:alt_index]
-                        + self.seqvar.insert
-                        + splice_context[
-                            alt_index + len(self.seqvar.insert) : 9 - len(self.seqvar.insert)
-                        ]
-                    )
-                if len(splice_context) == 9:
-                    maxentscore = maxent.score5(splice_context, matrix=self.matrix5)
-                else:
-                    maxentscore = 0
+                if self.strand == GenomicStrand.Minus:
+                    splice_context = self.reverse_complement(splice_context)
+                altseq = ""
+                alt_index = self.seqvar.pos - pos - 1
+                for i in range(len(splice_context)):
+                    if len(altseq) == 9:
+                        break
+                    if i < alt_index:
+                        altseq += splice_context[i]
+                    elif i == alt_index:
+                        altseq += self.seqvar.insert
+                        if len(altseq) == 9:
+                            break
+                        elif len(altseq) > 9:
+                            altseq = altseq[:9]
+                            break
+                        # Add the remaining nucleotides from the reference sequence
+                        else:
+                            for j in range(i + 1, len(splice_context)):
+                                altseq += splice_context[j]
+                                if len(altseq) == 9:
+                                    break
+
+                maxentscore = maxent.score5(splice_context, matrix=self.matrix5)
+
                 if (
                     splice_context[3:5] in ["GT", refseq[3:5]]
                     and maxentscore > 1
@@ -249,19 +318,30 @@ class SplicingPrediction:
 
             elif splice_type == SpliceType.Acceptor:
                 splice_context = self.get_sequence(pos, pos + 23)
+                if self.strand == GenomicStrand.Minus:
+                    splice_context = self.reverse_complement(splice_context)
+                altseq = ""
                 alt_index = self.seqvar.pos - pos - 1
-                if 0 < alt_index < 23:
-                    splice_context = (
-                        splice_context[:alt_index]
-                        + self.seqvar.insert
-                        + splice_context[
-                            alt_index + len(self.seqvar.insert) : 23 - len(self.seqvar.insert)
-                        ]
-                    )
-                if len(splice_context) == 23:
-                    maxentscore = maxent.score3(splice_context, matrix=self.matrix3)
-                else:
-                    maxentscore = 0
+                for i in range(len(splice_context)):
+                    if len(altseq) == 23:
+                        break
+                    if i < alt_index:
+                        altseq += splice_context[i]
+                    elif i == alt_index:
+                        altseq += self.seqvar.insert
+                        if len(altseq) == 23:
+                            break
+                        elif len(altseq) > 23:
+                            altseq = altseq[:23]
+                            break
+                        # Add the remaining nucleotides from the reference sequence
+                        else:
+                            for j in range(i + 1, len(splice_context)):
+                                altseq += splice_context[j]
+                                if len(altseq) == 23:
+                                    break
+
+                maxentscore = maxent.score3(splice_context, matrix=self.matrix3)
                 if (
                     splice_context[18:20] in ["AG", refseq[18:20]]
                     and maxentscore > 1
