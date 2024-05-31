@@ -649,27 +649,9 @@ class SeqVarPVS1Helper:
             return True
 
         # Cryptic splice site disruption
-        sp = SplicingPrediction(seqvar)
+        sp = SplicingPrediction(seqvar, consequences)
         refseq = sp.get_sequence(seqvar.pos - 20, seqvar.pos + 20)
-
-        # Determine the splice type
-        splice_type = SpliceType.Unknown
-        for consequence in consequences:
-            match consequence:
-                case "splice_acceptor_variant":
-                    splice_type = SpliceType.Acceptor
-                    break
-                case "splice_donor_variant":
-                    splice_type = SpliceType.Donor
-                    break
-                case _:
-                    continue
-        if splice_type == SpliceType.Unknown:
-            logger.debug("Splice type is unknown. Cannot predict cryptic splice site disruption.")
-            raise AlgorithmError(
-                "Splice type is unknown. Cannot predict cryptic splice site disruption."
-            )
-
+        splice_type = sp.determine_splice_type(consequences)
         cryptic_sites = sp.get_cryptic_ss(refseq, splice_type)
         if len(cryptic_sites) > 0:
             for site in cryptic_sites:

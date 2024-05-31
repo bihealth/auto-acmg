@@ -24,7 +24,7 @@ from src.defs.seqvar import SeqVar
 class SplicingPrediction:
     """Splicing prediction for a sequence variant."""
 
-    def __init__(self, seqvar: SeqVar, *, config: Optional[Config] = None):
+    def __init__(self, seqvar: SeqVar, consequences: List[str], *, config: Optional[Config] = None):
         self.donor_threshold = 3
         self.acceptor_threshold = 3
         self.percent_threshold = 0.7
@@ -38,6 +38,20 @@ class SplicingPrediction:
         self.maxent_foldchange = 1.00
         self.matrix5 = load_matrix5()
         self.matrix3 = load_matrix3()
+
+        self.splice_type = self.determine_splice_type(consequences)
+        self._initialize_maxentscore()
+
+    def _initialize_maxentscore(self):
+        """Initialize the MaxEntScan scores for the sequence variant."""
+        # Get the reference sequence
+        refseq = self.get_sequence(self.seqvar.pos - 20, self.seqvar.pos + 20)
+        altseq = self.form_alt_seq(self.seqvar, refseq)
+
+        # Get the MaxEntScan scores for the reference sequence
+        self.maxentscore_ref, self.maxentscore_alt, self.maxent_foldchange = (
+            self._calculate_maxentscore(refseq, altseq, self.splice_type)
+        )
 
     def _calculate_maxentscore(
         self, refseq: str, altseq: str, splice_type: SpliceType
@@ -80,20 +94,29 @@ class SplicingPrediction:
         maxent_foldchange = maxentscore_alt / maxentscore_ref
         return round(maxentscore_ref, 2), round(maxentscore_alt, 2), round(maxent_foldchange, 2)
 
-    def _initialize_maxentscore(self):
-        """Initialize the MaxEntScan scores for the sequence variant."""
-        # Get the reference sequence
-        # refseq = self.get_sequence(self.seqvar.pos - 1, self.seqvar.pos + 23)
-        # altseq = (
-        #     refseq[: self.seqvar.pos - 1]
-        #     + self.seqvar.insert
-        #     + refseq[self.seqvar.pos - 1 + len(self.seqvar.insert) :]
-        # )
+    def determine_splice_type(self, consequences: List[str]) -> SpliceType:
+        """Determine the splice type based on the consequence."""
+        splice_type = SpliceType.Unknown
+        for consequence in consequences:
+            match consequence:
+                case "splice_acceptor_variant":
+                    splice_type = SpliceType.Acceptor
+                    break
+                case "splice_donor_variant":
+                    splice_type = SpliceType.Donor
+                    break
+                case _:
+                    continue
+        return splice_type
 
-        # # Get the MaxEntScan scores for the reference sequence
-        # self.maxentscore_ref, self.maxentscore_alt, self.maxent_foldchange = self._calculate_maxentscore(
-        #     refseq, refseq, self.seqvar.splice_type
-        # )
+    def form_alt_seq(self, seqvar: SeqVar, refseq: str) -> str:
+        """Form the alternative sequence for the sequence variant."""
+        altseq = (
+            refseq[: seqvar.pos - (seqvar.pos - 20) - 1]
+            + seqvar.insert
+            + refseq[seqvar.pos - (seqvar.pos - 20) + len(seqvar.insert) - 1 :]
+        )
+        return altseq
 
     def get_sequence(self, start: int, end: int) -> str:
         """
@@ -145,7 +168,7 @@ class SplicingPrediction:
         search_flank = 20  # Flank size for checking positions around the variant
         cryptic_sites = []
 
-        for offset in range(-search_flank, search_flank):
+        for offset in range(-search_flank, search_flank + 1):
             pos = self.seqvar.pos + offset
             if splice_type == SpliceType.Donor:
                 splice_context = self.get_sequence(pos, pos + 9)
