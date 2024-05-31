@@ -612,7 +612,11 @@ class SeqVarPVS1Helper:
         return start_pos, end_pos
 
     def _exon_skipping_or_cryptic_ss_disruption(
-        self, seqvar: SeqVar, exons: List[Exon], consequences: List[str]
+        self,
+        seqvar: SeqVar,
+        exons: List[Exon],
+        consequences: List[str],
+        strand: Optional[GenomicStrand],
     ) -> bool:
         """
         Check if the variant causes exon skipping or cryptic splice site disruption.
@@ -643,13 +647,16 @@ class SeqVarPVS1Helper:
         logger.debug(
             "Checking if the variant causes exon skipping or cryptic splice site disruption."
         )
+        if not strand:
+            logger.error("Strand is not available. Cannot determine exon skipping.")
+            raise MissingDataError("Strand is not available. Cannot determine exon skipping.")
         start_pos, end_pos = self._skipping_exon_pos(seqvar, exons)
         if (end_pos - start_pos) % 3 != 0:
             logger.debug("Exon length is not a multiple of 3. Predicted to cause exon skipping.")
             return True
 
         # Cryptic splice site disruption
-        sp = SplicingPrediction(seqvar, consequences)
+        sp = SplicingPrediction(seqvar, consequences=consequences, strand=strand)
         refseq = sp.get_sequence(seqvar.pos - 20, seqvar.pos + 20)
         splice_type = sp.determine_splice_type(consequences)
         cryptic_sites = sp.get_cryptic_ss(refseq, splice_type)
@@ -986,7 +993,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
 
         elif self._consequence == SeqVarConsequence.SpliceSites:
             if self._exon_skipping_or_cryptic_ss_disruption(
-                self.seqvar, self.exons, self.consequences
+                self.seqvar, self.exons, self.consequences, self.strand
             ) and self._undergo_nmd(self.tx_pos_utr, self.HGNC_id, self.strand, self.exons):
                 if self._in_biologically_relevant_transcript(self.transcript_tags):
                     self.prediction = PVS1Prediction.PVS1
@@ -995,7 +1002,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                     self.prediction = PVS1Prediction.NotPVS1
                     self.prediction_path = PVS1PredictionSeqVarPath.SS2
             elif self._exon_skipping_or_cryptic_ss_disruption(
-                self.seqvar, self.exons, self.consequences
+                self.seqvar, self.exons, self.consequences, self.strand
             ) and not self._undergo_nmd(self.tx_pos_utr, self.HGNC_id, self.strand, self.exons):
                 if self._critical4protein_function(self.seqvar, self.exons, self.strand):
                     self.prediction = PVS1Prediction.PVS1_Strong

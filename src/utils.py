@@ -14,7 +14,12 @@ from src.api.mehari import MehariClient
 from src.core.config import Config
 from src.defs.annonars_variant import VariantResult
 from src.defs.auto_acmg import SpliceType
-from src.defs.auto_pvs1 import SeqVarConsequence, SeqvarConsequenceMapping, TranscriptInfo
+from src.defs.auto_pvs1 import (
+    GenomicStrand,
+    SeqVarConsequence,
+    SeqvarConsequenceMapping,
+    TranscriptInfo,
+)
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException
 from src.defs.genome_builds import CHROM_REFSEQ_37, CHROM_REFSEQ_38, GenomeRelease
 from src.defs.mehari import TranscriptGene, TranscriptSeqvar
@@ -24,11 +29,19 @@ from src.defs.seqvar import SeqVar
 class SplicingPrediction:
     """Splicing prediction for a sequence variant."""
 
-    def __init__(self, seqvar: SeqVar, consequences: List[str], *, config: Optional[Config] = None):
+    def __init__(
+        self,
+        seqvar: SeqVar,
+        *,
+        strand: GenomicStrand,
+        consequences: List[str],
+        config: Optional[Config] = None,
+    ):
         self.donor_threshold = 3
         self.acceptor_threshold = 3
         self.percent_threshold = 0.7
         self.seqvar = seqvar
+        self.strand = strand
         self.config: Config = config or Config()
         self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
         self.sr = SeqRepo(self.config.seqrepo_data_dir)
@@ -118,6 +131,43 @@ class SplicingPrediction:
         )
         return altseq
 
+    @staticmethod
+    def format_donor(raw_seq: str) -> str:
+        donor_exon = 3
+        format_seq = (
+            raw_seq[:donor_exon].lower()
+            + raw_seq[donor_exon : donor_exon + 2].upper()
+            + raw_seq[donor_exon + 2 :].lower()
+        )
+        return format_seq
+
+    @staticmethod
+    def format_acceptor(raw_seq: str) -> str:
+        acceptor_intron = 20
+        format_seq = (
+            raw_seq[: acceptor_intron - 2].lower()
+            + raw_seq[acceptor_intron - 2 : acceptor_intron].upper()
+            + raw_seq[acceptor_intron:].lower()
+        )
+        return format_seq
+
+    @staticmethod
+    def reverse_complement(seq: str) -> str:
+        """Retrun a reverse complementary seq"""
+        nt_complement = {
+            "A": "T",
+            "C": "G",
+            "T": "A",
+            "G": "C",
+            "a": "t",
+            "c": "g",
+            "t": "a",
+            "g": "c",
+        }
+        reverse_seq = list(reversed(seq))
+        rev_comp_seq = [nt_complement[k] for k in reverse_seq]
+        return "".join(rev_comp_seq)
+
     def get_sequence(self, start: int, end: int) -> str:
         """
         Retrieve the sequence for the specified range.
@@ -144,6 +194,8 @@ class SplicingPrediction:
             raise AlgorithmError("Invalid genome release.")
         try:
             seq = self.sr[chrom][start:end]
+            if self.strand == GenomicStrand.Minus:
+                seq = self.reverse_complement(seq)
             return seq
         except Exception as e:
             logger.error("Failed to get sequence for {}:{}-{}. Error: {}", chrom, start, end, e)
