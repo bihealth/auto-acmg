@@ -173,7 +173,8 @@ class SplicingPrediction:
         maxent_foldchange = maxentscore_alt / maxentscore_ref
         return round(maxentscore_ref, 2), round(maxentscore_alt, 2), round(maxent_foldchange, 2)
 
-    def determine_splice_type(self, consequences: List[str]) -> SpliceType:
+    @staticmethod
+    def determine_splice_type(consequences: List[str]) -> SpliceType:
         """Determine the splice type based on the consequence."""
         splice_type = SpliceType.Unknown
         for consequence in consequences:
@@ -187,26 +188,6 @@ class SplicingPrediction:
                 case _:
                     continue
         return splice_type
-
-    @staticmethod
-    def format_donor(raw_seq: str) -> str:
-        donor_exon = 3
-        format_seq = (
-            raw_seq[:donor_exon].lower()
-            + raw_seq[donor_exon : donor_exon + 2].upper()
-            + raw_seq[donor_exon + 2 :].lower()
-        )
-        return format_seq
-
-    @staticmethod
-    def format_acceptor(raw_seq: str) -> str:
-        acceptor_intron = 20
-        format_seq = (
-            raw_seq[: acceptor_intron - 2].lower()
-            + raw_seq[acceptor_intron - 2 : acceptor_intron].upper()
-            + raw_seq[acceptor_intron:].lower()
-        )
-        return format_seq
 
     @staticmethod
     def reverse_complement(seq: str) -> str:
