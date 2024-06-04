@@ -20,10 +20,10 @@ class VariantQuery(BaseModel):
 class Cadd(BaseModel):
     ConsDetail: Optional[str] = None
     PolyPhenVal: Optional[float] = None
-    SpliceAI_acc_gain: Optional[int] = Field(..., alias="SpliceAI-acc-gain")
-    SpliceAI_acc_loss: Optional[int] = Field(..., alias="SpliceAI-acc-loss")
-    SpliceAI_don_gain: Optional[int] = Field(..., alias="SpliceAI-don-gain")
-    SpliceAI_don_loss: Optional[int] = Field(..., alias="SpliceAI-don-loss")
+    SpliceAI_acc_gain: Optional[float] = Field(..., alias="SpliceAI-acc-gain")
+    SpliceAI_acc_loss: Optional[float] = Field(..., alias="SpliceAI-acc-loss")
+    SpliceAI_don_gain: Optional[float] = Field(..., alias="SpliceAI-don-gain")
+    SpliceAI_don_loss: Optional[float] = Field(..., alias="SpliceAI-don-loss")
 
 
 class GnomadExomes(BaseModel):
