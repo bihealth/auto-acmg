@@ -34,7 +34,7 @@ class SplicingPrediction:
         seqvar: SeqVar,
         *,
         strand: GenomicStrand,
-        consequences: List[str],
+        consequences: List[str] = [],
         exons: List[Exon],
         config: Optional[Config] = None,
     ):
@@ -44,6 +44,7 @@ class SplicingPrediction:
         self.seqvar = seqvar
         self.strand = strand
         self.exons = exons
+        self.splice_type = self.determine_splice_type(consequences)
         self.config: Config = config or Config()
         self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
         self.sr = SeqRepo(self.config.seqrepo_data_dir)
@@ -53,60 +54,66 @@ class SplicingPrediction:
         self.maxent_foldchange = 1.00
         self.matrix5 = load_matrix5()
         self.matrix3 = load_matrix3()
-
-        self.splice_type = self.determine_splice_type(consequences)
         self._initialize_maxentscore()
 
     def _initialize_maxentscore(self):
         """Initialize the MaxEntScan scores for the sequence variant."""
-        # Calculate the reference sequence by iterating through the exons
-        # and choosing the end position of the previous exon for Donor
-        # or the start position of the next exon for Acceptor.
-        # Get the reference sequence by choosing the 9 (3+6) nucleotides for Donor
-        # and 23 (3+20) nucleotides for Acceptor.
-        refseq = ""
-        refseq_start = 0
-        refseq_end = 0
-        if self.strand == GenomicStrand.Plus:
-            for i, exon in enumerate(self.exons):
-                if self.splice_type == SpliceType.Donor:
-                    if (
-                        exon.altEndI <= self.seqvar.pos
-                        and self.exons[i + 1].altStartI >= self.seqvar.pos
-                    ):
-                        refseq_start = exon.altEndI - 3
-                        refseq_end = exon.altEndI + 6
-                        refseq = self.get_sequence(refseq_start, refseq_end)
-                        break
-                elif self.splice_type == SpliceType.Acceptor:
-                    if exon.altStartI >= self.seqvar.pos:
-                        refseq_start = exon.altStartI - 3
-                        refseq_end = exon.altStartI + 20
-                        refseq = self.get_sequence(refseq_start, refseq_end)
-                        break
-        elif self.strand == GenomicStrand.Minus:
-            for i, exon in enumerate(self.exons):
-                if self.splice_type == SpliceType.Donor:
-                    if exon.altStartI >= self.seqvar.pos:
-                        refseq_start = exon.altStartI - 6
-                        refseq_end = exon.altStartI + 3
-                        refseq = self.get_sequence(refseq_start, refseq_end)
-                        refseq = self.reverse_complement(refseq)
-                        break
-                elif self.splice_type == SpliceType.Acceptor:
-                    if (
-                        exon.altEndI <= self.seqvar.pos
-                        and self.exons[i + 1].altStartI >= self.seqvar.pos
-                    ):
-                        refseq_start = exon.altEndI - 20
-                        refseq_end = exon.altEndI + 3
-                        refseq = self.get_sequence(refseq_start, refseq_end)
-                        refseq = self.reverse_complement(refseq)
-                        break
+        refseq_start, _, refseq = self._find_reference_sequence()
+        altseq = self._generate_alt_sequence(refseq, refseq_start)
+        self.maxentscore_ref, self.maxentscore_alt, self.maxent_foldchange = (
+            self._calculate_maxentscore(refseq, altseq, self.splice_type)
+        )
 
-        # Get the alternative sequence by inserting the variant nucleotide(s) into the reference
+    def _find_reference_sequence(self) -> Tuple[int, int, str]:
+        """Find the reference sequence based on the exon positions and splice type."""
+        if self.strand == GenomicStrand.Plus:
+            return self._find_refseq_plus_strand()
+        elif self.strand == GenomicStrand.Minus:
+            return self._find_refseq_minus_strand()
+
+    def _find_refseq_plus_strand(self) -> Tuple[int, int, str]:
+        refseq = ""
+        refseq_start, refseq_end = 0, 0
+        for i, exon in enumerate(self.exons):
+            if self.splice_type == SpliceType.Donor:
+                if (
+                    exon.altEndI <= self.seqvar.pos
+                    and self.exons[i + 1].altStartI >= self.seqvar.pos
+                ):
+                    refseq_start, refseq_end = exon.altEndI - 3, exon.altEndI + 6
+                    refseq = self.get_sequence(refseq_start, refseq_end)
+                    break
+            elif self.splice_type == SpliceType.Acceptor:
+                if exon.altStartI >= self.seqvar.pos:
+                    refseq_start, refseq_end = exon.altStartI - 3, exon.altStartI + 20
+                    refseq = self.get_sequence(refseq_start, refseq_end)
+                    break
+        return refseq_start, refseq_end, refseq
+
+    def _find_refseq_minus_strand(self) -> Tuple[int, int, str]:
+        refseq = ""
+        refseq_start, refseq_end = 0, 0
+        for i, exon in enumerate(self.exons):
+            if self.splice_type == SpliceType.Donor:
+                if exon.altStartI >= self.seqvar.pos:
+                    refseq_start, refseq_end = exon.altStartI - 6, exon.altStartI + 3
+                    refseq = self.reverse_complement(self.get_sequence(refseq_start, refseq_end))
+                    break
+            elif self.splice_type == SpliceType.Acceptor:
+                if (
+                    exon.altEndI <= self.seqvar.pos
+                    and self.exons[i + 1].altStartI >= self.seqvar.pos
+                ):
+                    refseq_start, refseq_end = exon.altEndI - 20, exon.altEndI + 3
+                    refseq = self.reverse_complement(self.get_sequence(refseq_start, refseq_end))
+                    break
+        return refseq_start, refseq_end, refseq
+
+    def _generate_alt_sequence(self, refseq: str, refseq_start: int) -> str:
+        """Generate the alternative sequence with the variant nucleotide(s) inserted."""
         altseq = ""
         altseq_index = self.seqvar.pos - refseq_start - 1
+        # Splice length is 9 for Donor and 23 for Acceptor
         splice_length = 9 if self.splice_type == SpliceType.Donor else 23
         for i in range(len(refseq)):
             if len(altseq) == splice_length:
@@ -114,23 +121,20 @@ class SplicingPrediction:
             if i < altseq_index:
                 altseq += refseq[i]
             elif i == altseq_index:
+                # Insert the variant nucleotide(s) into the reference sequence
                 altseq += self.seqvar.insert
                 if len(altseq) == splice_length:
                     break
                 elif len(altseq) > splice_length:
                     altseq = altseq[:splice_length]
                     break
-                # Add the remaining nucleotides from the reference sequence
                 else:
+                    # Add the remaining nucleotides from the reference sequence
                     for j in range(i + 1, len(refseq)):
                         altseq += refseq[j]
                         if len(altseq) == splice_length:
                             break
-
-        # Get the MaxEntScan scores for the reference sequence
-        self.maxentscore_ref, self.maxentscore_alt, self.maxent_foldchange = (
-            self._calculate_maxentscore(refseq, altseq, self.splice_type)
-        )
+        return altseq
 
     def _calculate_maxentscore(
         self, refseq: str, altseq: str, splice_type: SpliceType
@@ -242,13 +246,6 @@ class SplicingPrediction:
     def get_cryptic_ss(self, refseq: str, splice_type: SpliceType) -> List[Tuple[int, str, float]]:
         """
         Get cryptic splice sites around the variant position.
-
-        Args:
-            refseq: The reference sequence in the specified region.
-            splice_type: The type of splice site, either "donor" or "acceptor".
-
-        Returns:
-            List[Tuple[int, str, float]]: List of cryptic splice sites with position, context, and score.
         """
         if splice_type == SpliceType.Unknown:
             logger.warning("Unknown splice type. Cannot predict cryptic splice sites.")
@@ -261,79 +258,149 @@ class SplicingPrediction:
         for offset in range(-search_flank, search_flank + 1):
             pos = self.seqvar.pos + offset
             if splice_type == SpliceType.Donor:
-                splice_context = self.get_sequence(pos, pos + 9)
-                if self.strand == GenomicStrand.Minus:
-                    splice_context = self.reverse_complement(splice_context)
-                altseq = ""
-                alt_index = self.seqvar.pos - pos - 1
-                for i in range(len(splice_context)):
-                    if len(altseq) == 9:
-                        break
-                    if i < alt_index:
-                        altseq += splice_context[i]
-                    elif i == alt_index:
-                        altseq += self.seqvar.insert
-                        if len(altseq) == 9:
-                            break
-                        elif len(altseq) > 9:
-                            altseq = altseq[:9]
-                            break
-                        # Add the remaining nucleotides from the reference sequence
-                        else:
-                            for j in range(i + 1, len(splice_context)):
-                                altseq += splice_context[j]
-                                if len(altseq) == 9:
-                                    break
-
-                maxentscore = maxent.score5(splice_context, matrix=self.matrix5)
-
-                if (
-                    splice_context[3:5] in ["GT", refseq[3:5]]
-                    and maxentscore > 1
-                    and (
-                        maxentscore >= self.donor_threshold
-                        or maxentscore / refscore >= self.percent_threshold
-                    )
-                ):
-                    cryptic_sites.append((pos, splice_context, maxentscore))
-
+                cryptic_sites.extend(self._find_cryptic_donor_sites(pos, refseq, refscore))
             elif splice_type == SpliceType.Acceptor:
-                splice_context = self.get_sequence(pos, pos + 23)
-                if self.strand == GenomicStrand.Minus:
-                    splice_context = self.reverse_complement(splice_context)
-                altseq = ""
-                alt_index = self.seqvar.pos - pos - 1
-                for i in range(len(splice_context)):
-                    if len(altseq) == 23:
-                        break
-                    if i < alt_index:
-                        altseq += splice_context[i]
-                    elif i == alt_index:
-                        altseq += self.seqvar.insert
-                        if len(altseq) == 23:
-                            break
-                        elif len(altseq) > 23:
-                            altseq = altseq[:23]
-                            break
-                        # Add the remaining nucleotides from the reference sequence
-                        else:
-                            for j in range(i + 1, len(splice_context)):
-                                altseq += splice_context[j]
-                                if len(altseq) == 23:
-                                    break
-
-                maxentscore = maxent.score3(splice_context, matrix=self.matrix3)
-                if (
-                    splice_context[18:20] in ["AG", refseq[18:20]]
-                    and maxentscore > 1
-                    and (
-                        maxentscore >= self.acceptor_threshold
-                        or maxentscore / refscore >= self.percent_threshold
-                    )
-                ):
-                    cryptic_sites.append((pos, splice_context, maxentscore))
+                cryptic_sites.extend(self._find_cryptic_acceptor_sites(pos, refseq, refscore))
 
         return cryptic_sites
+
+    def _find_cryptic_donor_sites(
+        self, pos: int, refseq: str, refscore: float
+    ) -> List[Tuple[int, str, float]]:
+        """Find cryptic donor sites."""
+        splice_context = self.get_sequence(pos, pos + 9)
+        if self.strand == GenomicStrand.Minus:
+            splice_context = self.reverse_complement(splice_context)
+        altseq = self._generate_alt_sequence(splice_context, pos)
+        maxentscore = maxent.score5(splice_context, matrix=self.matrix5)
+
+        if (
+            splice_context[3:5] in ["GT", refseq[3:5]]
+            and maxentscore > 1
+            and (
+                maxentscore >= self.donor_threshold
+                or maxentscore / refscore >= self.percent_threshold
+            )
+        ):
+            return [(pos, splice_context, maxentscore)]
+        return []
+
+    def _find_cryptic_acceptor_sites(
+        self, pos: int, refseq: str, refscore: float
+    ) -> List[Tuple[int, str, float]]:
+        """Find cryptic acceptor sites."""
+        splice_context = self.get_sequence(pos, pos + 23)
+        if self.strand == GenomicStrand.Minus:
+            splice_context = self.reverse_complement(splice_context)
+        altseq = self._generate_alt_sequence(splice_context, pos)
+        maxentscore = maxent.score3(splice_context, matrix=self.matrix3)
+
+        if (
+            splice_context[18:20] in ["AG", refseq[18:20]]
+            and maxentscore > 1
+            and (
+                maxentscore >= self.acceptor_threshold
+                or maxentscore / refscore >= self.percent_threshold
+            )
+        ):
+            return [(pos, splice_context, maxentscore)]
+        return []
+
+    # def get_cryptic_ss(self, refseq: str, splice_type: SpliceType) -> List[Tuple[int, str, float]]:
+    #     """
+    #     Get cryptic splice sites around the variant position.
+
+    #     Args:
+    #         refseq: The reference sequence in the specified region.
+    #         splice_type: The type of splice site, either "donor" or "acceptor".
+
+    #     Returns:
+    #         List[Tuple[int, str, float]]: List of cryptic splice sites with position, context, and score.
+    #     """
+    #     if splice_type == SpliceType.Unknown:
+    #         logger.warning("Unknown splice type. Cannot predict cryptic splice sites.")
+    #         return []
+
+    #     refscore = self.maxentscore_ref
+    #     search_flank = 20  # Flank size for checking positions around the variant
+    #     cryptic_sites = []
+
+    #     for offset in range(-search_flank, search_flank + 1):
+    #         pos = self.seqvar.pos + offset
+    #         if splice_type == SpliceType.Donor:
+    #             splice_context = self.get_sequence(pos, pos + 9)
+    #             if self.strand == GenomicStrand.Minus:
+    #                 splice_context = self.reverse_complement(splice_context)
+    #             altseq = ""
+    #             alt_index = self.seqvar.pos - pos - 1
+    #             for i in range(len(splice_context)):
+    #                 if len(altseq) == 9:
+    #                     break
+    #                 if i < alt_index:
+    #                     altseq += splice_context[i]
+    #                 elif i == alt_index:
+    #                     altseq += self.seqvar.insert
+    #                     if len(altseq) == 9:
+    #                         break
+    #                     elif len(altseq) > 9:
+    #                         altseq = altseq[:9]
+    #                         break
+    #                     # Add the remaining nucleotides from the reference sequence
+    #                     else:
+    #                         for j in range(i + 1, len(splice_context)):
+    #                             altseq += splice_context[j]
+    #                             if len(altseq) == 9:
+    #                                 break
+
+    #             maxentscore = maxent.score5(splice_context, matrix=self.matrix5)
+
+    #             if (
+    #                 splice_context[3:5] in ["GT", refseq[3:5]]
+    #                 and maxentscore > 1
+    #                 and (
+    #                     maxentscore >= self.donor_threshold
+    #                     or maxentscore / refscore >= self.percent_threshold
+    #                 )
+    #             ):
+    #                 cryptic_sites.append((pos, splice_context, maxentscore))
+
+    #         elif splice_type == SpliceType.Acceptor:
+    #             splice_context = self.get_sequence(pos, pos + 23)
+    #             if self.strand == GenomicStrand.Minus:
+    #                 splice_context = self.reverse_complement(splice_context)
+    #             altseq = ""
+    #             alt_index = self.seqvar.pos - pos - 1
+    #             for i in range(len(splice_context)):
+    #                 if len(altseq) == 23:
+    #                     break
+    #                 if i < alt_index:
+    #                     altseq += splice_context[i]
+    #                 elif i == alt_index:
+    #                     altseq += self.seqvar.insert
+    #                     if len(altseq) == 23:
+    #                         break
+    #                     elif len(altseq) > 23:
+    #                         altseq = altseq[:23]
+    #                         break
+    #                     # Add the remaining nucleotides from the reference sequence
+    #                     else:
+    #                         for j in range(i + 1, len(splice_context)):
+    #                             altseq += splice_context[j]
+    #                             if len(altseq) == 23:
+    #                                 break
+
+    #             maxentscore = maxent.score3(splice_context, matrix=self.matrix3)
+    #             if (
+    #                 splice_context[18:20] in ["AG", refseq[18:20]]
+    #                 and maxentscore > 1
+    #                 and (
+    #                     maxentscore >= self.acceptor_threshold
+    #                     or maxentscore / refscore >= self.percent_threshold
+    #                 )
+    #             ):
+    #                 cryptic_sites.append((pos, splice_context, maxentscore))
+
+    #     return cryptic_sites
 
 
 class SeqVarTranscriptsHelper:
