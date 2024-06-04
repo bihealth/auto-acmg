@@ -47,17 +47,20 @@ class AutoBP7:
             logger.error("Failed to get variant information. Error: {}", e)
             return None
 
-    def _check_proximity_to_pathogenic_variants(self) -> bool:
+    def _check_proximity_to_pathogenic_variants(self, seqvar: SeqVar) -> bool:
         """
         Check for pathogenic variants +/- 2bp of the position in ClinVar.
 
         Check the ClinVar data for variants within 2bp of the position.
 
+        Attributes:
+            seqvar (SeqVar): The variant to check.
+
         Returns:
             bool: True if pathogenic variants are found, False otherwise.
         """
         response = self.annonars_client.get_variant_from_range(
-            self.seqvar, self.seqvar.pos - 2, self.seqvar.pos + 2
+            seqvar, seqvar.pos - 2, seqvar.pos + 2
         )
         if response and response.result.clinvar:
             pathogenic_variants = [
@@ -73,17 +76,20 @@ class AutoBP7:
             return len(pathogenic_variants) > 0
         return False
 
-    def _check_proximity_to_splice_site(self) -> bool:
+    def _check_proximity_to_splice_site(self, seqvar: SeqVar) -> bool:
         """
         Check if the variant is closer than 2bp to a splice site.
 
         Check if the variant is within 2bp from the start or end of an exon.
 
+        Attributes:
+            seqvar (SeqVar): The variant to check.
+
         Returns:
             bool: True if the variant is within 2bp of a splice site, False otherwise.
         """
         # Fetch transcript data
-        seqvar_transcript_helper = SeqVarTranscriptsHelper(self.seqvar, config=self.config)
+        seqvar_transcript_helper = SeqVarTranscriptsHelper(seqvar, config=self.config)
         seqvar_transcript_helper.initialize()
         (
             _,
@@ -102,14 +108,11 @@ class AutoBP7:
 
         # Check if the variant is within 2bp of a start or end of an exon
         for exon in gene_transcript.genomeAlignments[0].exons:
-            if (
-                abs(self.seqvar.pos - exon.altCdsStartI) <= 2
-                or abs(exon.altCdsEndI - self.seqvar.pos) <= 2
-            ):
+            if abs(seqvar.pos - exon.altCdsStartI) <= 2 or abs(exon.altCdsEndI - seqvar.pos) <= 2:
                 return True
         return False
 
-    def _predict_spliceai(self) -> bool:
+    def _predict_spliceai(self, seqvar: SeqVar) -> bool:
         """
         Predict splice site alterations using SpliceAI.
 
@@ -117,10 +120,13 @@ class AutoBP7:
         If any of SpliceAI scores are greater than 0, the variant is considered a splice site
         alteration.
 
+        Attributes:
+            seqvar (SeqVar): The variant to check.
+
         Returns:
             bool: True if the variant is a splice site alteration, False otherwise.
         """
-        variant_info = self._get_variant_info(self.seqvar)
+        variant_info = self._get_variant_info(seqvar)
         if not variant_info or not variant_info.cadd:
             raise MissingDataError("Missing CADD data for variant.")
         acc_gain = variant_info.cadd.SpliceAI_acc_gain
@@ -145,13 +151,13 @@ class AutoBP7:
                 self.prediction.BP7 = False
                 return self.prediction
 
-            if self._check_proximity_to_pathogenic_variants():
+            if self._check_proximity_to_pathogenic_variants(self.seqvar):
                 self.prediction.BP7 = False
                 return self.prediction
-            if self._check_proximity_to_splice_site():
+            if self._check_proximity_to_splice_site(self.seqvar):
                 self.prediction.BP7 = False
                 return self.prediction
-            if self._predict_spliceai():
+            if self._predict_spliceai(self.seqvar):
                 self.prediction.BP7 = False
             else:
                 self.prediction.BP7 = True

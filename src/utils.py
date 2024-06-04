@@ -57,7 +57,12 @@ class SplicingPrediction:
         self._initialize_maxentscore()
 
     def _initialize_maxentscore(self):
-        """Initialize the MaxEntScan scores for the sequence variant."""
+        """
+        Initialize the MaxEntScan scores for the sequence variant.
+
+        Find the reference sequence, generate the alternative sequence, and calculate the
+        MaxEntScan score for the reference and alternative sequences.
+        """
         refseq_start, _, refseq = self._find_reference_sequence()
         altseq = self._generate_alt_sequence(refseq, refseq_start)
         self.maxentscore_ref, self.maxentscore_alt, self.maxent_foldchange = (
