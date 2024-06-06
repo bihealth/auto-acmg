@@ -4,11 +4,11 @@ section,variant_name,genome_release,expected_prediction,comment
 # PM1,,,,
 ## Hotspot or critical domain,,,,
 ## PM1,,,,
-,3-178936091-C-T,GRCh37,PM1,Hotspot with 4 pathogenic variants
-,7-140453136-C-T,GRCh37,PM1,UniProt domain with 2 pathogenic variants
-,1-55516888-G-A,GRCh37,,No hotspot or critical domain
+#,3-178936091-C-T,GRCh37,PM1,Hotspot with 4 pathogenic variants
+#,7-140453136-C-T,GRCh37,PM1,UniProt domain with 2 pathogenic variants
+#,1-55516888-G-A,GRCh37,,No hotspot or critical domain
 ## PP3,,,,
-,NM_000277.2(PAH):c.472C>T,GRCh38,PP3,Pathogenic BayesDel_noAF_score
+#,NM_000277.2(PAH):c.472C>T,GRCh38,PP3,Pathogenic BayesDel_noAF_score
 ## BP7,,,,
 #,NM_000277.2(PAH):c.963C>T,GRCh38,BP7,(p.Leu321=) from ClinGen
 #,NM_000257.3(MYH7):c.3036C>T,GRCh38,BP7,(p.Ala1012=) from ClinGen

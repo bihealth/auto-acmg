@@ -84,37 +84,35 @@ class AutoPP3BP4:
     @staticmethod
     def _is_pathogenic_spliceai(variant_info: VariantResult) -> bool:
         """Check if any of the pathogenic scores meet the threshold."""
-        if not variant_info.cadd:
-            logger.error("Missing CADD data.")
-            raise MissingDataError("Missing CADD data.")
-        spliceai_scores = [
-            variant_info.cadd.SpliceAI_acc_gain,
-            variant_info.cadd.SpliceAI_acc_loss,
-            variant_info.cadd.SpliceAI_don_gain,
-            variant_info.cadd.SpliceAI_don_loss,
-        ]
-        for score in spliceai_scores:
-            if score is not None and score >= 0.5:
-                logger.debug("Pathogenic SpliceAI score: {}", score)
-                return True
+        if (
+            not variant_info.gnomad_exomes
+            or not variant_info.gnomad_exomes.effectInfo
+            or not variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
+        ):
+            logger.error("Missing GnomAD exomes data.")
+            raise MissingDataError("Missing GnomAD exomes data.")
+        if variant_info.gnomad_exomes.effectInfo.spliceaiDsMax >= 0.2:
+            logger.debug(
+                "Pathogenic SpliceAI score: {}", variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
+            )
+            return True
         return False
 
     @staticmethod
     def _is_benign_spliceai(variant_info: VariantResult) -> bool:
         """Check if any of the pathogenic scores meet the threshold."""
-        if not variant_info.cadd:
-            logger.error("Missing CADD data.")
-            raise MissingDataError("Missing CADD data.")
-        spliceai_scores = [
-            variant_info.cadd.SpliceAI_acc_gain,
-            variant_info.cadd.SpliceAI_acc_loss,
-            variant_info.cadd.SpliceAI_don_gain,
-            variant_info.cadd.SpliceAI_don_loss,
-        ]
-        for score in spliceai_scores:
-            if score is not None and score <= 0.1:
-                logger.debug("Benign SpliceAI score: {}", score)
-                return True
+        if (
+            not variant_info.gnomad_exomes
+            or not variant_info.gnomad_exomes.effectInfo
+            or not variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
+        ):
+            logger.error("Missing GnomAD exomes data.")
+            raise MissingDataError("Missing GnomAD exomes data.")
+        if variant_info.gnomad_exomes.effectInfo.spliceaiDsMax <= 0.1:
+            logger.debug(
+                "Benign SpliceAI score: {}", variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
+            )
+            return True
         return False
 
     def predict(self) -> Optional[PP3BP4]:
@@ -134,10 +132,10 @@ class AutoPP3BP4:
             # Evaluate PP3 and BP4 criteria
             is_pathogenic = self._is_pathogenic_score(
                 self.variant_info
-            )  # or self._is_pathogenic_spliceai(self.variant_info)
-            is_benign = self._is_benign_score(
+            ) or self._is_pathogenic_spliceai(self.variant_info)
+            is_benign = self._is_benign_score(self.variant_info) or self._is_benign_spliceai(
                 self.variant_info
-            )  # or self._is_benign_spliceai(self.variant_info)
+            )
             self.prediction.PP3 = is_pathogenic
             self.prediction.BP4 = is_benign
 

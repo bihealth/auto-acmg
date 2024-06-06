@@ -26,8 +26,19 @@ class Cadd(BaseModel):
     SpliceAI_don_loss: Optional[float] = Field(..., alias="SpliceAI-don-loss")
 
 
+class EffectInfo(BaseModel):
+    pangolinLargestDs: Optional[float] = None
+    phylop: Optional[float] = None
+    polyphenMax: Optional[float] = None
+    revelMax: Optional[float] = None
+    siftMax: Optional[float] = None
+    spliceaiDsMax: Optional[float] = None
+    caddPhred: Optional[float] = None
+
+
 class GnomadExomes(BaseModel):
     alleleCounts: List[AlleleCount]
+    effectInfo: Optional[EffectInfo] = None
 
 
 class Dbnsfp(BaseModel):
@@ -111,7 +122,7 @@ class GnomadGenomes(BaseModel):
     refAllele: Optional[str] = None
     altAllele: Optional[str] = None
     alleleCounts: Optional[List[AlleleCount]] = None
-    effectInfo: Optional[Any] = None
+    effectInfo: Optional[EffectInfo] = None
     variantInfo: Optional[Any] = None
     qualityInfo: Optional[Any] = None
     ageInfo: Optional[Any] = None
