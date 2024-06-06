@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -19,7 +19,7 @@ class VariantQuery(BaseModel):
 
 class Cadd(BaseModel):
     ConsDetail: Optional[str] = None
-    PolyPhenVal: Optional[float] = None
+    # PolyPhenVal: Optional[float] = None
     SpliceAI_acc_gain: Optional[float] = Field(..., alias="SpliceAI-acc-gain")
     SpliceAI_acc_loss: Optional[float] = Field(..., alias="SpliceAI-acc-loss")
     SpliceAI_don_gain: Optional[float] = Field(..., alias="SpliceAI-don-gain")
@@ -31,6 +31,13 @@ class GnomadExomes(BaseModel):
 
 
 class Dbnsfp(BaseModel):
+    BayesDel_noAF_score: Optional[Union[str, float, int]] = None
+    REVEL_score: Optional[Union[str, float, int]] = None
+    CADD_raw: Optional[Union[str, float, int]] = None
+    PrimateAI_score: Optional[Union[str, float, int]] = None
+    Polyphen2_HVAR_score: Optional[Union[str, float, int]] = None
+    VEST4_score: Optional[Union[str, float, int]] = None
+    phyloP100way_vertebrate: Optional[Union[str, float, int]] = None
     HGVSc_ANNOVAR: Optional[str] = None
     HGVSp_ANNOVAR: Optional[str] = None
     HGVSc_snpEff: Optional[str] = None
