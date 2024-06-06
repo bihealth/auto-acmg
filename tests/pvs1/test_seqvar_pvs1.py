@@ -93,7 +93,7 @@ def test_choose_hgvs_p(main_hgvs, main_hgvs_p, transcripts_data, expected_result
     transcripts = [MagicMock(feature_id=id, hgvs_p=hgvs_p) for id, hgvs_p in transcripts_data]
 
     # Invoke the method under test
-    result = SeqVarPVS1Helper._choose_hgvs_p(main_hgvs, main_transcript, transcripts)  # type: ignore
+    result = SeqVarPVS1Helper()._choose_hgvs_p(main_hgvs, main_transcript, transcripts)  # type: ignore
 
     # Verify the result
     assert result == expected_result
@@ -120,7 +120,7 @@ def test_choose_hgvs_p(main_hgvs, main_hgvs_p, transcripts_data, expected_result
 )
 def test_get_pHGVS_termination(pHGVS, expected_termination):
     """Test the _get_pHGVS_termination method."""
-    termination = SeqVarPVS1Helper._get_pHGVS_termination(pHGVS)
+    termination = SeqVarPVS1Helper()._get_pHGVS_termination(pHGVS)
     assert termination == expected_termination, f"Failed for pHGVS: {pHGVS}"
 
 
@@ -201,7 +201,7 @@ def test_calculate_5_prime_UTR_length(gene_transcripts_file, transcript_id, expe
 )
 def test_calculate_altered_region(var_pos, exons, strand, expected_result):
     """Test the _calculate_altered_region method."""
-    result = SeqVarPVS1Helper._calculate_altered_region(var_pos, exons, strand)
+    result = SeqVarPVS1Helper()._calculate_altered_region(var_pos, exons, strand)
     assert result == expected_result
 
 
@@ -306,7 +306,7 @@ def test_count_pathogenic_variants(annonars_range_response, expected_result, seq
 )
 def test_get_consequence(value, expected_result):
     """Test the _get_consequence method."""
-    result = SeqVarPVS1Helper._get_consequence(value)
+    result = SeqVarPVS1Helper()._get_consequence(value)
     assert result == expected_result
 
 
@@ -376,7 +376,7 @@ def test_undergo_nmd(gene_transcripts_file, transcript_id, hgnc_id, var_pos, exp
         raise ValueError(f"Transcript {transcript_id} not found in the gene transcripts")
     exons = tsx.genomeAlignments[0].exons
     strand = GenomicStrand.from_string(tsx.genomeAlignments[0].strand)
-    result = SeqVarPVS1Helper()._undergo_nmd(var_pos, hgnc_id, strand, exons)
+    result = SeqVarPVS1Helper().undergo_nmd(var_pos, hgnc_id, strand, exons)
     assert result == expected_result
 
 
@@ -394,7 +394,7 @@ def test_undergo_nmd(gene_transcripts_file, transcript_id, hgnc_id, var_pos, exp
 )
 def test_in_biologically_relevant_transcript(transcript_tags, expected_result):
     """Test the _in_biologically_relevant_transcript method."""
-    result = SeqVarPVS1Helper._in_biologically_relevant_transcript(transcript_tags)
+    result = SeqVarPVS1Helper().in_biologically_relevant_transcript(transcript_tags)
     assert result == expected_result, f"Failed for transcript_tags: {transcript_tags}"
 
 
@@ -421,7 +421,7 @@ def test_critical4protein_function(
     mock_count_pathogenic = MagicMock(return_value=(pathogenic_variants, total_variants))
     monkeypatch.setattr(SeqVarPVS1Helper, "_count_pathogenic_variants", mock_count_pathogenic)
 
-    result = SeqVarPVS1Helper()._critical4protein_function(seqvar, exons, strand)  # type: ignore
+    result = SeqVarPVS1Helper().critical4protein_function(seqvar, exons, strand)  # type: ignore
     assert result == expected_result
 
 
@@ -462,7 +462,7 @@ def test_lof_is_frequent_in_population(
     mock_count_lof_variants = MagicMock(return_value=(frequent_lof_variants, lof_variants))
     monkeypatch.setattr(SeqVarPVS1Helper, "_count_lof_variants", mock_count_lof_variants)
 
-    result = SeqVarPVS1Helper()._lof_is_frequent_in_population(seqvar, exons, strand)  # type: ignore
+    result = SeqVarPVS1Helper().lof_is_frequent_in_population(seqvar, exons, strand)  # type: ignore
     assert result == expected_result
 
 
@@ -483,7 +483,7 @@ def test_lof_is_frequent_in_population(
 )
 def test_lof_removes_more_then_10_percent_of_protein(prot_pos, prot_length, expected_result):
     """Test the _lof_removes_more_then_10_percent_of_protein method."""
-    result = SeqVarPVS1Helper()._lof_removes_more_then_10_percent_of_protein(prot_pos, prot_length)
+    result = SeqVarPVS1Helper().lof_removes_more_then_10_percent_of_protein(prot_pos, prot_length)
     assert result == expected_result
 
 
@@ -732,7 +732,7 @@ def test_closest_alternative_start_codon_invalid():
 )
 def test_alternative_start_codon(hgvs, cds_info, expected_result):
     """Test the _alternative_start_codon method."""
-    result = SeqVarPVS1Helper()._alternative_start_codon(cds_info, hgvs)
+    result = SeqVarPVS1Helper().alternative_start_codon(cds_info, hgvs)
     assert result == expected_result
 
 
@@ -809,7 +809,7 @@ def test_upstream_pathogenic_variants(
     mock_count_pathogenic = MagicMock(return_value=(pathogenic_variants, 10))
     monkeypatch.setattr(SeqVarPVS1Helper, "_count_pathogenic_variants", mock_count_pathogenic)
 
-    result = SeqVarPVS1Helper()._upstream_pathogenic_variants(seqvar, exons, strand, cds_info, hgvs)
+    result = SeqVarPVS1Helper().upstream_pathogenic_variants(seqvar, exons, strand, cds_info, hgvs)
     assert result == expected_result
 
 

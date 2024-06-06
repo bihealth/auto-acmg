@@ -150,7 +150,7 @@ class AutoACMG:
             try:
                 logger.info("Predicting PVS1.")
                 pvs1 = AutoPVS1(self.seqvar, self.genome_release, config=self.config)
-                seqvar_prediction, seqvar_prediction_path = pvs1.predict()
+                seqvar_prediction, seqvar_prediction_path, comment = pvs1.predict()
                 if seqvar_prediction is None or seqvar_prediction_path is None:
                     raise AutoAcmgBaseException(
                         "PVS1 prediction failed: prediction or prediction path is None."
@@ -158,18 +158,25 @@ class AutoACMG:
                 else:
                     if seqvar_prediction == PVS1Prediction.NotSet:
                         raise AutoAcmgBaseException("PVS1 prediction failed: prediction NotSet.")
-                    self.prediction.pvs1.prediction = (
-                        ACMGPrediction.Positive
-                        if seqvar_prediction in PVS1_POSITIVE_SEQVAR_PREDICTIONS
-                        else ACMGPrediction.Negative
-                    )
-                    self.prediction.pvs1.description = (
-                        f"PVS1 strength: {seqvar_prediction.name}. "
-                        f"PVS1 prediction path: {PVS1PredictionPathMapping[seqvar_prediction_path]}."
-                    )
+                    elif seqvar_prediction == PVS1Prediction.UnsupportedConsequence:
+                        self.prediction.pvs1.prediction = ACMGPrediction.NotApplicable
+                        self.prediction.pvs1.summary = "Unsupported consequence"
+                        self.prediction.pvs1.description = comment
+                    else:
+                        self.prediction.pvs1.prediction = (
+                            ACMGPrediction.Positive
+                            if seqvar_prediction in PVS1_POSITIVE_SEQVAR_PREDICTIONS
+                            else ACMGPrediction.Negative
+                        )
+                        self.prediction.pvs1.summary = (
+                            f"PVS1 strength: {seqvar_prediction.name}. "
+                            f"PVS1 prediction path: {PVS1PredictionPathMapping[seqvar_prediction_path]}."
+                        )
+                        self.prediction.pvs1.description = comment
             except AutoAcmgBaseException as e:
                 self.prediction.pvs1.prediction = ACMGPrediction.NotSet
                 self.prediction.pvs1.description = "PVS1 prediction failed."
+                self.comment = f"Error: {e}"
                 logger.error("Failed to predict PVS1 criteria. Error: {}", e)
 
             # Other criteria

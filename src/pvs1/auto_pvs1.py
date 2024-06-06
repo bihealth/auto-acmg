@@ -45,7 +45,7 @@ class AutoPVS1:
 
     def predict(
         self,
-    ) -> Tuple[PVS1Prediction, Union[PVS1PredictionSeqVarPath, PVS1PredictionStrucVarPath]]:
+    ) -> Tuple[PVS1Prediction, Union[PVS1PredictionSeqVarPath, PVS1PredictionStrucVarPath], str]:
         """Runs the prediction algorithm to assess the PVS1 criteria for the resolved variant.
 
         This method resolves the variant and then, based on the type of variant, predicts its
@@ -53,36 +53,23 @@ class AutoPVS1:
         variants.
 
         Returns:
-            Tuple[PVS1Prediction, Union[PVS1PredictionSeqVarPath, PVS1PredictionStrucVarPath]]: The
-            prediction result and the path taken to reach it. If the prediction fails, returns None.
+            The prediction result, the path taken to reach it and comment with details of
+            prediction. If the prediction fails, returns None.
         """
         if isinstance(self.variant, SeqVar):
-            self.seqvar: SeqVar = self.variant
-            self.seqvar_prediction: PVS1Prediction = PVS1Prediction.NotSet
-            self.seqvar_prediction_path: PVS1PredictionSeqVarPath = PVS1PredictionSeqVarPath.NotSet
-
             try:
-                seqvar_pvs1 = SeqVarPVS1(self.seqvar, config=self.config)
+                seqvar_pvs1 = SeqVarPVS1(self.variant, config=self.config)
                 seqvar_pvs1.initialize()
-                self.seqvar_prediction, self.seqvar_prediction_path = seqvar_pvs1.verify_PVS1()
-                return self.seqvar_prediction, self.seqvar_prediction_path
+                return seqvar_pvs1.verify_PVS1()
             except AutoAcmgBaseException as e:
                 logger.exception("Error occurred: {}", e)
                 raise AutoPVS1Error("Error occurred while predicting PVS1.") from e
 
         elif isinstance(self.variant, StrucVar):
-            self.strucvar: StrucVar = self.variant
-            self.strucvar_prediction: PVS1Prediction = PVS1Prediction.NotSet  # type: ignore
-            self.strucvar_prediction_path: PVS1PredictionStrucVarPath = PVS1PredictionStrucVarPath.NotSet  # type: ignore
-
             try:
-                strucvar_pvs1 = StrucVarPVS1(self.strucvar)
+                strucvar_pvs1 = StrucVarPVS1(self.variant, config=self.config)
                 strucvar_pvs1.initialize()
-                strucvar_pvs1.verify_PVS1()
-                self.strucvar_prediction, self.strucvar_prediction_path = (
-                    strucvar_pvs1.get_prediction()
-                )
-                return self.strucvar_prediction, self.strucvar_prediction_path
+                return strucvar_pvs1.verify_PVS1()
             except AutoAcmgBaseException as e:
                 logger.exception("Error occurred: {}", e)
                 raise AutoPVS1Error("Error occurred while predicting PVS1.") from e
