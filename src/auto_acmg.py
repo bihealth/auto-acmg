@@ -138,25 +138,9 @@ class AutoACMG:
             self.seqvar: SeqVar = variant
             self.prediction: AutoACMGResult = AutoACMGResult()
 
-            # PP5 and BP6 criteria
-            self.prediction.pp5.prediction = ACMGPrediction.NotSet
-            self.prediction.pp5.comment = "PP5 prediction is deprecated."
-            self.prediction.bp6.prediction = ACMGPrediction.NotSet
-            self.prediction.bp6.comment = "BP6 prediction is deprecated."
+            # PP5 and BP6 criteria are depricated
             logger.warning("Note, that PP5 and BP6 criteria are depricated and not predicted.")
-
             # Not implemented criteria
-            for crit in NOT_IMPLEMENTED_CRITERIA:
-                setattr(
-                    getattr(self.prediction, crit.lower()),
-                    "prediction",
-                    ACMGPrediction.NotSet,
-                )
-                setattr(
-                    getattr(self.prediction, crit.lower()),
-                    "comment",
-                    f"{crit} prediction is not implemented.",
-                )
             logger.warning(
                 "Some criteria are not implemented yet: {}",
                 NOT_IMPLEMENTED_CRITERIA,
@@ -179,13 +163,13 @@ class AutoACMG:
                         if seqvar_prediction in PVS1_POSITIVE_SEQVAR_PREDICTIONS
                         else ACMGPrediction.Negative
                     )
-                    self.prediction.pvs1.comment = (
+                    self.prediction.pvs1.description = (
                         f"PVS1 strength: {seqvar_prediction.name}. "
                         f"PVS1 prediction path: {PVS1PredictionPathMapping[seqvar_prediction_path]}."
                     )
             except AutoAcmgBaseException as e:
                 self.prediction.pvs1.prediction = ACMGPrediction.NotSet
-                self.prediction.pvs1.comment = "PVS1 prediction failed."
+                self.prediction.pvs1.description = "PVS1 prediction failed."
                 logger.error("Failed to predict PVS1 criteria. Error: {}", e)
 
             # Other criteria
@@ -208,6 +192,7 @@ class AutoACMG:
                 logger.error("Failed to predict other ACMG criteria. Error: {}", e)
 
             logger.info("ACMG criteria prediction completed.")
+            logger.debug("ACMG criteria prediction result: {}", self.prediction)
             return self.prediction
 
         elif isinstance(variant, StrucVar):

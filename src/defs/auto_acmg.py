@@ -168,6 +168,9 @@ class ACMGPrediction(AutoAcmgBaseEnum):
     """ACMG prediction enumeration."""
 
     NotSet = auto()
+    NotApplicable = auto()
+    NotAutomated = auto()
+    Depricated = auto()
     Positive = auto()
     Negative = auto()
 
@@ -177,7 +180,8 @@ class CriteriaPrediction(BaseModel):
 
     name: str
     prediction: ACMGPrediction = ACMGPrediction.NotSet
-    comment: str = ""
+    summary: str = ""
+    description: str = ""
 
 
 class AutoACMGResult(BaseModel):
@@ -185,29 +189,29 @@ class AutoACMGResult(BaseModel):
 
     pvs1: CriteriaPrediction = CriteriaPrediction(name="PVS1")
     ps1: CriteriaPrediction = CriteriaPrediction(name="PS1")
-    ps2: CriteriaPrediction = CriteriaPrediction(name="PS2")
-    ps3: CriteriaPrediction = CriteriaPrediction(name="PS3")
-    ps4: CriteriaPrediction = CriteriaPrediction(name="PS4")
+    ps2: CriteriaPrediction = CriteriaPrediction(name="PS2", prediction=ACMGPrediction.NotAutomated)
+    ps3: CriteriaPrediction = CriteriaPrediction(name="PS3", prediction=ACMGPrediction.NotAutomated)
+    ps4: CriteriaPrediction = CriteriaPrediction(name="PS4", prediction=ACMGPrediction.NotAutomated)
     pm1: CriteriaPrediction = CriteriaPrediction(name="PM1")
     pm2: CriteriaPrediction = CriteriaPrediction(name="PM2")
-    pm3: CriteriaPrediction = CriteriaPrediction(name="PM3")
+    pm3: CriteriaPrediction = CriteriaPrediction(name="PM3", prediction=ACMGPrediction.NotAutomated)
     pm4: CriteriaPrediction = CriteriaPrediction(name="PM4")
     pm5: CriteriaPrediction = CriteriaPrediction(name="PM5")
-    pm6: CriteriaPrediction = CriteriaPrediction(name="PM6")
-    pp1: CriteriaPrediction = CriteriaPrediction(name="PP1")
+    pm6: CriteriaPrediction = CriteriaPrediction(name="PM6", prediction=ACMGPrediction.NotAutomated)
+    pp1: CriteriaPrediction = CriteriaPrediction(name="PP1", prediction=ACMGPrediction.NotAutomated)
     pp2: CriteriaPrediction = CriteriaPrediction(name="PP2")
     pp3: CriteriaPrediction = CriteriaPrediction(name="PP3")
-    pp4: CriteriaPrediction = CriteriaPrediction(name="PP4")
-    pp5: CriteriaPrediction = CriteriaPrediction(name="PP5")
+    pp4: CriteriaPrediction = CriteriaPrediction(name="PP4", prediction=ACMGPrediction.NotAutomated)
+    pp5: CriteriaPrediction = CriteriaPrediction(name="PP5", prediction=ACMGPrediction.Depricated)
     ba1: CriteriaPrediction = CriteriaPrediction(name="BA1")
     bs1: CriteriaPrediction = CriteriaPrediction(name="BS1")
     bs2: CriteriaPrediction = CriteriaPrediction(name="BS2")
-    bs3: CriteriaPrediction = CriteriaPrediction(name="BS3")
-    bs4: CriteriaPrediction = CriteriaPrediction(name="BS4")
+    bs3: CriteriaPrediction = CriteriaPrediction(name="BS3", prediction=ACMGPrediction.NotAutomated)
+    bs4: CriteriaPrediction = CriteriaPrediction(name="BS4", prediction=ACMGPrediction.NotAutomated)
     bp1: CriteriaPrediction = CriteriaPrediction(name="BP1")
-    bp2: CriteriaPrediction = CriteriaPrediction(name="BP2")
+    bp2: CriteriaPrediction = CriteriaPrediction(name="BP2", prediction=ACMGPrediction.NotAutomated)
     bp3: CriteriaPrediction = CriteriaPrediction(name="BP3")
     bp4: CriteriaPrediction = CriteriaPrediction(name="BP4")
-    bp5: CriteriaPrediction = CriteriaPrediction(name="BP5")
-    bp6: CriteriaPrediction = CriteriaPrediction(name="BP6")
+    bp5: CriteriaPrediction = CriteriaPrediction(name="BP5", prediction=ACMGPrediction.NotAutomated)
+    bp6: CriteriaPrediction = CriteriaPrediction(name="BP6", prediction=ACMGPrediction.Depricated)
     bp7: CriteriaPrediction = CriteriaPrediction(name="BP7")
