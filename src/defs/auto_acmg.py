@@ -59,6 +59,30 @@ class AminoAcid(AutoAcmgBaseEnum):
     Stop = "*"
 
 
+class MissenseScore(BaseModel):
+    """Missense score."""
+
+    name: str
+    benign_threshold: Optional[float] = None
+    pathogenic_threshold: Optional[float] = None
+
+
+MissenseScores: List[MissenseScore] = [
+    MissenseScore(name="BayesDel_noAF_score", benign_threshold=-0.36, pathogenic_threshold=0.27),
+    MissenseScore(name="REVEL_score", benign_threshold=0.183, pathogenic_threshold=0.773),
+    MissenseScore(name="CADD_raw", benign_threshold=0.15, pathogenic_threshold=28.1),
+    MissenseScore(name="PrimateAI_score", benign_threshold=0.362, pathogenic_threshold=0.867),
+    # MissenseScore(name="FATHMM", benign_threshold=4.69, pathogenic_threshold=-5.04),  # is <=
+    # MissenseScore(name="MutPred2", benign_threshold=0.197, pathogenic_threshold=0.829),  # We don't have the right score for this
+    MissenseScore(name="Polyphen2_HVAR_score", benign_threshold=0.009, pathogenic_threshold=0.999),
+    # MissenseScore(name="SIFT_score", benign_threshold=0.327, pathogenic_threshold=0.001),   # is <=
+    MissenseScore(name="VEST4_score", benign_threshold=0.302, pathogenic_threshold=0.861),
+    MissenseScore(
+        name="phyloP100way_vertebrate", benign_threshold=0.021, pathogenic_threshold=9.741
+    ),  # Not sure about 100/470/17 way
+]
+
+
 class ACMGCriteria(BaseModel):
     """ACMG criteria prediction. Note: without PVS1."""
 
