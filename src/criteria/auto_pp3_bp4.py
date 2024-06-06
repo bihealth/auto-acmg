@@ -8,7 +8,7 @@ from src.api.annonars import AnnonarsClient
 from src.core.config import Config
 from src.defs.annonars_variant import VariantResult
 from src.defs.auto_acmg import PP3BP4, MissenseScores
-from src.defs.exceptions import AutoAcmgBaseException, MissingDataError
+from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 
@@ -34,19 +34,46 @@ class AutoPP3BP4:
 
     @staticmethod
     def _convert_score_value(score_value: Optional[Union[str, float, int]]) -> Optional[float]:
-        """Convert score value to float."""
+        """
+        Convert score value to float.
+
+        Since the score values can be represented as strings (with ";" as separator), we pick the
+        maximum value that is not empty ("."). If the value is already numeric, we return it as is.
+
+        Args:
+            score_value (Optional[Union[str, float, int]]): Score value to convert.
+
+        Returns:
+            Optional[float]: Converted score value.
+
+        Raises:
+            AlgorithmError: If the score value cannot be converted to float.
+        """
         if score_value is None:
             return None
         if isinstance(score_value, (float, int)):
-            return score_value
+            return float(score_value)
         try:
             return max(float(score) for score in score_value.split(";") if score != ".")
         except ValueError as e:
             logger.error("Failed to convert score value to float. Error: {}", e)
-            raise
+            raise AlgorithmError("Failed to convert score value to float.") from e
 
     def _is_pathogenic_score(self, variant_info: VariantResult) -> bool:
-        """Check if any of the pathogenic scores meet the threshold."""
+        """
+        Check if any of the pathogenic scores meet the threshold.
+
+        Go through the Missense scores and check if any of the pathogenic scores meet the threshold.
+
+        Args:
+            variant_info (VariantResult): Variant information.
+
+        Returns:
+            bool: True if the variant is pathogenic, False otherwise.
+
+        Raises:
+            MissingDataError: If the variant information is missing.
+        """
         if not variant_info.dbnsfp:
             logger.error("Missing dbNSFP data.")
             raise MissingDataError("Missing dbNSFP data.")
@@ -64,7 +91,20 @@ class AutoPP3BP4:
         return False
 
     def _is_benign_score(self, variant_info: VariantResult) -> bool:
-        """Check if any of the benign scores meet the threshold."""
+        """
+        Check if any of the benign scores meet the threshold.
+
+        Go through the Missense scores and check if any of the benign scores meet the threshold.
+
+        Args:
+            variant_info (VariantResult): Variant information.
+
+        Returns:
+            bool: True if the variant is benign, False otherwise.
+
+        Raises:
+            MissingDataError: If the variant information is missing.
+        """
         if not variant_info.dbnsfp:
             logger.error("Missing dbNSFP data.")
             raise MissingDataError("Missing dbNSFP data.")
@@ -83,7 +123,20 @@ class AutoPP3BP4:
 
     @staticmethod
     def _is_pathogenic_spliceai(variant_info: VariantResult) -> bool:
-        """Check if any of the pathogenic scores meet the threshold."""
+        """
+        Check if any of the pathogenic scores meet the threshold.
+
+        The threshold is set to 0.2 according to doi:10.1101/2023.02.24.23286431.
+
+        Args:
+            variant_info (VariantResult): Variant information.
+
+        Returns:
+            bool: True if the variant is pathogenic, False otherwise.
+
+        Raises:
+            MissingDataError: If the variant information is missing.
+        """
         if (
             not variant_info.gnomad_exomes
             or not variant_info.gnomad_exomes.effectInfo
@@ -100,7 +153,20 @@ class AutoPP3BP4:
 
     @staticmethod
     def _is_benign_spliceai(variant_info: VariantResult) -> bool:
-        """Check if any of the pathogenic scores meet the threshold."""
+        """
+        Check if any of the pathogenic scores meet the threshold.
+
+        The threshold is set to 0.1 according to doi:10.1101/2023.02.24.23286431.
+
+        Args:
+            variant_info (VariantResult): Variant information.
+
+        Returns:
+            bool: True if the variant is benign, False otherwise.
+
+        Raises:
+            MissingDataError: If the variant information is missing.
+        """
         if (
             not variant_info.gnomad_exomes
             or not variant_info.gnomad_exomes.effectInfo
