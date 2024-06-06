@@ -51,7 +51,7 @@ class AutoBP7:
         """
         Check for pathogenic variants +/- 2bp of the position in ClinVar.
 
-        Check the ClinVar data for variants within 2bp of the position.
+        Check if there are pathogenic variants within 2bp of the position in ClinVar.
 
         Attributes:
             seqvar (SeqVar): The variant to check.
@@ -80,7 +80,7 @@ class AutoBP7:
         """
         Check if the variant is closer than 2bp to a splice site.
 
-        Check if the variant is within 2bp from the start or end of an exon.
+        Check if the variant is located within 2bp of a splice site.
 
         Attributes:
             seqvar (SeqVar): The variant to check.

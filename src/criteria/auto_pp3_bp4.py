@@ -1,14 +1,14 @@
 """Implementation of the PP3 and BP4 criteria."""
 
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from loguru import logger
 
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config
 from src.defs.annonars_variant import VariantResult
-from src.defs.auto_acmg import PP3BP4
-from src.defs.exceptions import AutoAcmgBaseException, MissingDataError
+from src.defs.auto_acmg import PP3BP4, MissenseScores
+from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 
@@ -33,41 +33,153 @@ class AutoPP3BP4:
         self.prediction: PP3BP4 | None = None
 
     @staticmethod
-    def _get_best_pathogenic_score(variant_info: VariantResult) -> Optional[float]:
-        """Get the best pathogenic score available."""
-        # Avoid linting errors
-        assert variant_info.cadd is not None and variant_info.dbnsfp is not None
-        scores = [
-            # variant_info.mutpred2,
-            variant_info.cadd.PolyPhenVal,
-            # variant_info.revel,
-            # variant_info.bayesdel,
-            # variant_info.vest4,
-            # variant_info.phylop,
-        ]
-        scores = [score for score in scores if score is not None]
-        return max(scores) if scores else None  # type: ignore
+    def _convert_score_value(score_value: Optional[Union[str, float, int]]) -> Optional[float]:
+        """
+        Convert score value to float.
+
+        Since the score values can be represented as strings (with ";" as separator), we pick the
+        maximum value that is not empty ("."). If the value is already numeric, we return it as is.
+
+        Args:
+            score_value (Optional[Union[str, float, int]]): Score value to convert.
+
+        Returns:
+            Optional[float]: Converted score value.
+
+        Raises:
+            AlgorithmError: If the score value cannot be converted to float.
+        """
+        if score_value is None:
+            return None
+        if isinstance(score_value, (float, int)):
+            return float(score_value)
+        try:
+            return max(float(score) for score in score_value.split(";") if score != ".")
+        except ValueError as e:
+            logger.error("Failed to convert score value to float. Error: {}", e)
+            raise AlgorithmError("Failed to convert score value to float.") from e
+
+    def _is_pathogenic_score(self, variant_info: VariantResult) -> bool:
+        """
+        Check if any of the pathogenic scores meet the threshold.
+
+        Go through the Missense scores and check if any of the pathogenic scores meet the threshold.
+
+        Args:
+            variant_info (VariantResult): Variant information.
+
+        Returns:
+            bool: True if the variant is pathogenic, False otherwise.
+
+        Raises:
+            MissingDataError: If the variant information is missing.
+        """
+        if not variant_info.dbnsfp:
+            logger.error("Missing dbNSFP data.")
+            raise MissingDataError("Missing dbNSFP data.")
+        for score in MissenseScores:
+            score_value = self._convert_score_value(getattr(variant_info.dbnsfp, score.name, None))
+            if score_value is not None and score.pathogenic_threshold is not None:
+                if score_value >= score.pathogenic_threshold:
+                    logger.debug(
+                        "Pathogenic score({}): {} >= {}",
+                        score.name,
+                        score_value,
+                        score.pathogenic_threshold,
+                    )
+                    return True
+        return False
+
+    def _is_benign_score(self, variant_info: VariantResult) -> bool:
+        """
+        Check if any of the benign scores meet the threshold.
+
+        Go through the Missense scores and check if any of the benign scores meet the threshold.
+
+        Args:
+            variant_info (VariantResult): Variant information.
+
+        Returns:
+            bool: True if the variant is benign, False otherwise.
+
+        Raises:
+            MissingDataError: If the variant information is missing.
+        """
+        if not variant_info.dbnsfp:
+            logger.error("Missing dbNSFP data.")
+            raise MissingDataError("Missing dbNSFP data.")
+        for score in MissenseScores:
+            score_value = self._convert_score_value(getattr(variant_info.dbnsfp, score.name, None))
+            if score_value is not None and score.benign_threshold is not None:
+                if score_value <= score.benign_threshold:
+                    logger.debug(
+                        "Benign score({}): {} <= {}",
+                        score.name,
+                        score_value,
+                        score.benign_threshold,
+                    )
+                    return True
+        return False
 
     @staticmethod
-    def _get_best_benign_score(variant_info: VariantResult) -> Optional[float]:
-        """Get the best benign score available."""
-        # Avoid linting errors
-        assert variant_info.cadd is not None and variant_info.dbnsfp is not None
-        scores = [
-            # variant_info.dbnsfp.REVEL_rankscore,
-            # variant_info.dbnsfp.MutPred_rankscore,
-            variant_info.cadd.PolyPhenVal,
-            # variant_info.bayesdel,
-            # variant_info.vest4,
-            # variant_info.phylop,
-        ]
-        scores = [score for score in scores if score is not None]
-        return min(scores) if scores else None  # type: ignore
+    def _is_pathogenic_spliceai(variant_info: VariantResult) -> bool:
+        """
+        Check if any of the pathogenic scores meet the threshold.
 
-    def _predict_spliceai(self, variant_info: VariantResult) -> Optional[float]:
-        """Predict splice site alterations using SpliceAI."""
-        # TODO: Implement this method.
-        return None
+        The threshold is set to 0.2 according to doi:10.1101/2023.02.24.23286431.
+
+        Args:
+            variant_info (VariantResult): Variant information.
+
+        Returns:
+            bool: True if the variant is pathogenic, False otherwise.
+
+        Raises:
+            MissingDataError: If the variant information is missing.
+        """
+        if (
+            not variant_info.gnomad_exomes
+            or not variant_info.gnomad_exomes.effectInfo
+            or not variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
+        ):
+            logger.error("Missing GnomAD exomes data.")
+            raise MissingDataError("Missing GnomAD exomes data.")
+        if variant_info.gnomad_exomes.effectInfo.spliceaiDsMax >= 0.2:
+            logger.debug(
+                "Pathogenic SpliceAI score: {}", variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
+            )
+            return True
+        return False
+
+    @staticmethod
+    def _is_benign_spliceai(variant_info: VariantResult) -> bool:
+        """
+        Check if any of the pathogenic scores meet the threshold.
+
+        The threshold is set to 0.1 according to doi:10.1101/2023.02.24.23286431.
+
+        Args:
+            variant_info (VariantResult): Variant information.
+
+        Returns:
+            bool: True if the variant is benign, False otherwise.
+
+        Raises:
+            MissingDataError: If the variant information is missing.
+        """
+        if (
+            not variant_info.gnomad_exomes
+            or not variant_info.gnomad_exomes.effectInfo
+            or not variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
+        ):
+            logger.error("Missing GnomAD exomes data.")
+            raise MissingDataError("Missing GnomAD exomes data.")
+        if variant_info.gnomad_exomes.effectInfo.spliceaiDsMax <= 0.1:
+            logger.debug(
+                "Benign SpliceAI score: {}", variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
+            )
+            return True
+        return False
 
     def predict(self) -> Optional[PP3BP4]:
         """Predict PP3 and BP4 criteria."""
@@ -79,29 +191,19 @@ class AutoPP3BP4:
                 self.prediction.BP4 = False
                 return self.prediction
 
-            if not self.variant_info or not self.variant_info.cadd or not self.variant_info.dbnsfp:
-                logger.error("Missing CADD or DBNSFP data.")
-                raise MissingDataError("Missing CADD or DBNSFP data.")
+            if not self.variant_info:
+                logger.error("Missing variant data.")
+                raise MissingDataError("Missing variant data.")
 
-            best_pathogenic_score = self._get_best_pathogenic_score(self.variant_info)
-            best_benign_score = self._get_best_benign_score(self.variant_info)
-            spliceai_score = self._predict_spliceai(self.variant_info)
-
-            # Evaluate PP3
-            if best_pathogenic_score and best_pathogenic_score > 0.8:
-                self.prediction.PP3 = True
-            elif spliceai_score and spliceai_score > 0.8:
-                self.prediction.PP3 = True
-            else:
-                self.prediction.PP3 = False
-
-            # Evaluate BP4
-            if best_benign_score and best_benign_score < 0.2:
-                self.prediction.BP4 = True
-            elif spliceai_score and spliceai_score < 0.2:
-                self.prediction.BP4 = True
-            else:
-                self.prediction.BP4 = False
+            # Evaluate PP3 and BP4 criteria
+            is_pathogenic = self._is_pathogenic_score(
+                self.variant_info
+            ) or self._is_pathogenic_spliceai(self.variant_info)
+            is_benign = self._is_benign_score(self.variant_info) or self._is_benign_spliceai(
+                self.variant_info
+            )
+            self.prediction.PP3 = is_pathogenic
+            self.prediction.BP4 = is_benign
 
         except AutoAcmgBaseException as e:
             logger.error("Failed to predict PP3 and BP4 criteria. Error: {}", e)
