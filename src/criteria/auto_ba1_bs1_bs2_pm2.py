@@ -1,7 +1,7 @@
 """Implementation of BA1, BS1, BS2, PM2 prediction for sequence variants."""
 
 import re
-from typing import Optional
+from typing import Optional, Tuple
 
 from loguru import logger
 
@@ -27,11 +27,18 @@ class AutoBA1BS1BS2PM2:
     ):
         #: Configuration to use.
         self.config = config or Config()
+        #: Sequence variant to predict.
         self.seqvar = seqvar
+        #: Genome release.
         self.genome_release = genome_release
+        #: Variant information.
         self.variant_info = variant_info
+        #: Annonars client.
         self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
+        #: Prediction result.
         self.prediction: BA1BS1BS2PM2 | None = None
+        #: Comment to store the prediction explanation.
+        self.comment: str = ""
 
     def _get_variant_info(self, seqvar: SeqVar) -> Optional[AnnonarsVariantResponse]:
         """Get variant information from Annonars.
@@ -130,7 +137,7 @@ class AutoBA1BS1BS2PM2:
                     return True
             return allele_freq < 0.0001
 
-    def predict(self) -> Optional[BA1BS1BS2PM2]:
+    def predict(self) -> Tuple[Optional[BA1BS1BS2PM2], str]:
         """
         Predicts the BA1, BS1, BS2, PM2 criteria for the sequence variant.
 
@@ -166,7 +173,8 @@ class AutoBA1BS1BS2PM2:
             self.prediction.PM2 = self.evaluate_pm2(self.seqvar, self.variant_info)
         except AutoAcmgBaseException as e:
             logger.error("Error occurred during BA1, BS1, BS2, PM2 prediction. Error: {}", e)
+            self.comment += f"An error occurred while predicting BA1, BS1, BS2, PM2 criteria: {e}"
             self.prediction = None
 
-        # Return the prediction result
-        return self.prediction
+        # Return the prediction result and explanation
+        return self.prediction, self.comment

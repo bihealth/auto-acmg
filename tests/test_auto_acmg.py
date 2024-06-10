@@ -7,7 +7,7 @@ from src.auto_acmg import AutoACMG
 from src.core.config import Config
 from src.criteria.auto_criteria import AutoACMGCriteria
 from src.criteria.auto_ps1_pm5 import AutoPS1PM5
-from src.defs.auto_acmg import PS1PM5, ACMGCriteria, AutoACMGResult
+from src.defs.auto_acmg import PS1PM5, ACMGResult, AutoACMGResult
 from src.defs.exceptions import AutoAcmgBaseException, ParseError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar, SeqVarResolver
@@ -69,7 +69,7 @@ def mock_auto_pvs1_failure(monkeypatch):
 @pytest.fixture
 def mock_auto_criteria_success(monkeypatch):
     mock_criteria = MagicMock(AutoACMGCriteria)
-    mock_criteria.predict.return_value = ACMGCriteria()
+    mock_criteria.predict.return_value = ACMGResult()
     monkeypatch.setattr("src.auto_acmg.AutoACMGCriteria", lambda *args, **kwargs: mock_criteria)
     return mock_criteria
 

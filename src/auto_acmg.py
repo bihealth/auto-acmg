@@ -6,7 +6,7 @@ from loguru import logger
 
 from src.core.config import Config
 from src.criteria.auto_criteria import AutoACMGCriteria
-from src.defs.auto_acmg import ACMGPrediction, AutoACMGResult
+from src.defs.auto_acmg import ACMGPrediction, AutoACMGPrediction, AutoACMGResult
 from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionPathMapping, PVS1PredictionStrucVarPath
 from src.defs.exceptions import AutoAcmgBaseException, ParseError
 from src.defs.genome_builds import GenomeRelease
@@ -159,14 +159,14 @@ class AutoACMG:
                     if seqvar_prediction == PVS1Prediction.NotSet:
                         raise AutoAcmgBaseException("PVS1 prediction failed: prediction NotSet.")
                     elif seqvar_prediction == PVS1Prediction.UnsupportedConsequence:
-                        self.prediction.pvs1.prediction = ACMGPrediction.NotApplicable
+                        self.prediction.pvs1.prediction = AutoACMGPrediction.NotApplicable
                         self.prediction.pvs1.summary = "Unsupported consequence"
                         self.prediction.pvs1.description = comment
                     else:
                         self.prediction.pvs1.prediction = (
-                            ACMGPrediction.Positive
+                            AutoACMGPrediction.Positive
                             if seqvar_prediction in PVS1_POSITIVE_SEQVAR_PREDICTIONS
-                            else ACMGPrediction.Negative
+                            else AutoACMGPrediction.Negative
                         )
                         self.prediction.pvs1.summary = (
                             f"PVS1 strength: {seqvar_prediction.name}. "
@@ -174,7 +174,7 @@ class AutoACMG:
                         )
                         self.prediction.pvs1.description = comment
             except AutoAcmgBaseException as e:
-                self.prediction.pvs1.prediction = ACMGPrediction.NotSet
+                self.prediction.pvs1.prediction = AutoACMGPrediction.NotSet
                 self.prediction.pvs1.description = "PVS1 prediction failed."
                 self.comment = f"Error: {e}"
                 logger.error("Failed to predict PVS1 criteria. Error: {}", e)
@@ -193,7 +193,16 @@ class AutoACMG:
                         setattr(
                             getattr(self.prediction, criteria.lower()),
                             "prediction",
-                            ACMGPrediction.Positive if prediction else ACMGPrediction.Negative,
+                            (
+                                AutoACMGPrediction.Positive
+                                if prediction["prediction"] == ACMGPrediction.Positive
+                                else AutoACMGPrediction.Negative
+                            ),
+                        )
+                        setattr(
+                            getattr(self.prediction, criteria.lower()),
+                            "summary",
+                            prediction["comment"],
                         )
             except AutoAcmgBaseException as e:
                 logger.error("Failed to predict other ACMG criteria. Error: {}", e)

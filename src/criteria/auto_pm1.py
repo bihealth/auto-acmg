@@ -24,13 +24,20 @@ class AutoPM1:
         *,
         config: Config,
     ):
-        """Initialize the class."""
+        #: Configuration to use.
+        self.config = config or Config()
+        #: Sequence variant to predict.
         self.seqvar = seqvar
+        #: Genome release.
         self.genome_release = genome_release
+        #: Variant information.
         self.variant_info = variant_info
+        #: Annonars client.
         self.annonars_client = AnnonarsClient(api_base_url=config.api_base_url_annonars)
-        self.config = config
+        #: Prediction result.
         self.prediction: PM1 | None = None
+        #: Comment to store the prediction explanation.
+        self.comment: str = ""
 
     def _count_pathogenic_variants(
         self, seqvar: SeqVar, start_pos: int, end_pos: int
@@ -80,42 +87,65 @@ class AutoPM1:
             logger.error("Failed to get variant from range. No ClinVar data.")
             raise InvalidAPIResposeError("Failed to get variant from range. No ClinVar data.")
 
-    @staticmethod
-    def _get_uniprot_domain(variant_info: VariantResult) -> Optional[Tuple[int, int]]:
+    def _get_uniprot_domain(self, variant_info: VariantResult) -> Optional[Tuple[int, int]]:
         """Check if the variant is in a UniProt domain."""
         # TODO: Implement this method
         return None
 
-    def predict(self) -> Optional[PM1]:
+    def predict(self) -> Tuple[Optional[PM1], str]:
         """Predict PM1 criteria."""
         self.prediction = PM1()
         try:
             if self.seqvar.chrom == "MT":
                 # skipped according to McCormick et al. (2020).
+                self.comment = "The variant is in the mitochondrial genome. PM1 is not met."
                 self.prediction.PM1 = False
-                return self.prediction
+                return self.prediction, self.comment
 
+            self.comment = (
+                "Counting pathogenic variants in the range of 50bp."
+                f"The range is {self.seqvar.pos - 25} - {self.seqvar.pos + 25}. => \n"
+            )
             pathogenic_count, _ = self._count_pathogenic_variants(
                 self.seqvar, self.seqvar.pos - 25, self.seqvar.pos + 25
             )
 
+            self.comment += f"Found {pathogenic_count} Pathogenic variants. => \n"
             if pathogenic_count >= 4:
+                self.comment += "Found 4 or more pathogenic variants. PM1 is met."
                 self.prediction.PM1 = True
-                return self.prediction
+                return self.prediction, self.comment
+            else:
+                self.comment += "Found less than 4 pathogenic variants."
 
+            self.comment += "Checking if the variant is in a UniProt domain. => \n"
             uniprot_domain = self._get_uniprot_domain(self.variant_info)
             if not uniprot_domain:
+                self.comment += "The variant is not in a UniProt domain. PM1 is not met."
                 self.prediction.PM1 = False
-                return self.prediction
+                return self.prediction, self.comment
+
             start_pos, end_pos = uniprot_domain
+            self.comment += (
+                "Counting pathogenic variants in the UniProt domain. "
+                f"The range is {start_pos} - {end_pos}. => \n"
+            )
             pathogenic_count, _ = self._count_pathogenic_variants(self.seqvar, start_pos, end_pos)
             if pathogenic_count >= 2:
+                self.comment += (
+                    "Found 2 or more pathogenic variants in the UniProt domain. " "PM1 is met."
+                )
                 self.prediction.PM1 = True
-                return self.prediction
-
-            self.prediction.PM1 = False
+                return self.prediction, self.comment
+            else:
+                self.comment += (
+                    "Found less than 2 pathogenic variants in the UniProt domain. "
+                    "PM1 is not met."
+                )
+                self.prediction.PM1 = False
         except AutoAcmgBaseException as e:
             logger.error("Error occurred during PM1 prediction. Error: {}", e)
+            self.comment += f"Error occurred during PM1 prediction. Error: {e}"
             self.prediction = None
 
-        return self.prediction
+        return self.prediction, self.comment
