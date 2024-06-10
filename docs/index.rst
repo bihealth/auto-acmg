@@ -19,6 +19,12 @@ If you want to **use** auto-acmg, the best place is to start at :ref:`dev_quicks
    acmg_pvs1_algorithm_details
 
 .. toctree::
+    :maxdepth: 2
+    :caption: Usage:
+
+    usage
+
+.. toctree::
    :maxdepth: 2
    :caption: Development:
 
