@@ -1,6 +1,6 @@
 """Implementation of the PP3 and BP4 criteria."""
 
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 from loguru import logger
 
@@ -24,16 +24,24 @@ class AutoPP3BP4:
         *,
         config: Config,
     ):
-        """Initialize the class."""
+        #: Configuration to use.
+        self.config = config or Config()
+        #: Sequence variant to predict.
         self.seqvar = seqvar
+        #: Genome release.
         self.genome_release = genome_release
+        #: Variant information.
         self.variant_info = variant_info
-        self.config = config
+        #: Annonars client.
         self.annonars_client = AnnonarsClient(api_base_url=config.api_base_url_annonars)
+        #: Prediction result.
         self.prediction: PP3BP4 | None = None
+        #: Comment to store the prediction explanation.
+        self.comment: str = ""
 
-    @staticmethod
-    def _convert_score_value(score_value: Optional[Union[str, float, int]]) -> Optional[float]:
+    def _convert_score_value(
+        self, score_value: Optional[Union[str, float, int]]
+    ) -> Optional[float]:
         """
         Convert score value to float.
 
@@ -77,10 +85,13 @@ class AutoPP3BP4:
         if not variant_info.dbnsfp:
             logger.error("Missing dbNSFP data.")
             raise MissingDataError("Missing dbNSFP data.")
+        self.comment += "Checking for pathogenic scores: \n"
         for score in MissenseScores:
+            self.comment += f"Checking {score.name} score: "
             score_value = self._convert_score_value(getattr(variant_info.dbnsfp, score.name, None))
-            if score_value is not None and score.pathogenic_threshold is not None:
+            if score_value is not None:
                 if score_value >= score.pathogenic_threshold:
+                    self.comment += f"{score_value} >= {score.pathogenic_threshold}. =>\n"
                     logger.debug(
                         "Pathogenic score({}): {} >= {}",
                         score.name,
@@ -88,6 +99,10 @@ class AutoPP3BP4:
                         score.pathogenic_threshold,
                     )
                     return True
+                else:
+                    self.comment += f"{score_value} < {score.pathogenic_threshold}.\n"
+            else:
+                self.comment += "Score not found. \n"
         return False
 
     def _is_benign_score(self, variant_info: VariantResult) -> bool:
@@ -108,10 +123,13 @@ class AutoPP3BP4:
         if not variant_info.dbnsfp:
             logger.error("Missing dbNSFP data.")
             raise MissingDataError("Missing dbNSFP data.")
+        self.comment += "Checking for benign scores: \n"
         for score in MissenseScores:
+            self.comment += f"Checking {score.name} score: "
             score_value = self._convert_score_value(getattr(variant_info.dbnsfp, score.name, None))
             if score_value is not None and score.benign_threshold is not None:
                 if score_value <= score.benign_threshold:
+                    self.comment += f"{score_value} <= {score.benign_threshold}. =>\n"
                     logger.debug(
                         "Benign score({}): {} <= {}",
                         score.name,
@@ -119,10 +137,13 @@ class AutoPP3BP4:
                         score.benign_threshold,
                     )
                     return True
+                else:
+                    self.comment += f"{score_value} > {score.benign_threshold}.\n"
+            else:
+                self.comment += "Score not found. \n"
         return False
 
-    @staticmethod
-    def _is_pathogenic_spliceai(variant_info: VariantResult) -> bool:
+    def _is_pathogenic_spliceai(self, variant_info: VariantResult) -> bool:
         """
         Check if any of the pathogenic scores meet the threshold.
 
@@ -144,15 +165,24 @@ class AutoPP3BP4:
         ):
             logger.error("Missing GnomAD exomes data.")
             raise MissingDataError("Missing GnomAD exomes data.")
+        self.comment += "Checking for pathogenic SpliceAI score: \n"
         if variant_info.gnomad_exomes.effectInfo.spliceaiDsMax >= 0.2:
+            self.comment += (
+                "Pathogenic SpliceAI score: "
+                f"{variant_info.gnomad_exomes.effectInfo.spliceaiDsMax} >= 0.2. =>\n"
+            )
             logger.debug(
                 "Pathogenic SpliceAI score: {}", variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
             )
             return True
-        return False
+        else:
+            self.comment += (
+                "Benign SpliceAI score: "
+                f"{variant_info.gnomad_exomes.effectInfo.spliceaiDsMax} < 0.2.\n"
+            )
+            return False
 
-    @staticmethod
-    def _is_benign_spliceai(variant_info: VariantResult) -> bool:
+    def _is_benign_spliceai(self, variant_info: VariantResult) -> bool:
         """
         Check if any of the pathogenic scores meet the threshold.
 
@@ -174,39 +204,56 @@ class AutoPP3BP4:
         ):
             logger.error("Missing GnomAD exomes data.")
             raise MissingDataError("Missing GnomAD exomes data.")
+        self.comment += "Checking for benign SpliceAI score: \n"
         if variant_info.gnomad_exomes.effectInfo.spliceaiDsMax <= 0.1:
+            self.comment += (
+                "Benign SpliceAI score: "
+                f"{variant_info.gnomad_exomes.effectInfo.spliceaiDsMax} <= 0.1. =>\n"
+            )
             logger.debug(
                 "Benign SpliceAI score: {}", variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
             )
             return True
-        return False
+        else:
+            self.comment += (
+                "Pathogenic SpliceAI score: "
+                f"{variant_info.gnomad_exomes.effectInfo.spliceaiDsMax} > 0.1.\n"
+            )
+            return False
 
-    def predict(self) -> Optional[PP3BP4]:
+    def predict(self) -> Tuple[Optional[PP3BP4], str]:
         """Predict PP3 and BP4 criteria."""
         self.prediction = PP3BP4()
 
         try:
             if self.seqvar.chrom == "MT":
+                self.comment = "Variant is in mitochondrial DNA. PP3 and BP4 criteria are not met."
                 self.prediction.PP3 = False
                 self.prediction.BP4 = False
-                return self.prediction
+                return self.prediction, self.comment
 
             if not self.variant_info:
                 logger.error("Missing variant data.")
                 raise MissingDataError("Missing variant data.")
 
             # Evaluate PP3 and BP4 criteria
+            self.comment = "Checking Scores. => \n"
             is_pathogenic = self._is_pathogenic_score(
                 self.variant_info
             ) or self._is_pathogenic_spliceai(self.variant_info)
             is_benign = self._is_benign_score(self.variant_info) or self._is_benign_spliceai(
                 self.variant_info
             )
+            self.comment += (
+                f"Result: PP3 is {'met' if is_pathogenic else 'not met'}, "
+                f"BP4 is {'met' if is_benign else 'not met'}. => \n"
+            )
             self.prediction.PP3 = is_pathogenic
             self.prediction.BP4 = is_benign
 
         except AutoAcmgBaseException as e:
             logger.error("Failed to predict PP3 and BP4 criteria. Error: {}", e)
+            self.comment += f"An error occurred during prediction. Error: {e}"
             self.prediction = None
 
-        return self.prediction
+        return self.prediction, self.comment

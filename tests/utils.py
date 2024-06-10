@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Tuple, Type
 
 from pydantic import BaseModel
 
-from src.defs.auto_acmg import ACMGCriteria
+from src.defs.auto_acmg import ACMGResult
 from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionSeqVarPath
 from src.defs.genome_builds import GenomeRelease
 
@@ -95,7 +95,7 @@ def load_test_data(
             if record["section"].startswith("#"):
                 continue
             expected_prediction = parse_expected_prediction(
-                record["expected_prediction"], ACMGCriteria
+                record["expected_prediction"], ACMGResult
             )
             result.append(
                 (

@@ -9,7 +9,12 @@ from src.core.config import Config
 from src.defs.annonars_variant import VariantResult
 from src.defs.auto_acmg import PP2BP1
 from src.defs.auto_pvs1 import SeqVarConsequence, SeqvarConsequenceMapping
-from src.defs.exceptions import AlgorithmError, InvalidAPIResposeError, MissingDataError
+from src.defs.exceptions import (
+    AlgorithmError,
+    AutoAcmgBaseException,
+    InvalidAPIResposeError,
+    MissingDataError,
+)
 from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import TranscriptGene, TranscriptSeqvar
 from src.defs.seqvar import SeqVar
@@ -27,16 +32,22 @@ class AutoPP2BP1:
         *,
         config: Config,
     ):
-        """Initialize the class."""
+        #: Configuration to use.
+        self.config = config or Config()
+        #: Sequence variant to predict.
         self.seqvar = seqvar
+        #: Genome release.
         self.genome_release = genome_release
+        #: Variant information.
         self.variant_info = variant_info
-        self.config = config
+        #: Annonars client.
         self.annonars_client = AnnonarsClient(api_base_url=config.api_base_url_annonars)
+        #: Prediction result.
         self.prediction: PP2BP1 | None = None
+        #: Comment to store the prediction explanation.
+        self.comment: str = ""
 
-    @staticmethod
-    def _get_consequence(seqvar_transcript: TranscriptSeqvar | None) -> SeqVarConsequence:
+    def _get_consequence(self, seqvar_transcript: TranscriptSeqvar | None) -> SeqVarConsequence:
         """Get the consequence of the sequence variant.
 
         Args:
@@ -53,8 +64,7 @@ class AutoPP2BP1:
                     return SeqvarConsequenceMapping[consequence]
             return SeqVarConsequence.NotSet
 
-    @staticmethod
-    def _calculate_range(gene_transcript: TranscriptGene) -> Tuple[int, int]:
+    def _calculate_range(self, gene_transcript: TranscriptGene) -> Tuple[int, int]:
         """
         Calculate the range for the missense variants.
 
@@ -141,17 +151,19 @@ class AutoPP2BP1:
             logger.error("Failed to get variant from range. No ClinVar data.")
             raise InvalidAPIResposeError("Failed to get variant from range. No ClinVar data.")
 
-    def predict(self) -> Optional[PP2BP1]:
+    def predict(self) -> Tuple[Optional[PP2BP1], str]:
         """Predict PP2 and BP1 criteria."""
         self.prediction = PP2BP1()
         try:
             if self.seqvar.chrom == "MT":
+                self.comment = "Variant is in mitochondrial DNA. PP2 and BP1 criteria are not met."
                 # skipped according to McCormick et al. (2020).
                 self.prediction.PP2 = False
                 self.prediction.BP1 = False
-                return self.prediction
+                return self.prediction, self.comment
 
             # Fetch transcript data
+            self.comment = "Fetching transcript data. => \n"
             seqvar_transcript_helper = SeqVarTranscriptsHelper(self.seqvar, config=self.config)
             seqvar_transcript_helper.initialize()
             (
@@ -168,24 +180,42 @@ class AutoPP2BP1:
                     "Transcript data is not fully set. Cannot initialize the PVS1 class."
                 )
             if consequence != SeqVarConsequence.Missense:
+                self.comment += (
+                    f"Consequence is not missense. Consequence: {consequence}. "
+                    "PP2 and BP1 criteria are not met."
+                )
                 self.prediction.PP2 = False
                 self.prediction.BP1 = False
-                return self.prediction
+                return self.prediction, self.comment
 
             start_pos, end_pos = self._calculate_range(gene_transcript)
+            self.comment += f"Count missense variants on range: {start_pos} - {end_pos}. => \n"
             pathogenic_count, benign_count, total_count = self._get_missense_variants(
                 self.seqvar, start_pos, end_pos
             )
             pathogenic_ratio = pathogenic_count / total_count
             benign_ratio = benign_count / total_count
+            self.comment += (
+                f"Pathogenic missense variants: {pathogenic_count}, "
+                f"Benign missense variants: {benign_count}, "
+                f"Total missense variants: {total_count}. => \n"
+                f"Pathogenic ratio: {pathogenic_ratio}, Benign ratio: {benign_ratio}. => \n"
+            )
 
             if pathogenic_ratio > 0.808:
+                self.comment += "Pathogenic ratio is greater than 0.808. PP2 is met."
                 self.prediction.PP2 = True
+            else:
+                self.comment += "Pathogenic ratio is less than 0.808. PP2 is not met."
             if benign_ratio > 0.569:
+                self.comment += "Benign ratio is greater than 0.569. BP1 is met."
                 self.prediction.BP1 = True
+            else:
+                self.comment += "Benign ratio is less than 0.569. BP1 is not met."
 
-        except:
-            logger.error("Failed to predict PP2 and BP1 criteria.")
+        except AutoAcmgBaseException as e:
+            logger.error("Failed to predict PP2 and BP1 criteria. Error: {}", e)
+            self.comment += f"Error occurred during PP2 and BP1 prediction. Error: {e}"
             self.prediction = None
 
-        return self.prediction
+        return self.prediction, self.comment

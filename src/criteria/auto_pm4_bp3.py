@@ -1,6 +1,6 @@
 """Implementation of PM4 and BP3 rules for sequence variants."""
 
-from typing import Optional
+from typing import Optional, Tuple
 
 from loguru import logger
 
@@ -26,11 +26,18 @@ class AutoPM4BP3:
     ):
         #: Configuration to use.
         self.config = config or Config()
+        #: Sequence variant to predict.
         self.seqvar = seqvar
+        #: Genome release.
         self.genome_release = genome_release
+        #: Variant information.
         self.variant_info = variant_info
+        #: Annonars client.
         self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
+        #: Prediction result.
         self.prediction: PM4BP3 | None = None
+        #: Comment to store the prediction explanation.
+        self.comment: str = ""
 
     def _get_variant_info(self, seqvar: SeqVar) -> Optional[AnnonarsVariantResponse]:
         """Get variant information from Annonars.
@@ -67,7 +74,7 @@ class AutoPM4BP3:
         """
         return False
 
-    def predict(self) -> Optional[PM4BP3]:
+    def predict(self) -> Tuple[Optional[PM4BP3], str]:
         """Predicts PM4 and BP3 criteria for the provided sequence variant.
 
         Implementation of the rule:
@@ -94,28 +101,40 @@ class AutoPM4BP3:
             if not self.variant_info:
                 raise MissingDataError("No valid primary information.")
 
+            self.comment = "Predicting???"
             # Stop-loss variants are considered as PM4
             if self.variant_info.cadd and self.variant_info.cadd.ConsDetail == "stop_loss":
+                self.comment += f"Variant consequence is stop-loss. PM4 is met"
                 self.prediction.PM4 = True
                 self.prediction.BP3 = False
             elif self.variant_info.cadd and self.variant_info.cadd.ConsDetail in [
                 "inframe_deletion",
                 "inframe_insertion",
             ]:
+                self.comment += f"Variant consequence is in-frame deletion/insertion."
                 if not self._in_repeat_region(self.variant_info) and self._in_conserved_domain(
                     self.variant_info
                 ):
+                    self.comment += (
+                        f"Variant is not in a repeat region and in a conserved domain."
+                        f"PM4 is met."
+                    )
                     self.prediction.PM4 = True
                     self.prediction.BP3 = False
                 elif self._in_repeat_region(self.variant_info) and not self._in_conserved_domain(
                     self.variant_info
                 ):
+                    self.comment += (
+                        f"Variant is in a repeat region and not in a conserved domain."
+                        f"BP3 is met."
+                    )
                     self.prediction.PM4 = False
                     self.prediction.BP3 = True
 
         except AutoAcmgBaseException as e:
             logger.error("Failed to predict PM4 and BP3 criteria. Error: {}", e)
+            self.comment += f"An error occured while predicting PM4 and BP3 criteria: {e}"
             self.prediction = None
 
-        # Return the prediction
-        return self.prediction
+        # Return the prediction and the explanation
+        return self.prediction, self.comment

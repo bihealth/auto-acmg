@@ -66,6 +66,7 @@ class PVS1Prediction(AutoAcmgBaseEnum):
     PVS1_Moderate = auto()
     PVS1_Supporting = auto()
     NotPVS1 = auto()
+    UnsupportedConsequence = auto()
 
 
 #: Enumeration for PVS1 prediction path for sequence variant

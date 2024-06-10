@@ -1,13 +1,22 @@
 """PVS1 criteria for Structural Variants (StrucVar)."""
 
+from typing import Optional
+
 from loguru import logger
 
+from src.core.config import Config
 from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionStrucVarPath
 from src.defs.strucvar import StrucVar, StrucVarType
 
 
 class StrucVarPVS1Helper:
     """Helper methods for PVS1 criteria for structural variants."""
+
+    def __init__(self, *, config: Optional[Config] = None):
+        #: Configuration to use.
+        self.config: Config = config or Config()
+        #: Comment to store the prediction explanation.
+        self.comment = ""
 
     @staticmethod
     def _full_gene_deletion() -> bool:
@@ -63,8 +72,13 @@ class StrucVarPVS1Helper:
 class StrucVarPVS1(StrucVarPVS1Helper):
     """PVS1 prediction for structural variants."""
 
-    def __init__(self, variant: StrucVar):
+    def __init__(self, variant: StrucVar, *, config: Optional[Config] = None):
+        super().__init__()
+
+        # === Attributes ===
         self.variant = variant
+
+        # === Prediction attributes ===
         self.prediction: PVS1Prediction = PVS1Prediction.NotSet
         self.prediction_path: PVS1PredictionStrucVarPath = PVS1PredictionStrucVarPath.NotSet
 
@@ -147,6 +161,4 @@ class StrucVarPVS1(StrucVarPVS1Helper):
             self.prediction_path = PVS1PredictionStrucVarPath.NotSet
             logger.error("Unsupported structural variant type: {}", self.variant.sv_type)
 
-    def get_prediction(self) -> tuple[PVS1Prediction, PVS1PredictionStrucVarPath]:
-        """Get the PVS1 prediction."""
-        return self.prediction, self.prediction_path
+        return self.prediction, self.prediction_path, self.comment
