@@ -79,9 +79,9 @@ def test_auto_ps1_pm5_get_variant_info_auto_acmg_exception(
         ("", None),  # Empty string
     ],
 )
-def test_parse_HGVSp(pHGVSp, expected_result):
+def test_parse_HGVSp(pHGVSp, expected_result, auto_ps1_pm5):
     """Test parsing of protein changes from HGVS format."""
-    result = AutoPS1PM5._parse_HGVSp(pHGVSp)
+    result = auto_ps1_pm5._parse_HGVSp(pHGVSp)
     assert result == expected_result
 
 
@@ -93,14 +93,14 @@ def test_parse_HGVSp(pHGVSp, expected_result):
         (None, False),  # No clinical significance data
     ],
 )
-def test_is_pathogenic(clinical_significance, expected_result):
+def test_is_pathogenic(clinical_significance, expected_result, auto_ps1_pm5):
     """Test determination of pathogenicity based on variant info."""
     variant_info = MagicMock()
     variant_info.clinvar = MagicMock()
     variant_info.clinvar.referenceAssertions = [MagicMock()]
     variant_info.clinvar.referenceAssertions[0].clinicalSignificance = clinical_significance
 
-    result = AutoPS1PM5._is_pathogenic(variant_info)
+    result = auto_ps1_pm5._is_pathogenic(variant_info)
     assert (
         result == expected_result
     ), f"Expected {expected_result} for clinical significance: {clinical_significance}"

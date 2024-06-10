@@ -36,7 +36,11 @@ def mock_strucvar():
 def mock_seqvar_pvs1(monkeypatch):
     mock_pvs1 = Mock(SeqVarPVS1)
     mock_pvs1.initialize.return_value = None
-    mock_pvs1.verify_PVS1.return_value = (PVS1Prediction.PVS1, PVS1PredictionSeqVarPath.NF1)
+    mock_pvs1.verify_PVS1.return_value = (
+        PVS1Prediction.PVS1,
+        PVS1PredictionSeqVarPath.NF1,
+        "example comment",
+    )
     monkeypatch.setattr("src.pvs1.auto_pvs1.SeqVarPVS1", lambda *args, **kwargs: mock_pvs1)
     return mock_pvs1
 
@@ -45,7 +49,7 @@ def mock_seqvar_pvs1(monkeypatch):
 def mock_seqvar_pvs1_failure(monkeypatch):
     mock_pvs1 = Mock(SeqVarPVS1)
     mock_pvs1.initialize.return_value = None
-    mock_pvs1.verify_PVS1.return_value = (None, None)
+    mock_pvs1.verify_PVS1.return_value = (None, None, "")
     monkeypatch.setattr("src.pvs1.auto_pvs1.SeqVarPVS1", lambda *args, **kwargs: mock_pvs1)
     return mock_pvs1
 
@@ -55,7 +59,11 @@ def mock_strucvar_pvs1(monkeypatch):
     mock_pvs1 = Mock(StrucVarPVS1)
     mock_pvs1.initialize.return_value = None
     mock_pvs1.verify_PVS1.return_value = None
-    mock_pvs1.get_prediction.return_value = (PVS1Prediction.PVS1, PVS1PredictionStrucVarPath.DEL1)
+    mock_pvs1.get_prediction.return_value = (
+        PVS1Prediction.PVS1,
+        PVS1PredictionStrucVarPath.DEL1,
+        "example comment",
+    )
     monkeypatch.setattr("src.pvs1.auto_pvs1.StrucVarPVS1", lambda *args, **kwargs: mock_pvs1)
     return mock_pvs1
 
@@ -65,7 +73,7 @@ def mock_strucvar_pvs1_failure(monkeypatch):
     mock_pvs1 = Mock(StrucVarPVS1)
     mock_pvs1.initialize.return_value = None
     mock_pvs1.verify_PVS1.return_value = None
-    mock_pvs1.get_prediction.return_value = (None, None)
+    mock_pvs1.get_prediction.return_value = (None, None, "")
     monkeypatch.setattr("src.pvs1.auto_pvs1.StrucVarPVS1", lambda *args, **kwargs: mock_pvs1)
     return mock_pvs1
 
@@ -74,41 +82,37 @@ def test_autoPVS1_predict_seqvar_success(mock_seqvar_pvs1, mock_seqvar):
     """Test predict method with a successful response."""
     autoPVS1 = AutoPVS1(mock_seqvar)
     with runner.isolated_filesystem():
-        autoPVS1.predict()
+        prediction = autoPVS1.predict()
     assert mock_seqvar_pvs1.initialize.called
     assert mock_seqvar_pvs1.verify_PVS1.called
-    assert autoPVS1.seqvar_prediction == PVS1Prediction.PVS1
-    assert autoPVS1.seqvar_prediction_path == PVS1PredictionSeqVarPath.NF1
+    assert prediction == (PVS1Prediction.PVS1, PVS1PredictionSeqVarPath.NF1, "example comment")
 
 
 def test_autoPVS1_predict_seqvar_failure(mock_seqvar_pvs1_failure, mock_seqvar):
     """Test predict method with a failed response."""
     autoPVS1 = AutoPVS1(mock_seqvar)
     with runner.isolated_filesystem():
-        autoPVS1.predict()
+        prediction = autoPVS1.predict()
     assert mock_seqvar_pvs1_failure.initialize.called
     assert mock_seqvar_pvs1_failure.verify_PVS1.called
-    assert autoPVS1.seqvar_prediction == None
-    assert autoPVS1.seqvar_prediction_path == None
+    assert prediction == (None, None, "")
 
 
 def test_autoPVS1_predict_strucvar_success(mock_strucvar_pvs1, mock_strucvar):
     """Test predict method with a successful response."""
     autoPVS1 = AutoPVS1(mock_strucvar)
     with runner.isolated_filesystem():
-        autoPVS1.predict()
+        prediction = autoPVS1.predict()
     assert mock_strucvar_pvs1.initialize.called
     assert mock_strucvar_pvs1.verify_PVS1.called
-    assert autoPVS1.strucvar_prediction == PVS1Prediction.PVS1
-    assert autoPVS1.strucvar_prediction_path == PVS1PredictionStrucVarPath.DEL1
+    assert prediction == (PVS1Prediction.PVS1, PVS1PredictionStrucVarPath.DEL1, "example comment")
 
 
 def test_autoPVS1_predict_strucvar_failure(mock_strucvar_pvs1_failure, mock_strucvar):
     """Test predict method with a failed response."""
     autoPVS1 = AutoPVS1(mock_strucvar)
     with runner.isolated_filesystem():
-        autoPVS1.predict()
+        prediction = autoPVS1.predict()
     assert mock_strucvar_pvs1_failure.initialize.called
     assert mock_strucvar_pvs1_failure.verify_PVS1.called
-    assert autoPVS1.strucvar_prediction == None
-    assert autoPVS1.strucvar_prediction_path == None
+    assert prediction == (None, None, "")

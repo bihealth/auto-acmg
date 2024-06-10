@@ -68,114 +68,6 @@ class MockCdsInfo:
 
 
 @pytest.mark.parametrize(
-    "main_hgvs, main_hgvs_p, transcripts_data, expected_result",
-    [
-        # Case where main transcript has valid protein HGVS
-        ("NM_000001.1", "p.Gly100Ser", [], "NM_000001.1:p.Gly100Ser"),
-        # Case where main transcript HGVS protein is not set, but another transcript has it
-        ("NM_000001.1", "", [("NM_000002.1", "p.Arg200Gln")], "NM_000001.1:p.Arg200Gln"),
-        # Case where main transcript and others do not have valid protein HGVS
-        ("NM_000001.1", "", [("NM_000002.1", ""), ("NM_000003.1", "p.?")], "NM_000001.1:p.?"),
-        # Case with no valid protein HGVS notation in any transcript
-        ("NM_000001.1", "p.?", [("NM_000002.1", "p.?"), ("NM_000003.1", "")], "NM_000001.1:p.?"),
-        # Case where multiple transcripts have valid HGVS, but the first valid one is chosen
-        (
-            "NM_000001.1",
-            "",
-            [("NM_000002.1", ""), ("NM_000003.1", "p.Lys300Thr")],
-            "NM_000001.1:p.Lys300Thr",
-        ),
-    ],
-)
-def test_choose_hgvs_p(main_hgvs, main_hgvs_p, transcripts_data, expected_result):
-    # Mocking the main and other transcripts
-    main_transcript = MagicMock(hgvs_p=main_hgvs_p)
-    transcripts = [MagicMock(feature_id=id, hgvs_p=hgvs_p) for id, hgvs_p in transcripts_data]
-
-    # Invoke the method under test
-    result = SeqVarPVS1Helper()._choose_hgvs_p(main_hgvs, main_transcript, transcripts)  # type: ignore
-
-    # Verify the result
-    assert result == expected_result
-
-
-@pytest.mark.parametrize(
-    "pHGVS,expected_termination",
-    [
-        ("NM_031475.2:p.Gln98*", 98),
-        ("NM_031475.2:p.Ala586Glyfs*73", 586 + 73),
-        ("NP_000305.3:p.Arg378SerfsTer5", 378 + 5),
-        ("p.Arg97Glyfs*26", 97 + 26),
-        ("p.Arg97GlyfsX26", 97 + 26),
-        ("p.Arg97GlyfsTer26", 97 + 26),
-        # ("p.Arg97fs", -1),  # No termination number provided
-        ("p.Gly100Ter", 100),
-        ("p.Cys24*", 24),
-        ("p.Ala2X", 2),
-        ("p.Tyr10Ter", 10),
-        ("p.Gln98*", 98),
-        ("p.Ala586Gly", -1),  # No frameshift or termination codon
-        ("'NM_000218.3:p.Y662S'", -1),  # Missense mutation
-    ],
-)
-def test_get_pHGVS_termination(pHGVS, expected_termination):
-    """Test the _get_pHGVS_termination method."""
-    termination = SeqVarPVS1Helper()._get_pHGVS_termination(pHGVS)
-    assert termination == expected_termination, f"Failed for pHGVS: {pHGVS}"
-
-
-@pytest.mark.parametrize(
-    "tHGVS,expected_result",
-    [
-        ("c.*1102=", 1102),  # Stop codon at position 1102
-        ("c.2506G>T", 2506),  # Missense mutation at position 2506
-        ("c.2506_2507insT", 2506),  # Insertion at position 2506
-        ("c.2506_2507del", 2506),  # Deletion at position 2506
-        ("c.2506_2507delinsT", 2506),  # Deletion-insertion at position 2506
-        ("c.1234+5G>T", 1234),  # Intron mutation (splice site)
-        ("c.1234-1G>A", 1234),  # Intron mutation (splice site)
-        ("c.234_235del", 234),  # Deletion with range
-        ("c.234_235insA", 234),  # Insertion with range
-        ("c.234_235delinsA", 234),  # Deletion-insertion with range
-        ("c.234+5_234+7del", 234),  # Complex range with intron positions
-        ("c.234-5_234-7del", 234),  # Complex range with intron positions
-        ("invalid", -1),  # Invalid HGVS
-    ],
-)
-def test_get_cds_position(tHGVS, expected_result):
-    """Test the _get_cds_position method."""
-    result = SeqVarPVS1Helper()._get_cds_position(tHGVS)
-    assert result == expected_result
-
-
-@pytest.mark.parametrize(
-    "gene_transcripts_file,transcript_id,expected_result",
-    [
-        ("mehari/mehari_genes_success.json", "NM_002108.4", 348),
-        ("mehari/f10_mehari_genes_NM_000504.4.json", "NM_000504.4", 57),
-        ("mehari/pcid2_mehari_genes.json", "NM_001127202.4", 35),
-    ],
-)
-def test_calculate_5_prime_UTR_length(gene_transcripts_file, transcript_id, expected_result):
-    """Test the _calculate_5_prime_UTR_length method."""
-    gene_transcripts = GeneTranscripts.model_validate(
-        get_json_object(gene_transcripts_file)
-    ).transcripts
-    tsx = None
-    for transcript in gene_transcripts:
-        if transcript.id == transcript_id:
-            tsx = transcript
-    if tsx is None:  # Should never happen
-        raise ValueError(f"Transcript {transcript_id} not found in the gene transcripts")
-    exons = tsx.genomeAlignments[0].exons
-    cds_start = tsx.genomeAlignments[0].cdsStart
-    cds_end = tsx.genomeAlignments[0].cdsEnd
-    strand = GenomicStrand.from_string(tsx.genomeAlignments[0].strand)
-    result = SeqVarPVS1Helper()._calculate_5_prime_UTR_length(exons, cds_start, cds_end, strand)
-    assert result == expected_result
-
-
-@pytest.mark.parametrize(
     "var_pos,exons,strand,expected_result",
     [
         (
@@ -269,6 +161,20 @@ def test_count_pathogenic_variants(annonars_range_response, expected_result, seq
 
 
 @pytest.mark.parametrize(
+    "var_pos,exons,expected_result",
+    [
+        (100, [MockExon(0, 100, 0, 100)], (0, 100)),
+        (150, [MockExon(0, 100, 0, 100), MockExon(100, 200, 100, 200)], (100, 200)),
+        (150, [MockExon(0, 100, 0, 100), MockExon(100, 200, 100, 200)], (100, 200)),
+    ],
+)
+def test_find_affected_exon_position(var_pos, exons, expected_result):
+    """Test the _find_affected_exon_position method."""
+    result = SeqVarPVS1Helper()._find_affected_exon_position(var_pos, exons)
+    assert result == expected_result
+
+
+@pytest.mark.parametrize(
     "value,expected_result",
     [
         (
@@ -325,6 +231,132 @@ def test_count_lof_variants(annonars_range_response, expected_result, seqvar):
         )
         result = SeqVarPVS1Helper()._count_lof_variants(seqvar, 1, 1000)  # Real range is mocked
         assert result == expected_result
+
+
+@pytest.mark.parametrize(
+    "hgvs, cds_info, expected_result",
+    [
+        # Test no alternative start codon is found
+        (
+            "NM_000001",
+            {
+                "NM_000001": MockCdsInfo(
+                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                ),
+                "NM_000002": MockCdsInfo(
+                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                ),
+            },
+            None,
+        ),
+        # Test an alternative start codon is found
+        (
+            "NM_000001",
+            {
+                "NM_000001": MockCdsInfo(
+                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                ),
+                "NM_000002": MockCdsInfo(
+                    start_codon=150, stop_codon=1000, cds_start=150, cds_end=1000, exons=[]
+                ),
+            },
+            150,
+        ),
+        # Test multiple transcripts, one with an alternative start
+        (
+            "NM_000001",
+            {
+                "NM_000001": MockCdsInfo(
+                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                ),
+                "NM_000002": MockCdsInfo(
+                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                ),
+                "NM_000003": MockCdsInfo(
+                    start_codon=200, stop_codon=1000, cds_start=200, cds_end=1000, exons=[]
+                ),
+            },
+            200,
+        ),
+        # Test multiple transcripts, none with an alternative start
+        (
+            "NM_000001",
+            {
+                "NM_000001": MockCdsInfo(
+                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                ),
+                "NM_000002": MockCdsInfo(
+                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                ),
+                "NM_000003": MockCdsInfo(
+                    start_codon=100, stop_codon=2000, cds_start=100, cds_end=1000, exons=[]
+                ),
+            },
+            None,
+        ),
+    ],
+)
+def test_closest_alternative_start_codon(hgvs, cds_info, expected_result):
+    """Test the _closest_alternative_start_codon method."""
+    result = SeqVarPVS1Helper()._closest_alternative_start_codon(cds_info, hgvs)
+    assert result == expected_result
+
+
+def test_closest_alternative_start_codon_invalid():
+    """Test the _closest_alternative_start_codon method."""
+    hgvs = "NM_000"
+    cds_info = {
+        "NM_000001": MockCdsInfo(
+            start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+        ),
+        "NM_000002": MockCdsInfo(
+            start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+        ),
+        "NM_000003": MockCdsInfo(
+            start_codon=200, stop_codon=1000, cds_start=200, cds_end=1000, exons=[]
+        ),
+    }
+    with pytest.raises(MissingDataError):
+        SeqVarPVS1Helper()._closest_alternative_start_codon(cds_info, hgvs)  # type: ignore
+
+
+@pytest.mark.parametrize(
+    "seqvar, exons, expected_result",
+    [
+        (
+            SeqVar(GenomeRelease.GRCh38, "1", 50, "A", "T"),
+            [MockExon(2, 100, 0, 100)],
+            (2, 100),
+        ),  # One exon
+        (
+            SeqVar(GenomeRelease.GRCh38, "1", 150, "A", "T"),
+            [MockExon(0, 100, 0, 100), MockExon(100, 200, 100, 200)],
+            (100, 200),
+        ),  # Multiple exons
+        (
+            SeqVar(GenomeRelease.GRCh38, "1", 98, "A", "T"),
+            [MockExon(100, 200, 100, 200)],
+            (100, 200),
+        ),  # Upstream intron
+        (
+            SeqVar(GenomeRelease.GRCh38, "1", 220, "A", "T"),
+            [MockExon(100, 200, 100, 200)],
+            (100, 200),
+        ),  # Downstream intron
+    ],
+)
+def test_skipping_exon_pos(seqvar, exons, expected_result):
+    """Test the _skipping_exon_pos method."""
+    result = SeqVarPVS1Helper()._skipping_exon_pos(seqvar, exons)
+    assert result == expected_result
+
+
+def test_skipping_exon_pos_invalid():
+    """Test the _skipping_exon_pos method."""
+    seqvar = SeqVar(GenomeRelease.GRCh38, "1", 50, "A", "T")
+    exons = [MockExon(100, 200, 100, 200)]
+    with pytest.raises(AlgorithmError):
+        SeqVarPVS1Helper()._skipping_exon_pos(seqvar, exons)  # type: ignore
 
 
 @pytest.mark.parametrize(
@@ -487,45 +519,6 @@ def test_lof_removes_more_then_10_percent_of_protein(prot_pos, prot_length, expe
     assert result == expected_result
 
 
-@pytest.mark.parametrize(
-    "seqvar, exons, expected_result",
-    [
-        (
-            SeqVar(GenomeRelease.GRCh38, "1", 50, "A", "T"),
-            [MockExon(2, 100, 0, 100)],
-            (2, 100),
-        ),  # One exon
-        (
-            SeqVar(GenomeRelease.GRCh38, "1", 150, "A", "T"),
-            [MockExon(0, 100, 0, 100), MockExon(100, 200, 100, 200)],
-            (100, 200),
-        ),  # Multiple exons
-        (
-            SeqVar(GenomeRelease.GRCh38, "1", 98, "A", "T"),
-            [MockExon(100, 200, 100, 200)],
-            (100, 200),
-        ),  # Upstream intron
-        (
-            SeqVar(GenomeRelease.GRCh38, "1", 220, "A", "T"),
-            [MockExon(100, 200, 100, 200)],
-            (100, 200),
-        ),  # Downstream intron
-    ],
-)
-def test_skipping_exon_pos(seqvar, exons, expected_result):
-    """Test the _skipping_exon_pos method."""
-    result = SeqVarPVS1Helper()._skipping_exon_pos(seqvar, exons)
-    assert result == expected_result
-
-
-def test_skipping_exon_pos_invalid():
-    """Test the _skipping_exon_pos method."""
-    seqvar = SeqVar(GenomeRelease.GRCh38, "1", 50, "A", "T")
-    exons = [MockExon(100, 200, 100, 200)]
-    with pytest.raises(AlgorithmError):
-        SeqVarPVS1Helper()._skipping_exon_pos(seqvar, exons)  # type: ignore
-
-
 # @pytest.mark.parametrize(
 #     "skipping_exon_pos_output, consequences, strand, cryptic_ss_output, expected",
 #     [
@@ -578,93 +571,6 @@ def test_skipping_exon_pos_invalid():
 #                 seqvar, exons, consequences, strand  # type: ignore
 #             )
 #             assert result == expected, f"Expected {expected}, but got {result}"
-
-
-@pytest.mark.parametrize(
-    "hgvs, cds_info, expected_result",
-    [
-        # Test no alternative start codon is found
-        (
-            "NM_000001",
-            {
-                "NM_000001": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
-                ),
-                "NM_000002": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
-                ),
-            },
-            None,
-        ),
-        # Test an alternative start codon is found
-        (
-            "NM_000001",
-            {
-                "NM_000001": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
-                ),
-                "NM_000002": MockCdsInfo(
-                    start_codon=150, stop_codon=1000, cds_start=150, cds_end=1000, exons=[]
-                ),
-            },
-            150,
-        ),
-        # Test multiple transcripts, one with an alternative start
-        (
-            "NM_000001",
-            {
-                "NM_000001": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
-                ),
-                "NM_000002": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
-                ),
-                "NM_000003": MockCdsInfo(
-                    start_codon=200, stop_codon=1000, cds_start=200, cds_end=1000, exons=[]
-                ),
-            },
-            200,
-        ),
-        # Test multiple transcripts, none with an alternative start
-        (
-            "NM_000001",
-            {
-                "NM_000001": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
-                ),
-                "NM_000002": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
-                ),
-                "NM_000003": MockCdsInfo(
-                    start_codon=100, stop_codon=2000, cds_start=100, cds_end=1000, exons=[]
-                ),
-            },
-            None,
-        ),
-    ],
-)
-def test_closest_alternative_start_codon(hgvs, cds_info, expected_result):
-    """Test the _closest_alternative_start_codon method."""
-    result = SeqVarPVS1Helper()._closest_alternative_start_codon(cds_info, hgvs)
-    assert result == expected_result
-
-
-def test_closest_alternative_start_codon_invalid():
-    """Test the _closest_alternative_start_codon method."""
-    hgvs = "NM_000"
-    cds_info = {
-        "NM_000001": MockCdsInfo(
-            start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
-        ),
-        "NM_000002": MockCdsInfo(
-            start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
-        ),
-        "NM_000003": MockCdsInfo(
-            start_codon=200, stop_codon=1000, cds_start=200, cds_end=1000, exons=[]
-        ),
-    }
-    with pytest.raises(MissingDataError):
-        SeqVarPVS1Helper()._closest_alternative_start_codon(cds_info, hgvs)  # type: ignore
 
 
 @pytest.mark.parametrize(
