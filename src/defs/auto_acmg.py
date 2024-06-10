@@ -216,3 +216,12 @@ class AutoACMGResult(BaseModel):
     bp5: AutoACMGCriteria = AutoACMGCriteria(name="BP5", prediction=AutoACMGPrediction.NotAutomated)
     bp6: AutoACMGCriteria = AutoACMGCriteria(name="BP6", prediction=AutoACMGPrediction.Depricated)
     bp7: AutoACMGCriteria = AutoACMGCriteria(name="BP7")
+
+    def export(self, filename: Optional[str] = None) -> None:
+        """Export the ACMG criteria prediction to a JSON file."""
+        data = self.model_dump_json(indent=4)
+        if not filename:
+            filename = f"acmg_criteria_prediction.json"
+        with open(filename, "w") as file:
+            for line in data.splitlines():
+                file.write(line)
