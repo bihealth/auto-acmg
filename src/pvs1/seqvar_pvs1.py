@@ -726,7 +726,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
     """Handles the PVS1 criteria assessment for sequence variants."""
 
     def __init__(self, seqvar: SeqVar, *, config: Optional[Config] = None):
-        super().__init__()
+        super().__init__(config=config)
 
         # === Data for internal use ===
         self._seqvar_transcript: TranscriptSeqvar | None = None
