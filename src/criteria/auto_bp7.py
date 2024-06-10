@@ -1,6 +1,6 @@
 """Implementation of BP7 criteria."""
 
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from loguru import logger
 
@@ -26,13 +26,20 @@ class AutoBP7:
         *,
         config: Config,
     ):
-        """Initialize the class."""
+        #: Configuration to use.
+        self.config = config or Config()
+        #: Sequence variant to predict.
         self.seqvar = seqvar
+        #: Genome release.
         self.genome_release = genome_release
+        #: Variant information.
         self.variant_info = variant_info
-        self.config = config
+        #: Annonars client.
         self.annonars_client = AnnonarsClient(api_base_url=config.api_base_url_annonars)
+        #: Prediction result.
         self.prediction: BP7 | None = None
+        #: Comment to store the prediction explanation.
+        self.comment: str = ""
 
     def _get_variant_info(self, seqvar: SeqVar) -> Optional[VariantResult]:
         """Get variant information from Annonars.
@@ -142,27 +149,42 @@ class AutoBP7:
             return True
         return False
 
-    def predict(self) -> Optional[BP7]:
+    def predict(self) -> Tuple[Optional[BP7], str]:
         """Predict BP7 criterion."""
         self.prediction = BP7()
         try:
             if self.seqvar.chrom == "MT":
                 # skipped according to McCormick et al. (2020).
+                self.comment = "Variant is in the mitochondrial genome. BP7 is not met."
                 self.prediction.BP7 = False
-                return self.prediction
+                return self.prediction, self.comment
 
+            self.comment = "Checking for pathogenic variants in the range of 2bp. => \n"
             if self._check_proximity_to_pathogenic_variants(self.seqvar):
+                self.comment += "Found pathogenic variants in the range of 2bp. BP7 is not met."
                 self.prediction.BP7 = False
-                return self.prediction
+                return self.prediction, self.comment
+            else:
+                self.comment += "No pathogenic variants found in the range of 2bp. => \n"
+
+            self.comment += "Checking for proximity to splice site. => \n"
             if self._check_proximity_to_splice_site(self.seqvar):
+                self.comment += "Variant is within 2bp of a splice site. BP7 is not met."
                 self.prediction.BP7 = False
-                return self.prediction
+                return self.prediction, self.comment
+            else:
+                self.comment += "Variant is not within 2bp of a splice site. => \n"
+
+            self.comment += "Predicting splice site alterations using SpliceAI. => \n"
             if self._predict_spliceai(self.seqvar):
+                self.comment += "Variant is a splice site alteration. BP7 is not met."
                 self.prediction.BP7 = False
             else:
+                self.comment += "Variant is not a splice site alteration. BP7 is met."
                 self.prediction.BP7 = True
         except AutoAcmgBaseException as e:
             logger.error("Failed to predict BP7 criterion. Error: {}", e)
+            self.comment += f"Failed to predict BP7 criterion. Error: {e}"
             self.prediction = None
 
-        return self.prediction
+        return self.prediction, self.comment

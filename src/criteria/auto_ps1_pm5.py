@@ -1,7 +1,7 @@
 """Implementation of PS1 and PM5 prediction for sequence variants."""
 
 import re
-from typing import Optional
+from typing import Optional, Tuple
 
 from loguru import logger
 
@@ -33,12 +33,18 @@ class AutoPS1PM5:
     ):
         #: Configuration to use.
         self.config = config or Config()
-        # Attributes to be set
+        #: Sequence variant to predict.
         self.seqvar = seqvar
+        #: Genome release.
         self.genome_release = genome_release
+        #: Variant information.
         self.variant_info = variant_info
+        #: Annonars client.
         self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
+        #: Prediction result.
         self.prediction: PS1PM5 | None = None
+        #: Comment to store the prediction explanation.
+        self.comment: str = ""
 
     def _get_variant_info(self, seqvar: SeqVar) -> Optional[AnnonarsVariantResponse]:
         """Get variant information from Annonars.
@@ -53,8 +59,7 @@ class AutoPS1PM5:
             logger.error("Failed to get variant information. Error: {}", e)
             return None
 
-    @staticmethod
-    def _parse_HGVSp(pHGVSp: str) -> Optional[AminoAcid]:
+    def _parse_HGVSp(self, pHGVSp: str) -> Optional[AminoAcid]:
         """Parse the pHGVSp from VEP into its components.
 
         Args:
@@ -76,8 +81,7 @@ class AutoPS1PM5:
             logger.debug("Invalid pHGVSp: {}", pHGVSp)
             return None
 
-    @staticmethod
-    def _is_pathogenic(variant_info: VariantResult) -> bool:
+    def _is_pathogenic(self, variant_info: VariantResult) -> bool:
         """Check if the variant is pathogenic.
 
         Args:
@@ -95,7 +99,7 @@ class AutoPS1PM5:
                     return True
         return False
 
-    def predict(self) -> Optional[PS1PM5]:
+    def predict(self) -> Tuple[Optional[PS1PM5], str]:
         """
         Predicts the criteria PS1 and PM5 for the provided sequence variant.
 
@@ -116,7 +120,7 @@ class AutoPS1PM5:
             pathogenic has been seen before.
 
         Returns:
-            PS1PM5: The prediction result.
+            Tuple[Optional[PS1PM5], str]: The prediction result and the comment with the explanation.
         """
         try:
             # Initialize the prediction result
@@ -131,15 +135,18 @@ class AutoPS1PM5:
                     "No valid primary variant information for PS1/PM5 prediction."
                 )
 
+            self.comment = f"Extracting primary amino acid change from pHGVS: {self.variant_info.dbnsfp.HGVSp_VEP}.\n"
             primary_aa_change = self._parse_HGVSp(self.variant_info.dbnsfp.HGVSp_VEP)
             if not primary_aa_change:
                 raise AlgorithmError("No valid primary amino acid change for PS1/PM5 prediction.")
 
+            self.comment += f"Primary amino acid change: {primary_aa_change.name}. =>\n"
             for alt_base in DNA_BASES:
                 # Skip the same base insert
                 if alt_base == self.seqvar.insert:
                     continue
 
+                self.comment += f"Analysing alternative variant with base: {alt_base}.\n"
                 alt_seqvar = SeqVar(
                     genome_release=self.genome_release,
                     chrom=self.seqvar.chrom,
@@ -148,19 +155,38 @@ class AutoPS1PM5:
                     insert=alt_base,
                 )
                 alt_info = self._get_variant_info(alt_seqvar)
+
                 if alt_info and alt_info.result.dbnsfp and alt_info.result.dbnsfp.HGVSp_VEP:
+                    self.comment += (
+                        f"Extracting alternative amino acid change from pHGVS: "
+                        f"{alt_info.result.dbnsfp.HGVSp_VEP}.\n"
+                    )
                     alt_aa_change = self._parse_HGVSp(alt_info.result.dbnsfp.HGVSp_VEP)
+                    self.comment += f"Alternative amino acid change: {alt_aa_change.name if alt_aa_change else "N/A"}. =>\n"
                     if alt_aa_change and self._is_pathogenic(alt_info.result):
                         if primary_aa_change == alt_aa_change:
+                            self.comment += (
+                                "Alternative variant is pathogenic "
+                                "and amino acid change is the same as primary variant.\n"
+                                "Result: PS1 is met.\n"
+                            )
                             self.prediction.PS1 = True  # Same amino acid change and pathogenic
                         if primary_aa_change != alt_aa_change:
+                            self.comment += (
+                                "Alternative variant is pathogenic "
+                                "and amino acid change is different from primary variant.\n"
+                                "Result: PM5 is met.\n"
+                            )
                             self.prediction.PM5 = (
                                 True  # Different amino acid change at same residue, pathogenic
                             )
+                else:
+                    self.comment += f"Failed to get variant information for {alt_seqvar}.\n"
 
         except AutoAcmgBaseException as e:
             logger.error("Error occurred during PS1/PM5 prediction. Error: {}", e)
+            self.comment += f"Error occurred during PS1/PM5 prediction. Error: {e}"
             self.prediction = None
 
-        # Return the prediction result
-        return self.prediction
+        # Return the prediction result and the comment with the explanation
+        return self.prediction, self.comment

@@ -63,8 +63,8 @@ class MissenseScore(BaseModel):
     """Missense score."""
 
     name: str
-    benign_threshold: Optional[float] = None
-    pathogenic_threshold: Optional[float] = None
+    benign_threshold: float = 0.0
+    pathogenic_threshold: float = 0.0
 
 
 MissenseScores: List[MissenseScore] = [
@@ -81,38 +81,6 @@ MissenseScores: List[MissenseScore] = [
         name="phyloP100way_vertebrate", benign_threshold=0.021, pathogenic_threshold=9.741
     ),  # Not sure about 100/470/17 way
 ]
-
-
-class ACMGCriteria(BaseModel):
-    """ACMG criteria prediction. Note: without PVS1."""
-
-    PS1: bool = False
-    PS2: bool = False
-    PS3: bool = False
-    PS4: bool = False
-    PM1: bool = False
-    PM2: bool = False
-    PM3: bool = False
-    PM4: bool = False
-    PM5: bool = False
-    PM6: bool = False
-    PP1: bool = False
-    PP2: bool = False
-    PP3: bool = False
-    PP4: bool = False
-    PP5: bool = False
-    BA1: bool = False
-    BS1: bool = False
-    BS2: bool = False
-    BS3: bool = False
-    BS4: bool = False
-    BP1: bool = False
-    BP2: bool = False
-    BP3: bool = False
-    BP4: bool = False
-    BP5: bool = False
-    BP6: bool = False
-    BP7: bool = False
 
 
 class PS1PM5(BaseModel):
@@ -172,42 +140,88 @@ class ACMGPrediction(AutoAcmgBaseEnum):
     Negative = auto()
 
 
-class CriteriaPrediction(BaseModel):
+class ACMGCriteria(BaseModel):
+
+    prediction: ACMGPrediction = ACMGPrediction.NotSet
+    comment: str = ""
+
+
+class ACMGResult(BaseModel):
+    """ACMG criteria prediction. Note: without PVS1."""
+
+    PS1: ACMGCriteria = ACMGCriteria()
+    PM1: ACMGCriteria = ACMGCriteria()
+    PM2: ACMGCriteria = ACMGCriteria()
+    PM4: ACMGCriteria = ACMGCriteria()
+    PM5: ACMGCriteria = ACMGCriteria()
+    PP2: ACMGCriteria = ACMGCriteria()
+    PP3: ACMGCriteria = ACMGCriteria()
+    BA1: ACMGCriteria = ACMGCriteria()
+    BS1: ACMGCriteria = ACMGCriteria()
+    BS2: ACMGCriteria = ACMGCriteria()
+    BP1: ACMGCriteria = ACMGCriteria()
+    BP3: ACMGCriteria = ACMGCriteria()
+    BP4: ACMGCriteria = ACMGCriteria()
+    BP7: ACMGCriteria = ACMGCriteria()
+
+
+class AutoACMGPrediction(AutoAcmgBaseEnum):
+    """ACMG prediction enumeration."""
+
+    NotSet = auto()
+    NotApplicable = auto()
+    NotAutomated = auto()
+    Depricated = auto()
+    Positive = auto()
+    Negative = auto()
+
+
+class AutoACMGCriteria(BaseModel):
     """Criteria prediction."""
 
     name: str
-    prediction: ACMGPrediction = ACMGPrediction.NotSet
-    comment: str = ""
+    prediction: AutoACMGPrediction = AutoACMGPrediction.NotSet
+    summary: str = ""
+    description: str = ""
 
 
 class AutoACMGResult(BaseModel):
     """Response of the ACMG criteria prediction."""
 
-    pvs1: CriteriaPrediction = CriteriaPrediction(name="PVS1")
-    ps1: CriteriaPrediction = CriteriaPrediction(name="PS1")
-    ps2: CriteriaPrediction = CriteriaPrediction(name="PS2")
-    ps3: CriteriaPrediction = CriteriaPrediction(name="PS3")
-    ps4: CriteriaPrediction = CriteriaPrediction(name="PS4")
-    pm1: CriteriaPrediction = CriteriaPrediction(name="PM1")
-    pm2: CriteriaPrediction = CriteriaPrediction(name="PM2")
-    pm3: CriteriaPrediction = CriteriaPrediction(name="PM3")
-    pm4: CriteriaPrediction = CriteriaPrediction(name="PM4")
-    pm5: CriteriaPrediction = CriteriaPrediction(name="PM5")
-    pm6: CriteriaPrediction = CriteriaPrediction(name="PM6")
-    pp1: CriteriaPrediction = CriteriaPrediction(name="PP1")
-    pp2: CriteriaPrediction = CriteriaPrediction(name="PP2")
-    pp3: CriteriaPrediction = CriteriaPrediction(name="PP3")
-    pp4: CriteriaPrediction = CriteriaPrediction(name="PP4")
-    pp5: CriteriaPrediction = CriteriaPrediction(name="PP5")
-    ba1: CriteriaPrediction = CriteriaPrediction(name="BA1")
-    bs1: CriteriaPrediction = CriteriaPrediction(name="BS1")
-    bs2: CriteriaPrediction = CriteriaPrediction(name="BS2")
-    bs3: CriteriaPrediction = CriteriaPrediction(name="BS3")
-    bs4: CriteriaPrediction = CriteriaPrediction(name="BS4")
-    bp1: CriteriaPrediction = CriteriaPrediction(name="BP1")
-    bp2: CriteriaPrediction = CriteriaPrediction(name="BP2")
-    bp3: CriteriaPrediction = CriteriaPrediction(name="BP3")
-    bp4: CriteriaPrediction = CriteriaPrediction(name="BP4")
-    bp5: CriteriaPrediction = CriteriaPrediction(name="BP5")
-    bp6: CriteriaPrediction = CriteriaPrediction(name="BP6")
-    bp7: CriteriaPrediction = CriteriaPrediction(name="BP7")
+    pvs1: AutoACMGCriteria = AutoACMGCriteria(name="PVS1")
+    ps1: AutoACMGCriteria = AutoACMGCriteria(name="PS1")
+    ps2: AutoACMGCriteria = AutoACMGCriteria(name="PS2", prediction=AutoACMGPrediction.NotAutomated)
+    ps3: AutoACMGCriteria = AutoACMGCriteria(name="PS3", prediction=AutoACMGPrediction.NotAutomated)
+    ps4: AutoACMGCriteria = AutoACMGCriteria(name="PS4", prediction=AutoACMGPrediction.NotAutomated)
+    pm1: AutoACMGCriteria = AutoACMGCriteria(name="PM1")
+    pm2: AutoACMGCriteria = AutoACMGCriteria(name="PM2")
+    pm3: AutoACMGCriteria = AutoACMGCriteria(name="PM3", prediction=AutoACMGPrediction.NotAutomated)
+    pm4: AutoACMGCriteria = AutoACMGCriteria(name="PM4")
+    pm5: AutoACMGCriteria = AutoACMGCriteria(name="PM5")
+    pm6: AutoACMGCriteria = AutoACMGCriteria(name="PM6", prediction=AutoACMGPrediction.NotAutomated)
+    pp1: AutoACMGCriteria = AutoACMGCriteria(name="PP1", prediction=AutoACMGPrediction.NotAutomated)
+    pp2: AutoACMGCriteria = AutoACMGCriteria(name="PP2")
+    pp3: AutoACMGCriteria = AutoACMGCriteria(name="PP3")
+    pp4: AutoACMGCriteria = AutoACMGCriteria(name="PP4", prediction=AutoACMGPrediction.NotAutomated)
+    pp5: AutoACMGCriteria = AutoACMGCriteria(name="PP5", prediction=AutoACMGPrediction.Depricated)
+    ba1: AutoACMGCriteria = AutoACMGCriteria(name="BA1")
+    bs1: AutoACMGCriteria = AutoACMGCriteria(name="BS1")
+    bs2: AutoACMGCriteria = AutoACMGCriteria(name="BS2")
+    bs3: AutoACMGCriteria = AutoACMGCriteria(name="BS3", prediction=AutoACMGPrediction.NotAutomated)
+    bs4: AutoACMGCriteria = AutoACMGCriteria(name="BS4", prediction=AutoACMGPrediction.NotAutomated)
+    bp1: AutoACMGCriteria = AutoACMGCriteria(name="BP1")
+    bp2: AutoACMGCriteria = AutoACMGCriteria(name="BP2", prediction=AutoACMGPrediction.NotAutomated)
+    bp3: AutoACMGCriteria = AutoACMGCriteria(name="BP3")
+    bp4: AutoACMGCriteria = AutoACMGCriteria(name="BP4")
+    bp5: AutoACMGCriteria = AutoACMGCriteria(name="BP5", prediction=AutoACMGPrediction.NotAutomated)
+    bp6: AutoACMGCriteria = AutoACMGCriteria(name="BP6", prediction=AutoACMGPrediction.Depricated)
+    bp7: AutoACMGCriteria = AutoACMGCriteria(name="BP7")
+
+    def export(self, filename: Optional[str] = None) -> None:
+        """Export the ACMG criteria prediction to a JSON file."""
+        data = self.model_dump_json(indent=4)
+        if not filename:
+            filename = f"acmg_criteria_prediction.json"
+        with open(filename, "w") as file:
+            for line in data.splitlines():
+                file.write(line)
