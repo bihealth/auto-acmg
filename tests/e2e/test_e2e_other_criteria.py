@@ -36,8 +36,8 @@ def acmg_criteria_test_helper(
     assert isinstance(seqvar, SeqVar)
     # Then, predict ACMG criteria
     auto_acmg_criteria = AutoACMGCriteria(seqvar, genome_release, config=config)
-    result = auto_acmg_criteria.predict()
-    assert result == expected_prediction
+    prediction = auto_acmg_criteria.predict()
+    assert prediction == expected_prediction
 
 
 @pytest.mark.remote

@@ -37,8 +37,9 @@ def pvs1_seqvar_test_helper(
     assert isinstance(variant, SeqVar)
     # then, predict PVS1
     pvs1 = AutoPVS1(variant, genome_release, config=config)
-    result = pvs1.predict()
-    assert result == (expected_prediction, expected_path)
+    prediction, path, _ = pvs1.predict()
+    assert prediction == expected_prediction
+    assert path == expected_path
 
 
 @pytest.mark.remote
