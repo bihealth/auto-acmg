@@ -58,8 +58,7 @@ def mock_seqvar_pvs1_failure(monkeypatch):
 def mock_strucvar_pvs1(monkeypatch):
     mock_pvs1 = Mock(StrucVarPVS1)
     mock_pvs1.initialize.return_value = None
-    mock_pvs1.verify_PVS1.return_value = None
-    mock_pvs1.get_prediction.return_value = (
+    mock_pvs1.verify_PVS1.return_value = (
         PVS1Prediction.PVS1,
         PVS1PredictionStrucVarPath.DEL1,
         "example comment",
@@ -72,8 +71,7 @@ def mock_strucvar_pvs1(monkeypatch):
 def mock_strucvar_pvs1_failure(monkeypatch):
     mock_pvs1 = Mock(StrucVarPVS1)
     mock_pvs1.initialize.return_value = None
-    mock_pvs1.verify_PVS1.return_value = None
-    mock_pvs1.get_prediction.return_value = (None, None, "")
+    mock_pvs1.verify_PVS1.return_value = (None, None, "")
     monkeypatch.setattr("src.pvs1.auto_pvs1.StrucVarPVS1", lambda *args, **kwargs: mock_pvs1)
     return mock_pvs1
 

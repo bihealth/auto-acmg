@@ -53,7 +53,11 @@ def mock_seqvar_resolver_failure(monkeypatch):
 @pytest.fixture
 def mock_auto_pvs1_success(monkeypatch):
     mock_pvs1 = MagicMock(AutoPVS1)
-    mock_pvs1.predict.return_value = (PVS1Prediction.PVS1, PVS1PredictionSeqVarPath.NF1)
+    mock_pvs1.predict.return_value = (
+        PVS1Prediction.PVS1,
+        PVS1PredictionSeqVarPath.NF1,
+        "example comment",
+    )
     monkeypatch.setattr("src.auto_acmg.AutoPVS1", lambda *args, **kwargs: mock_pvs1)
     return mock_pvs1
 
