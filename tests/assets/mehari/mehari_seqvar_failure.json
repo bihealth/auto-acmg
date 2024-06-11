@@ -1,15 +1,3 @@
-{
-  "version": {
-    "tx_db": "0.25.1",
-    "mehari": "0.24.2"
-  },
-  "query": {
-    "genome_release": "grch37",
-    "chromosome": "6",
-    "position": 2274,
-    "reference": "A",
-    "alternative": "T",
-    "hgnc_id": null
-  },
-  "result": []
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:a7c82defef7587cfaea172f876394c119e8815be5bae5374551a4236cbb5866e
+size 245
