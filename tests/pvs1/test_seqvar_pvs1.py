@@ -144,7 +144,7 @@ def test_calculate_altered_region_real_data(
 @pytest.mark.parametrize(
     "annonars_range_response, expected_result",
     [
-        ("annonars/NM_000152.4:c.1A>G_annonars_range.json", (501, 2205)),
+        ("annonars/NM_000152.4:c.1A>G_annonars_range.json", (535, 2606)),
         ("annonars/CDH1_range.json", (0, 2)),
     ],
 )

@@ -73,11 +73,13 @@ class AutoBP7:
             pathogenic_variants = [
                 v
                 for v in response.result.clinvar
-                if v.referenceAssertions
-                and v.referenceAssertions[0].clinicalSignificance
+                if v.records
+                and v.records[0].classifications
+                and v.records[0].classifications.germlineClassification
+                and v.records[0].classifications.germlineClassification.description
                 in [
-                    "CLINICAL_SIGNIFICANCE_LIKELY_PATHOGENIC",
-                    "CLINICAL_SIGNIFICANCE_PATHOGENIC",
+                    "Pathogenic",
+                    "Likely pathogenic",
                 ]
             ]
             return len(pathogenic_variants) > 0

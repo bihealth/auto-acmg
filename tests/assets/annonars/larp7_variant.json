@@ -1,5 +1,5 @@
 {
-  "server_version": "0.36.1",
+  "server_version": "0.38.0",
   "query": {
     "genome_release": "grch37",
     "chromosome": "4",
@@ -3498,25 +3498,78 @@
       }
     ],
     "clinvar": {
-      "release": "GRCh37",
-      "chromosome": "4",
-      "start": 113568536,
-      "stop": 113568537,
-      "reference": "G",
-      "alternative": "GA",
-      "vcv": "VCV000504211",
-      "referenceAssertions": [
+      "records": [
         {
-          "rcv": "RCV000599079",
-          "title": "NM_016648.4(LARP7):c.834dup (p.Arg279fs) AND not provided",
-          "clinicalSignificance": "CLINICAL_SIGNIFICANCE_PATHOGENIC",
-          "reviewStatus": "REVIEW_STATUS_CRITERIA_PROVIDED_MULTIPLE_SUBMITTERS_NO_CONFLICTS"
-        },
-        {
-          "rcv": "RCV001262130",
-          "title": "NM_016648.4(LARP7):c.834dup (p.Arg279fs) AND Microcephalic primordial dwarfism, Alazami type",
-          "clinicalSignificance": "CLINICAL_SIGNIFICANCE_PATHOGENIC",
-          "reviewStatus": "REVIEW_STATUS_CRITERIA_PROVIDED_MULTIPLE_SUBMITTERS_NO_CONFLICTS"
+          "accession": {
+            "accession": "VCV000504211",
+            "version": 19
+          },
+          "rcvs": [
+            {
+              "accession": {
+                "accession": "RCV000599079",
+                "version": 12
+              },
+              "title": "NM_016648.4(LARP7):c.834dup (p.Arg279fs) AND not provided",
+              "classifications": {
+                "germlineClassification": {
+                  "reviewStatus": "AGGREGATE_GERMLINE_REVIEW_STATUS_CRITERIA_PROVIDED_MULTIPLE_SUBMITTERS_NO_CONFLICTS",
+                  "description": {
+                    "value": "Pathogenic",
+                    "dateLastEvaluated": "2023-04-29T00:00:00+00:00",
+                    "submissionCount": 3
+                  }
+                }
+              }
+            },
+            {
+              "accession": {
+                "accession": "RCV001262130",
+                "version": 6
+              },
+              "title": "NM_016648.4(LARP7):c.834dup (p.Arg279fs) AND Microcephalic primordial dwarfism, Alazami type",
+              "classifications": {
+                "germlineClassification": {
+                  "reviewStatus": "AGGREGATE_GERMLINE_REVIEW_STATUS_CRITERIA_PROVIDED_MULTIPLE_SUBMITTERS_NO_CONFLICTS",
+                  "description": {
+                    "value": "Pathogenic",
+                    "dateLastEvaluated": "2022-09-27T00:00:00+00:00",
+                    "submissionCount": 3
+                  }
+                }
+              }
+            }
+          ],
+          "name": "NM_016648.4(LARP7):c.834dup (p.Arg279fs)",
+          "variationType": "VARIATION_TYPE_DUPLICATION",
+          "classifications": {
+            "germlineClassification": {
+              "reviewStatus": "AGGREGATE_GERMLINE_REVIEW_STATUS_CRITERIA_PROVIDED_MULTIPLE_SUBMITTERS_NO_CONFLICTS",
+              "description": "Pathogenic",
+              "dateLastEvaluated": "2023-04-29T00:00:00+00:00",
+              "dateCreated": "2018-04-02T00:00:00+00:00",
+              "mostRecentSubmission": "2024-05-12T00:00:00+00:00",
+              "numberOfSubmitters": 6,
+              "numberOfSubmissions": 6
+            }
+          },
+          "sequenceLocation": {
+            "assembly": "GRCh37",
+            "chr": "CHROMOSOME_4",
+            "accession": "NC_000004.11",
+            "start": 113568536,
+            "stop": 113568537,
+            "displayStart": 113568536,
+            "displayStop": 113568537,
+            "variantLength": 1,
+            "positionVcf": 113568536,
+            "referenceAlleleVcf": "G",
+            "alternateAlleleVcf": "GA"
+          },
+          "hgncIds": [
+            "HGNC:24912",
+            "HGNC:41070"
+          ]
         }
       ]
     }

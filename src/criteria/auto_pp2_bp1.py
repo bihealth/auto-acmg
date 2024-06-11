@@ -6,6 +6,7 @@ from loguru import logger
 
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config
+from src.defs.annonars_range import ClinvarItem
 from src.defs.annonars_variant import VariantResult
 from src.defs.auto_acmg import PP2BP1
 from src.defs.auto_pvs1 import SeqVarConsequence, SeqvarConsequenceMapping
@@ -88,6 +89,50 @@ class AutoPP2BP1:
             gene_transcript.genomeAlignments[0].cdsEnd,
         )
 
+    def _is_missense(self, variant: ClinvarItem) -> bool:
+        """
+        Check if the variant is missense.
+        """
+        if variant.records and variant.records[0].sequenceLocation:
+            info = variant.records[0].sequenceLocation
+            genome_release = (
+                GenomeRelease.from_string(info.assembly)
+                if info.assembly
+                else self.seqvar.genome_release
+            )
+            chromosome = (
+                info.chr.lower().replace("chromosome_", "") if info.chr else self.seqvar.chrom
+            )
+            start = info.start
+            reference = info.referenceAlleleVcf
+            alternate = info.alternateAlleleVcf
+
+            if not start or not reference or not alternate:
+                raise MissingDataError("Start, reference, or alternate allele is not set.")
+
+            try:
+                seqvar = SeqVar(
+                    chrom=chromosome,
+                    pos=start,
+                    delete=reference,
+                    insert=alternate,
+                    genome_release=genome_release,
+                )
+                seqvar_transcript_helper = SeqVarTranscriptsHelper(seqvar, config=self.config)
+                seqvar_transcript_helper.initialize()
+                (
+                    _,
+                    _,
+                    _,
+                    _,
+                    consequence,
+                ) = seqvar_transcript_helper.get_ts_info()
+                return consequence == SeqVarConsequence.Missense
+            except AutoAcmgBaseException as e:
+                return False
+        else:
+            return False
+
     def _get_missense_variants(
         self, seqvar: SeqVar, start_pos: int, end_pos: int
     ) -> Tuple[int, int, int]:
@@ -121,24 +166,26 @@ class AutoPP2BP1:
             benign_variants = []
             missense_variants = []
 
-            # TODO: Check if the variant is missense
-            for variant in response.result.clinvar:
+            for v in response.result.clinvar:
                 if (
-                    variant.referenceAssertions
-                    and variant.referenceAssertions[0].clinicalSignificance
+                    v.records
+                    and v.records[0].classifications
+                    and v.records[0].classifications.germlineClassification
                 ):
-                    significance = variant.referenceAssertions[0].clinicalSignificance
-                    missense_variants.append(variant)
+                    significance = v.records[0].classifications.germlineClassification.description
+                    if not self._is_missense(v):
+                        continue
+                    missense_variants.append(v)
                     if significance in [
-                        "CLINICAL_SIGNIFICANCE_LIKELY_PATHOGENIC",
-                        "CLINICAL_SIGNIFICANCE_PATHOGENIC",
+                        "Pathogenic",
+                        "Likely pathogenic",
                     ]:
-                        pathogenic_variants.append(variant)
+                        pathogenic_variants.append(v)
                     elif significance in [
-                        "CLINICAL_SIGNIFICANCE_BENIGN",
-                        "CLINICAL_SIGNIFICANCE_LIKELY_BENIGN",
+                        "Benign",
+                        "Likely benign",
                     ]:
-                        benign_variants.append(variant)
+                        benign_variants.append(v)
 
             logger.debug(
                 "Pathogenic missense variants: {}, Benign missense variants: {}, Total missense variants: {}",

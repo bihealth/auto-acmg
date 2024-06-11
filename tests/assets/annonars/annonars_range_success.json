@@ -1,5 +1,5 @@
 {
-  "server_version": "0.36.1",
+  "server_version": "0.38.0",
   "query": {
     "genome_release": "grch37",
     "chromosome": "1",
