@@ -1,27 +1,3 @@
-{
-  "server_version": "0.36.1",
-  "query": {
-    "genome_release": "grch37",
-    "chromosome": "1",
-    "start": 55506888,
-    "stop": 55506887
-  },
-  "result": {
-    "cadd": {
-
-    },
-    "dbsnp": [],
-    "dbnsfp": {
-
-    },
-    "dbscsnv": {
-
-    },
-    "gnomad_mtdna": [],
-    "gnomad_exomes": [],
-    "gnomad_genomes": [],
-    "helixmtdb": [],
-    "ucsc_conservation": [],
-    "clinvar": []
-  }
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:fc3a3f672e34a0eac8d32562a97cbcae644e7f874926be1f9b8134937eb944b5
+size 400

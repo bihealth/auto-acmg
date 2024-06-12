@@ -1,11 +1,3 @@
-{
-  "success": true,
-  "value": {
-    "assembly": "GRCh37",
-    "contig": "4",
-    "pos": 113568536,
-    "reference_deleted": "G",
-    "alternate_inserted": "GA"
-  },
-  "message": null
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:b68d9015507dd8a063168b915d2b5419134af9115c7e848a94a87db5ba7b4ccc
+size 186

@@ -134,15 +134,48 @@ class ReferenceAssertion(BaseModel):
     reviewStatus: Optional[str] = None
 
 
-class ClinvarItem(BaseModel):
-    release: Optional[str] = None
-    chromosome: Optional[str] = None
+class GermlineClassification(BaseModel):
+    reviewStatus: Optional[str] = None
+    description: Optional[str] = None
+    dateLastEvaluated: Optional[str] = None
+    dateCreated: Optional[str] = None
+    mostRecentSubmission: Optional[str] = None
+    numberOfSubmitters: Optional[int] = None
+    numberOfSubmissions: Optional[int] = None
+
+
+class Classifications(BaseModel):
+    germlineClassification: GermlineClassification
+
+
+class SequenceLocation(BaseModel):
+    assembly: Optional[str] = None
+    chr: Optional[str] = None
+    accession: Optional[str] = None
     start: Optional[int] = None
     stop: Optional[int] = None
-    reference: Optional[str] = None
-    alternative: Optional[str] = None
-    vcv: Optional[str] = None
-    referenceAssertions: Optional[List[ReferenceAssertion]] = None
+    displayStart: Optional[int] = None
+    displayStop: Optional[int] = None
+    variantLength: Optional[int] = None
+    referenceAllele: Optional[str] = None
+    alternateAllele: Optional[str] = None
+    positionVcf: Optional[int] = None
+    referenceAlleleVcf: Optional[str] = None
+    alternateAlleleVcf: Optional[str] = None
+
+
+class Record(BaseModel):
+    # accession: Accession
+    # rcvs: List[Rcv]
+    name: str
+    variationType: str
+    classifications: Classifications
+    sequenceLocation: SequenceLocation
+    hgncIds: List[str]
+
+
+class ClinvarItem(BaseModel):
+    records: List[Record]
 
 
 class GnomadGenome(BaseModel):
