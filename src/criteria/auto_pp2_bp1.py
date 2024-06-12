@@ -48,26 +48,10 @@ class AutoPP2BP1:
         #: Comment to store the prediction explanation.
         self.comment: str = ""
 
-    def _get_consequence(self, seqvar_transcript: TranscriptSeqvar | None) -> SeqVarConsequence:
-        """Get the consequence of the sequence variant.
-
-        Args:
-            seqvar_transcript: The sequence variant transcript.
-
-        Returns:
-            SeqVarConsequence: The consequence of the sequence variant.
-        """
-        if not seqvar_transcript:
-            return SeqVarConsequence.NotSet
-        else:
-            for consequence in seqvar_transcript.consequences:
-                if consequence in SeqvarConsequenceMapping:
-                    return SeqvarConsequenceMapping[consequence]
-            return SeqVarConsequence.NotSet
-
     def _calculate_range(self, gene_transcript: TranscriptGene) -> Tuple[int, int]:
         """
-        Calculate the range for the missense variants.
+        Calculate the range for the missense variants. The range is calculated based on the CDS
+        start and end positions of the gene transcript and includes the entire transcript region.
 
         Args:
             gene_transcript: The gene transcript.
@@ -91,9 +75,21 @@ class AutoPP2BP1:
 
     def _is_missense(self, variant: ClinvarItem) -> bool:
         """
-        Check if the variant is missense.
+        Check if the variant is missense. The method retrieves information for the variant and
+        checks if the consequence is missense.
+
+        Note:
+            If the consequence cannot be determined, the variant is not counted (False is
+            returned).
+
+        Args:
+            variant: ClinVar information of the variant to check.
+
+        Returns:
+            bool: True if the variant is missense, False otherwise.
         """
         if variant.records and variant.records[0].sequenceLocation:
+            # Get the seqvar information
             info = variant.records[0].sequenceLocation
             genome_release = (
                 GenomeRelease.from_string(info.assembly)
@@ -109,7 +105,6 @@ class AutoPP2BP1:
 
             if not start or not reference or not alternate:
                 raise MissingDataError("Start, reference, or alternate allele is not set.")
-
             try:
                 seqvar = SeqVar(
                     chrom=chromosome,
@@ -118,6 +113,7 @@ class AutoPP2BP1:
                     insert=alternate,
                     genome_release=genome_release,
                 )
+                # Fetch transcript data and check the consequence
                 seqvar_transcript_helper = SeqVarTranscriptsHelper(seqvar, config=self.config)
                 seqvar_transcript_helper.initialize()
                 (
@@ -128,7 +124,8 @@ class AutoPP2BP1:
                     consequence,
                 ) = seqvar_transcript_helper.get_ts_info()
                 return consequence == SeqVarConsequence.Missense
-            except AutoAcmgBaseException as e:
+            except AutoAcmgBaseException:
+                # Don't count the variant if the consequence cannot be determined
                 return False
         else:
             return False
@@ -140,8 +137,8 @@ class AutoPP2BP1:
         Counts pathogenic, benign, and total missense variants in the specified range.
 
         The method retrieves variants from the specified range and iterates through the ClinVar data
-        of each variant to count the number of pathogenic variants, benign variants, and the total number
-        of missense variants.
+        of each variant to count the number of pathogenic variants, benign variants, and the total
+        number of missense variants.
 
         Args:
             seqvar: The sequence variant being analyzed.
@@ -149,7 +146,8 @@ class AutoPP2BP1:
             end_pos: The end position of the range.
 
         Returns:
-            Tuple[int, int, int]: The number of pathogenic variants, benign variants, and the total number of variants.
+            Tuple[int, int, int]: The number of pathogenic variants, benign variants, and the total
+            number of variants.
 
         Raises:
             InvalidAPIResposeError: If the API response is invalid or cannot be processed.
@@ -187,12 +185,6 @@ class AutoPP2BP1:
                     ]:
                         benign_variants.append(v)
 
-            logger.debug(
-                "Pathogenic missense variants: {}, Benign missense variants: {}, Total missense variants: {}",
-                len(pathogenic_variants),
-                len(benign_variants),
-                len(missense_variants),
-            )
             return len(pathogenic_variants), len(benign_variants), len(missense_variants)
         else:
             logger.error("Failed to get variant from range. No ClinVar data.")
@@ -204,6 +196,7 @@ class AutoPP2BP1:
         try:
             if self.seqvar.chrom == "MT":
                 self.comment = "Variant is in mitochondrial DNA. PP2 and BP1 criteria are not met."
+                logger.info("Variant is in mitochondrial DNA. PP2 and BP1 criteria are not met.")
                 # skipped according to McCormick et al. (2020).
                 self.prediction.PP2 = False
                 self.prediction.BP1 = False
@@ -211,6 +204,7 @@ class AutoPP2BP1:
 
             # Fetch transcript data
             self.comment = "Fetching transcript data. => \n"
+            logger.debug("Fetching transcript data.")
             seqvar_transcript_helper = SeqVarTranscriptsHelper(self.seqvar, config=self.config)
             seqvar_transcript_helper.initialize()
             (
@@ -231,12 +225,17 @@ class AutoPP2BP1:
                     f"Consequence is not missense. Consequence: {consequence}. "
                     "PP2 and BP1 criteria are not met."
                 )
+                logger.info(
+                    "Consequence is not missense: {}. PP2 and BP1 criteria are not met.",
+                    consequence,
+                )
                 self.prediction.PP2 = False
                 self.prediction.BP1 = False
                 return self.prediction, self.comment
 
             start_pos, end_pos = self._calculate_range(gene_transcript)
             self.comment += f"Count missense variants on range: {start_pos} - {end_pos}. => \n"
+            logger.debug("Count missense variants on range: {} - {}.", start_pos, end_pos)
             pathogenic_count, benign_count, total_count = self._get_missense_variants(
                 self.seqvar, start_pos, end_pos
             )
@@ -248,21 +247,32 @@ class AutoPP2BP1:
                 f"Total missense variants: {total_count}. => \n"
                 f"Pathogenic ratio: {pathogenic_ratio}, Benign ratio: {benign_ratio}. => \n"
             )
+            logger.debug(
+                "Pathogenic missense variants: {}, Benign missense variants: {}, "
+                "Total missense variants: {}",
+                pathogenic_count,
+                benign_count,
+                total_count,
+            )
 
             if pathogenic_ratio > 0.808:
                 self.comment += "Pathogenic ratio is greater than 0.808. PP2 is met."
+                logger.info("Pathogenic ratio is greater than 0.808. PP2 is met.")
                 self.prediction.PP2 = True
             else:
                 self.comment += "Pathogenic ratio is less than 0.808. PP2 is not met."
+                logger.info("Pathogenic ratio is less than 0.808. PP2 is not met.")
             if benign_ratio > 0.569:
                 self.comment += "Benign ratio is greater than 0.569. BP1 is met."
+                logger.info("Benign ratio is greater than 0.569. BP1 is met.")
                 self.prediction.BP1 = True
             else:
                 self.comment += "Benign ratio is less than 0.569. BP1 is not met."
+                logger.info("Benign ratio is less than 0.569. BP1 is not met.")
 
         except AutoAcmgBaseException as e:
-            logger.error("Failed to predict PP2 and BP1 criteria. Error: {}", e)
             self.comment += f"Error occurred during PP2 and BP1 prediction. Error: {e}"
+            logger.error("Failed to predict PP2 and BP1 criteria. Error: {}", e)
             self.prediction = None
 
         return self.prediction, self.comment
