@@ -61,22 +61,6 @@ def load_test_data_pvs1(
     return result
 
 
-def parse_expected_prediction(pred_str: str, model_class: Type[BaseModel]) -> BaseModel:
-    """
-    Parse expected prediction string into the model class.
-
-    :param pred_str: The expected prediction string.
-    :type pred_str: str
-    :param model_class: The model class to parse the string into.
-    :type model_class: Type[BaseModel]
-    """
-    prediction_dict = {}
-    criteria = pred_str.split("-")
-    for criterion in criteria:
-        prediction_dict[criterion] = True
-    return model_class(**prediction_dict)
-
-
 def load_test_data(
     path: str,
 ) -> List[Tuple[Any, ...]]:
@@ -94,14 +78,11 @@ def load_test_data(
         for record in reader:
             if record["section"].startswith("#"):
                 continue
-            expected_prediction = parse_expected_prediction(
-                record["expected_prediction"], ACMGResult
-            )
             result.append(
                 (
                     record["variant_name"],
                     GenomeRelease[record["genome_release"]],
-                    expected_prediction,
+                    record["expected_prediction"],
                     record["comment"],
                 )
             )

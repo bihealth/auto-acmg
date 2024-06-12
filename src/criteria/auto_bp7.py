@@ -42,10 +42,12 @@ class AutoBP7:
         self.comment: str = ""
 
     def _get_variant_info(self, seqvar: SeqVar) -> Optional[VariantResult]:
-        """Get variant information from Annonars.
+        """
+        Get variant information from Annonars.
 
         Returns:
-            VariantResult: Annonars response.
+            Optional[VariantResult]: The variant information. None if the information is not
+            available.
         """
         try:
             logger.debug("Getting variant information for {}.", seqvar)
@@ -73,11 +75,13 @@ class AutoBP7:
             pathogenic_variants = [
                 v
                 for v in response.result.clinvar
-                if v.referenceAssertions
-                and v.referenceAssertions[0].clinicalSignificance
+                if v.records
+                and v.records[0].classifications
+                and v.records[0].classifications.germlineClassification
+                and v.records[0].classifications.germlineClassification.description
                 in [
-                    "CLINICAL_SIGNIFICANCE_LIKELY_PATHOGENIC",
-                    "CLINICAL_SIGNIFICANCE_PATHOGENIC",
+                    "Pathogenic",
+                    "Likely pathogenic",
                 ]
             ]
             return len(pathogenic_variants) > 0
@@ -156,35 +160,45 @@ class AutoBP7:
             if self.seqvar.chrom == "MT":
                 # skipped according to McCormick et al. (2020).
                 self.comment = "Variant is in the mitochondrial genome. BP7 is not met."
+                logger.debug("Variant is in the mitochondrial genome. BP7 is not met.")
                 self.prediction.BP7 = False
                 return self.prediction, self.comment
 
             self.comment = "Checking for pathogenic variants in the range of 2bp. => \n"
+            logger.debug("Checking for pathogenic variants in the range of 2bp.")
             if self._check_proximity_to_pathogenic_variants(self.seqvar):
                 self.comment += "Found pathogenic variants in the range of 2bp. BP7 is not met."
+                logger.debug("Found pathogenic variants in the range of 2bp. BP7 is not met.")
                 self.prediction.BP7 = False
                 return self.prediction, self.comment
             else:
                 self.comment += "No pathogenic variants found in the range of 2bp. => \n"
+                logger.debug("No pathogenic variants found in the range of 2bp. => \n")
 
             self.comment += "Checking for proximity to splice site. => \n"
+            logger.debug("Checking for proximity to splice site.")
             if self._check_proximity_to_splice_site(self.seqvar):
                 self.comment += "Variant is within 2bp of a splice site. BP7 is not met."
+                logger.debug("Variant is within 2bp of a splice site. BP7 is not met.")
                 self.prediction.BP7 = False
                 return self.prediction, self.comment
             else:
                 self.comment += "Variant is not within 2bp of a splice site. => \n"
+                logger.debug("Variant is not within 2bp of a splice site. => \n")
 
             self.comment += "Predicting splice site alterations using SpliceAI. => \n"
+            logger.debug("Predicting splice site alterations using SpliceAI.")
             if self._predict_spliceai(self.seqvar):
                 self.comment += "Variant is a splice site alteration. BP7 is not met."
+                logger.debug("Variant is a splice site alteration. BP7 is not met.")
                 self.prediction.BP7 = False
             else:
                 self.comment += "Variant is not a splice site alteration. BP7 is met."
+                logger.debug("Variant is not a splice site alteration. BP7 is met.")
                 self.prediction.BP7 = True
         except AutoAcmgBaseException as e:
-            logger.error("Failed to predict BP7 criterion. Error: {}", e)
             self.comment += f"Failed to predict BP7 criterion. Error: {e}"
+            logger.error("Failed to predict BP7 criterion. Error: {}", e)
             self.prediction = None
 
         return self.prediction, self.comment

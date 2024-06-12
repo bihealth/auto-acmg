@@ -90,12 +90,17 @@ class AutoPS1PM5:
         Returns:
             bool: True if the variant is pathogenic
         """
-        if variant_info.clinvar and variant_info.clinvar.referenceAssertions:
-            for refAssertion in variant_info.clinvar.referenceAssertions:
-                if refAssertion.clinicalSignificance and refAssertion.clinicalSignificance in [
-                    "CLINICAL_SIGNIFICANCE_PATHOGENIC",
-                    "CLINICAL_SIGNIFICANCE_LIKELY_PATHOGENIC",
-                ]:
+        if variant_info.clinvar and variant_info.clinvar.records:
+            for rec in variant_info.clinvar.records:
+                if (
+                    rec.classifications
+                    and rec.classifications.germlineClassification
+                    and rec.classifications.germlineClassification.description
+                    in [
+                        "Pathogenic",
+                        "Likely pathogenic",
+                    ]
+                ):
                     return True
         return False
 

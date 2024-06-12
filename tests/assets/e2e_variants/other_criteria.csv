@@ -1,16 +1,65 @@
 section,variant_name,genome_release,expected_prediction,comment
 # Tests for different criteria,,,,
-# expected_prediction includes criteria met separated by commas,,,,
-# PM1,,,,
-## Hotspot or critical domain,,,,
+# expected_prediction includes criteria name if it's met,,,,
+## PS1,,,,
+### Same amino acid change,,,,
 ## PM1,,,,
-#,3-178936091-C-T,GRCh37,PM1,Hotspot with 4 pathogenic variants
-#,7-140453136-C-T,GRCh37,PM1,UniProt domain with 2 pathogenic variants
+### Hotspot or critical domain,,,,
+,3-178936091-C-T,GRCh37,PM1,Hotspot with 4 pathogenic variants
+,7-140453136-C-T,GRCh37,PM1,UniProt domain with 2 pathogenic variants
 #,1-55516888-G-A,GRCh37,,No hotspot or critical domain
+## PM2,,,,
+### Absent from controls,,,,
+## PM4,,,,
+### Protein length change,,,,
+## PM5,,,,
+### De novo missense variant,,,,
+## PP2,,,,
+### Missense variant in gene where low rate of benign missense variants,,,,
+#,NM_002880.3(RAF1):c.769T>C,GRCh37,PP2,(p.Ser257Pro) from ClinGen
+#,NM_005343.3(HRAS):c.175G>A,GRCh37,PP2,(p.Ala59Thr) from ClinGen
+#,NM_004333.4(BRAF):c.1595G>A,GRCh37,PP2,(p.Cys532Tyr) from ClinGen
+#,NM_005633.3(SOS1):c.512T>C,GRCh37,PP2,(p.Val171Ala) from ClinGen
+#,NM_004985.4(KRAS):c.40G>A,GRCh37,PP2,(p.Val14Ile) from ClinGen
+#,NM_000314.6(PTEN):c.520T>A,GRCh37,PP2,(p.Tyr174Asn) from ClinGen
 ## PP3,,,,
+### Multiple computational evidence support a deleterious effect,,,,
 #,NM_000277.2(PAH):c.472C>T,GRCh38,PP3,Pathogenic BayesDel_noAF_score
+#,NM_004985.4(KRAS):c.173C>T,GRCh38,PP3,(p.Thr58Ile) from ClinGen
+#,NM_000277.1(PAH):c.721C>T,GRCh38,PP3,(p.Arg241Cys) from ClinGen
+#,NM_000277.1(PAH):c.1066-11G>A,GRCh38,PP3,from ClinGen
+#,NM_000277.1(PAH):c.1241A>G,GRCh38,PP3,(p.Tyr414Cys) from ClinGen
+#,NM_000277.1(PAH):c.520A>G,GRCh38,PP3,(p.Ile174Val) from ClinGen
+#,NM_022124.6(CDH23):c.380A>G,GRCh38,PP3,(p.Asp127Gly) from ClinGen
+#,NM_005343.3(HRAS):c.175G>A,GRCh38,PP3,(p.Ala59Thr) from ClinGen
+#,NM_000257.4(MYH7):c.1370T>C,GRCh38,PP3,(p.Ile457Thr) from ClinGen
+## BA1,,,,
+### Allele frequency,,,,
+## BS1,,,,
+### Allele frequency,,,,
+## BS2,,,,
+### Health control,,,,
+## BP1,,,,
+### Missense variant in gene where missense is a common mechanism,,,,
+#,NM_000038.6(APC):c.235A>G,GRCh37,BP1,(p.Ser79Gly) from ClinGen
+#,NM_000038.6(APC):c.420G>C,GRCh37,BP1,(p.Gly140Arg) from ClinGen
+#,NM_000038.6(APC):c.1487C>T,GRCh37,BP1,(p.Thr496Ile) from ClinGen
+#,NM_000059.4(BRCA2):c.663T>G,GRCh37,BP1,(p.Phe221Leu) from ClinGen
+#,NM_007294.4(BRCA1):c.305C>G,GRCh37,BP1,(p.Ala102Gly) from ClinGen
+## BP3,,,,
+### In-frame indel in gene where in-frame indel is a common mechanism,,,,
+## BP4,,,,
+### In-frame indel in gene where in-frame indel is a common mechanism,,,,
+#,NM_000314.6(PTEN):c.801+23G>A,GRCh38,BP4,from ClinGen
+#,NM_206933.2(USH2A):c.15494C>G,GRCh38,BP4,(p.Ala5165Gly) from ClinGen
+#,NM_005343.3(HRAS):c.510G>A,GRCh38,BP4,(p.Lys170=) from ClinGen
+#,NM_000546.5(TP53):c.892G>A,GRCh38,BP4,(p.Glu298Lys) from ClinGen
+#,NM_000277.2(PAH):c.1278T>C,GRCh38,BP4,(p.Asn426=) from ClinGen
+#,NM_000257.3(MYH7):c.2162+4G>A,GRCh38,BP4,from ClinGen
+#,NM_007373.3(SHOC2):c.1302C>T,GRCh38,BP4,(p.Asn434=) from ClinGen
 ## BP7,,,,
+### Synonymous variant in gene where synonymous is a common mechanism,,,,
+#,NM_000257.3(MYH7):c.3036C>T,GRCh37,BP7,(p.Ala1012=) from ClinGen Due to MaxentScan
+#,NM_000156.6(GAMT):c.279C>T,GRCh37,BP7,(p.Asp93=) from ClinGen Due to MaxentScan
 #,NM_000277.2(PAH):c.963C>T,GRCh38,BP7,(p.Leu321=) from ClinGen
-#,NM_000257.3(MYH7):c.3036C>T,GRCh38,BP7,(p.Ala1012=) from ClinGen
-#,NM_000156.6(GAMT):c.279C>T,GRCh38,BP7,(p.Asp93=) from ClinGen
-#,NM_000156.6(GAMT):c.392-7C>T,GRCh38,,
+#,NM_000156.6(GAMT):c.392-7C>T,GRCh38,,No effect

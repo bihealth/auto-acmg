@@ -88,8 +88,8 @@ def test_parse_HGVSp(pHGVSp, expected_result, auto_ps1_pm5):
 @pytest.mark.parametrize(
     "clinical_significance, expected_result",
     [
-        ("CLINICAL_SIGNIFICANCE_PATHOGENIC", True),
-        ("CLINICAL_SIGNIFICANCE_BENIGN", False),
+        ("Pathogenic", True),
+        ("Benign", False),
         (None, False),  # No clinical significance data
     ],
 )
@@ -97,8 +97,12 @@ def test_is_pathogenic(clinical_significance, expected_result, auto_ps1_pm5):
     """Test determination of pathogenicity based on variant info."""
     variant_info = MagicMock()
     variant_info.clinvar = MagicMock()
-    variant_info.clinvar.referenceAssertions = [MagicMock()]
-    variant_info.clinvar.referenceAssertions[0].clinicalSignificance = clinical_significance
+    variant_info.clinvar.records = [MagicMock()]
+    variant_info.clinvar.records[0].classifications = MagicMock()
+    variant_info.clinvar.records[0].classifications.germlineClassification = MagicMock()
+    variant_info.clinvar.records[0].classifications.germlineClassification.description = (
+        clinical_significance
+    )
 
     result = auto_ps1_pm5._is_pathogenic(variant_info)
     assert (
