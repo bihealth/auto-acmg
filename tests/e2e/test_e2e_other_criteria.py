@@ -26,7 +26,7 @@ ACMG_TEST_DATA: AcmgTestData = load_test_data("tests/assets/e2e_variants/other_c
 def acmg_criteria_test_helper(
     variant_name: str,
     genome_release: GenomeRelease,
-    expected_prediction: str,
+    expected_prediction: List[str],
     comment: str,
     config: Config,
 ):
@@ -38,8 +38,17 @@ def acmg_criteria_test_helper(
     auto_acmg_criteria = AutoACMGCriteria(seqvar, genome_release, config=config)
     prediction = auto_acmg_criteria.predict()
     assert isinstance(prediction, ACMGResult)
-    crit = prediction.model_dump()[expected_prediction]
-    assert crit["prediction"] == ACMGPrediction.Positive, f"Failed for {variant_name}: {comment}"
+    # crit = prediction.model_dump()[expected_prediction]
+    # assert crit["prediction"] == ACMGPrediction.Positive, f"Failed for {variant_name}: {comment}"
+    for crit_name, crit in prediction.model_dump().items():
+        if crit_name in expected_prediction:
+            assert (
+                crit["prediction"] == ACMGPrediction.Positive
+            ), f"Failed for {variant_name}: {comment}"
+        else:
+            assert (
+                crit["prediction"] != ACMGPrediction.Positive
+            ), f"Failed for {variant_name}: {comment}"
 
 
 @pytest.mark.remote
@@ -50,7 +59,7 @@ def acmg_criteria_test_helper(
 def test_acmg_criteria_seqvar_csv(
     variant_name: str,
     genome_release: GenomeRelease,
-    expected_prediction: str,
+    expected_prediction: List[str],
     comment: str,
     config: Config,
 ):

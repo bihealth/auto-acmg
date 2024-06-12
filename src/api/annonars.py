@@ -1,5 +1,6 @@
 """Annonars API client."""
 
+from time import sleep
 from typing import Any, Optional
 
 import requests

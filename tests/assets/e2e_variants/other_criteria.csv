@@ -1,6 +1,6 @@
 section,variant_name,genome_release,expected_prediction,comment
 # Tests for different criteria,,,,
-# expected_prediction includes criteria name if it's met,,,,
+# expected_prediction includes criteria name if it's met separated with '-',,,,
 ## PS1,,,,
 ### Same amino acid change,,,,
 ## PM1,,,,
@@ -62,4 +62,3 @@ section,variant_name,genome_release,expected_prediction,comment
 #,NM_000257.3(MYH7):c.3036C>T,GRCh37,BP7,(p.Ala1012=) from ClinGen Due to MaxentScan
 #,NM_000156.6(GAMT):c.279C>T,GRCh37,BP7,(p.Asp93=) from ClinGen Due to MaxentScan
 #,NM_000277.2(PAH):c.963C>T,GRCh38,BP7,(p.Leu321=) from ClinGen
-#,NM_000156.6(GAMT):c.392-7C>T,GRCh38,,No effect
