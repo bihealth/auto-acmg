@@ -21,14 +21,11 @@ from src.defs.seqvar import SeqVar
 class AutoACMGCriteria:
     """Predict ACMG criteria for sequence variant."""
 
-    def __init__(
-        self, seqvar: SeqVar, genome_release: GenomeRelease, *, config: Optional[Config] = None
-    ):
+    def __init__(self, seqvar: SeqVar, *, config: Optional[Config] = None):
         #: Configuration to use.
         self.config = config or Config()
         # Attributes to be set
         self.seqvar = seqvar
-        self.genome_release = genome_release
         self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
         self.prediction: Optional[ACMGResult] = None
 
@@ -57,9 +54,7 @@ class AutoACMGCriteria:
         # PS1 and PM5
         try:
             logger.info("Predicting PS1 and PM5 criteria.")
-            ps1pm5 = AutoPS1PM5(
-                self.seqvar, self.genome_release, variant_info.result, config=self.config
-            )
+            ps1pm5 = AutoPS1PM5(self.seqvar, variant_info.result, config=self.config)
             ps1_pm5_prediction, ps1_pm5_comment = ps1pm5.predict()
             if not ps1_pm5_prediction:
                 logger.error("Failed to predict PS1&PM5 criteria.")
@@ -81,9 +76,7 @@ class AutoACMGCriteria:
         # PM4 and BP3
         try:
             logger.info("Predicting PM4 and BP3 criteria.")
-            pm4bp3 = AutoPM4BP3(
-                self.seqvar, self.genome_release, variant_info.result, config=self.config
-            )
+            pm4bp3 = AutoPM4BP3(self.seqvar, variant_info.result, config=self.config)
             pm4_bp3_prediction, pm4_bp3_comment = pm4bp3.predict()
             if not pm4_bp3_prediction:
                 logger.error("Failed to predict PM4&BP3 criteria.")
@@ -105,9 +98,7 @@ class AutoACMGCriteria:
         # BA1, BS1, BS2, PM2
         try:
             logger.info("Predicting BA1, BS1, BS2, and PM2 criteria.")
-            ba1bs1bs2pm2 = AutoBA1BS1BS2PM2(
-                self.seqvar, self.genome_release, variant_info.result, config=self.config
-            )
+            ba1bs1bs2pm2 = AutoBA1BS1BS2PM2(self.seqvar, variant_info.result, config=self.config)
             ba1bs1bs2pm2_prediction, ba1bs1bs2pm2_comment = ba1bs1bs2pm2.predict()
             if not ba1bs1bs2pm2_prediction:
                 logger.error("Failed to predict BA1, BS1, BS2, and PM2 criteria.")
@@ -147,7 +138,7 @@ class AutoACMGCriteria:
         # PM1
         try:
             logger.info("Predicting PM1 criteria.")
-            pm1 = AutoPM1(self.seqvar, self.genome_release, variant_info.result, config=self.config)
+            pm1 = AutoPM1(self.seqvar, variant_info.result, config=self.config)
             pm1_prediction, pm1_comment = pm1.predict()
             if not pm1_prediction:
                 logger.error("Failed to predict PM1 criteria.")
@@ -164,9 +155,7 @@ class AutoACMGCriteria:
         # PP2 and BP1
         try:
             logger.info("Predicting PP2 and BP1 criteria.")
-            pp2bp1 = AutoPP2BP1(
-                self.seqvar, self.genome_release, variant_info.result, config=self.config
-            )
+            pp2bp1 = AutoPP2BP1(self.seqvar, variant_info.result, config=self.config)
             pp2_bp1_prediction, pp2_bp1_comment = pp2bp1.predict()
             if not pp2_bp1_prediction:
                 logger.error("Failed to predict PP2 and BP1 criteria.")
@@ -187,7 +176,7 @@ class AutoACMGCriteria:
         # BP7
         try:
             logger.info("Predicting BP7 criteria.")
-            bp7 = AutoBP7(self.seqvar, self.genome_release, variant_info.result, config=self.config)
+            bp7 = AutoBP7(self.seqvar, variant_info.result, config=self.config)
             bp7_prediction, bp7_comment = bp7.predict()
             if not bp7_prediction:
                 logger.error("Failed to predict BP7 criteria.")
@@ -204,9 +193,7 @@ class AutoACMGCriteria:
         # PP3 and BP4
         try:
             logger.info("Predicting PP3 and BP4 criteria.")
-            pp3_bp4 = AutoPP3BP4(
-                self.seqvar, self.genome_release, variant_info.result, config=self.config
-            )
+            pp3_bp4 = AutoPP3BP4(self.seqvar, variant_info.result, config=self.config)
             pp3_bp4_prediction, pp3_bp4_comment = pp3_bp4.predict()
             if not pp3_bp4_prediction:
                 logger.error("Failed to predict PP3 and BP4 criteria.")

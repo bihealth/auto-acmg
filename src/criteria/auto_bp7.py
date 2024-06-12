@@ -21,7 +21,6 @@ class AutoBP7:
     def __init__(
         self,
         seqvar: SeqVar,
-        genome_release: GenomeRelease,
         variant_info: VariantResult,
         *,
         config: Config,
@@ -30,8 +29,6 @@ class AutoBP7:
         self.config = config or Config()
         #: Sequence variant to predict.
         self.seqvar = seqvar
-        #: Genome release.
-        self.genome_release = genome_release
         #: Variant information.
         self.variant_info = variant_info
         #: Annonars client.

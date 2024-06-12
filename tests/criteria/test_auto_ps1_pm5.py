@@ -26,7 +26,7 @@ def variant_info():
 
 @pytest.fixture
 def auto_ps1_pm5(seqvar, variant_info):
-    return AutoPS1PM5(seqvar, GenomeRelease.GRCh38, variant_info.result)
+    return AutoPS1PM5(seqvar, variant_info.result)
 
 
 @patch.object(AnnonarsClient, "get_variant_info")
@@ -34,9 +34,7 @@ def test_auto_ps1_pm5_get_variant_info(mock_get_variant_info, variant_info, seqv
     """Test getting variant information."""
     mock_get_variant_info.return_value = variant_info
 
-    auto_ps1_pm5 = AutoPS1PM5(
-        seqvar=seqvar, genome_release=GenomeRelease.GRCh38, variant_info=variant_info.result
-    )
+    auto_ps1_pm5 = AutoPS1PM5(seqvar=seqvar, variant_info=variant_info.result)
     response = auto_ps1_pm5._get_variant_info(auto_ps1_pm5.seqvar)
     assert response is not None
     assert response == variant_info
@@ -47,9 +45,7 @@ def test_auto_ps1_pm5_get_variant_info_none(mock_get_variant_info, variant_info,
     """Test getting variant information returns None."""
     mock_get_variant_info.return_value = None
 
-    auto_ps1_pm5 = AutoPS1PM5(
-        seqvar=seqvar, genome_release=GenomeRelease.GRCh38, variant_info=variant_info.result
-    )
+    auto_ps1_pm5 = AutoPS1PM5(seqvar=seqvar, variant_info=variant_info.result)
     response = auto_ps1_pm5._get_variant_info(auto_ps1_pm5.seqvar)
     assert response is None
 
@@ -61,9 +57,7 @@ def test_auto_ps1_pm5_get_variant_info_auto_acmg_exception(
     """Test getting variant information raises AutoAcmgBaseException."""
     mock_get_variant_info.side_effect = AutoAcmgBaseException("An error occurred")
 
-    auto_ps1_pm5 = AutoPS1PM5(
-        seqvar=seqvar, genome_release=GenomeRelease.GRCh38, variant_info=variant_info.result
-    )
+    auto_ps1_pm5 = AutoPS1PM5(seqvar=seqvar, variant_info=variant_info.result)
     response = auto_ps1_pm5._get_variant_info(auto_ps1_pm5.seqvar)
     assert response is None
 

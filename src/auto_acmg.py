@@ -149,7 +149,7 @@ class AutoACMG:
             # PVS1
             try:
                 logger.info("Predicting PVS1.")
-                pvs1 = AutoPVS1(self.seqvar, self.genome_release, config=self.config)
+                pvs1 = AutoPVS1(self.seqvar, config=self.config)
                 seqvar_prediction, seqvar_prediction_path, comment = pvs1.predict()
                 if seqvar_prediction is None or seqvar_prediction_path is None:
                     raise AutoAcmgBaseException(
@@ -182,9 +182,7 @@ class AutoACMG:
             # Other criteria
             try:
                 logger.info("Predicting other ACMG criteria.")
-                auto_criteria = AutoACMGCriteria(
-                    self.seqvar, self.genome_release, config=self.config
-                )
+                auto_criteria = AutoACMGCriteria(self.seqvar, config=self.config)
                 criteria_preciction = auto_criteria.predict()
                 if criteria_preciction is None:
                     raise AutoAcmgBaseException("Other ACMG criteria prediction failed.")

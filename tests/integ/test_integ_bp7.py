@@ -15,21 +15,12 @@ from src.defs.seqvar import SeqVar
 @pytest.mark.parametrize(
     "variant_name, genome_release, expected_prediction",
     [
-        (
-            "NM_000257.3(MYH7):c.3036C>T",
-            GenomeRelease.GRCh37,
-            True,
-        ),
-        (
-            "NM_000156.6(GAMT):c.279C>T",
-            GenomeRelease.GRCh37,
-            True,
-        ),
-        (
-            "NM_000277.2(PAH):c.963C>T",
-            GenomeRelease.GRCh37,
-            False,
-        ), ### Found pathogenic variant in 2 bp proximity
+        ("NM_000257.3(MYH7):c.3036C>T", GenomeRelease.GRCh37, True),
+        ("NM_000156.6(GAMT):c.279C>T", GenomeRelease.GRCh37, True),
+        # Pathogenic variant in 2 bp proximity
+        ("NM_000277.2(PAH):c.963C>T", GenomeRelease.GRCh37, False),
+        # Should be True from ClinGen!!
+        ("NM_000277.1:c.772C>T", GenomeRelease.GRCh37, False),
     ],
 )
 def test_bp7(
@@ -43,11 +34,11 @@ def test_bp7(
     seqvar = auto_acmg.resolve_variant()
     assert isinstance(seqvar, SeqVar)
     # Then, fetch the variant_info from Annonars
-    auto_acmg_criteria = AutoACMGCriteria(seqvar, genome_release, config=config)
+    auto_acmg_criteria = AutoACMGCriteria(seqvar, config=config)
     variant_info = auto_acmg_criteria._get_variant_info(seqvar)
     assert isinstance(variant_info, AnnonarsVariantResponse)
     # Then, predict BP7
-    auto_bp7 = AutoBP7(seqvar, genome_release, variant_info.result, config=config)
+    auto_bp7 = AutoBP7(seqvar, variant_info.result, config=config)
     prediction, details = auto_bp7.predict()
     print(details)
     if expected_prediction is None:

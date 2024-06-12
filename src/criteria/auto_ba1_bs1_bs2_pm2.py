@@ -20,7 +20,6 @@ class AutoBA1BS1BS2PM2:
     def __init__(
         self,
         seqvar: SeqVar,
-        genome_release: GenomeRelease,
         variant_info: VariantResult,
         *,
         config: Optional[Config] = None,
@@ -29,8 +28,6 @@ class AutoBA1BS1BS2PM2:
         self.config = config or Config()
         #: Sequence variant to predict.
         self.seqvar = seqvar
-        #: Genome release.
-        self.genome_release = genome_release
         #: Variant information.
         self.variant_info = variant_info
         #: Annonars client.

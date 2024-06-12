@@ -26,7 +26,6 @@ class AutoPS1PM5:
     def __init__(
         self,
         seqvar: SeqVar,
-        genome_release: GenomeRelease,
         variant_info: VariantResult,
         *,
         config: Optional[Config] = None,
@@ -35,8 +34,6 @@ class AutoPS1PM5:
         self.config = config or Config()
         #: Sequence variant to predict.
         self.seqvar = seqvar
-        #: Genome release.
-        self.genome_release = genome_release
         #: Variant information.
         self.variant_info = variant_info
         #: Annonars client.
@@ -153,7 +150,7 @@ class AutoPS1PM5:
 
                 self.comment += f"Analysing alternative variant with base: {alt_base}.\n"
                 alt_seqvar = SeqVar(
-                    genome_release=self.genome_release,
+                    genome_release=self.seqvar.genome_release,
                     chrom=self.seqvar.chrom,
                     pos=self.seqvar.pos,
                     delete=self.seqvar.delete,

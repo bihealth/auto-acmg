@@ -35,7 +35,7 @@ def acmg_criteria_test_helper(
     seqvar = auto_acmg.resolve_variant()
     assert isinstance(seqvar, SeqVar)
     # Then, predict ACMG criteria
-    auto_acmg_criteria = AutoACMGCriteria(seqvar, genome_release, config=config)
+    auto_acmg_criteria = AutoACMGCriteria(seqvar, config=config)
     prediction = auto_acmg_criteria.predict()
     assert isinstance(prediction, ACMGResult)
     # crit = prediction.model_dump()[expected_prediction]
