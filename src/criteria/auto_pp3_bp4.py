@@ -162,7 +162,8 @@ class AutoPP3BP4:
         """
         Check if any of the pathogenic scores meet the threshold.
 
-        The threshold is set to 0.2 according to doi:10.1101/2023.02.24.23286431.
+        Note:
+            The threshold is set to 0.2 according to doi:10.1101/2023.02.24.23286431.
 
         Args:
             variant_info (VariantResult): Variant information.
@@ -205,7 +206,8 @@ class AutoPP3BP4:
         """
         Check if any of the pathogenic scores meet the threshold.
 
-        The threshold is set to 0.1 according to doi:10.1101/2023.02.24.23286431.
+        Note:
+            The threshold is set to 0.1 according to doi:10.1101/2023.02.24.23286431.
 
         Args:
             variant_info (VariantResult): Variant information.

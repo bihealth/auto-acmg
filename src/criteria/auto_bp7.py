@@ -42,10 +42,12 @@ class AutoBP7:
         self.comment: str = ""
 
     def _get_variant_info(self, seqvar: SeqVar) -> Optional[VariantResult]:
-        """Get variant information from Annonars.
+        """
+        Get variant information from Annonars.
 
         Returns:
-            VariantResult: Annonars response.
+            Optional[VariantResult]: The variant information. None if the information is not
+            available.
         """
         try:
             logger.debug("Getting variant information for {}.", seqvar)
