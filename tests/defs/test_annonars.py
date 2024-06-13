@@ -10,7 +10,7 @@ from tests.utils import get_json_object
     [
         "annonars/annonars_range_success.json",
         "annonars/annonars_range_failure.json",
-        "annonars/NM_000152.4:c.1A>G_annonars_range.json",
+        "annonars/GAA_range.json",
         "annonars/CDH1_range.json",
         "annonars/SHH_annonars_range_success.json",
     ],
