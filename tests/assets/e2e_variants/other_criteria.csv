@@ -1,8 +1,12 @@
 section,variant_name,genome_release,expected_prediction,comment
 # Tests for different criteria,,,,
-# expected_prediction includes criteria name if it's met,,,,
+# expected_prediction includes criteria name if it's met separated with '-',,,,
 ## PS1,,,,
 ### Same amino acid change,,,,
+#,NM_176795.4(HRAS):c.173C>T,GRCh37,PS1,(p.Thr58Ile) from ClinGen
+#,NM_000277.2(PAH):c.865G>C,GRCh37,PS1,(p.Gly289Arg) from ClinGen
+#,NM_004333.4(BRAF):c.735A>T,GRCh37,PS1,(p.Leu245Phe) from ClinGen
+#,NM_004333.4(BRAF):c.739T>C,GRCh37,PS1,(p.Phe247Leu) from ClinGen
 ## PM1,,,,
 ### Hotspot or critical domain,,,,
 ,3-178936091-C-T,GRCh37,PM1,Hotspot with 4 pathogenic variants
@@ -14,6 +18,10 @@ section,variant_name,genome_release,expected_prediction,comment
 ### Protein length change,,,,
 ## PM5,,,,
 ### De novo missense variant,,,,
+#,NM_000314.6(PTEN):c.388C>G,GRCh37,PM5,(p.Arg130Gly) from ClinGen
+#,NM_000277.1(PAH):c.782G>C,GRCh37,PM5,(p.Arg261Pro) from ClinGen
+#,NM_000260.3(MYO7A):c.3503G>A,GRCh37,PM5,(p.Arg1168Gln) from ClinGen
+#,NM_000152.3(GAA):c.1933G>A,GRCh37,PM5,(p.Asp645Asn) from ClinGen
 ## PP2,,,,
 ### Missense variant in gene where low rate of benign missense variants,,,,
 #,NM_002880.3(RAF1):c.769T>C,GRCh37,PP2,(p.Ser257Pro) from ClinGen
@@ -62,4 +70,3 @@ section,variant_name,genome_release,expected_prediction,comment
 #,NM_000257.3(MYH7):c.3036C>T,GRCh37,BP7,(p.Ala1012=) from ClinGen Due to MaxentScan
 #,NM_000156.6(GAMT):c.279C>T,GRCh37,BP7,(p.Asp93=) from ClinGen Due to MaxentScan
 #,NM_000277.2(PAH):c.963C>T,GRCh38,BP7,(p.Leu321=) from ClinGen
-#,NM_000156.6(GAMT):c.392-7C>T,GRCh38,,No effect

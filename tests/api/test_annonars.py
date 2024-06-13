@@ -24,7 +24,7 @@ example_seqvar = SeqVar(
 @responses.activate
 def test_get_variant_from_range_success():
     """Test to_annonar method with a successful response."""
-    mock_response = get_json_object("annonars/annonars_range_success.json")
+    mock_response = get_json_object("annonars/PCSK9_range.json")
     start = 1000
     stop = 2000
     responses.add(
@@ -42,7 +42,7 @@ def test_get_variant_from_range_success():
 @responses.activate
 def test_get_variant_from_range_failure():
     """Test to_annonar method with a failed response."""
-    mock_response = get_json_object("annonars/annonars_range_failure.json")
+    mock_response = get_json_object("annonars/range_failure.json")
     start = 1000
     stop = 999
     responses.add(
@@ -76,7 +76,7 @@ def test_get_variant_from_range_500():
 @responses.activate
 def test_get_variant_info_success():
     """Test get_variant_info method with a successful response."""
-    mock_response = get_json_object("annonars/annonars_variant_success.json")
+    mock_response = get_json_object("annonars/RP11_variant.json")
     responses.add(
         responses.GET,
         f"https://example.com/annonars/annos/variant?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&pos={example_seqvar.pos}&reference={example_seqvar.delete}&alternative={example_seqvar.insert}",
@@ -92,7 +92,7 @@ def test_get_variant_info_success():
 @responses.activate
 def test_get_variant_info_failure():
     """Test get_variant_info method with a failed response."""
-    mock_response = get_json_object("annonars/annonars_variant_failure.json")
+    mock_response = get_json_object("annonars/variant_failure.json")
     responses.add(
         responses.GET,
         f"https://example.com/annonars/annos/variant?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&pos={example_seqvar.pos}&reference={example_seqvar.delete}&alternative={example_seqvar.insert}",

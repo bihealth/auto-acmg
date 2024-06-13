@@ -15,20 +15,11 @@ from src.pvs1.strucvar_pvs1 import StrucVarPVS1
 
 
 class AutoPVS1:
-    """Implements the AutoPVS1 algorithm for predicting PVS1 criteria based on genomic variants.
-
-    This class handles both sequence variants and structural variants to determine their potential
-    impact under the PVS1 criteria of the ACMG guidelines for variant classification.
-
-    Attributes:
-        variant_name (str): The name or identifier of the variant being analyzed.
-        genome_release (GenomeRelease): The genome release version, defaults to GRCh38.
-    """
+    """Implements the AutoPVS1 algorithm for predicting PVS1 criteria based on genomic variants."""
 
     def __init__(
         self,
-        variant: SeqVar | StrucVar,
-        genome_release: GenomeRelease = GenomeRelease.GRCh38,
+        variant: Union[SeqVar, StrucVar],
         *,
         config: Optional[Config] = None,
     ):
@@ -36,12 +27,10 @@ class AutoPVS1:
 
         Args:
             variant_name: The name or identifier of the variant.
-            genome_release (Optional): The genome release version, such as GRCh38 or GRCh37.
         """
         #: Configuration to use.
-        self.config = config or Config()
-        self.variant = variant
-        self.genome_release = genome_release
+        self.config: Config = config or Config()
+        self.variant: Union[SeqVar, StrucVar] = variant
 
     def predict(
         self,

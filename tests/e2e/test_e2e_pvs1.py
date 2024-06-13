@@ -36,7 +36,7 @@ def pvs1_seqvar_test_helper(
     variant = auto_acmg.resolve_variant()
     assert isinstance(variant, SeqVar)
     # then, predict PVS1
-    pvs1 = AutoPVS1(variant, genome_release, config=config)
+    pvs1 = AutoPVS1(variant, config=config)
     prediction, path, _ = pvs1.predict()
     assert prediction == expected_prediction
     assert path == expected_path

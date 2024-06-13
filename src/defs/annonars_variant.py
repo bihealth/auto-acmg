@@ -129,13 +129,6 @@ class GnomadGenomes(BaseModel):
     vrsInfo: Optional[Any] = None
 
 
-class ReferenceAssertion(BaseModel):
-    rcv: Optional[str] = None
-    title: Optional[str] = None
-    clinicalSignificance: Optional[str] = None
-    reviewStatus: Optional[str] = None
-
-
 class GermlineClassification(BaseModel):
     reviewStatus: Optional[str] = None
     description: Optional[str] = None
