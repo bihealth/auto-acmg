@@ -23,10 +23,12 @@ class AutoACMGCriteria:
 
     def __init__(self, seqvar: SeqVar, *, config: Optional[Config] = None):
         #: Configuration to use.
-        self.config = config or Config()
+        self.config: Config = config or Config()
         # Attributes to be set
-        self.seqvar = seqvar
-        self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
+        self.seqvar: SeqVar = seqvar
+        self.annonars_client: AnnonarsClient = AnnonarsClient(
+            api_base_url=self.config.api_base_url_annonars
+        )
         self.prediction: Optional[ACMGResult] = None
 
     def _get_variant_info(self, seqvar: SeqVar) -> Optional[AnnonarsVariantResponse]:

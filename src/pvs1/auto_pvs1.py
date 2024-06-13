@@ -19,7 +19,7 @@ class AutoPVS1:
 
     def __init__(
         self,
-        variant: SeqVar | StrucVar,
+        variant: Union[SeqVar, StrucVar],
         *,
         config: Optional[Config] = None,
     ):
@@ -29,8 +29,8 @@ class AutoPVS1:
             variant_name: The name or identifier of the variant.
         """
         #: Configuration to use.
-        self.config = config or Config()
-        self.variant = variant
+        self.config: Config = config or Config()
+        self.variant: Union[SeqVar, StrucVar] = variant
 
     def predict(
         self,

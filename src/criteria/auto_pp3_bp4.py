@@ -21,18 +21,20 @@ class AutoPP3BP4:
         seqvar: SeqVar,
         variant_info: VariantResult,
         *,
-        config: Config,
+        config: Optional[Config] = None,
     ):
         #: Configuration to use.
-        self.config = config or Config()
+        self.config: Config = config or Config()
         #: Sequence variant to predict.
-        self.seqvar = seqvar
+        self.seqvar: SeqVar = seqvar
         #: Variant information.
-        self.variant_info = variant_info
+        self.variant_info: VariantResult = variant_info
         #: Annonars client.
-        self.annonars_client = AnnonarsClient(api_base_url=config.api_base_url_annonars)
+        self.annonars_client: AnnonarsClient = AnnonarsClient(
+            api_base_url=self.config.api_base_url_annonars
+        )
         #: Prediction result.
-        self.prediction: PP3BP4 | None = None
+        self.prediction: Optional[PP3BP4] = None
         #: Comment to store the prediction explanation.
         self.comment: str = ""
 

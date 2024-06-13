@@ -25,15 +25,17 @@ class AutoBA1BS1BS2PM2:
         config: Optional[Config] = None,
     ):
         #: Configuration to use.
-        self.config = config or Config()
+        self.config: Config = config or Config()
         #: Sequence variant to predict.
-        self.seqvar = seqvar
+        self.seqvar: SeqVar = seqvar
         #: Variant information.
-        self.variant_info = variant_info
+        self.variant_info: VariantResult = variant_info
         #: Annonars client.
-        self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
+        self.annonars_client: AnnonarsClient = AnnonarsClient(
+            api_base_url=self.config.api_base_url_annonars
+        )
         #: Prediction result.
-        self.prediction: BA1BS1BS2PM2 | None = None
+        self.prediction: Optional[BA1BS1BS2PM2] = None
         #: Comment to store the prediction explanation.
         self.comment: str = ""
 
