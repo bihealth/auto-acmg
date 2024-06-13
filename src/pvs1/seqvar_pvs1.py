@@ -34,9 +34,11 @@ class SeqVarPVS1Helper:
         #: Configuration to use.
         self.config: Config = config or Config()
         #: Annonars API client.
-        self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
+        self.annonars_client: AnnonarsClient = AnnonarsClient(
+            api_base_url=self.config.api_base_url_annonars
+        )
         #: Comment to store the prediction explanation.
-        self.comment = ""
+        self.comment: str = ""
 
     def _calculate_altered_region(
         self, var_pos: int, exons: List[Exon], strand: GenomicStrand

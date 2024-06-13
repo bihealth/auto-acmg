@@ -24,12 +24,12 @@ def ts_helper(seqvar):
 
 
 @pytest.fixture
-def seqvar_transcripts(file_name: str = "mehari/mehari_seqvar_success.json"):
+def seqvar_transcripts(file_name: str = "mehari/DCDC2_seqvar.json"):
     return TranscriptsSeqVar.model_validate(get_json_object(file_name)).result
 
 
 @pytest.fixture
-def gene_transcripts(file_name: str = "mehari/mehari_genes_success.json"):
+def gene_transcripts(file_name: str = "mehari/HAL_gene.json"):
     return GeneTranscripts.model_validate(get_json_object(file_name)).transcripts
 
 
@@ -69,16 +69,14 @@ def test_get_ts_info_success(ts_helper):
     """Test get_ts_info method with a successful response."""
     # Mock the actual data that would be returned from the Mehari API
     ts_helper.seqvar_ts_info = TranscriptsSeqVar.model_validate(
-        get_json_object("mehari/mehari_seqvar_success.json")
+        get_json_object("mehari/DCDC2_seqvar.json")
     )
     ts_helper.seqvar_transcript = TranscriptsSeqVar.model_validate(
-        get_json_object("mehari/mehari_seqvar_success.json")
+        get_json_object("mehari/DCDC2_seqvar.json")
     ).result
-    ts_helper.gene_ts_info = GeneTranscripts.model_validate(
-        get_json_object("mehari/mehari_genes_success.json")
-    )
+    ts_helper.gene_ts_info = GeneTranscripts.model_validate(get_json_object("mehari/HAL_gene.json"))
     ts_helper.gene_transcript = GeneTranscripts.model_validate(
-        get_json_object("mehari/mehari_genes_success.json")
+        get_json_object("mehari/HAL_gene.json")
     ).transcripts
     ts_helper.consequence = SeqVarConsequence.InitiationCodon
 
@@ -197,14 +195,14 @@ def test_get_consequence_none_input():
     [
         (
             ["NM_001267039.2"],
-            "mehari/larp7_mehari_gene.json",
-            "mehari/larp7_mehari_seqvar.json",
+            "mehari/LARP7_gene.json",
+            "mehari/LARP7_seqvar.json",
             "NM_001267039.2",
         ),
         (
             ["NM_001267039.2", "NM_001370974.1"],
-            "mehari/larp7_mehari_gene.json",
-            "mehari/larp7_mehari_seqvar.json",
+            "mehari/LARP7_gene.json",
+            "mehari/LARP7_seqvar.json",
             "NM_001267039.2",
         ),
     ],
@@ -227,8 +225,8 @@ def test_choose_transcript_success(hgvss, gene_ts_file, seqvar_ts_file, expected
 @pytest.mark.parametrize(
     "hgvss, gene_ts_file, seqvar_ts_file",
     [
-        (["invalid"], "mehari/larp7_mehari_gene.json", "mehari/larp7_mehari_seqvar.json"),
-        ([], "mehari/larp7_mehari_gene.json", "mehari/larp7_mehari_seqvar.json"),
+        (["invalid"], "mehari/LARP7_gene.json", "mehari/LARP7_seqvar.json"),
+        ([], "mehari/LARP7_gene.json", "mehari/LARP7_seqvar.json"),
     ],
 )
 def test_choose_transcript_invalid(hgvss, gene_ts_file, seqvar_ts_file, ts_helper):

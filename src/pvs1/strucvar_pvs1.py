@@ -16,7 +16,7 @@ class StrucVarPVS1Helper:
         #: Configuration to use.
         self.config: Config = config or Config()
         #: Comment to store the prediction explanation.
-        self.comment = ""
+        self.comment: str = ""
 
     @staticmethod
     def _full_gene_deletion() -> bool:

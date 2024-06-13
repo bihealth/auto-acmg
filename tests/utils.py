@@ -78,11 +78,12 @@ def load_test_data(
         for record in reader:
             if record["section"].startswith("#"):
                 continue
+            expected_prediction = record["expected_prediction"].split("-")
             result.append(
                 (
                     record["variant_name"],
                     GenomeRelease[record["genome_release"]],
-                    record["expected_prediction"],
+                    expected_prediction,
                     record["comment"],
                 )
             )

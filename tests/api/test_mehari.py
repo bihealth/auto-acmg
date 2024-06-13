@@ -25,7 +25,7 @@ example_hgnc_id = "HGNC:1234"
 @responses.activate
 def test_get_seqvar_transcripts_success():
     """Test get_transcripts method with a successful response."""
-    mock_response = get_json_object("mehari/mehari_seqvar_success.json")
+    mock_response = get_json_object("mehari/DCDC2_seqvar.json")
     responses.add(
         responses.GET,
         f"https://example.com/mehari/seqvars/csq?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&position={example_seqvar.pos}&reference={example_seqvar.delete}&alternative={example_seqvar.insert}",
@@ -41,7 +41,7 @@ def test_get_seqvar_transcripts_success():
 @responses.activate
 def test_get_seqvar_transcripts_failure():
     """Test get_transcripts method with a failed response."""
-    mock_response = get_json_object("mehari/mehari_seqvar_failure.json")
+    mock_response = get_json_object("mehari/seqvar_failure.json")
     responses.add(
         responses.GET,
         f"https://example.com/mehari/seqvars/csq?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&position={example_seqvar.pos}&reference={example_seqvar.delete}&alternative={example_seqvar.insert}",
@@ -71,7 +71,7 @@ def test_get_seqvar_transcripts_500():
 @responses.activate
 def test_get_gene_transcripts_success():
     """Test get_gene_transcripts method with a successful response."""
-    mock_response = get_json_object("mehari/mehari_genes_success.json")
+    mock_response = get_json_object("mehari/HAL_gene.json")
     responses.add(
         responses.GET,
         f"https://example.com/mehari/genes/txs?hgncId={example_hgnc_id}&genomeBuild=GENOME_BUILD_GRCH38",
@@ -87,7 +87,7 @@ def test_get_gene_transcripts_success():
 @responses.activate
 def test_get_gene_transcripts_failure():
     """Test get_gene_transcripts method with a failed response."""
-    mock_response = get_json_object("mehari/mehari_genes_failure.json")
+    mock_response = get_json_object("mehari/gene_failure.json")
     responses.add(
         responses.GET,
         f"https://example.com/mehari/genes/txs?hgncId={example_hgnc_id}&genomeBuild=GENOME_BUILD_GRCH38",

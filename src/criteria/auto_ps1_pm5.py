@@ -9,9 +9,11 @@ from src.api.annonars import AnnonarsClient
 from src.core.config import Config
 from src.defs.annonars_variant import AnnonarsVariantResponse, VariantResult
 from src.defs.auto_acmg import PS1PM5, AminoAcid
+from src.defs.auto_pvs1 import SeqVarConsequence
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.utils import SeqVarTranscriptsHelper
 
 #: DNA bases
 DNA_BASES = ["A", "C", "G", "T"]
@@ -26,23 +28,22 @@ class AutoPS1PM5:
     def __init__(
         self,
         seqvar: SeqVar,
-        genome_release: GenomeRelease,
         variant_info: VariantResult,
         *,
         config: Optional[Config] = None,
     ):
         #: Configuration to use.
-        self.config = config or Config()
+        self.config: Config = config or Config()
         #: Sequence variant to predict.
-        self.seqvar = seqvar
-        #: Genome release.
-        self.genome_release = genome_release
+        self.seqvar: SeqVar = seqvar
         #: Variant information.
-        self.variant_info = variant_info
+        self.variant_info: VariantResult = variant_info
         #: Annonars client.
-        self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
+        self.annonars_client: AnnonarsClient = AnnonarsClient(
+            api_base_url=self.config.api_base_url_annonars
+        )
         #: Prediction result.
-        self.prediction: PS1PM5 | None = None
+        self.prediction: Optional[PS1PM5] = None
         #: Comment to store the prediction explanation.
         self.comment: str = ""
 
@@ -104,6 +105,21 @@ class AutoPS1PM5:
                     return True
         return False
 
+    def _is_missense(self) -> bool:
+        """
+        Check if the variant is a missense variant.
+
+        Fetches the transcript information for the sequence variant and checks if the variant
+        consequence is missense.
+
+        Returns:
+            bool: True if the variant is a missense variant.
+        """
+        seqvar_transcript_helper = SeqVarTranscriptsHelper(self.seqvar, config=self.config)
+        seqvar_transcript_helper.initialize()
+        (_, _, _, _, consequence) = seqvar_transcript_helper.get_ts_info()
+        return consequence == SeqVarConsequence.Missense
+
     def predict(self) -> Tuple[Optional[PS1PM5], str]:
         """
         Predicts the criteria PS1 and PM5 for the provided sequence variant.
@@ -111,21 +127,24 @@ class AutoPS1PM5:
         Implementation of the rule PS1 and PM5:
             The method implements the rule by:
             - Getting the primary variant information & parsing the primary amino acid change.
-            - Iterating over all possible alternative bases & getting the alternative variant information.
-            - Parsing the alternative amino acid change & checking if the alternative variant is pathogenic.
-            - If the alternative variant is pathogenic and the amino acid change is the same as the primary variant,
-            then PS1 is set to True.
-            - If the alternative variant is pathogenic and the amino acid change is different from the primary variant,
-            then PM5 is set to True.
+            - Iterating over all possible alternative bases & getting the alternative variant
+              information.
+            - Parsing the alternative amino acid change & checking if the alternative variant is
+              pathogenic.
+            - If the alternative variant is pathogenic and the amino acid change is the same as the
+              primary variant, then PS1 is set to True.
+            - If the alternative variant is pathogenic and the amino acid change is different from
+              the primary variant, then PM5 is set to True.
 
         Note:
             Rules:
-            PS1: Same amino acid change as a previously established pathogenic variant regardless of nucleotide change.
-            PM5: Novel missense change at an amino acid residue where a different missense change determined to be
-            pathogenic has been seen before.
+            PS1: Same amino acid change as a previously established pathogenic variant regardless of
+              nucleotide change.
+            PM5: Novel missense change at an amino acid residue where a different missense change
+              determined to be pathogenic has been seen before.
 
         Returns:
-            Tuple[Optional[PS1PM5], str]: The prediction result and the comment with the explanation.
+            Tuple[Optional[PS1PM5], str]: Prediction result and the comment with the explanation.
         """
         try:
             # Initialize the prediction result
@@ -140,7 +159,13 @@ class AutoPS1PM5:
                     "No valid primary variant information for PS1/PM5 prediction."
                 )
 
-            self.comment = f"Extracting primary amino acid change from pHGVS: {self.variant_info.dbnsfp.HGVSp_VEP}.\n"
+            if not self._is_missense():
+                raise AlgorithmError("Variant is not a missense variant. PS1/PM5 not applicable.")
+
+            self.comment = (
+                "Extracting primary amino acid change from pHGVS: "
+                f"{self.variant_info.dbnsfp.HGVSp_VEP}.\n"
+            )
             primary_aa_change = self._parse_HGVSp(self.variant_info.dbnsfp.HGVSp_VEP)
             if not primary_aa_change:
                 raise AlgorithmError("No valid primary amino acid change for PS1/PM5 prediction.")
@@ -153,7 +178,7 @@ class AutoPS1PM5:
 
                 self.comment += f"Analysing alternative variant with base: {alt_base}.\n"
                 alt_seqvar = SeqVar(
-                    genome_release=self.genome_release,
+                    genome_release=self.seqvar.genome_release,
                     chrom=self.seqvar.chrom,
                     pos=self.seqvar.pos,
                     delete=self.seqvar.delete,
@@ -167,7 +192,10 @@ class AutoPS1PM5:
                         f"{alt_info.result.dbnsfp.HGVSp_VEP}.\n"
                     )
                     alt_aa_change = self._parse_HGVSp(alt_info.result.dbnsfp.HGVSp_VEP)
-                    self.comment += f"Alternative amino acid change: {alt_aa_change.name if alt_aa_change else "N/A"}. =>\n"
+                    self.comment += (
+                        "Alternative amino acid change: "
+                        f"{alt_aa_change.name if alt_aa_change else "N/A"}. =>\n"
+                    )
                     if alt_aa_change and self._is_pathogenic(alt_info.result):
                         if primary_aa_change == alt_aa_change:
                             self.comment += (
