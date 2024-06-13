@@ -21,9 +21,7 @@ def seqvar():
 
 @pytest.fixture
 def variant_info():
-    return AnnonarsVariantResponse.model_validate(
-        get_json_object("annonars/annonars_variant_success.json")
-    )
+    return AnnonarsVariantResponse.model_validate(get_json_object("annonars/RP11_variant.json"))
 
 
 @pytest.fixture
@@ -81,7 +79,7 @@ def test_convert_score_value_various(score_value, expected, auto_pp3bp4):
 @pytest.mark.parametrize(
     "file_path, expected",
     [
-        ("annonars/PAH_annonars_variant.json", True),
+        ("annonars/PAH_variant.json", True),
     ],
 )
 def test_is_pathogenic_score(file_path, expected, seqvar, variant_info):
@@ -95,8 +93,8 @@ def test_is_pathogenic_score(file_path, expected, seqvar, variant_info):
 @pytest.mark.parametrize(
     "file_path",
     [
-        ("annonars/annonars_variant_success.json"),
-        ("annonars/larp7_variant.json"),
+        ("annonars/RP11_variant.json"),
+        ("annonars/LARP7_variant.json"),
     ],
 )
 def test_is_pathogenic_score_missing_data(file_path, seqvar, variant_info):
@@ -110,7 +108,7 @@ def test_is_pathogenic_score_missing_data(file_path, seqvar, variant_info):
 @pytest.mark.parametrize(
     "file_path, expected",
     [
-        ("annonars/PAH_annonars_variant.json", False),
+        ("annonars/PAH_variant.json", False),
     ],
 )
 def test_is_benign_score(file_path, expected, seqvar, variant_info):
@@ -124,8 +122,8 @@ def test_is_benign_score(file_path, expected, seqvar, variant_info):
 @pytest.mark.parametrize(
     "file_path",
     [
-        ("annonars/annonars_variant_success.json"),
-        ("annonars/larp7_variant.json"),
+        ("annonars/RP11_variant.json"),
+        ("annonars/LARP7_variant.json"),
     ],
 )
 def test_is_benign_score_missing_data(file_path, seqvar, variant_info):
@@ -139,7 +137,7 @@ def test_is_benign_score_missing_data(file_path, seqvar, variant_info):
 @pytest.mark.parametrize(
     "file_path, expected",
     [
-        ("annonars/PAH_annonars_variant.json", False),
+        ("annonars/PAH_variant.json", False),
     ],
 )
 def test_is_pathogenic_spliceai(file_path, expected, seqvar, variant_info):
@@ -153,8 +151,8 @@ def test_is_pathogenic_spliceai(file_path, expected, seqvar, variant_info):
 @pytest.mark.parametrize(
     "file_path",
     [
-        ("annonars/annonars_variant_success.json"),
-        ("annonars/larp7_variant.json"),
+        ("annonars/RP11_variant.json"),
+        ("annonars/LARP7_variant.json"),
     ],
 )
 def test_is_pathogenic_spliceai_missing_data(file_path, seqvar, variant_info):
@@ -168,7 +166,7 @@ def test_is_pathogenic_spliceai_missing_data(file_path, seqvar, variant_info):
 @pytest.mark.parametrize(
     "file_path, expected",
     [
-        ("annonars/PAH_annonars_variant.json", True),
+        ("annonars/PAH_variant.json", True),
     ],
 )
 def test_is_benign_spliceai(file_path, expected, seqvar, variant_info):
@@ -182,8 +180,8 @@ def test_is_benign_spliceai(file_path, expected, seqvar, variant_info):
 @pytest.mark.parametrize(
     "file_path",
     [
-        ("annonars/annonars_variant_success.json"),
-        ("annonars/larp7_variant.json"),
+        ("annonars/RP11_variant.json"),
+        ("annonars/LARP7_variant.json"),
     ],
 )
 def test_is_benign_spliceai_missing_data(file_path, seqvar, variant_info):

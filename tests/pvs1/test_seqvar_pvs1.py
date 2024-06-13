@@ -101,19 +101,19 @@ def test_calculate_altered_region(var_pos, exons, strand, expected_result):
     "gene_transcripts_file,transcript_id,var_pos,expected_result",
     [
         (
-            "mehari/mehari_genes_success.json",
+            "mehari/HAL_gene.json",
             "NM_002108.4",
             96370184,
             (96366439, 96370184),
         ),  # Strand minus
         (
-            "mehari/f10_mehari_genes_NM_000504.4.json",
+            "mehari/F10_gene_NM_000504.4.json",
             "NM_000504.4",
             113139456,
             (113139456, 113149529),
         ),  # Strand plus
         (
-            "mehari/pcid2_mehari_genes.json",
+            "mehari/PCID2_gene.json",
             "NM_001127202.4",
             113184385,
             (113177535, 113184385),
@@ -363,28 +363,28 @@ def test_skipping_exon_pos_invalid():
     "gene_transcripts_file,transcript_id,hgnc_id,var_pos,expected_result",
     [
         (
-            "mehari/f10_mehari_genes_NM_000504.4.json",
+            "mehari/F10_gene_NM_000504.4.json",
             "NM_000504.4",
             "HGNC:3528",
             500,
             True,
         ),  # Strand plus
         (
-            "mehari/f10_mehari_genes_NM_000504.4.json",
+            "mehari/F10_gene_NM_000504.4.json",
             "NM_000504.4",
             "HGNC:3528",
             1000,
             False,
         ),  # Strand plus
         (
-            "mehari/pcid2_mehari_genes.json",
+            "mehari/PCID2_gene.json",
             "NM_001127202.4",
             "HGNC:25653",
             900,
             True,
         ),  # Strand minus. Not a frameshift!
         (
-            "mehari/pcid2_mehari_genes.json",
+            "mehari/PCID2_gene.json",
             "NM_001127202.4",
             "HGNC:25653",
             1100,
