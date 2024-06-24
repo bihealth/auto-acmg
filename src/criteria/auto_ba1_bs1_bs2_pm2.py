@@ -69,16 +69,23 @@ class AutoBA1BS1BS2PM2:
         """
         if seqvar.chrom.startswith("M"):
             if not variant_data.gnomad_mtdna or not variant_data.gnomad_mtdna.afHet:
+                self.comment += "No gnomad data found for mitochondrial variant.\n"
                 raise MissingDataError("No gnomad data found for mitochondrial variant.")
             else:
+                self.comment += (
+                    "Mitochondrial variant with allele frequency: "
+                    f"{variant_data.gnomad_mtdna.afHet}.\n"
+                )
                 return variant_data.gnomad_mtdna.afHet
         else:
             controls_af = self._get_control_af(variant_data)
             if not controls_af.raw or not controls_af.raw.af:
+                self.comment += "No allele frequency found in control data.\n"
                 raise MissingDataError("No allele frequency found in control data.")
+            self.comment += f"Allele frequency: {controls_af.raw.af}.\n"
             return controls_af.raw.af
 
-    def _check_zygosity(self, variant_data: VariantResult) -> bool:
+    def _check_zygosity(self, seqvar: SeqVar, variant_data: VariantResult) -> bool:
         """
         Check the zygosity of the sequence variant.
 
@@ -89,11 +96,17 @@ class AutoBA1BS1BS2PM2:
             True if the variant is recessive (homozygous), dominant (heterozygous), or X-linked
             (hemizygous) disorder.
         """
+        if seqvar.chrom.startswith("M"):
+            self.comment += "Mitochondrial variants are not considered for BS2 criteria."
+            return False
         controls_af = self._get_control_af(variant_data)
         if not controls_af.raw or not controls_af.raw.nhomalt:
+            self.comment += "No nhomalt found in control data.\n"
             raise MissingDataError("No raw data found in control data.")
-        if controls_af.raw.nhomalt:
+        if controls_af.raw.nhomalt > 5:
+            self.comment += f"nhomalt is {controls_af.raw.nhomalt} > 5.\n"
             return True
+        self.comment += f"nhomalt is {controls_af.raw.nhomalt} <= 5.\n"
         return False
 
     def predict(self) -> Tuple[Optional[BA1BS1BS2PM2], str]:
@@ -118,6 +131,7 @@ class AutoBA1BS1BS2PM2:
         try:
             self.prediction = BA1BS1BS2PM2()
 
+            self.comment += "Check allele frequency for the control population.\n"
             af = self._get_af(self.seqvar, self.variant_info)
             if af > 0.05:
                 self.prediction.BA1 = True
@@ -125,7 +139,9 @@ class AutoBA1BS1BS2PM2:
                 self.prediction.BS1 = True
             else:
                 self.prediction.PM2 = True
-            if self._check_zygosity(self.variant_info):
+
+            self.comment += "Check zygosity.\n"
+            if self._check_zygosity(self.seqvar, self.variant_info):
                 self.prediction.BS2 = True
 
         except AutoAcmgBaseException as e:
