@@ -113,6 +113,7 @@ class AlleleCount(BaseModel):
     afGrpmax: Optional[float] = None
     acGrpmax: Optional[int] = None
     anGrpmax: Optional[int] = None
+    afPopmax: Optional[float] = None
     nhomaltGrpmax: Optional[int] = None
 
 
@@ -171,12 +172,16 @@ class Clinvar(BaseModel):
     records: List[Record]
 
 
+class GnomadMtDna(BaseModel):
+    afHet: Optional[float] = None
+
+
 class VariantResult(BaseModel):
     cadd: Optional[Cadd] = None
     dbsnp: Optional[Any] = None
     dbnsfp: Optional[Dbnsfp] = None
     dbscsnv: Optional[Any] = None
-    gnomad_mtdna: Optional[Any] = None
+    gnomad_mtdna: Optional[GnomadMtDna] = None
     gnomad_exomes: Optional[GnomadExomes] = None
     gnomad_genomes: Optional[GnomadGenomes] = None
     helixmtdb: Optional[Any] = None
