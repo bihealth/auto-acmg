@@ -141,7 +141,7 @@ class AutoBA1BS1BS2PM2:
                 self.prediction.PM2 = True
 
             self.comment += "Check zygosity.\n"
-            if self._check_zygosity(self.seqvar, self.variant_info):
+            if af >= 0.01 and self._check_zygosity(self.seqvar, self.variant_info):
                 self.prediction.BS2 = True
 
         except AutoAcmgBaseException as e:
