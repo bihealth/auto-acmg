@@ -14,6 +14,10 @@ section,variant_name,genome_release,expected_prediction,comment
 #,1-55516888-G-A,GRCh37,,No hotspot or critical domain
 ## PM2,,,,
 ### Absent from controls,,,,
+#,NM_000277.2(PAH):c.503delA,GRCh37,PM2,(p.Asn168fs) from ClinGen
+#,NM_000277.1(PAH):c.814G>T,GRCh37,PM2,(p.Glu272Ter) from ClinGen
+#,NM_000277.1(PAH):c.1162G>A,GRCh37,PM2,(p.Trp388Ter) from ClinGen
+#,NM_000277.1(PAH):c.1162G>A,GRCh37,PM2,(p.Trp388Ter) from ClinGen
 ## PM4,,,,
 ### Protein length change,,,,
 ## PM5,,,,
@@ -43,10 +47,16 @@ section,variant_name,genome_release,expected_prediction,comment
 #,NM_000257.4(MYH7):c.1370T>C,GRCh38,PP3,(p.Ile457Thr) from ClinGen
 ## BA1,,,,
 ### Allele frequency,,,,
+#,NM_005249.5(FOXG1):c.489C>T,GRCh37,BA1,from ClinGen
+#,NM_000257.3(MYH7):c.2358G>T,GRCh37,BA1,from ClinGen
+#,NM_000277.2(PAH):c.1278T>C,GRCh37,BA1,from ClinGen
+#,NM_000277.2(PAH):c.707-7A>T,GRCh37,BA1,from ClinGen
 ## BS1,,,,
 ### Allele frequency,,,,
+#,NM_000277.2(PAH):c.1242C>T,GRCh37,BS1,from ClinGen
 ## BS2,,,,
 ### Health control,,,,
+#,NM_000277.2(PAH):c.1242C>T,GRCh37,BS2,from ClinGen
 ## BP1,,,,
 ### Missense variant in gene where missense is a common mechanism,,,,
 #,NM_000038.6(APC):c.235A>G,GRCh37,BP1,(p.Ser79Gly) from ClinGen
