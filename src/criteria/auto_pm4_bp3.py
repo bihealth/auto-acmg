@@ -1,12 +1,13 @@
 """Implementation of PM4 and BP3 rules for sequence variants."""
 
+import os
 from typing import Optional, Tuple
 
+import tabix  # type: ignore
 from loguru import logger
 
 from src.api.annonars import AnnonarsClient
-from src.api.remote import RemoteClient
-from src.core.config import Config
+from src.core.config import Config, settings
 from src.defs.annonars_variant import AnnonarsVariantResponse, VariantResult
 from src.defs.auto_acmg import PM4BP3
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
@@ -30,14 +31,12 @@ class AutoPM4BP3:
         self.seqvar: SeqVar = seqvar
         #: Variant information.
         self.variant_info: VariantResult = variant_info
-        #: Remote client to use.
-        self.remote_client: RemoteClient = RemoteClient()
         #: Prediction result.
         self.prediction: Optional[PM4BP3] = None
         #: Comment to store the prediction explanation.
         self.comment: str = ""
 
-    def _in_repeat_region(self, variant_info: VariantResult) -> bool:
+    def _in_repeat_region(self, seqvar: SeqVar) -> bool:
         """Check if the variant is in a repeat region.
 
         Args:
@@ -48,28 +47,23 @@ class AutoPM4BP3:
         """
         self.comment += "Check if the variant is in a repeat region.\n"
         try:
-            # Get repeat masked regions
-            repeat_regions = self.remote_client.get_repeat_masked_regions(self.seqvar)
-            # Parse the repeat regions
-            pass
-        except AutoAcmgBaseException as e:
+            # Find path to the lib/hg19_repeatmasker.bed.gz file
+            if seqvar.genome_release == GenomeRelease.GRCh37:
+                path = os.path.join(settings.PATH_TO_ROOT, "lib", "rmsk", "grch37", "rmsk.bed.gz")
+            else:
+                path = os.path.join(settings.PATH_TO_ROOT, "lib", "rmsk", "grch38", "rmsk.bed.gz")
+            tb = tabix.open(path)
+            records = tb.query(f"chr{seqvar.chrom}", seqvar.pos - 1, seqvar.pos)
+            # Check if iterator is not empty
+            if any(True for _ in records):
+                self.comment += "Variant is in a repeat region.\n"
+                return True
+            else:
+                self.comment += "Variant is not in a repeat region.\n"
+                return False
+        except tabix.TabixError as e:
             logger.error("Failed to check if the variant is in a repeat region. Error: {}", e)
-            self.comment += (
-                f"An error occured while checking if the variant is in a repeat region: {e}"
-            )
-            return False
-        return False
-
-    # def _in_conserved_domain(self, variant_info: VariantResult) -> bool:
-    #     """Check if the variant is in a conserved domain.
-
-    #     Args:
-    #         variant_info (VariantResult): The variant information.
-
-    #     Returns:
-    #         bool: True if the variant is in a conserved domain, False otherwise.
-    #     """
-    #     return False
+            raise AlgorithmError("Failed to check if the variant is in a repeat region.") from e
 
     def predict(self) -> Tuple[Optional[PM4BP3], str]:
         """Predicts PM4 and BP3 criteria for the provided sequence variant.
@@ -109,20 +103,21 @@ class AutoPM4BP3:
                 "inframe_insertion",
             ]:
                 self.comment += f"Variant consequence is in-frame deletion/insertion.\n"
-                if not self._in_repeat_region(self.variant_info):  # or _in_conserved_domain
+                if not self._in_repeat_region(self.seqvar):
                     self.comment += (
-                        f"Variant is not in a repeat region or in a conserved domain."
-                        f"PM4 is met."
+                        "Variant is not in a repeat region or a conserved domain. PM4 is met."
                     )
                     self.prediction.PM4 = True
                 else:
                     self.comment += (
-                        "Variant is in a repeat region or not in a conserved domain." "BP3 is met."
+                        "Variant is in a repeat region or not in a conserved domain. BP3 is met."
                     )
                     self.prediction.BP3 = True
             else:
-                self.comment += "Variant consequence is not indel or stop-loss."
-                self._in_repeat_region(self.variant_info)
+                self.comment += (
+                    "Variant consequence is not indel or stop-loss. PM4 and BP3 are not met."
+                )
+                self._in_repeat_region(self.seqvar)
                 self.prediction.PM4 = False
                 self.prediction.BP3 = False
 

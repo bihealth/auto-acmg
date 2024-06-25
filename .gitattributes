@@ -1,3 +1,4 @@
 tests/assets/*.json filter=lfs diff=lfs merge=lfs -text
 tests/assets/**.json filter=lfs diff=lfs merge=lfs -text
 tests/assets/**/*.json filter=lfs diff=lfs merge=lfs -text
+lib/rmsk/**/* filter=lfs diff=lfs merge=lfs -text
