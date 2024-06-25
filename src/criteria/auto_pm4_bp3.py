@@ -39,8 +39,10 @@ class AutoPM4BP3:
     def _in_repeat_region(self, seqvar: SeqVar) -> bool:
         """Check if the variant is in a repeat region.
 
+        Check if the variant is in a repeat region using the RepeatMasker track.
+
         Args:
-            variant_info (VariantResult): The variant information.
+            seqvar (SeqVar): Sequence variant.
 
         Returns:
             bool: True if the variant is in a repeat region, False otherwise.
@@ -71,10 +73,9 @@ class AutoPM4BP3:
         Implementation of the rule:
         - If the variant is a stop-loss variant, PM4 is True and BP3 is False.
         - If the variant is an in-frame deletion/insertion:
-        - If the variant is not in a repeat region and in a conserved domain, PM4 is True and BP3 is
-        False.
-        - If the variant is in a repeat region and not in a conserved domain, PM4 is False and BP3
-        is True.
+        - If the variant is not in a repeat region, PM4 is True and BP3 is False.
+        - If the variant is in a repeat region, PM4 is False and BP3 is True.
+        - Otherwise, PM4 and BP3 are False.
 
         Note:
             Rules:

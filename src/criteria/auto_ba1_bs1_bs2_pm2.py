@@ -167,7 +167,7 @@ class AutoBA1BS1BS2PM2:
         - for dominant: XX allele count - 2 * XX nhomalt + XY allele count > 2
         - for recessive: XX nhomalt + XY nhomalt > 2
         - for dominant/recessive: XX allele count - 2 * XX nhomalt + XY allele count > 2 and
-          XX nhomalt + XY nhomalt > 2
+        XX nhomalt + XY nhomalt > 2
         If the variant is on autosomal chromosomes, check the allele count as follows:
         - for dominant: allele count - 2 * nhomalt > 5
         - for recessive: nhomalt > 5
