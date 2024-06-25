@@ -1,4 +1,6 @@
 tests/assets/*.json filter=lfs diff=lfs merge=lfs -text
 tests/assets/**.json filter=lfs diff=lfs merge=lfs -text
 tests/assets/**/*.json filter=lfs diff=lfs merge=lfs -text
+lib/rmsk/**/*.gz filter=lfs diff=lfs merge=lfs -text
+lib/rmsk/**/*.tbi filter=lfs diff=lfs merge=lfs -text
 tests/e2e/cassettes/**/* filter=lfs diff=lfs merge=lfs -text

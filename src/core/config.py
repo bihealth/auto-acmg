@@ -1,3 +1,4 @@
+import os
 from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, model_validator
@@ -24,6 +25,11 @@ class Settings(BaseSettings):
 
     #: Path to seqrepo data directory
     SEQREPO_DATA_DIR: str = ""
+
+    #: Path to the root directory
+    @property
+    def PATH_TO_ROOT(self) -> str:
+        return os.path.abspath(os.path.join(__file__, "..", "..", ".."))
 
 
 settings = Settings(_env_file=".env", _env_file_encoding="utf-8")  # type: ignore[call-arg]

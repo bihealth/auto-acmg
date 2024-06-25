@@ -3,6 +3,7 @@ import requests
 import responses
 
 from src.api.annonars import AnnonarsClient
+from src.defs.annonars_gene import AnnonarsGeneResponse
 from src.defs.annonars_range import AnnonarsRangeResponse
 from src.defs.annonars_variant import AnnonarsVariantResponse
 from src.defs.exceptions import AnnonarsException
@@ -117,3 +118,49 @@ def test_get_variant_info_500():
     client = AnnonarsClient(api_base_url="https://example.com/annonars")
     with pytest.raises(AnnonarsException):
         client.get_variant_info(example_seqvar)
+
+
+@responses.activate
+def test_get_gene_info_success():
+    """Test get_gene_info method with a successful response."""
+    mock_response = get_json_object("annonars/BRCA1_gene.json")
+    responses.add(
+        responses.GET,
+        f"https://example.com/annonars/genes/info?hgnc_id=HGNC:1100",
+        json=mock_response,
+        status=200,
+    )
+
+    client = AnnonarsClient(api_base_url="https://example.com/annonars")
+    response = client.get_gene_info("HGNC:1100")
+    assert response == AnnonarsGeneResponse.model_validate(mock_response)
+
+
+@responses.activate
+def test_get_gene_info_failure():
+    """Test get_gene_info method with a failed response."""
+    mock_response = get_json_object("annonars/gene_failure.json")
+    responses.add(
+        responses.GET,
+        f"https://example.com/annonars/genes/info?hgnc_id=HGNC:1100",
+        json=mock_response,
+        status=200,
+    )
+
+    client = AnnonarsClient(api_base_url="https://example.com/annonars")
+    response = client.get_gene_info("HGNC:1100")
+    assert response == AnnonarsGeneResponse.model_validate(mock_response)
+
+
+@responses.activate
+def test_get_gene_info_500():
+    """Test get_gene_info method with a 500 response."""
+    responses.add(
+        responses.GET,
+        f"https://example.com/annonars/genes/info?hgnc_id=HGNC:1100",
+        status=500,
+    )
+
+    client = AnnonarsClient(api_base_url="https://example.com/annonars")
+    with pytest.raises(AnnonarsException):
+        client.get_gene_info("HGNC:1100")

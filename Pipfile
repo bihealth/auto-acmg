@@ -15,6 +15,7 @@ loguru = "*"
 typing-extensions = "*"
 msgpack = "*"
 seqrepo = "*"
+pytabix = "*"
 
 [dev-packages]
 mypy = "*"

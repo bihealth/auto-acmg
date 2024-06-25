@@ -128,20 +128,20 @@ class AutoPS1PM5:
             The method implements the rule by:
             - Getting the primary variant information & parsing the primary amino acid change.
             - Iterating over all possible alternative bases & getting the alternative variant
-              information.
+            information.
             - Parsing the alternative amino acid change & checking if the alternative variant is
-              pathogenic.
+            pathogenic.
             - If the alternative variant is pathogenic and the amino acid change is the same as the
-              primary variant, then PS1 is set to True.
+            primary variant, then PS1 is set to True.
             - If the alternative variant is pathogenic and the amino acid change is different from
-              the primary variant, then PM5 is set to True.
+            the primary variant, then PM5 is set to True.
 
         Note:
             Rules:
             PS1: Same amino acid change as a previously established pathogenic variant regardless of
-              nucleotide change.
+            nucleotide change.
             PM5: Novel missense change at an amino acid residue where a different missense change
-              determined to be pathogenic has been seen before.
+            determined to be pathogenic has been seen before.
 
         Returns:
             Tuple[Optional[PS1PM5], str]: Prediction result and the comment with the explanation.

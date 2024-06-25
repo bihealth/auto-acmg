@@ -33,6 +33,25 @@ class SpliceType(AutoAcmgBaseEnum):
     Unknown = "unknown"
 
 
+class AlleleCondition(AutoAcmgBaseEnum):
+    """Allele condition enumeration."""
+
+    Dominant = "dominant"
+    Recessive = "recessive"
+    Unknown = "unknown"
+
+
+ClingenDosageMap: dict[str, AlleleCondition] = {
+    "CLINGEN_DOSAGE_SCORE_UNKNOWN": AlleleCondition.Unknown,
+    "CLINGEN_DOSAGE_SCORE_SUFFICIENT_EVIDENCE_AVAILABLE": AlleleCondition.Dominant,
+    "CLINGEN_DOSAGE_SCORE_SOME_EVIDENCE_AVAILABLE": AlleleCondition.Dominant,
+    "CLINGEN_DOSAGE_SCORE_LITTLE_EVIDENCE": AlleleCondition.Unknown,
+    "CLINGEN_DOSAGE_SCORE_NO_EVIDENCE_AVAILABLE": AlleleCondition.Unknown,
+    "CLINGEN_DOSAGE_SCORE_RECESSIVE": AlleleCondition.Recessive,
+    "CLINGEN_DOSAGE_SCORE_UNLIKELY": AlleleCondition.Unknown,
+}
+
+
 class AminoAcid(AutoAcmgBaseEnum):
     """Amino acid enumeration."""
 
