@@ -44,6 +44,9 @@ class AutoBP7:
         """
         Get variant information from Annonars.
 
+        Attributes:
+            seqvar (SeqVar): The variant to get information for.
+
         Returns:
             Optional[VariantResult]: The variant information. None if the information is not
             available.

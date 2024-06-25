@@ -92,6 +92,13 @@ jobs:
       - name: Run tests
         run: make ci-e2e-test
 
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          flags: e2e
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: bihealth/auto-acmg
+
   Docs:
     runs-on: ubuntu-latest
     steps:

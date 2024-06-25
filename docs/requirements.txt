@@ -4,3 +4,4 @@ aiohttp
 pydantic_settings
 typer
 loguru
+pytabix

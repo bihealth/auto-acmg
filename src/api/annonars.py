@@ -8,6 +8,7 @@ from loguru import logger
 from pydantic import ValidationError
 
 from src.core.config import settings
+from src.defs.annonars_gene import AnnonarsGeneResponse
 from src.defs.annonars_range import AnnonarsRangeResponse
 from src.defs.annonars_variant import AnnonarsVariantResponse
 from src.defs.exceptions import AnnonarsException
@@ -78,6 +79,28 @@ class AnnonarsClient:
         except requests.RequestException as e:
             logger.exception("Request failed: {}", e)
             raise AnnonarsException("Failed to get variant information.") from e
+        except ValidationError as e:
+            logger.exception("Validation failed: {}", e)
+            raise AnnonarsException("Annonars returned non-validating data.") from e
+
+    def get_gene_info(self, hgnc_id: str) -> AnnonarsGeneResponse:
+        """Get gene information from Annonars.
+
+        Args:
+            seqvar (SeqVar): Sequence variant.
+
+        Returns:
+            Any: Annonars response.
+        """
+        url = f"{self.api_base_url}/genes/info?hgnc_id={hgnc_id}"
+        logger.debug("GET request to: {}", url)
+        response = requests.get(url)
+        try:
+            response.raise_for_status()
+            return AnnonarsGeneResponse.model_validate(response.json())
+        except requests.RequestException as e:
+            logger.exception("Request failed: {}", e)
+            raise AnnonarsException("Failed to get gene information.") from e
         except ValidationError as e:
             logger.exception("Validation failed: {}", e)
             raise AnnonarsException("Annonars returned non-validating data.") from e
