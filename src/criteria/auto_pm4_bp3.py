@@ -5,6 +5,7 @@ from typing import Optional, Tuple
 from loguru import logger
 
 from src.api.annonars import AnnonarsClient
+from src.api.remote import RemoteClient
 from src.core.config import Config
 from src.defs.annonars_variant import AnnonarsVariantResponse, VariantResult
 from src.defs.auto_acmg import PM4BP3
@@ -29,27 +30,12 @@ class AutoPM4BP3:
         self.seqvar: SeqVar = seqvar
         #: Variant information.
         self.variant_info: VariantResult = variant_info
-        #: Annonars client.
-        self.annonars_client: AnnonarsClient = AnnonarsClient(
-            api_base_url=self.config.api_base_url_annonars
-        )
+        #: Remote client to use.
+        self.remote_client: RemoteClient = RemoteClient()
         #: Prediction result.
         self.prediction: Optional[PM4BP3] = None
         #: Comment to store the prediction explanation.
         self.comment: str = ""
-
-    def _get_variant_info(self, seqvar: SeqVar) -> Optional[AnnonarsVariantResponse]:
-        """Get variant information from Annonars.
-
-        Returns:
-            AnnonarsVariantResponse: Annonars response.
-        """
-        try:
-            logger.debug("Getting variant information for {}.", seqvar)
-            return self.annonars_client.get_variant_info(seqvar)
-        except AutoAcmgBaseException as e:
-            logger.error("Failed to get variant information. Error: {}", e)
-            return None
 
     def _in_repeat_region(self, variant_info: VariantResult) -> bool:
         """Check if the variant is in a repeat region.
@@ -60,18 +46,30 @@ class AutoPM4BP3:
         Returns:
             bool: True if the variant is in a repeat region, False otherwise.
         """
+        self.comment += "Check if the variant is in a repeat region.\n"
+        try:
+            # Get repeat masked regions
+            repeat_regions = self.remote_client.get_repeat_masked_regions(self.seqvar)
+            # Parse the repeat regions
+            pass
+        except AutoAcmgBaseException as e:
+            logger.error("Failed to check if the variant is in a repeat region. Error: {}", e)
+            self.comment += (
+                f"An error occured while checking if the variant is in a repeat region: {e}"
+            )
+            return False
         return False
 
-    def _in_conserved_domain(self, variant_info: VariantResult) -> bool:
-        """Check if the variant is in a conserved domain.
+    # def _in_conserved_domain(self, variant_info: VariantResult) -> bool:
+    #     """Check if the variant is in a conserved domain.
 
-        Args:
-            variant_info (VariantResult): The variant information.
+    #     Args:
+    #         variant_info (VariantResult): The variant information.
 
-        Returns:
-            bool: True if the variant is in a conserved domain, False otherwise.
-        """
-        return False
+    #     Returns:
+    #         bool: True if the variant is in a conserved domain, False otherwise.
+    #     """
+    #     return False
 
     def predict(self) -> Tuple[Optional[PM4BP3], str]:
         """Predicts PM4 and BP3 criteria for the provided sequence variant.
@@ -100,35 +98,33 @@ class AutoPM4BP3:
             if not self.variant_info:
                 raise MissingDataError("No valid primary information.")
 
-            self.comment = "Predicting???"
+            self.comment = "Check consequences of the variant for PM4.\n"
             # Stop-loss variants are considered as PM4
             if self.variant_info.cadd and self.variant_info.cadd.ConsDetail == "stop_loss":
-                self.comment += f"Variant consequence is stop-loss. PM4 is met"
+                self.comment += f"Variant consequence is stop-loss. PM4 is met."
                 self.prediction.PM4 = True
-                self.prediction.BP3 = False
+            # In-frame deletions/insertions
             elif self.variant_info.cadd and self.variant_info.cadd.ConsDetail in [
                 "inframe_deletion",
                 "inframe_insertion",
             ]:
-                self.comment += f"Variant consequence is in-frame deletion/insertion."
-                if not self._in_repeat_region(self.variant_info) and self._in_conserved_domain(
-                    self.variant_info
-                ):
+                self.comment += f"Variant consequence is in-frame deletion/insertion.\n"
+                if not self._in_repeat_region(self.variant_info):  # or _in_conserved_domain
                     self.comment += (
-                        f"Variant is not in a repeat region and in a conserved domain."
+                        f"Variant is not in a repeat region or in a conserved domain."
                         f"PM4 is met."
                     )
                     self.prediction.PM4 = True
-                    self.prediction.BP3 = False
-                elif self._in_repeat_region(self.variant_info) and not self._in_conserved_domain(
-                    self.variant_info
-                ):
+                else:
                     self.comment += (
-                        f"Variant is in a repeat region and not in a conserved domain."
-                        f"BP3 is met."
+                        "Variant is in a repeat region or not in a conserved domain." "BP3 is met."
                     )
-                    self.prediction.PM4 = False
                     self.prediction.BP3 = True
+            else:
+                self.comment += "Variant consequence is not indel or stop-loss."
+                self._in_repeat_region(self.variant_info)
+                self.prediction.PM4 = False
+                self.prediction.BP3 = False
 
         except AutoAcmgBaseException as e:
             logger.error("Failed to predict PM4 and BP3 criteria. Error: {}", e)
