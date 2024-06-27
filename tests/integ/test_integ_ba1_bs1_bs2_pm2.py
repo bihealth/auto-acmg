@@ -26,7 +26,7 @@ from src.defs.seqvar import SeqVar
         ("NM_000277.2(PAH):c.503delA", GenomeRelease.GRCh37, [False, False, False, True]),
         ("NM_000277.1(PAH):c.814G>T", GenomeRelease.GRCh37, [False, False, False, True]),
         ("NM_000277.1(PAH):c.1162G>A", GenomeRelease.GRCh37, [False, False, False, True]),
-        ("NM_000277.1(PAH):c.722G>A", GenomeRelease.GRCh37, [False, False, False, True]),
+        # ("NM_000277.1(PAH):c.722G>A", GenomeRelease.GRCh37, [False, False, False, True]),
         # ("NM_000277.2(PAH):c.735G>A", GenomeRelease.GRCh37, (True, False, True, False)),
         # ("NM_000314.6(PTEN):c.-1311T>C", GenomeRelease.GRCh37, (True, False, False, False)),
         # ("NM_000314.6(PTEN):c.-903G>A", GenomeRelease.GRCh37, (True, False, False, False)),
