@@ -44,8 +44,8 @@ class AutoBP7:
         """
         Get variant information from Annonars.
 
-        Attributes:
-            seqvar (SeqVar): The variant to get information for.
+        Args:
+            seqvar: The variant to get information for.
 
         Returns:
             Optional[VariantResult]: The variant information. None if the information is not
@@ -64,8 +64,8 @@ class AutoBP7:
 
         Check if there are pathogenic variants within 2bp of the position in ClinVar.
 
-        Attributes:
-            seqvar (SeqVar): The variant to check.
+        Args:
+            seqvar: The variant to check.
 
         Returns:
             bool: True if pathogenic variants are found, False otherwise.
@@ -95,8 +95,8 @@ class AutoBP7:
 
         Check if the variant is located within 2bp of a splice site.
 
-        Attributes:
-            seqvar (SeqVar): The variant to check.
+        Args:
+            seqvar: The variant to check.
 
         Returns:
             bool: True if the variant is within 2bp of a splice site, False otherwise.
@@ -133,8 +133,8 @@ class AutoBP7:
         If any of SpliceAI scores are greater than 0, the variant is considered a splice site
         alteration.
 
-        Attributes:
-            seqvar (SeqVar): The variant to check.
+        Args:
+            seqvar: The variant to check.
 
         Returns:
             bool: True if the variant is a splice site alteration, False otherwise.

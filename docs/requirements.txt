@@ -5,3 +5,5 @@ pydantic_settings
 typer
 loguru
 pytabix
+seqrepo
+msgpack
