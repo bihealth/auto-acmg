@@ -1,4 +1,4 @@
-"""Integration tests for `BP7` criteria using upstream server."""
+"""Integration tests for `PM1` criteria using upstream server."""
 
 import pytest
 
@@ -32,7 +32,7 @@ from src.defs.seqvar import SeqVar
         ("NM_001754.4(RUNX1):c.485G>A", GenomeRelease.GRCh37, True),
     ],
 )
-def test_bp7(
+def test_pm1(
     variant_name: str,
     genome_release: GenomeRelease,
     expected_prediction: bool,

@@ -1,4 +1,4 @@
-"""Integration tests for `BP7` criteria using upstream server."""
+"""Integration tests for `BA1`, `BS1`, `BS2`, `PM2` criteria using upstream server."""
 
 from typing import Tuple
 

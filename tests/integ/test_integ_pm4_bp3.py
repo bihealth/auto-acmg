@@ -1,4 +1,4 @@
-"""Integration tests for `PP2` and `BP1` critria using upstream server."""
+"""Integration tests for `PM4` and `BP3` critria using upstream server."""
 
 from typing import Tuple
 
@@ -27,6 +27,8 @@ from src.defs.seqvar import SeqVar
         ("NM_000277.2(PAH):c.1092_1106del", GenomeRelease.GRCh37, (True, False)),
         ("NM_000277.1(PAH):c.208_210delTCT", GenomeRelease.GRCh37, (True, False)),
         # ("NM_005249.4(FOXG1):c.209_232del24", GenomeRelease.GRCh37, (False, True)),
+        # ("NM_005249.5(FOXG1):c.209_235del", GenomeRelease.GRCh37, (False, True))
+        ("NM_005249.5(FOXG1):c.209_235dup", GenomeRelease.GRCh37, (False, True)),
     ],
 )
 def test_pm4_bp3(
