@@ -1,11 +1,13 @@
 """Implementation of PM1 criteria."""
 
+import os
 from typing import Optional, Tuple
 
+import tabix  # type: ignore
 from loguru import logger
 
 from src.api.annonars import AnnonarsClient
-from src.core.config import Config
+from src.core.config import Config, settings
 from src.defs.annonars_variant import VariantResult
 from src.defs.auto_acmg import PM1
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, InvalidAPIResposeError
@@ -82,10 +84,29 @@ class AutoPM1:
             logger.error("Failed to get variant from range. No ClinVar data.")
             raise InvalidAPIResposeError("Failed to get variant from range. No ClinVar data.")
 
-    def _get_uniprot_domain(self, variant_info: VariantResult) -> Optional[Tuple[int, int]]:
+    def _get_uniprot_domain(self, seqvar: SeqVar) -> Optional[Tuple[int, int]]:
         """Check if the variant is in a UniProt domain."""
-        # TODO: Implement this method
-        return None
+        self.comment += "Check if the variant is in a UniProt domain.\n"
+        try:
+            # Find path to the lib file
+            if seqvar.genome_release == GenomeRelease.GRCh37:
+                path = os.path.join(
+                    settings.PATH_TO_ROOT, "lib", "uniprot", "grch37", "uniprot.bed.gz"
+                )
+            else:
+                path = os.path.join(
+                    settings.PATH_TO_ROOT, "lib", "uniprot", "grch38", "uniprot.bed.gz"
+                )
+            tb = tabix.open(path)
+            records = tb.query(f"chr{seqvar.chrom}", seqvar.pos - 1, seqvar.pos)
+            # Return the first record
+            for record in records:
+                return int(record[1]), int(record[2])
+            return None
+
+        except tabix.TabixError as e:
+            logger.error("Failed to check if the variant is in a UniProt domain. Error: {}", e)
+            raise AlgorithmError("Failed to check if the variant is in a UniProt domain.") from e
 
     def predict(self) -> Tuple[Optional[PM1], str]:
         """Predict PM1 criteria."""
@@ -122,7 +143,7 @@ class AutoPM1:
 
             self.comment += "Checking if the variant is in a UniProt domain. => \n"
             logger.debug("Checking if the variant is in a UniProt domain.")
-            uniprot_domain = self._get_uniprot_domain(self.variant_info)
+            uniprot_domain = self._get_uniprot_domain(self.seqvar)
             if not uniprot_domain:
                 self.comment += "The variant is not in a UniProt domain."
                 logger.debug("The variant is not in a UniProt domain.")
@@ -141,7 +162,7 @@ class AutoPM1:
             pathogenic_count, _ = self._count_pathogenic_variants(self.seqvar, start_pos, end_pos)
             if pathogenic_count >= 2:
                 self.comment += (
-                    "Found 2 or more pathogenic variants in the UniProt domain. " "PM1 is met."
+                    "Found 2 or more pathogenic variants in the UniProt domain. PM1 is met."
                 )
                 logger.debug(
                     "Found 2 or more pathogenic variants in the UniProt domain. PM1 is met."
