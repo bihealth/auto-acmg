@@ -49,7 +49,7 @@ class AutoPM4BP3:
         """
         self.comment += "Check if the variant is in a repeat region.\n"
         try:
-            # Find path to the lib/hg19_repeatmasker.bed.gz file
+            # Find path to the lib file
             if seqvar.genome_release == GenomeRelease.GRCh37:
                 path = os.path.join(settings.PATH_TO_ROOT, "lib", "rmsk", "grch37", "rmsk.bed.gz")
             else:
