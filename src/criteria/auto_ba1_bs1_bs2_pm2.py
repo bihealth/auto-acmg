@@ -40,24 +40,24 @@ class AutoBA1BS1BS2PM2:
         #: Comment to store the prediction explanation.
         self.comment: str = ""
 
-    def _get_control_af(self, variant_data: VariantResult) -> AlleleCount:
+    def _get_control_af(self, variant_data: VariantResult) -> Optional[AlleleCount]:
         """
-        Get the allele frequency for the control population.
+        Get the allele frequency information for the control population.
 
         Args:
             variant_data: The variant data.
 
         Returns:
-            The allele frequency for the control population.
+            The allele frequency for the control population. None if no data found.
         """
         if not variant_data.gnomad_exomes or not variant_data.gnomad_exomes.alleleCounts:
             raise MissingDataError("No allele counts found in variant data")
         for af in variant_data.gnomad_exomes.alleleCounts:
             if af.cohort == "controls":
                 return af
-        raise MissingDataError("No controls allele counts found in variant data.")
+        return None
 
-    def _get_af(self, seqvar: SeqVar, variant_data: VariantResult) -> float:
+    def _get_af(self, seqvar: SeqVar, variant_data: VariantResult) -> Optional[float]:
         """
         Get the allele frequency for the sequence variant.
 
@@ -66,7 +66,7 @@ class AutoBA1BS1BS2PM2:
             variant_data: The variant data.
 
         Returns:
-            The allele frequency.
+            The allele frequency. None if no controls data
         """
         if seqvar.chrom.startswith("M"):
             if not variant_data.gnomad_mtdna or not variant_data.gnomad_mtdna.afHet:
@@ -80,6 +80,9 @@ class AutoBA1BS1BS2PM2:
                 return variant_data.gnomad_mtdna.afHet
         else:
             controls_af = self._get_control_af(variant_data)
+            if not controls_af:
+                self.comment += "No controls allele frequency data found."
+                return None
             if (
                 not controls_af.bySex
                 or not controls_af.bySex.overall
@@ -189,7 +192,7 @@ class AutoBA1BS1BS2PM2:
         allele_condition = self._get_allele_condition(seqvar)
         self.comment += f"Allele condition: {allele_condition.name}.\n"
         controls_af = self._get_control_af(variant_data)
-        if not controls_af.bySex:
+        if not controls_af or not controls_af.bySex:
             self.comment += "No controls allele data found in control data.\n"
             raise MissingDataError("No raw data found in control data.")
 
@@ -290,15 +293,21 @@ class AutoBA1BS1BS2PM2:
 
             self.comment += "Check allele frequency for the control population.\n"
             af = self._get_af(self.seqvar, self.variant_info)
-            if af > 0.05:
+            if not af:
+                self.comment += "No controls: PM2 is met."
+                self.prediction.PM2 = True
+            elif af > 0.05:
+                self.comment += "Allele frequency > 5%: BA1 is met."
                 self.prediction.BA1 = True
             elif af >= 0.01:
+                self.comment += "Allele frequency > 1%: BS1 is met."
                 self.prediction.BS1 = True
             else:
+                self.comment += "Allele frequency <= 1%: PM2 is met."
                 self.prediction.PM2 = True
 
             self.comment += "Check zygosity.\n"
-            if af >= 0.01 and self._check_zygosity(self.seqvar, self.variant_info):
+            if af and af >= 0.01 and self._check_zygosity(self.seqvar, self.variant_info):
                 self.prediction.BS2 = True
 
         except AutoAcmgBaseException as e:
