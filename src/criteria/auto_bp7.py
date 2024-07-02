@@ -40,7 +40,7 @@ class AutoBP7:
         #: Comment to store the prediction explanation.
         self.comment: str = ""
 
-    def _get_variant_info(self, seqvar: SeqVar) -> Optional[VariantResult]:
+    def _get_var_info(self, seqvar: SeqVar) -> Optional[VariantResult]:
         """
         Get variant information from Annonars.
 
@@ -58,7 +58,7 @@ class AutoBP7:
             logger.error("Failed to get variant information. Error: {}", e)
             return None
 
-    def _check_proximity_to_pathogenic_variants(self, seqvar: SeqVar) -> bool:
+    def _check_proximity_to_pathogenic_vars(self, seqvar: SeqVar) -> bool:
         """
         Check for pathogenic variants +/- 2bp of the position in ClinVar.
 
@@ -89,7 +89,7 @@ class AutoBP7:
             return len(pathogenic_variants) > 0
         return False
 
-    def _check_proximity_to_splice_site(self, seqvar: SeqVar) -> bool:
+    def _check_proximity_to_ss(self, seqvar: SeqVar) -> bool:
         """
         Check if the variant is closer than 2bp to a splice site.
 
@@ -125,7 +125,7 @@ class AutoBP7:
                 return True
         return False
 
-    def _predict_spliceai(self, seqvar: SeqVar) -> bool:
+    def _pred_spliceai(self, seqvar: SeqVar) -> bool:
         """
         Predict splice site alterations using SpliceAI.
 
@@ -139,7 +139,7 @@ class AutoBP7:
         Returns:
             bool: True if the variant is a splice site alteration, False otherwise.
         """
-        variant_info = self._get_variant_info(seqvar)
+        variant_info = self._get_var_info(seqvar)
         if not variant_info or not variant_info.cadd:
             raise MissingDataError("Missing CADD data for variant.")
         acc_gain = variant_info.cadd.SpliceAI_acc_gain
@@ -168,7 +168,7 @@ class AutoBP7:
 
             self.comment = "Checking for pathogenic variants in the range of 2bp. => \n"
             logger.debug("Checking for pathogenic variants in the range of 2bp.")
-            if self._check_proximity_to_pathogenic_variants(self.seqvar):
+            if self._check_proximity_to_pathogenic_vars(self.seqvar):
                 self.comment += "Found pathogenic variants in the range of 2bp. BP7 is not met."
                 logger.debug("Found pathogenic variants in the range of 2bp. BP7 is not met.")
                 self.prediction.BP7 = False
@@ -179,7 +179,7 @@ class AutoBP7:
 
             self.comment += "Checking for proximity to splice site. => \n"
             logger.debug("Checking for proximity to splice site.")
-            if self._check_proximity_to_splice_site(self.seqvar):
+            if self._check_proximity_to_ss(self.seqvar):
                 self.comment += "Variant is within 2bp of a splice site. BP7 is not met."
                 logger.debug("Variant is within 2bp of a splice site. BP7 is not met.")
                 self.prediction.BP7 = False
@@ -190,7 +190,7 @@ class AutoBP7:
 
             self.comment += "Predicting splice site alterations using SpliceAI. => \n"
             logger.debug("Predicting splice site alterations using SpliceAI.")
-            if self._predict_spliceai(self.seqvar):
+            if self._pred_spliceai(self.seqvar):
                 self.comment += "Variant is a splice site alteration. BP7 is not met."
                 logger.debug("Variant is a splice site alteration. BP7 is not met.")
                 self.prediction.BP7 = False

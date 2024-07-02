@@ -40,7 +40,7 @@ class AutoPM1:
         #: Comment to store the prediction explanation.
         self.comment: str = ""
 
-    def _count_pathogenic_variants(
+    def _count_pathogenic_vars(
         self, seqvar: SeqVar, start_pos: int, end_pos: int
     ) -> Tuple[int, int]:
         """
@@ -126,7 +126,7 @@ class AutoPM1:
                 "Counting pathogenic variants in the range of 50bp."
                 f"The range is {self.seqvar.pos - 25} - {self.seqvar.pos + 25}."
             )
-            pathogenic_count, _ = self._count_pathogenic_variants(
+            pathogenic_count, _ = self._count_pathogenic_vars(
                 self.seqvar, self.seqvar.pos - 25, self.seqvar.pos + 25
             )
 
@@ -159,7 +159,7 @@ class AutoPM1:
                 "Counting pathogenic variants in the UniProt domain. "
                 f"The range is {start_pos} - {end_pos}."
             )
-            pathogenic_count, _ = self._count_pathogenic_variants(self.seqvar, start_pos, end_pos)
+            pathogenic_count, _ = self._count_pathogenic_vars(self.seqvar, start_pos, end_pos)
             if pathogenic_count >= 2:
                 self.comment += (
                     "Found 2 or more pathogenic variants in the UniProt domain. PM1 is met."

@@ -47,7 +47,7 @@ class AutoPS1PM5:
         #: Comment to store the prediction explanation.
         self.comment: str = ""
 
-    def _get_variant_info(self, seqvar: SeqVar) -> Optional[AnnonarsVariantResponse]:
+    def _get_var_info(self, seqvar: SeqVar) -> Optional[AnnonarsVariantResponse]:
         """Get variant information from Annonars.
 
         Returns:
@@ -184,7 +184,7 @@ class AutoPS1PM5:
                     delete=self.seqvar.delete,
                     insert=alt_base,
                 )
-                alt_info = self._get_variant_info(alt_seqvar)
+                alt_info = self._get_var_info(alt_seqvar)
 
                 if alt_info and alt_info.result.dbnsfp and alt_info.result.dbnsfp.HGVSp_VEP:
                     self.comment += (

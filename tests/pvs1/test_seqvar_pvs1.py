@@ -91,9 +91,9 @@ class MockCdsInfo:
         ),
     ],
 )
-def test_calculate_altered_region(var_pos, exons, strand, expected_result):
-    """Test the _calculate_altered_region method."""
-    result = SeqVarPVS1Helper()._calculate_altered_region(var_pos, exons, strand)
+def test_calc_alt_reg(var_pos, exons, strand, expected_result):
+    """Test the _calc_alt_reg method."""
+    result = SeqVarPVS1Helper()._calc_alt_reg(var_pos, exons, strand)
     assert result == expected_result
 
 
@@ -120,10 +120,8 @@ def test_calculate_altered_region(var_pos, exons, strand, expected_result):
         ),  # Strand minus
     ],
 )
-def test_calculate_altered_region_real_data(
-    gene_transcripts_file, transcript_id, var_pos, expected_result
-):
-    """Test the _calculate_altered_region method."""
+def test_calc_alt_reg_real_data(gene_transcripts_file, transcript_id, var_pos, expected_result):
+    """Test the _calc_alt_reg method."""
     gene_transcripts = GeneTranscripts.model_validate(
         get_json_object(gene_transcripts_file)
     ).transcripts
@@ -136,7 +134,7 @@ def test_calculate_altered_region_real_data(
 
     exons = tsx.genomeAlignments[0].exons
     strand = GenomicStrand.from_string(tsx.genomeAlignments[0].strand)
-    start_pos, end_pos = SeqVarPVS1Helper()._calculate_altered_region(var_pos, exons, strand)
+    start_pos, end_pos = SeqVarPVS1Helper()._calc_alt_reg(var_pos, exons, strand)
     assert start_pos == expected_result[0]
     assert end_pos == expected_result[1]
 
@@ -148,15 +146,13 @@ def test_calculate_altered_region_real_data(
         ("annonars/CDH1_range.json", (0, 2)),
     ],
 )
-def test_count_pathogenic_variants(annonars_range_response, expected_result, seqvar):
-    """Test the _count_pathogenic_variants method."""
+def test_count_pathogenic_vars(annonars_range_response, expected_result, seqvar):
+    """Test the _count_pathogenic_vars method."""
     with patch.object(AnnonarsClient, "get_variant_from_range") as mock_get_variant_from_range:
         mock_get_variant_from_range.return_value = AnnonarsRangeResponse.model_validate(
             get_json_object(annonars_range_response)
         )
-        result = SeqVarPVS1Helper()._count_pathogenic_variants(
-            seqvar, 1, 1000
-        )  # Real range is mocked
+        result = SeqVarPVS1Helper()._count_pathogenic_vars(seqvar, 1, 1000)  # Real range is mocked
         assert result == expected_result
 
 
@@ -168,9 +164,9 @@ def test_count_pathogenic_variants(annonars_range_response, expected_result, seq
         (150, [MockExon(0, 100, 0, 100), MockExon(100, 200, 100, 200)], (100, 200)),
     ],
 )
-def test_find_affected_exon_position(var_pos, exons, expected_result):
-    """Test the _find_affected_exon_position method."""
-    result = SeqVarPVS1Helper()._find_affected_exon_position(var_pos, exons)
+def test_find_aff_exon_pos(var_pos, exons, expected_result):
+    """Test the _find_aff_exon_pos method."""
+    result = SeqVarPVS1Helper()._find_aff_exon_pos(var_pos, exons)
     assert result == expected_result
 
 
@@ -210,9 +206,9 @@ def test_find_affected_exon_position(var_pos, exons, expected_result):
         (SeqVarConsequence.Missense, ["missense_variant"]),
     ],
 )
-def test_get_consequence(value, expected_result):
-    """Test the _get_consequence method."""
-    result = SeqVarPVS1Helper()._get_consequence(value)
+def test_get_conseq(value, expected_result):
+    """Test the _get_conseq method."""
+    result = SeqVarPVS1Helper()._get_conseq(value)
     assert result == expected_result
 
 
@@ -223,13 +219,13 @@ def test_get_consequence(value, expected_result):
         ("annonars/CDH1_range.json", (0, 0)),
     ],
 )
-def test_count_lof_variants(annonars_range_response, expected_result, seqvar):
-    """Test the _count_pathogenic_variants method."""
+def test_count_lof_vars(annonars_range_response, expected_result, seqvar):
+    """Test the _count_lof_vars method."""
     with patch.object(AnnonarsClient, "get_variant_from_range") as mock_get_variant_from_range:
         mock_get_variant_from_range.return_value = AnnonarsRangeResponse.model_validate(
             get_json_object(annonars_range_response)
         )
-        result = SeqVarPVS1Helper()._count_lof_variants(seqvar, 1, 1000)  # Real range is mocked
+        result = SeqVarPVS1Helper()._count_lof_vars(seqvar, 1, 1000)  # Real range is mocked
         assert result == expected_result
 
 
@@ -296,14 +292,14 @@ def test_count_lof_variants(annonars_range_response, expected_result, seqvar):
         ),
     ],
 )
-def test_closest_alternative_start_codon(hgvs, cds_info, expected_result):
-    """Test the _closest_alternative_start_codon method."""
-    result = SeqVarPVS1Helper()._closest_alternative_start_codon(cds_info, hgvs)
+def test_closest_alt_start_cdn(hgvs, cds_info, expected_result):
+    """Test the _closest_alt_start_cdn method."""
+    result = SeqVarPVS1Helper()._closest_alt_start_cdn(cds_info, hgvs)
     assert result == expected_result
 
 
-def test_closest_alternative_start_codon_invalid():
-    """Test the _closest_alternative_start_codon method."""
+def test_closest_alt_start_cdn_invalid():
+    """Test the _closest_alt_start_cdn method."""
     hgvs = "NM_000"
     cds_info = {
         "NM_000001": MockCdsInfo(
@@ -317,7 +313,7 @@ def test_closest_alternative_start_codon_invalid():
         ),
     }
     with pytest.raises(MissingDataError):
-        SeqVarPVS1Helper()._closest_alternative_start_codon(cds_info, hgvs)  # type: ignore
+        SeqVarPVS1Helper()._closest_alt_start_cdn(cds_info, hgvs)  # type: ignore
 
 
 @pytest.mark.parametrize(
@@ -424,9 +420,9 @@ def test_undergo_nmd(gene_transcripts_file, transcript_id, hgnc_id, var_pos, exp
         (["SomeTag", "AnotherTag"], False),
     ],
 )
-def test_in_biologically_relevant_transcript(transcript_tags, expected_result):
-    """Test the _in_biologically_relevant_transcript method."""
-    result = SeqVarPVS1Helper().in_biologically_relevant_transcript(transcript_tags)
+def test_in_bio_relevant_tsx(transcript_tags, expected_result):
+    """Test the _in_bio_relevant_tsx method."""
+    result = SeqVarPVS1Helper().in_bio_relevant_tsx(transcript_tags)
     assert result == expected_result, f"Failed for transcript_tags: {transcript_tags}"
 
 
@@ -440,20 +436,20 @@ def test_in_biologically_relevant_transcript(transcript_tags, expected_result):
         (100, 0, GenomicStrand.Plus, False),  # Test more pathogenic variants than total variants
     ],
 )
-def test_critical4protein_function(
+def test_crit4prot_func(
     seqvar, pathogenic_variants, total_variants, strand, expected_result, monkeypatch
 ):
-    """Test the _critical4protein_function method."""
+    """Test the _crit4prot_func method."""
     # Mock exons, since they won't affect the outcome
     exons = [MagicMock(spec=Exon)]
-    # Mocking _calculate_altered_region to return a mocked range
+    # Mocking _calc_alt_reg to return a mocked range
     mock_calculate = MagicMock(return_value=(1, 1000))
-    monkeypatch.setattr(SeqVarPVS1Helper, "_calculate_altered_region", mock_calculate)
-    # Mocking _count_pathogenic_variants to return controlled counts of pathogenic and total variants
+    monkeypatch.setattr(SeqVarPVS1Helper, "_calc_alt_reg", mock_calculate)
+    # Mocking _count_pathogenic_vars to return controlled counts of pathogenic and total variants
     mock_count_pathogenic = MagicMock(return_value=(pathogenic_variants, total_variants))
-    monkeypatch.setattr(SeqVarPVS1Helper, "_count_pathogenic_variants", mock_count_pathogenic)
+    monkeypatch.setattr(SeqVarPVS1Helper, "_count_pathogenic_vars", mock_count_pathogenic)
 
-    result = SeqVarPVS1Helper().critical4protein_function(seqvar, exons, strand)  # type: ignore
+    result = SeqVarPVS1Helper().crit4prot_func(seqvar, exons, strand)  # type: ignore
     assert result == expected_result
 
 
@@ -482,19 +478,20 @@ def test_critical4protein_function(
         (0, 0, GenomicStrand.Plus, False),  # Test case where no LoF variants are found
     ],
 )
-def test_lof_is_frequent_in_population(
+def test_lof_freq_in_pop(
     seqvar, frequent_lof_variants, lof_variants, strand, expected_result, monkeypatch
 ):
+    """Test the _lof_freq_in_pop method."""
     # Mocking exons, since they won't affect the outcome
     exons = [MagicMock(spec=Exon)]
-    # Mocking _calculate_altered_region to return a mocked range
+    # Mocking _calc_alt_reg to return a mocked range
     mock_calculate = MagicMock(return_value=(1, 1000))
-    monkeypatch.setattr(SeqVarPVS1Helper, "_find_affected_exon_position", mock_calculate)
-    # Mocking _count_lof_variants to return controlled counts of frequent and total LoF variants
-    mock_count_lof_variants = MagicMock(return_value=(frequent_lof_variants, lof_variants))
-    monkeypatch.setattr(SeqVarPVS1Helper, "_count_lof_variants", mock_count_lof_variants)
+    monkeypatch.setattr(SeqVarPVS1Helper, "_find_aff_exon_pos", mock_calculate)
+    # Mocking _count_lof_vars to return controlled counts of frequent and total LoF variants
+    mock_count_lof_vars = MagicMock(return_value=(frequent_lof_variants, lof_variants))
+    monkeypatch.setattr(SeqVarPVS1Helper, "_count_lof_vars", mock_count_lof_vars)
 
-    result = SeqVarPVS1Helper().lof_is_frequent_in_population(seqvar, exons, strand)  # type: ignore
+    result = SeqVarPVS1Helper().lof_freq_in_pop(seqvar, exons, strand)  # type: ignore
     assert result == expected_result
 
 
@@ -513,9 +510,9 @@ def test_lof_is_frequent_in_population(
         ),  # Test case where the variant removes more than 10% of the protein
     ],
 )
-def test_lof_removes_more_then_10_percent_of_protein(prot_pos, prot_length, expected_result):
-    """Test the _lof_removes_more_then_10_percent_of_protein method."""
-    result = SeqVarPVS1Helper().lof_removes_more_then_10_percent_of_protein(prot_pos, prot_length)
+def test_lof_rm_gt_10pct_of_prot(prot_pos, prot_length, expected_result):
+    """Test the _lof_rm_gt_10pct_of_prot method."""
+    result = SeqVarPVS1Helper().lof_rm_gt_10pct_of_prot(prot_pos, prot_length)
     assert result == expected_result
 
 
@@ -552,10 +549,10 @@ def test_lof_removes_more_then_10_percent_of_protein(prot_pos, prot_length, expe
 #         ),
 #     ],
 # )
-# def test_exon_skipping_or_cryptic_ss_disruption(
+# def test_exon_skip_or_cryptic_ss_disrupt(
 #     seqvar, skipping_exon_pos_output, consequences, strand, cryptic_ss_output, expected
 # ):
-#     """Test the _exon_skipping_or_cryptic_ss_disruption method."""
+#     """Test the _exon_skip_or_cryptic_ss_disrupt method."""
 #     exons = [MockExon(90, 120, 90, 120)]
 
 #     # Mock the SplicingPrediction class
@@ -567,7 +564,7 @@ def test_lof_removes_more_then_10_percent_of_protein(prot_pos, prot_length, expe
 #         SeqVarPVS1Helper, "_skipping_exon_pos", return_value=skipping_exon_pos_output
 #     ):
 #         with patch("src.utils.SplicingPrediction", return_value=sp_mock):
-#             result = SeqVarPVS1Helper()._exon_skipping_or_cryptic_ss_disruption(
+#             result = SeqVarPVS1Helper()._exon_skip_or_cryptic_ss_disrupt(
 #                 seqvar, exons, consequences, strand  # type: ignore
 #             )
 #             assert result == expected, f"Expected {expected}, but got {result}"
@@ -636,9 +633,9 @@ def test_lof_removes_more_then_10_percent_of_protein(prot_pos, prot_length, expe
         ),
     ],
 )
-def test_alternative_start_codon(hgvs, cds_info, expected_result):
-    """Test the _alternative_start_codon method."""
-    result = SeqVarPVS1Helper().alternative_start_codon(cds_info, hgvs)
+def test_alt_start_cdn(hgvs, cds_info, expected_result):
+    """Test the _alt_start_cdn method."""
+    result = SeqVarPVS1Helper().alt_start_cdn(cds_info, hgvs)
     assert result == expected_result
 
 
@@ -707,15 +704,15 @@ def test_alternative_start_codon(hgvs, cds_info, expected_result):
         ),  # Test no pathogenic variants found on minus strand
     ],
 )
-def test_upstream_pathogenic_variants(
+def test_up_pathogenic_vars(
     seqvar, exons, strand, pathogenic_variants, hgvs, cds_info, expected_result, monkeypatch
 ):
-    """Test the _upstream_pathogenic_variants method."""
-    # Mocking _count_pathogenic_variants to return a controlled number of pathogenic variants
+    """Test the _up_pathogenic_vars method."""
+    # Mocking _count_pathogenic_vars to return a controlled number of pathogenic variants
     mock_count_pathogenic = MagicMock(return_value=(pathogenic_variants, 10))
-    monkeypatch.setattr(SeqVarPVS1Helper, "_count_pathogenic_variants", mock_count_pathogenic)
+    monkeypatch.setattr(SeqVarPVS1Helper, "_count_pathogenic_vars", mock_count_pathogenic)
 
-    result = SeqVarPVS1Helper().upstream_pathogenic_variants(seqvar, exons, strand, cds_info, hgvs)
+    result = SeqVarPVS1Helper().up_pathogenic_vars(seqvar, exons, strand, cds_info, hgvs)
     assert result == expected_result
 
 

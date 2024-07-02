@@ -38,9 +38,7 @@ class AutoPP3BP4:
         #: Comment to store the prediction explanation.
         self.comment: str = ""
 
-    def _convert_score_value(
-        self, score_value: Optional[Union[str, float, int]]
-    ) -> Optional[float]:
+    def _convert_score_val(self, score_value: Optional[Union[str, float, int]]) -> Optional[float]:
         """
         Convert score value to float.
 
@@ -89,7 +87,7 @@ class AutoPP3BP4:
         for score in MissenseScores:
             self.comment += f"Checking {score.name} score: "
             logger.debug("Checking {} score.", score.name)
-            score_value = self._convert_score_value(getattr(variant_info.dbnsfp, score.name, None))
+            score_value = self._convert_score_val(getattr(variant_info.dbnsfp, score.name, None))
             if score_value is not None:
                 if score_value >= score.pathogenic_threshold:
                     self.comment += f"{score_value} >= {score.pathogenic_threshold}. =>\n"
@@ -136,7 +134,7 @@ class AutoPP3BP4:
         for score in MissenseScores:
             self.comment += f"Checking {score.name} score: "
             logger.debug("Checking {} score.", score.name)
-            score_value = self._convert_score_value(getattr(variant_info.dbnsfp, score.name, None))
+            score_value = self._convert_score_val(getattr(variant_info.dbnsfp, score.name, None))
             if score_value is not None and score.benign_threshold is not None:
                 if score_value <= score.benign_threshold:
                     self.comment += f"{score_value} <= {score.benign_threshold}. =>\n"
