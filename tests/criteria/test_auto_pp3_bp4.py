@@ -40,16 +40,16 @@ def auto_pp3bp4(seqvar, variant_info):
         ("-1.0;-0.5;-0.8", -0.5),
     ],
 )
-def test_convert_score_value(score_value, expected, auto_pp3bp4):
-    """Test _convert_score_value method."""
-    result = auto_pp3bp4._convert_score_value(score_value)
+def test_convert_score_val(score_value, expected, auto_pp3bp4):
+    """Test _convert_score_val method."""
+    result = auto_pp3bp4._convert_score_val(score_value)
     assert result == expected, f"Expected {expected}, but got {result}"
 
 
-def test_convert_score_value_invalid_string(auto_pp3bp4):
-    """Test _convert_score_value method with invalid string input."""
+def test_convert_score_val_invalid_string(auto_pp3bp4):
+    """Test _convert_score_val method with invalid string input."""
     with pytest.raises(AlgorithmError):
-        auto_pp3bp4._convert_score_value("invalid")
+        auto_pp3bp4._convert_score_val("invalid")
 
 
 def test_auto_pp3bp4_initialization(seqvar, variant_info):
@@ -70,9 +70,9 @@ def test_auto_pp3bp4_initialization(seqvar, variant_info):
         ("3.5;.;1.2", 3.5),
     ],
 )
-def test_convert_score_value_various(score_value, expected, auto_pp3bp4):
-    """Test _convert_score_value method with various valid and invalid inputs."""
-    result = auto_pp3bp4._convert_score_value(score_value)
+def test_convert_score_val_various(score_value, expected, auto_pp3bp4):
+    """Test _convert_score_val method with various valid and invalid inputs."""
+    result = auto_pp3bp4._convert_score_val(score_value)
     assert result == expected
 
 

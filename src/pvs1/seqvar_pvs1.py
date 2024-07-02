@@ -40,7 +40,7 @@ class SeqVarPVS1Helper:
         #: Comment to store the prediction explanation.
         self.comment: str = ""
 
-    def _calculate_altered_region(
+    def _calc_alt_reg(
         self, var_pos: int, exons: List[Exon], strand: GenomicStrand
     ) -> Tuple[int, int]:
         """
@@ -68,7 +68,7 @@ class SeqVarPVS1Helper:
         logger.debug("Altered region: {} - {}", start_pos, end_pos)
         return start_pos, end_pos
 
-    def _count_pathogenic_variants(
+    def _count_pathogenic_vars(
         self, seqvar: SeqVar, start_pos: int, end_pos: int
     ) -> Tuple[int, int]:
         """
@@ -118,7 +118,7 @@ class SeqVarPVS1Helper:
             logger.error("Failed to get variant from range. No ClinVar data.")
             raise InvalidAPIResposeError("Failed to get variant from range. No ClinVar data.")
 
-    def _find_affected_exon_position(self, var_pos: int, exons: List[Exon]) -> Tuple[int, int]:
+    def _find_aff_exon_pos(self, var_pos: int, exons: List[Exon]) -> Tuple[int, int]:
         """
         Find start and end positions of the affected exon.
 
@@ -139,7 +139,7 @@ class SeqVarPVS1Helper:
         logger.debug("Affected exon not found. Variant position: {}. Exons: {}", var_pos, exons)
         raise AlgorithmError("Affected exon not found.")
 
-    def _get_consequence(self, val: SeqVarConsequence) -> List[str]:
+    def _get_conseq(self, val: SeqVarConsequence) -> List[str]:
         """
         Get the VEP consequence of the sequence variant by value.
 
@@ -151,7 +151,7 @@ class SeqVarPVS1Helper:
         """
         return [key for key, value in SeqvarConsequenceMapping.items() if value == val]
 
-    def _count_lof_variants(self, seqvar: SeqVar, start_pos: int, end_pos: int) -> Tuple[int, int]:
+    def _count_lof_vars(self, seqvar: SeqVar, start_pos: int, end_pos: int) -> Tuple[int, int]:
         """
         Counts Loss-of-Function (LoF) variants in the specified range.
 
@@ -187,9 +187,7 @@ class SeqVarPVS1Helper:
                 if not variant.vep:
                     continue
                 for vep in variant.vep:
-                    if vep.consequence in self._get_consequence(
-                        SeqVarConsequence.NonsenseFrameshift
-                    ):
+                    if vep.consequence in self._get_conseq(SeqVarConsequence.NonsenseFrameshift):
                         lof_variants += 1
                         if not variant.alleleCounts:
                             continue
@@ -209,9 +207,7 @@ class SeqVarPVS1Helper:
                 "Failed to get variant from range. No gnomAD genomes data."
             )
 
-    def _closest_alternative_start_codon(
-        self, cds_info: Dict[str, CdsInfo], hgvs: str
-    ) -> Optional[int]:
+    def _closest_alt_start_cdn(self, cds_info: Dict[str, CdsInfo], hgvs: str) -> Optional[int]:
         """
         Calculate the closest potential start codon.
 
@@ -348,7 +344,7 @@ class SeqVarPVS1Helper:
         )
         return var_pos <= nmd_cutoff
 
-    def in_biologically_relevant_transcript(self, transcript_tags: List[str]) -> bool:
+    def in_bio_relevant_tsx(self, transcript_tags: List[str]) -> bool:
         """
         Checks if the exon with SeqVar is in a biologically relevant transcript.
 
@@ -369,7 +365,7 @@ class SeqVarPVS1Helper:
         )
         return "ManeSelect" in transcript_tags
 
-    def critical4protein_function(
+    def crit4prot_func(
         self,
         seqvar: SeqVar,
         exons: List[Exon],
@@ -417,8 +413,8 @@ class SeqVarPVS1Helper:
             )
 
         try:
-            start_pos, end_pos = self._calculate_altered_region(seqvar.pos, exons, strand)
-            pathogenic_variants, total_variants = self._count_pathogenic_variants(
+            start_pos, end_pos = self._calc_alt_reg(seqvar.pos, exons, strand)
+            pathogenic_variants, total_variants = self._count_pathogenic_vars(
                 seqvar, start_pos, end_pos
             )
             self.comment += (
@@ -446,7 +442,7 @@ class SeqVarPVS1Helper:
             logger.error("Failed to predict criticality for variant. Error: {}", e)
             raise AlgorithmError("Failed to predict criticality for variant.") from e
 
-    def lof_is_frequent_in_population(
+    def lof_freq_in_pop(
         self,
         seqvar: SeqVar,
         exons: List[Exon],
@@ -490,10 +486,8 @@ class SeqVarPVS1Helper:
             )
 
         try:
-            start_pos, end_pos = self._find_affected_exon_position(seqvar.pos, exons)
-            frequent_lof_variants, lof_variants = self._count_lof_variants(
-                seqvar, start_pos, end_pos
-            )
+            start_pos, end_pos = self._find_aff_exon_pos(seqvar.pos, exons)
+            frequent_lof_variants, lof_variants = self._count_lof_vars(seqvar, start_pos, end_pos)
             self.comment += (
                 f"Found {frequent_lof_variants} frequent LoF variants from {lof_variants} total "
                 f"LoF variants in the range {start_pos} - {end_pos}. "
@@ -519,7 +513,7 @@ class SeqVarPVS1Helper:
             logger.error("Failed to predict LoF frequency for variant. Error: {}", e)
             raise AlgorithmError("Failed to predict LoF frequency for variant.") from e
 
-    def lof_removes_more_then_10_percent_of_protein(self, prot_pos: int, prot_length: int) -> bool:
+    def lof_rm_gt_10pct_of_prot(self, prot_pos: int, prot_length: int) -> bool:
         """
         Check if the LoF variant removes more than 10% of the protein.
 
@@ -545,7 +539,7 @@ class SeqVarPVS1Helper:
         )
         return prot_pos / prot_length > 0.1
 
-    def exon_skipping_or_cryptic_ss_disruption(
+    def exon_skip_or_cryptic_ss_disrupt(
         self,
         seqvar: SeqVar,
         exons: List[Exon],
@@ -627,7 +621,7 @@ class SeqVarPVS1Helper:
             self.comment += "No cryptic splice site found. Predicted to preserve reading frame."
         return False
 
-    def alternative_start_codon(self, cds_info: Dict[str, CdsInfo], hgvs: str) -> bool:
+    def alt_start_cdn(self, cds_info: Dict[str, CdsInfo], hgvs: str) -> bool:
         """
         Check if the variant introduces an alternative start codon in other transcripts.
 
@@ -650,7 +644,7 @@ class SeqVarPVS1Helper:
                 False otherwise.
         """
         logger.debug("Checking if the variant introduces an alternative start codon.")
-        alt_start = self._closest_alternative_start_codon(cds_info, hgvs)
+        alt_start = self._closest_alt_start_cdn(cds_info, hgvs)
         if alt_start is not None:
             self.comment += (
                 f"Alternative start codon found at position {alt_start}. "
@@ -660,7 +654,7 @@ class SeqVarPVS1Helper:
         self.comment += "No alternative start codon found."
         return False
 
-    def upstream_pathogenic_variants(
+    def up_pathogenic_vars(
         self,
         seqvar: SeqVar,
         exons: List[Exon],
@@ -701,9 +695,9 @@ class SeqVarPVS1Helper:
         start_pos, end_pos = None, None
         if strand == GenomicStrand.Plus:
             start_pos = exons[0].altStartI
-            end_pos = self._closest_alternative_start_codon(cds_info, hgvs)
+            end_pos = self._closest_alt_start_cdn(cds_info, hgvs)
         elif strand == GenomicStrand.Minus:
-            start_pos = self._closest_alternative_start_codon(cds_info, hgvs)
+            start_pos = self._closest_alt_start_cdn(cds_info, hgvs)
             end_pos = exons[-1].altEndI
 
         if not start_pos or not end_pos:
@@ -714,7 +708,7 @@ class SeqVarPVS1Helper:
 
         # Fetch and count pathogenic variants in the specified range
         try:
-            pathogenic_variants, _ = self._count_pathogenic_variants(seqvar, start_pos, end_pos)
+            pathogenic_variants, _ = self._count_pathogenic_vars(seqvar, start_pos, end_pos)
             self.comment += (
                 f"Found {pathogenic_variants} pathogenic variants upstream of the closest "
                 f"in-frame start codon. The search range: {start_pos} - {end_pos} "
@@ -871,7 +865,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
 
             if self.undergo_nmd(self.tx_pos_utr, self.HGNC_id, self.strand, self.exons):
                 self.comment += " =>\n"
-                if self.in_biologically_relevant_transcript(self.transcript_tags):
+                if self.in_bio_relevant_tsx(self.transcript_tags):
                     self.prediction = PVS1Prediction.PVS1
                     self.prediction_path = PVS1PredictionSeqVarPath.NF1
                 else:
@@ -879,21 +873,19 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                     self.prediction_path = PVS1PredictionSeqVarPath.NF2
             else:
                 self.comment += " =>\n"
-                if self.critical4protein_function(self.seqvar, self.exons, self.strand):
+                if self.crit4prot_func(self.seqvar, self.exons, self.strand):
                     self.prediction = PVS1Prediction.PVS1_Strong
                     self.prediction_path = PVS1PredictionSeqVarPath.NF3
                 else:
                     self.comment += " =>\n"
-                    if self.lof_is_frequent_in_population(
+                    if self.lof_freq_in_pop(
                         self.seqvar, self.exons, self.strand
-                    ) or not self.in_biologically_relevant_transcript(self.transcript_tags):
+                    ) or not self.in_bio_relevant_tsx(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionSeqVarPath.NF4
                     else:
                         self.comment += " =>\n"
-                        if self.lof_removes_more_then_10_percent_of_protein(
-                            self.prot_pos, self.prot_length
-                        ):
+                        if self.lof_rm_gt_10pct_of_prot(self.prot_pos, self.prot_length):
                             self.prediction = PVS1Prediction.PVS1_Strong
                             self.prediction_path = PVS1PredictionSeqVarPath.NF5
                         else:
@@ -902,35 +894,33 @@ class SeqVarPVS1(SeqVarPVS1Helper):
 
         elif self._consequence == SeqVarConsequence.SpliceSites:
             self.comment = "Analysing as splice site variant. =>\n"
-            if self.exon_skipping_or_cryptic_ss_disruption(
+            if self.exon_skip_or_cryptic_ss_disrupt(
                 self.seqvar, self.exons, self.consequences, self.strand
             ) and self.undergo_nmd(self.tx_pos_utr, self.HGNC_id, self.strand, self.exons):
                 self.comment += " =>\n"
-                if self.in_biologically_relevant_transcript(self.transcript_tags):
+                if self.in_bio_relevant_tsx(self.transcript_tags):
                     self.prediction = PVS1Prediction.PVS1
                     self.prediction_path = PVS1PredictionSeqVarPath.SS1
                 else:
                     self.prediction = PVS1Prediction.NotPVS1
                     self.prediction_path = PVS1PredictionSeqVarPath.SS2
-            elif self.exon_skipping_or_cryptic_ss_disruption(
+            elif self.exon_skip_or_cryptic_ss_disrupt(
                 self.seqvar, self.exons, self.consequences, self.strand
             ) and not self.undergo_nmd(self.tx_pos_utr, self.HGNC_id, self.strand, self.exons):
                 self.comment += " =>\n"
-                if self.critical4protein_function(self.seqvar, self.exons, self.strand):
+                if self.crit4prot_func(self.seqvar, self.exons, self.strand):
                     self.prediction = PVS1Prediction.PVS1_Strong
                     self.prediction_path = PVS1PredictionSeqVarPath.SS3
                 else:
                     self.comment += " =>\n"
-                    if self.lof_is_frequent_in_population(
+                    if self.lof_freq_in_pop(
                         self.seqvar, self.exons, self.strand
-                    ) or not self.in_biologically_relevant_transcript(self.transcript_tags):
+                    ) or not self.in_bio_relevant_tsx(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionSeqVarPath.SS4
                     else:
                         self.comment += " =>\n"
-                        if self.lof_removes_more_then_10_percent_of_protein(
-                            self.prot_pos, self.prot_length
-                        ):
+                        if self.lof_rm_gt_10pct_of_prot(self.prot_pos, self.prot_length):
                             self.prediction = PVS1Prediction.PVS1_Strong
                             self.prediction_path = PVS1PredictionSeqVarPath.SS5
                         else:
@@ -938,21 +928,19 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                             self.prediction_path = PVS1PredictionSeqVarPath.SS6
             else:
                 self.comment += " =>\n"
-                if self.critical4protein_function(self.seqvar, self.exons, self.strand):
+                if self.crit4prot_func(self.seqvar, self.exons, self.strand):
                     self.prediction = PVS1Prediction.PVS1_Strong
                     self.prediction_path = PVS1PredictionSeqVarPath.SS10
                 else:
                     self.comment += " =>\n"
-                    if self.lof_is_frequent_in_population(
+                    if self.lof_freq_in_pop(
                         self.seqvar, self.exons, self.strand
-                    ) or not self.in_biologically_relevant_transcript(self.transcript_tags):
+                    ) or not self.in_bio_relevant_tsx(self.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionSeqVarPath.SS7
                     else:
                         self.comment += " =>\n"
-                        if self.lof_removes_more_then_10_percent_of_protein(
-                            self.prot_pos, self.prot_length
-                        ):
+                        if self.lof_rm_gt_10pct_of_prot(self.prot_pos, self.prot_length):
                             self.prediction = PVS1Prediction.PVS1_Strong
                             self.prediction_path = PVS1PredictionSeqVarPath.SS8
                         else:
@@ -961,12 +949,12 @@ class SeqVarPVS1(SeqVarPVS1Helper):
 
         elif self._consequence == SeqVarConsequence.InitiationCodon:
             self.comment = "Analysing as initiation codon variant. =>\n"
-            if self.alternative_start_codon(self.cds_info, self.HGVS):
+            if self.alt_start_cdn(self.cds_info, self.HGVS):
                 self.prediction = PVS1Prediction.NotPVS1
                 self.prediction_path = PVS1PredictionSeqVarPath.IC3
             else:
                 self.comment += " =>\n"
-                if self.upstream_pathogenic_variants(
+                if self.up_pathogenic_vars(
                     self.seqvar, self.exons, self.strand, self.cds_info, self.HGVS
                 ):
                     self.prediction = PVS1Prediction.PVS1_Moderate

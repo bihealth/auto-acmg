@@ -47,7 +47,7 @@ class AutoPP2BP1:
         #: Comment to store the prediction explanation.
         self.comment: str = ""
 
-    def _calculate_range(self, gene_transcript: TranscriptGene) -> Tuple[int, int]:
+    def _calc_range(self, gene_transcript: TranscriptGene) -> Tuple[int, int]:
         """
         Calculate the range for the missense variants. The range is calculated based on the CDS
         start and end positions of the gene transcript and includes the entire transcript region.
@@ -129,7 +129,7 @@ class AutoPP2BP1:
         else:
             return False
 
-    def _get_missense_variants(
+    def _get_missense_vars(
         self, seqvar: SeqVar, start_pos: int, end_pos: int
     ) -> Tuple[int, int, int]:
         """
@@ -232,10 +232,10 @@ class AutoPP2BP1:
                 self.prediction.BP1 = False
                 return self.prediction, self.comment
 
-            start_pos, end_pos = self._calculate_range(gene_transcript)
+            start_pos, end_pos = self._calc_range(gene_transcript)
             self.comment += f"Count missense variants on range: {start_pos} - {end_pos}. => \n"
             logger.debug("Count missense variants on range: {} - {}.", start_pos, end_pos)
-            pathogenic_count, benign_count, total_count = self._get_missense_variants(
+            pathogenic_count, benign_count, total_count = self._get_missense_vars(
                 self.seqvar, start_pos, end_pos
             )
             pathogenic_ratio = pathogenic_count / total_count

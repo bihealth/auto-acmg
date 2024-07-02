@@ -93,7 +93,7 @@ class AutoBA1BS1BS2PM2:
             self.comment += f"Allele frequency: {controls_af.bySex.overall.af}.\n"
             return controls_af.bySex.overall.af
 
-    def _get_allele_condition(self, seqvar: SeqVar) -> AlleleCondition:
+    def _get_allele_cond(self, seqvar: SeqVar) -> AlleleCondition:
         """
         Get the allele condition for the sequence variant.
 
@@ -160,7 +160,7 @@ class AutoBA1BS1BS2PM2:
                     clingen_dosage = AlleleCondition.Recessive
         return clingen_dosage
 
-    def _check_zygosity(self, seqvar: SeqVar, variant_data: VariantResult) -> bool:
+    def _check_zyg(self, seqvar: SeqVar, variant_data: VariantResult) -> bool:
         """
         Check the zygosity of the sequence variant.
 
@@ -189,7 +189,7 @@ class AutoBA1BS1BS2PM2:
             self.comment += "Mitochondrial variants are not considered for BS2 criteria."
             return False
 
-        allele_condition = self._get_allele_condition(seqvar)
+        allele_condition = self._get_allele_cond(seqvar)
         self.comment += f"Allele condition: {allele_condition.name}.\n"
         controls_af = self._get_control_af(variant_data)
         if not controls_af or not controls_af.bySex:
@@ -307,7 +307,7 @@ class AutoBA1BS1BS2PM2:
                 self.prediction.PM2 = True
 
             self.comment += "Check zygosity.\n"
-            if af and af >= 0.01 and self._check_zygosity(self.seqvar, self.variant_info):
+            if af and af >= 0.01 and self._check_zyg(self.seqvar, self.variant_info):
                 self.prediction.BS2 = True
 
         except AutoAcmgBaseException as e:

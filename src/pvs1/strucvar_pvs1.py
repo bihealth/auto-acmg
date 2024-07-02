@@ -19,53 +19,53 @@ class StrucVarPVS1Helper:
         self.comment: str = ""
 
     @staticmethod
-    def _full_gene_deletion() -> bool:
+    def full_gene_del() -> bool:
         """Check if the variant is a full gene deletion."""
         return False
 
     @staticmethod
-    def _deletion_disrupts_rf() -> bool:
+    def del_disrupt_rf() -> bool:
         """Check if the single or multiple exon deletion disrupts the reading frame."""
         return False
 
     @staticmethod
-    def _undergo_nmd() -> bool:
+    def dup_disrupt_rf() -> bool:
+        """Check if the duplication disrupts the reading frame."""
+        return False
+
+    @staticmethod
+    def undergo_nmd() -> bool:
         """Check if the deletion is expected to undergo NMD."""
         return False
 
     @staticmethod
-    def _in_biologically_relevant_transcript() -> bool:
+    def in_bio_relevant_tsx() -> bool:
         """Check if the deletion is in a biologically relevant transcript."""
         return False
 
     @staticmethod
-    def _critical4protein_function() -> bool:
+    def crit4prot_func() -> bool:
         """Check if the deletion is critical for protein function."""
         return False
 
     @staticmethod
-    def _lof_is_frequent_in_population() -> bool:
+    def lof_freq_in_pop() -> bool:
         """Check if loss-of-function is frequent in the population."""
         return False
 
     @staticmethod
-    def _lof_removes_more_then_10_percent_of_protein() -> bool:
+    def lof_rm_gt_10pct_of_prot() -> bool:
         """Check if the loss-of-function removes more than 10% of the protein."""
         return False
 
     @staticmethod
-    def _proven_in_tandem() -> bool:
+    def proven_in_tandem() -> bool:
         """Check if the duplication is proven in tandem."""
         return False
 
     @staticmethod
-    def _presumed_in_tandem() -> bool:
+    def presumed_in_tandem() -> bool:
         """Check if the duplication is presumed in tandem."""
-        return False
-
-    @staticmethod
-    def _duplication_disrupts_rf() -> bool:
-        """Check if the duplication disrupts the reading frame."""
         return False
 
 
@@ -89,47 +89,41 @@ class StrucVarPVS1(StrucVarPVS1Helper):
     def verify_PVS1(self):
         """Verify PVS1 prediction."""
         if self.variant.sv_type == StrucVarType.DEL:
-            if self._full_gene_deletion():
+            if self.full_gene_del():
                 self.prediction = PVS1Prediction.PVS1
                 self.prediction_path = PVS1PredictionStrucVarPath.DEL1
-            elif self._deletion_disrupts_rf() and self._undergo_nmd():
-                if self._in_biologically_relevant_transcript():
+            elif self.del_disrupt_rf() and self.undergo_nmd():
+                if self.in_bio_relevant_tsx():
                     self.prediction = PVS1Prediction.PVS1
                     self.prediction_path = PVS1PredictionStrucVarPath.DEL2
                 else:
                     self.prediction = PVS1Prediction.NotPVS1
                     self.prediction_path = PVS1PredictionStrucVarPath.DEL3
-            elif self._deletion_disrupts_rf() and not self._undergo_nmd():
-                if self._critical4protein_function():
+            elif self.del_disrupt_rf() and not self.undergo_nmd():
+                if self.crit4prot_func():
                     self.prediction = PVS1Prediction.PVS1_Strong
                     self.prediction_path = PVS1PredictionStrucVarPath.DEL4
                 else:
-                    if (
-                        self._lof_is_frequent_in_population()
-                        or not self._in_biologically_relevant_transcript()
-                    ):
+                    if self.lof_freq_in_pop() or not self.in_bio_relevant_tsx():
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionStrucVarPath.DEL5_1
                     else:
-                        if self._lof_removes_more_then_10_percent_of_protein():
+                        if self.lof_rm_gt_10pct_of_prot():
                             self.prediction = PVS1Prediction.PVS1_Strong
                             self.prediction_path = PVS1PredictionStrucVarPath.DEL6_1
                         else:
                             self.prediction = PVS1Prediction.PVS1_Moderate
                             self.prediction_path = PVS1PredictionStrucVarPath.DEL7_1
             else:
-                if self._critical4protein_function():
+                if self.crit4prot_func():
                     self.prediction = PVS1Prediction.PVS1_Strong
                     self.prediction_path = PVS1PredictionStrucVarPath.DEL8
                 else:
-                    if (
-                        self._lof_is_frequent_in_population()
-                        or not self._in_biologically_relevant_transcript()
-                    ):
+                    if self.lof_freq_in_pop() or not self.in_bio_relevant_tsx():
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionStrucVarPath.DEL5_2
                     else:
-                        if self._lof_removes_more_then_10_percent_of_protein():
+                        if self.lof_rm_gt_10pct_of_prot():
                             self.prediction = PVS1Prediction.PVS1_Strong
                             self.prediction_path = PVS1PredictionStrucVarPath.DEL6_2
                         else:
@@ -137,15 +131,15 @@ class StrucVarPVS1(StrucVarPVS1Helper):
                             self.prediction_path = PVS1PredictionStrucVarPath.DEL7_2
 
         elif self.variant.sv_type == StrucVarType.DUP:
-            if self._proven_in_tandem():
-                if self._duplication_disrupts_rf() and self._undergo_nmd():
+            if self.proven_in_tandem():
+                if self.dup_disrupt_rf() and self.undergo_nmd():
                     self.prediction = PVS1Prediction.PVS1
                     self.prediction_path = PVS1PredictionStrucVarPath.DUP1
                 else:
                     self.prediction = PVS1Prediction.NotPVS1
                     self.prediction_path = PVS1PredictionStrucVarPath.DUP2_1
-            elif self._presumed_in_tandem():
-                if self._duplication_disrupts_rf() and self._undergo_nmd():
+            elif self.presumed_in_tandem():
+                if self.dup_disrupt_rf() and self.undergo_nmd():
                     self.prediction = PVS1Prediction.PVS1_Strong
                     self.prediction_path = PVS1PredictionStrucVarPath.DUP3
                 else:
