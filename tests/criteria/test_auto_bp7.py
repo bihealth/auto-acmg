@@ -39,5 +39,5 @@ def test_check_proximity_to_pathogenic_variants(file_path, expected, seqvar, var
     range_response = AnnonarsRangeResponse.model_validate(get_json_object(file_path))
     with patch.object(AnnonarsClient, "get_variant_from_range", return_value=range_response):
         auto_bp7 = AutoBP7(seqvar=seqvar, variant_info=variant_info.result)
-        response = auto_bp7._check_proximity_to_pathogenic_variants(seqvar)
+        response = auto_bp7._check_proximity_to_pathogenic_vars(seqvar)
         assert response == expected
