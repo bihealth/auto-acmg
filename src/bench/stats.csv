@@ -1,0 +1,2 @@
+Variant,Expected Criteria,AutoACMG Criteria,AutoACMG Prediction time,AutoACMG True Positives,AutoACMG False Negatives,AutoACMG False Positives,Intervar Criteria,Intervar Prediction time,Intervar True Positives,Intervar False Negatives,Intervar False Positives,Comment,AutoACMG Full Response,Intervar Full Response
+NM_176795.4(HRAS):c.173C>T,PS1;PS4;PM1;PM2;PM6;PP2;PP3,,0,,,,,0,,,,from ClinGen https://erepo.clinicalgenome.org/evrepo/ui/classification/4fa14d9d-3bce-4dd8-affa-771b6298c4fc,,

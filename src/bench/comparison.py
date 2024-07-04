@@ -14,7 +14,7 @@ from src.defs.seqvar import SeqVar
 path_to_root = settings.PATH_TO_ROOT
 
 # Extract criteria from the csv file
-path = os.path.join(path_to_root, "tests", "assets", "e2e_variants", "comparison_criteria.csv")
+path = os.path.join(path_to_root, "src", "bench", "comparison_criteria.csv")
 print(f"Data path: {path}")
 variants = []
 with open(path, "rt") as inputf:
@@ -141,14 +141,15 @@ for var in variants:
         auto_acmg = AutoACMG(var[0], GenomeRelease.GRCh37)
         pred = auto_acmg.predict()
         end_time = time.time()
+        assert pred
         # Evaluate the model
         crit_met, tp, fn, fp = eval_autoacmg(pred, var[1])
-        record["AutoACMG Criteria"]: ";".join(crit_met)  # type: ignore
-        record["AutoACMG Prediction time"]: end_time - start_time  # type: ignore
-        record["AutoACMG True Positives"]: ";".join(tp)  # type: ignore
-        record["AutoACMG False Negatives"]: ";".join(fn)  # type: ignore
-        record["AutoACMG False Positives"]: ";".join(fp)  # type: ignore
-        record["AutoACMG Full Response"]: pred.model_dump()  # type: ignore
+        record["AutoACMG Criteria"] = ";".join(crit_met)
+        record["AutoACMG Prediction time"] = end_time - start_time
+        record["AutoACMG True Positives"] = ";".join(tp)
+        record["AutoACMG False Negatives"] = ";".join(fn)
+        record["AutoACMG False Positives"] = ";".join(fp)
+        record["AutoACMG Full Response"] = pred.model_dump()
     except Exception as e:
         print(f"Exception was raised for {var[0]} in AutoACMG:\n{e}")
 
@@ -158,16 +159,17 @@ for var in variants:
         resp = intervar_response(var[0])
         end_time = time.time()
         crit_met, tp, fn, fp = eval_intervar(resp, var[1])
-        record["Intervar Criteria"]: ";".join(crit_met)  # type: ignore
-        record["Intervar Prediction time"]: end_time - start_time  # type: ignore
-        record["Intervar True Positives"]: ";".join(tp)  # type: ignore
-        record["Intervar False Negatives"]: ";".join(fn)  # type: ignore
-        record["Intervar False Positives"]: ";".join(fp)  # type: ignore
-        record["Intervar Full Response"]: resp  # type: ignore
+        record["Intervar Criteria"] = ";".join(crit_met)
+        record["Intervar Prediction time"] = end_time - start_time
+        record["Intervar True Positives"] = ";".join(tp)
+        record["Intervar False Negatives"] = ";".join(fn)
+        record["Intervar False Positives"] = ";".join(fp)
+        record["Intervar Full Response"] = resp
     except Exception as e:
         print(f"Exception was raised for {var[0]} in InterVar:\n{e}")
 
+    print(f"Record for {var[0]}: {record}")
     stats = append_row(stats, pd.Series(record))
 
-output_path = os.path.join(path_to_root, "src", "jupyter", "stats.csv")
+output_path = os.path.join(path_to_root, "src", "bench", "stats.csv")
 stats.to_csv(output_path, index=False)
