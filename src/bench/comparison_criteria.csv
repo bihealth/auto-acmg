@@ -1,3 +1,6 @@
 variant,expected_criteria,comment
 # Tests for different criteria,,,
 NM_176795.4(HRAS):c.173C>T,PS1;PS4;PM1;PM2;PM6;PP2;PP3,from ClinGen https://erepo.clinicalgenome.org/evrepo/ui/classification/4fa14d9d-3bce-4dd8-affa-771b6298c4fc
+NM_000277.2(PAH):c.865G>C,PS1;PP3;PM2;PP4;PM3,from ClinGen https://erepo.clinicalgenome.org/evrepo/ui/classification/f6f2fb05-fc57-4712-ad91-80732194a1e8
+NM_004333.4(BRAF):c.735A>T,PS4;PS1;PP2;PP3;PM2;PM6;PM1,from ClinGen https://erepo.clinicalgenome.org/evrepo/ui/classification/fc4fa86e-060f-49dc-8ade-c259aa8ad24b
+NM_004333.4(BRAF):c.739T>C,PS3;PS1;PP2;PP3;PM2;PM6;PM1,from ClinGen https://erepo.clinicalgenome.org/evrepo/ui/classification/9a18dc91-2016-4b25-ab42-a9f679412ae8
