@@ -14,7 +14,7 @@ from src.defs.seqvar import SeqVar
 path_to_root = settings.PATH_TO_ROOT
 
 # Extract criteria from the csv file
-path = os.path.join(path_to_root, "src", "bench", "comparison_criteria.csv")
+path = os.path.join(path_to_root, "src", "bench", "comparison_criteria_custom.csv")
 print(f"Data path: {path}")
 variants = []
 with open(path, "rt") as inputf:
@@ -116,7 +116,13 @@ stats = pd.DataFrame(
     ]
 )
 
-for var in variants:
+for i, var in enumerate(variants):
+    # Save the stats every 50 variants
+    if i % 50 == 0:
+        print(f"Processed {i} variants")
+        output_path = os.path.join(path_to_root, "src", "bench", f"stats_{i}.csv")
+        stats.to_csv(output_path, index=False)
+
     record = {
         "Variant": var[0],
         "Expected Criteria": ";".join(var[1]),
@@ -168,8 +174,15 @@ for var in variants:
     except Exception as e:
         print(f"Exception was raised for {var[0]} in InterVar:\n{e}")
 
+    # Skip if both AutoACMG and Intervar did not return any criteria
+    if record["AutoACMG Criteria"] == "" and record["Intervar Criteria"] == "":
+        print(f"Skipping {var[0]}")
+        continue
+
+    # Add the record to the stats
     print(f"Record for {var[0]}: {record}")
     stats = append_row(stats, pd.Series(record))
 
+# Save the final stats
 output_path = os.path.join(path_to_root, "src", "bench", "stats.csv")
 stats.to_csv(output_path, index=False)
