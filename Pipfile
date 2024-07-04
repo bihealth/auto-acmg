@@ -16,6 +16,9 @@ typing-extensions = "*"
 msgpack = "*"
 seqrepo = "*"
 pytabix = "*"
+jupyterlab = "*"
+pandas = "*"
+pandas-stubs = "*"
 
 [dev-packages]
 mypy = "*"
