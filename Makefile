@@ -120,3 +120,16 @@ docs:
 .PHONY: ci-docs
 ci-docs:
 	make -C docs clean html 2>&1 | tee sphinx-output.log | grep -q "ERROR" && exit 1 || exit 0
+
+.PHONY: jupyternotebook
+jupyternotebook:
+	pipenv run \
+		jupyter notebook
+
+.PHONY: jupyterlab
+jupyterlab:
+	cp src/jupyter/comparison.ipynb tmp.ipynb && \
+	PYTHON=. pipenv run \
+		jupyter lab \
+			--ip=0.0.0.0 --allow-root --NotebookApp.custom_display_url=http://127.0.0.1:8888 \
+			tmp.ipynb

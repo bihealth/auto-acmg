@@ -1,0 +1,3 @@
+variant,expected_criteria,comment
+# Tests for different criteria,,,
+NM_176795.4(HRAS):c.173C>T,PS1;PS4;PM1;PM2;PM6;PP2;PP3,from ClinGen https://erepo.clinicalgenome.org/evrepo/ui/classification/4fa14d9d-3bce-4dd8-affa-771b6298c4fc
