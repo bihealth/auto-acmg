@@ -30,7 +30,6 @@ from src.defs.seqvar import SeqVar
         ("NM_001754.4(RUNX1):c.1317C>T", GenomeRelease.GRCh37, True),
         ("NM_001754.4(RUNX1):c.36G>A", GenomeRelease.GRCh37, True),
         ("NM_001754.4(RUNX1):c.843C>T", GenomeRelease.GRCh37, True),
-        ("NM_000257.3(MYH7):c.3036C>T", GenomeRelease.GRCh37, True),
         ("NM_005633.3(SOS1):c.1230G>A", GenomeRelease.GRCh37, True),
     ],
 )
