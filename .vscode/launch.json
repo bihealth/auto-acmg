@@ -8,6 +8,13 @@
           "module": "src.cli",
           "args": ["chr1:1234:A:G", "--genome-release", "grch37"],
           "console": "integratedTerminal"
-      }
+      },
+      {
+        "name": "Python: Comparison",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "src.bench.comparison_v2",
+        "console": "integratedTerminal"
+    },
   ]
 }

@@ -1,6 +1,9 @@
 /dev-*.py
 /*.ipynb
 
+# Temporary comparison results files
+src/bench/tmp/*.csv
+
 # DS_Store file
 .DS_Store
 
