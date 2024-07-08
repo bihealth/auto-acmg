@@ -19,6 +19,7 @@ pytabix = "*"
 jupyterlab = "*"
 pandas = "*"
 pandas-stubs = "*"
+matplotlib = "*"
 
 [dev-packages]
 mypy = "*"
