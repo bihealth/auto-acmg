@@ -155,25 +155,25 @@ class AutoACMGCriteria:
             logger.error("Failed to predict PM1 criteria. Error: {}", e)
 
         # PP2 and BP1
-        # try:
-        #     logger.info("Predicting PP2 and BP1 criteria.")
-        #     pp2bp1 = AutoPP2BP1(self.seqvar, variant_info.result, config=self.config)
-        #     pp2_bp1_prediction, pp2_bp1_comment = pp2bp1.predict()
-        #     if not pp2_bp1_prediction:
-        #         logger.error("Failed to predict PP2 and BP1 criteria.")
-        #         self.prediction.PP2.comment = pp2_bp1_comment
-        #     else:
-        #         self.prediction.PP2.prediction = (
-        #             ACMGPrediction.Positive if pp2_bp1_prediction.PP2 else ACMGPrediction.Negative
-        #         )
-        #         self.prediction.BP1.prediction = (
-        #             ACMGPrediction.Positive if pp2_bp1_prediction.BP1 else ACMGPrediction.Negative
-        #         )
-        #         self.prediction.PP2.comment = pp2_bp1_comment
-        #         self.prediction.BP1.comment = pp2_bp1_comment
+        try:
+            logger.info("Predicting PP2 and BP1 criteria.")
+            pp2bp1 = AutoPP2BP1(self.seqvar, variant_info.result, config=self.config)
+            pp2_bp1_prediction, pp2_bp1_comment = pp2bp1.predict()
+            if not pp2_bp1_prediction:
+                logger.error("Failed to predict PP2 and BP1 criteria.")
+                self.prediction.PP2.comment = pp2_bp1_comment
+            else:
+                self.prediction.PP2.prediction = (
+                    ACMGPrediction.Positive if pp2_bp1_prediction.PP2 else ACMGPrediction.Negative
+                )
+                self.prediction.BP1.prediction = (
+                    ACMGPrediction.Positive if pp2_bp1_prediction.BP1 else ACMGPrediction.Negative
+                )
+                self.prediction.PP2.comment = pp2_bp1_comment
+                self.prediction.BP1.comment = pp2_bp1_comment
 
-        # except AutoAcmgBaseException as e:
-        #     logger.error("Failed to predict PP2 and BP1 criteria. Error: {}", e)
+        except AutoAcmgBaseException as e:
+            logger.error("Failed to predict PP2 and BP1 criteria. Error: {}", e)
 
         # BP7
         try:

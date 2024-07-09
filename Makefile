@@ -128,7 +128,7 @@ jupyternotebook:
 
 .PHONY: jupyterlab
 jupyterlab:
-	cp src/bench/genebe.ipynb tmp.ipynb && \
+	cp src/bench/results_analysis.ipynb tmp.ipynb && \
 	PYTHON=. pipenv run \
 		jupyter lab \
 			--ip=0.0.0.0 --allow-root --NotebookApp.custom_display_url=http://127.0.0.1:8888 \
