@@ -225,20 +225,28 @@ stats = pd.DataFrame(
         "Intervar True Positives",
         "Intervar False Negatives",
         "Intervar False Positives",
+        "Genebe Criteria",
+        "Genebe Prediction time",
+        "Genebe True Positives",
+        "Genebe False Negatives",
+        "Genebe False Positives",
+        "Comment",
+        "AutoACMG Full Response",
+        "Intervar Full Response",
+        "Genebe Full Response",
     ]
 )
 
 for i, var in enumerate(variants):
     # Save the stats every 10 variants
-    if i % 10 == 0:
+    if i % 50 == 0:
         print(f"Processed {i} variants")
-        output_path = os.path.join(path_to_root, "src", "bench", "tmp", f"stats_{i}.csv")
+        output_path = os.path.join(path_to_root, "src", "bench", "tmp", f"_stats_{i}.csv")
         stats.to_csv(output_path, index=False)
 
     record = {
         "Variant": var[0],
         "Expected Criteria": ";".join(var[1]),
-        "Comment": var[2],
         "AutoACMG Criteria": "",
         "AutoACMG Prediction time": 0,
         "AutoACMG True Positives": "",
@@ -249,14 +257,15 @@ for i, var in enumerate(variants):
         "Intervar True Positives": "",
         "Intervar False Negatives": "",
         "Intervar False Positives": "",
-        "VarSome Criteria": "",
-        "VarSome Prediction time": 0,
-        "VarSome True Positives": "",
-        "VarSome False Negatives": "",
-        "VarSome False Positives": "",
+        "Genebe Criteria": "",
+        "Genebe Prediction time": 0,
+        "Genebe True Positives": "",
+        "Genebe False Negatives": "",
+        "Genebe False Positives": "",
+        "Comment": var[2],
         "AutoACMG Full Response": "",
         "Intervar Full Response": "",
-        "VarSome Full Response": "",
+        "Genebe Full Response": "",
     }
 
     # AutoACMG
@@ -321,5 +330,5 @@ for i, var in enumerate(variants):
     stats = append_row(stats, pd.Series(record))
 
 # Save the final stats
-output_path = os.path.join(path_to_root, "src", "bench", "stats.csv")
+output_path = os.path.join(path_to_root, "src", "bench", "_stats.csv")
 stats.to_csv(output_path, index=False)
