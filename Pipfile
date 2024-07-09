@@ -20,6 +20,9 @@ jupyterlab = "*"
 pandas = "*"
 pandas-stubs = "*"
 matplotlib = "*"
+genebe = "*"
+cyvcf2 = "*"
+mmh3 = "*"
 
 [dev-packages]
 mypy = "*"
