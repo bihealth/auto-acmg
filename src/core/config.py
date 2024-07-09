@@ -26,6 +26,12 @@ class Settings(BaseSettings):
     #: Path to seqrepo data directory
     SEQREPO_DATA_DIR: str = ""
 
+    #: API key for genebe
+    GENEBE_API_KEY: str = ""
+
+    #: Username for genebe
+    GENEBE_USERNAME: str = ""
+
     #: Path to the root directory
     @property
     def PATH_TO_ROOT(self) -> str:
