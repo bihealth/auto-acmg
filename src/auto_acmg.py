@@ -164,9 +164,9 @@ class AutoACMG:
                         self.prediction.pvs1.description = comment
                     else:
                         self.prediction.pvs1.prediction = (
-                            AutoACMGPrediction.Positive
+                            AutoACMGPrediction.Met
                             if seqvar_prediction in PVS1_POSITIVE_SEQVAR_PREDICTIONS
-                            else AutoACMGPrediction.Negative
+                            else AutoACMGPrediction.Unmet
                         )
                         self.prediction.pvs1.summary = (
                             f"PVS1 strength: {seqvar_prediction.name}. "
@@ -192,9 +192,9 @@ class AutoACMG:
                             getattr(self.prediction, criteria.lower()),
                             "prediction",
                             (
-                                AutoACMGPrediction.Positive
-                                if prediction["prediction"] == ACMGPrediction.Positive
-                                else AutoACMGPrediction.Negative
+                                AutoACMGPrediction.Met
+                                if prediction["prediction"] == ACMGPrediction.Met
+                                else AutoACMGPrediction.Unmet
                             ),
                         )
                         setattr(

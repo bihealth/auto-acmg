@@ -155,8 +155,8 @@ class ACMGPrediction(AutoAcmgBaseEnum):
     """ACMG prediction enumeration."""
 
     NotSet = auto()
-    Positive = auto()
-    Negative = auto()
+    Met = auto()
+    Unmet = auto()
 
 
 class ACMGCriteria(BaseModel):
@@ -191,8 +191,8 @@ class AutoACMGPrediction(AutoAcmgBaseEnum):
     NotApplicable = auto()
     NotAutomated = auto()
     Depricated = auto()
-    Positive = auto()
-    Negative = auto()
+    Met = auto()
+    Unmet = auto()
 
 
 class AutoACMGCriteria(BaseModel):

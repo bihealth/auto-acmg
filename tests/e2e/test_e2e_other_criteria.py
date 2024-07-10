@@ -43,11 +43,11 @@ def acmg_criteria_test_helper(
     for crit_name, crit in prediction.model_dump().items():
         if crit_name in expected_prediction:
             assert (
-                crit["prediction"] == ACMGPrediction.Positive
+                crit["prediction"] == ACMGPrediction.Met
             ), f"Failed for {variant_name}: {comment}"
         else:
             assert (
-                crit["prediction"] != ACMGPrediction.Positive
+                crit["prediction"] != ACMGPrediction.Met
             ), f"Failed for {variant_name}: {comment}"
 
 
