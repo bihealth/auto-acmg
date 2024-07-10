@@ -40,6 +40,8 @@ pandas = "*"
 pandas-stubs = "*"
 matplotlib = "*"
 scikit-learn = "*"
+scipy = "*"
+seaborn = "*"
 
 [requires]
 python_version = "3.12"
