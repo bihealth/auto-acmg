@@ -32,7 +32,7 @@ print(f"Number of variants: {len(variants)}")
 def eval_autoacmg(pred, expected):
     crit_met = []
     for crit in pred.model_dump().values():
-        if crit["prediction"] == AutoACMGPrediction.Positive:
+        if crit["prediction"] == AutoACMGPrediction.Met:
             crit_met.append(crit["name"])
     tp = list(set(expected) & set(crit_met))
     fn = list(set(expected) - set(crit_met))
