@@ -100,9 +100,10 @@ def intervar_response(variant: str):
 
     url = (
         f"http://wintervar.wglab.org/api_new.php?"
-        f"queryType=position&chr={chromosome}&pos={position}"
+        f"queryType={position}&chr={chromosome}&pos={position}"
         f"&ref={reference}&alt={alternative}&build=hg19"
     )
+    print("Requesting:", url)
     backend_resp = requests.get(url)
     backend_resp.raise_for_status()
     return backend_resp.json()
@@ -132,6 +133,7 @@ def genebe_response(variant: str):
         f"chr={chromosome}&pos={position}"
         f"&ref={reference}&alt={alternative}&genome=hg38"
     )
+    print("Requesting:", url)
     backend_resp = requests.get(url)
     backend_resp.raise_for_status()
     return backend_resp.json()
@@ -237,7 +239,7 @@ stats = pd.DataFrame(
     ]
 )
 
-for i, var in enumerate(variants):
+for i, var in enumerate(variants[-3:]):
     # Save the stats every 10 variants
     if i % 50 == 0:
         print(f"Processed {i} variants")
