@@ -39,6 +39,7 @@ jupyterlab = "*"
 pandas = "*"
 pandas-stubs = "*"
 matplotlib = "*"
+scikit-learn = "*"
 
 [requires]
 python_version = "3.12"
