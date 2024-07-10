@@ -110,24 +110,16 @@ class AutoACMGCriteria:
                 self.prediction.PM2.comment = ba1bs1bs2pm2_comment
             else:
                 self.prediction.BA1.prediction = (
-                    ACMGPrediction.Met
-                    if ba1bs1bs2pm2_prediction.BA1
-                    else ACMGPrediction.Unmet
+                    ACMGPrediction.Met if ba1bs1bs2pm2_prediction.BA1 else ACMGPrediction.Unmet
                 )
                 self.prediction.BS1.prediction = (
-                    ACMGPrediction.Met
-                    if ba1bs1bs2pm2_prediction.BS1
-                    else ACMGPrediction.Unmet
+                    ACMGPrediction.Met if ba1bs1bs2pm2_prediction.BS1 else ACMGPrediction.Unmet
                 )
                 self.prediction.BS2.prediction = (
-                    ACMGPrediction.Met
-                    if ba1bs1bs2pm2_prediction.BS2
-                    else ACMGPrediction.Unmet
+                    ACMGPrediction.Met if ba1bs1bs2pm2_prediction.BS2 else ACMGPrediction.Unmet
                 )
                 self.prediction.PM2.prediction = (
-                    ACMGPrediction.Met
-                    if ba1bs1bs2pm2_prediction.PM2
-                    else ACMGPrediction.Unmet
+                    ACMGPrediction.Met if ba1bs1bs2pm2_prediction.PM2 else ACMGPrediction.Unmet
                 )
                 self.prediction.BA1.comment = ba1bs1bs2pm2_comment
                 self.prediction.BS1.comment = ba1bs1bs2pm2_comment
