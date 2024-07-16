@@ -15,8 +15,8 @@ from src.defs.seqvar import SeqVar
 from src.utils import SeqVarTranscriptsHelper
 
 
-class AutoBA1BS1BS2PM2:
-    """Predicts BA1, BS1, BS2, PM2 criteria for sequence variants."""
+class AutoPM2BA1BS1BS2:
+    """Predicts PM2, BA1, BS1, BS2 criteria for sequence variants."""
 
     def __init__(
         self,
@@ -271,10 +271,12 @@ class AutoBA1BS1BS2PM2:
 
     def predict(self) -> Tuple[Optional[BA1BS1BS2PM2], str]:
         """
-        Predicts the BA1, BS1, BS2, PM2 criteria for the sequence variant.
+        Predicts the PM2, BA1, BS1, BS2 criteria for the sequence variant.
 
         Note:
             Rules:
+            PM2: Absent from controls allele frequency data.
+
             BA1: Allele frequency is >5%.
 
             BS1: Allele frequency is between 1% and 5%.
@@ -282,8 +284,6 @@ class AutoBA1BS1BS2PM2:
             BS2: Observed in a healthy adult individual for a recessive (homozygous), dominant
             (heterozygous), or X-linked (hemizygous) disorder, with full penetrance expected at an
             early age.
-
-            PM2: Absent from controls allele frequency data.
 
         Returns:
             BA1BS1BS2PM2: The prediction result.
@@ -311,8 +311,8 @@ class AutoBA1BS1BS2PM2:
                 self.prediction.BS2 = True
 
         except AutoAcmgBaseException as e:
-            logger.error("Error occurred during BA1, BS1, BS2, PM2 prediction. Error: {}", e)
-            self.comment += f"An error occurred while predicting BA1, BS1, BS2, PM2 criteria: {e}"
+            logger.error("Error occurred during PM2, BA1, BS1, BS2 prediction. Error: {}", e)
+            self.comment += f"An error occurred while predicting PM2, BA1, BS1, BS2 criteria: {e}"
             self.prediction = None
 
         # Return the prediction result and explanation
