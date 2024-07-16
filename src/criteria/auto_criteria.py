@@ -4,9 +4,9 @@ from loguru import logger
 
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config
-from src.criteria.auto_ba1_bs1_bs2_pm2 import AutoBA1BS1BS2PM2
 from src.criteria.auto_bp7 import AutoBP7
 from src.criteria.auto_pm1 import AutoPM1
+from src.criteria.auto_pm2_ba1_bs1_bs2 import AutoPM2BA1BS1BS2
 from src.criteria.auto_pm4_bp3 import AutoPM4BP3
 from src.criteria.auto_pp2_bp1 import AutoPP2BP1
 from src.criteria.auto_pp3_bp4 import AutoPP3BP4
@@ -100,7 +100,7 @@ class AutoACMGCriteria:
         # BA1, BS1, BS2, PM2
         try:
             logger.info("Predicting BA1, BS1, BS2, and PM2 criteria.")
-            ba1bs1bs2pm2 = AutoBA1BS1BS2PM2(self.seqvar, variant_info.result, config=self.config)
+            ba1bs1bs2pm2 = AutoPM2BA1BS1BS2(self.seqvar, variant_info.result, config=self.config)
             ba1bs1bs2pm2_prediction, ba1bs1bs2pm2_comment = ba1bs1bs2pm2.predict()
             if not ba1bs1bs2pm2_prediction:
                 logger.error("Failed to predict BA1, BS1, BS2, and PM2 criteria.")
