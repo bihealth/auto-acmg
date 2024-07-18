@@ -1,0 +1,194 @@
+{
+   "pvs1":{
+      "name":"PVS1",
+      "prediction":"<AutoACMGPrediction.NotSet":1>,
+      "summary":"",
+      "description":"PVS1 prediction failed."
+   },
+   "ps1":{
+      "name":"PS1",
+      "prediction":"<AutoACMGPrediction.Negative":6>,
+      "summary":"Error occurred during PS1/PM5 prediction. Error: No valid primary variant information for PS1/PM5 prediction.",
+      "description":""
+   },
+   "ps2":{
+      "name":"PS2",
+      "prediction":"<AutoACMGPrediction.NotAutomated":3>,
+      "summary":"",
+      "description":""
+   },
+   "ps3":{
+      "name":"PS3",
+      "prediction":"<AutoACMGPrediction.NotAutomated":3>,
+      "summary":"",
+      "description":""
+   },
+   "ps4":{
+      "name":"PS4",
+      "prediction":"<AutoACMGPrediction.NotAutomated":3>,
+      "summary":"",
+      "description":""
+   },
+   "pm1":{
+      "name":"PM1",
+      "prediction":"<AutoACMGPrediction.Negative":6>,
+      "summary":"Counting pathogenic variants in the range of 50bp.The range is 23892794 - 23892844. =>
+                Found 0 Pathogenic variants. =>
+                Found less than 4 pathogenic variants.Checking if the variant is in a UniProt domain. =>
+                Check if the variant is in a UniProt domain.
+                Counting pathogenic variants in the UniProt domain. The range is 23892755 - 23892932. =>
+                Found less than 2 pathogenic variants in the UniProt domain. PM1 is not met.",
+      "description":""
+   },
+   "pm2":{
+      "name":"PM2",
+      "prediction":"<AutoACMGPrediction.Positive":5>,
+      "summary":"Check allele frequency for the control population.
+      Allele frequency: 0.001873719971626997.Allele frequency <= 1%: PM2 is met.Check zygosity.",
+      "description":""
+   },
+   "pm3":{
+      "name":"PM3",
+      "prediction":"<AutoACMGPrediction.NotAutomated":3>,
+      "summary":"",
+      "description":""
+   },
+   "pm4":{
+      "name":"PM4",
+      "prediction":"<AutoACMGPrediction.Negative":6>,
+      "summary":"Check consequences of the variant for PM4.
+                Variant consequence is not indel or stop-loss. PM4 and BP3 are not met.Check if the variant is in a repeat region.
+                Variant is in a repeat region.",
+      "description":""
+   },
+   "pm5":{
+      "name":"PM5",
+      "prediction":"<AutoACMGPrediction.Negative":6>,
+      "summary":"Error occurred during PS1/PM5 prediction. Error: No valid primary variant information for PS1/PM5 prediction.",
+      "description":""
+   },
+   "pm6":{
+      "name":"PM6",
+      "prediction":"<AutoACMGPrediction.NotAutomated":3>,
+      "summary":"",
+      "description":""
+   },
+   "pp1":{
+      "name":"PP1",
+      "prediction":"<AutoACMGPrediction.NotAutomated":3>,
+      "summary":"",
+      "description":""
+   },
+   "pp2":{
+      "name":"PP2",
+      "prediction":"<AutoACMGPrediction.Negative":6>,
+      "summary":"Fetching transcript data. =>
+            Error occurred during PP2 and BP1 prediction. Error: Transcript data is not fully set. Cannot initialize the PVS1 class.",
+      "description":""
+   },
+   "pp3":{
+      "name":"PP3",
+      "prediction":"<AutoACMGPrediction.Negative":6>,
+      "summary":"Checking Scores. =>
+            An error occurred during prediction. Error: Missing dbNSFP data.",
+      "description":""
+   },
+   "pp4":{
+      "name":"PP4",
+      "prediction":"<AutoACMGPrediction.NotAutomated":3>,
+      "summary":"",
+      "description":""
+   },
+   "pp5":{
+      "name":"PP5",
+      "prediction":"<AutoACMGPrediction.Depricated":4>,
+      "summary":"",
+      "description":""
+   },
+   "ba1":{
+      "name":"BA1",
+      "prediction":"<AutoACMGPrediction.Negative":6>,
+      "summary":"Check allele frequency for the control population.
+            Allele frequency: 0.001873719971626997.
+            Allele frequency <= 1%: PM2 is met.Check zygosity.",
+      "description":""
+   },
+   "bs1":{
+      "name":"BS1",
+      "prediction":"<AutoACMGPrediction.Negative":6>,
+      "summary":"Check allele frequency for the control population.
+            Allele frequency: 0.001873719971626997.
+            Allele frequency <= 1%: PM2 is met.Check zygosity.",
+      "description":""
+   },
+   "bs2":{
+      "name":"BS2",
+      "prediction":"<AutoACMGPrediction.Negative":6>,
+      "summary":"Check allele frequency for the control population.
+            Allele frequency: 0.001873719971626997.
+            Allele frequency <= 1%: PM2 is met.Check zygosity.",
+      "description":""
+   },
+   "bs3":{
+      "name":"BS3",
+      "prediction":"<AutoACMGPrediction.NotAutomated":3>,
+      "summary":"",
+      "description":""
+   },
+   "bs4":{
+      "name":"BS4",
+      "prediction":"<AutoACMGPrediction.NotAutomated":3>,
+      "summary":"",
+      "description":""
+   },
+   "bp1":{
+      "name":"BP1",
+      "prediction":"<AutoACMGPrediction.Negative":6>,
+      "summary":"",
+      "description":""
+   },
+   "bp2":{
+      "name":"BP2",
+      "prediction":"<AutoACMGPrediction.NotAutomated":3>,
+      "summary":"",
+      "description":""
+   },
+   "bp3":{
+      "name":"BP3",
+      "prediction":"<AutoACMGPrediction.Negative":6>,
+      "summary":"Check consequences of the variant for PM4.
+            Variant consequence is not indel or stop-loss. PM4 and BP3 are not met.Check if the variant is in a repeat region.
+            Variant is in a repeat region.",
+      "description":""
+   },
+   "bp4":{
+      "name":"BP4",
+      "prediction":"<AutoACMGPrediction.Negative":6>,
+      "summary":"Checking Scores. =>
+            An error occurred during prediction. Error: Missing dbNSFP data.",
+      "description":""
+   },
+   "bp5":{
+      "name":"BP5",
+      "prediction":"<AutoACMGPrediction.NotAutomated":3>,
+      "summary":"",
+      "description":""
+   },
+   "bp6":{
+      "name":"BP6",
+      "prediction":"<AutoACMGPrediction.Depricated":4>,
+      "summary":"",
+      "description":""
+   },
+   "bp7":{
+      "name":"BP7",
+      "prediction":"<AutoACMGPrediction.Positive":5>,
+      "summary":"Checking for pathogenic variants in the range of 2bp. =>
+            No pathogenic variants found in the range of 2bp. =>
+            Checking for proximity to splice site. =>
+            Variant is not within 2bp of a splice site. =>
+            Predicting splice site alterations using SpliceAI. =>
+            Variant is not a splice site alteration. BP7 is met.",
+      "description":""
+   }
+}
