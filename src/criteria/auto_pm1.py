@@ -66,10 +66,10 @@ class AutoPM1:
             raise AlgorithmError("End position is less than the start position.")
 
         response = self.annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
-        if response and response.result.clinvar:
+        if response and response.clinvar:
             pathogenic_variants = [
                 v
-                for v in response.result.clinvar
+                for v in response.clinvar
                 if v.records
                 and v.records[0].classifications
                 and v.records[0].classifications.germlineClassification
@@ -79,7 +79,7 @@ class AutoPM1:
                     "Likely pathogenic",
                 ]
             ]
-            return len(pathogenic_variants), len(response.result.clinvar)
+            return len(pathogenic_variants), len(response.clinvar)
         else:
             logger.error("Failed to get variant from range. No ClinVar data.")
             raise InvalidAPIResposeError("Failed to get variant from range. No ClinVar data.")

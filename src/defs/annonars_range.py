@@ -207,3 +207,8 @@ class AnnonarsRangeResponse(BaseModel):
     server_version: str
     query: RangeQuery
     result: AnnonarsRangeResult
+
+
+class AnnonarsCustomRangeResult(BaseModel):
+    gnomad_genomes: Optional[List[GnomadGenome]] = None
+    clinvar: Optional[List[ClinvarItem]] = None

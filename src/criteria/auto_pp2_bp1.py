@@ -158,12 +158,12 @@ class AutoPP2BP1:
             raise AlgorithmError("End position is less than the start position.")
 
         response = self.annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
-        if response and response.result.clinvar:
+        if response and response.clinvar:
             pathogenic_variants = []
             benign_variants = []
             missense_variants = []
 
-            for v in response.result.clinvar:
+            for v in response.clinvar:
                 if (
                     v.records
                     and v.records[0].classifications

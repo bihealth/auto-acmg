@@ -73,10 +73,10 @@ class AutoBP7:
         response = self.annonars_client.get_variant_from_range(
             seqvar, seqvar.pos - 2, seqvar.pos + 2
         )
-        if response and response.result.clinvar:
+        if response and response.clinvar:
             pathogenic_variants = [
                 v
-                for v in response.result.clinvar
+                for v in response.clinvar
                 if v.records
                 and v.records[0].classifications
                 and v.records[0].classifications.germlineClassification

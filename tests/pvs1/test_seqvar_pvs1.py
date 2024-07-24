@@ -148,7 +148,7 @@ def test_calc_alt_reg_real_data(gene_transcripts_file, transcript_id, var_pos, e
 )
 def test_count_pathogenic_vars(annonars_range_response, expected_result, seqvar):
     """Test the _count_pathogenic_vars method."""
-    with patch.object(AnnonarsClient, "get_variant_from_range") as mock_get_variant_from_range:
+    with patch.object(AnnonarsClient, "_get_variant_from_range") as mock_get_variant_from_range:
         mock_get_variant_from_range.return_value = AnnonarsRangeResponse.model_validate(
             get_json_object(annonars_range_response)
         )
@@ -221,7 +221,7 @@ def test_get_conseq(value, expected_result):
 )
 def test_count_lof_vars(annonars_range_response, expected_result, seqvar):
     """Test the _count_lof_vars method."""
-    with patch.object(AnnonarsClient, "get_variant_from_range") as mock_get_variant_from_range:
+    with patch.object(AnnonarsClient, "_get_variant_from_range") as mock_get_variant_from_range:
         mock_get_variant_from_range.return_value = AnnonarsRangeResponse.model_validate(
             get_json_object(annonars_range_response)
         )
