@@ -1,7 +1,7 @@
 """Implementation of sequence variant class."""
 
 import re
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Optional
 
 from src.api.dotty import DottyClient
 from src.core.config import Config
