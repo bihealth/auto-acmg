@@ -5,7 +5,7 @@
 src/bench/tmp/*.csv
 
 # API cache
-cache/*.json
+cache/**
 
 # DS_Store file
 .DS_Store
