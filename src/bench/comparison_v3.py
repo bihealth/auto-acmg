@@ -241,7 +241,7 @@ stats = pd.DataFrame(
 
 for i, var in enumerate(variants):
     # Save the stats every 50 variants
-    if i % 50 == 0:
+    if i % 50 == 0 and i > 0:
         print(f"Processed {i} variants")
         output_path = os.path.join(path_to_root, "src", "bench", "tmp", f"_stats_{i}.csv")
         stats.to_csv(output_path, index=False)
