@@ -4,7 +4,7 @@ import os
 import time
 
 import pandas as pd
-import requests
+import httpx
 
 from src.auto_acmg import AutoACMG, AutoACMGPrediction
 from src.core.config import settings
@@ -81,7 +81,7 @@ def append_row(df, row):
 def intervar_response(variant: str):
     """
     Implement searching for ACMG classification for SNVs and indels.
-    Proxy requests to the `WinterVar <http://wintervar.wglab.org/>`_ backend.
+    Proxy httpx to the `WinterVar <http://wintervar.wglab.org/>`_ backend.
 
     :param variant: request
     :return: ACMG classification
@@ -104,7 +104,7 @@ def intervar_response(variant: str):
         f"&ref={reference}&alt={alternative}&build=hg19"
     )
     print("Requesting:", url)
-    backend_resp = requests.get(url)
+    backend_resp = httpx.get(url)
     backend_resp.raise_for_status()
     return backend_resp.json()
 
@@ -134,7 +134,7 @@ def genebe_response(variant: str):
         f"&ref={reference}&alt={alternative}&genome=hg38"
     )
     print("Requesting:", url)
-    backend_resp = requests.get(url)
+    backend_resp = httpx.get(url)
     backend_resp.raise_for_status()
     return backend_resp.json()
 

@@ -3,7 +3,7 @@ import os
 import time
 
 import pandas as pd
-import requests
+import httpx
 
 from src.auto_acmg import AutoACMG, AutoACMGPrediction
 from src.core.config import settings
@@ -64,7 +64,7 @@ def eval_intervar(pred, expected):
 def intervar_response(variant: str):
     """
     Implement searching for ACMG classification for SNVs and indels.
-    Proxy requests to the `WinterVar <http://wintervar.wglab.org/>`_ backend.
+    Proxy httpx to the `WinterVar <http://wintervar.wglab.org/>`_ backend.
 
     :param variant: request
     :return: ACMG classification
@@ -86,7 +86,7 @@ def intervar_response(variant: str):
         f"queryType=position&chr={chromosome}&pos={position}"
         f"&ref={reference}&alt={alternative}&build=hg19"
     )
-    backend_resp = requests.get(url)
+    backend_resp = httpx.get(url)
     backend_resp.raise_for_status()
     return backend_resp.json()
 
