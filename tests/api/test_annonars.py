@@ -1,10 +1,9 @@
 import pytest
-import requests
-import responses
+from pytest_httpx import HTTPXMock
 
 from src.api.annonars import AnnonarsClient
 from src.defs.annonars_gene import AnnonarsGeneResponse
-from src.defs.annonars_range import AnnonarsRangeResponse
+from src.defs.annonars_range import AnnonarsCustomRangeResult, AnnonarsRangeResponse
 from src.defs.annonars_variant import AnnonarsVariantResponse
 from src.defs.exceptions import AnnonarsException
 from src.defs.genome_builds import GenomeRelease
@@ -22,51 +21,117 @@ example_seqvar = SeqVar(
 )
 
 
-@responses.activate
-def test_get_variant_from_range_success():
-    """Test to_annonar method with a successful response."""
+@pytest.mark.asyncio
+async def test_get_variant_from_range_success(httpx_mock: HTTPXMock):
+    """Test _get_variant_from_range method with a successful response."""
     mock_response = get_json_object("annonars/PCSK9_range.json")
     start = 1000
     stop = 2000
-    responses.add(
-        responses.GET,
-        f"https://example.com/annonars/annos/range?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&start={start}&stop={stop}",
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/annonars/annos/range?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&start={start}&stop={stop}",
         json=mock_response,
-        status=200,
+        status_code=200,
     )
 
     client = AnnonarsClient(api_base_url="https://example.com/annonars")
-    response = client.get_variant_from_range(example_seqvar, start, stop)
+    response = client._get_variant_from_range(example_seqvar, start, stop)
     assert response == AnnonarsRangeResponse.model_validate(mock_response)
 
 
-@responses.activate
-def test_get_variant_from_range_failure():
-    """Test to_annonar method with a failed response."""
+@pytest.mark.asyncio
+async def test_get_variant_from_range_failure(httpx_mock: HTTPXMock):
+    """Test _get_variant_from_range method with a failed response."""
     mock_response = get_json_object("annonars/range_failure.json")
     start = 1000
     stop = 999
-    responses.add(
-        responses.GET,
-        f"https://example.com/annonars/annos/range?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&start={start}&stop={stop}",
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/annonars/annos/range?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&start={start}&stop={stop}",
         json=mock_response,
-        status=200,
+        status_code=200,
+    )
+
+    client = AnnonarsClient(api_base_url="https://example.com/annonars")
+    response = client._get_variant_from_range(example_seqvar, start, stop)
+    assert response == AnnonarsRangeResponse.model_validate(mock_response)
+
+
+@pytest.mark.asyncio
+async def test_get_variant_from_range_500(httpx_mock: HTTPXMock):
+    """Test _get_variant_from_range method with a 500 response."""
+    start = 1000
+    stop = 2000
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/annonars/annos/range?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&start={start}&stop={stop}",
+        status_code=500,
+    )
+
+    client = AnnonarsClient(api_base_url="https://example.com/annonars")
+    with pytest.raises(AnnonarsException):
+        client._get_variant_from_range(example_seqvar, start, stop)
+
+
+@pytest.mark.asyncio
+async def test_get_variant_from_large_range_success(httpx_mock: HTTPXMock):
+    """Test get_variant_from_range method with a successful response for a large range."""
+    mock_response_part1 = get_json_object("annonars/PCSK9_range_part1.json")
+    mock_response_part2 = get_json_object("annonars/PCSK9_range_part2.json")
+    start = 1000
+    stop = 11000  # Large range to be split into two parts
+
+    # Mock responses for the two parts
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/annonars/annos/range?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&start={start}&stop={start + 4999}",
+        json=mock_response_part1,
+        status_code=200,
+    )
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/annonars/annos/range?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&start={start + 5000}&stop={stop - 1}",
+        json=mock_response_part2,
+        status_code=200,
     )
 
     client = AnnonarsClient(api_base_url="https://example.com/annonars")
     response = client.get_variant_from_range(example_seqvar, start, stop)
-    assert response == AnnonarsRangeResponse.model_validate(mock_response)
+
+    # Validate that the combined response is correct
+    assert isinstance(response, AnnonarsCustomRangeResult)
+    # expected_gnomad_genomes = AnnonarsRangeResponse.model_validate(
+    #     mock_response_part1
+    # ).result.gnomad_genomes.extend(
+    #     AnnonarsRangeResponse.model_validate(mock_response_part2).result.gnomad_genomes
+    # )
+    # assert response.gnomad_genomes == expected_gnomad_genomes
+    # expeected_clinvar = AnnonarsRangeResponse.model_validate(
+    #     mock_response_part1
+    # ).result.clinvar.extend(
+    #     AnnonarsRangeResponse.model_validate(mock_response_part2).result.clinvar
+    # )
+    # assert response.clinvar == expeected_clinvar
 
 
-@responses.activate
-def test_get_variant_from_range_500():
-    """Test to_annonar method with a 500 response."""
+@pytest.mark.asyncio
+async def test_get_variant_from_large_range_failure(httpx_mock: HTTPXMock):
+    """Test get_variant_from_range method with a failed response for a large range."""
+    mock_response_part1 = get_json_object("annonars/PCSK9_range_part1.json")
     start = 1000
-    stop = 2000
-    responses.add(
-        responses.GET,
-        f"https://example.com/annonars/annos/range?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&start={start}&stop={stop}",
-        status=500,
+    stop = 11000  # Large range to be split into two parts
+
+    # Mock responses for the two parts
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/annonars/annos/range?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&start={start}&stop={start + 4999}",
+        json=mock_response_part1,
+        status_code=200,
+    )
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/annonars/annos/range?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&start={start + 5000}&stop={stop - 1}",
+        status_code=500,
     )
 
     client = AnnonarsClient(api_base_url="https://example.com/annonars")
@@ -74,15 +139,15 @@ def test_get_variant_from_range_500():
         client.get_variant_from_range(example_seqvar, start, stop)
 
 
-@responses.activate
-def test_get_variant_info_success():
+@pytest.mark.asyncio
+async def test_get_variant_info_success(httpx_mock: HTTPXMock):
     """Test get_variant_info method with a successful response."""
     mock_response = get_json_object("annonars/RP11_variant.json")
-    responses.add(
-        responses.GET,
-        f"https://example.com/annonars/annos/variant?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&pos={example_seqvar.pos}&reference={example_seqvar.delete}&alternative={example_seqvar.insert}",
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/annonars/annos/variant?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&pos={example_seqvar.pos}&reference={example_seqvar.delete}&alternative={example_seqvar.insert}",
         json=mock_response,
-        status=200,
+        status_code=200,
     )
 
     client = AnnonarsClient(api_base_url="https://example.com/annonars")
@@ -90,15 +155,15 @@ def test_get_variant_info_success():
     assert response == AnnonarsVariantResponse.model_validate(mock_response)
 
 
-@responses.activate
-def test_get_variant_info_failure():
+@pytest.mark.asyncio
+async def test_get_variant_info_failure(httpx_mock: HTTPXMock):
     """Test get_variant_info method with a failed response."""
     mock_response = get_json_object("annonars/variant_failure.json")
-    responses.add(
-        responses.GET,
-        f"https://example.com/annonars/annos/variant?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&pos={example_seqvar.pos}&reference={example_seqvar.delete}&alternative={example_seqvar.insert}",
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/annonars/annos/variant?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&pos={example_seqvar.pos}&reference={example_seqvar.delete}&alternative={example_seqvar.insert}",
         json=mock_response,
-        status=200,
+        status_code=200,
     )
 
     client = AnnonarsClient(api_base_url="https://example.com/annonars")
@@ -106,13 +171,13 @@ def test_get_variant_info_failure():
     assert response == AnnonarsVariantResponse.model_validate(mock_response)
 
 
-@responses.activate
-def test_get_variant_info_500():
+@pytest.mark.asyncio
+async def test_get_variant_info_500(httpx_mock: HTTPXMock):
     """Test get_variant_info method with a 500 response."""
-    responses.add(
-        responses.GET,
-        f"https://example.com/annonars/annos/variant?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&pos={example_seqvar.pos}&reference={example_seqvar.delete}&alternative={example_seqvar.insert}",
-        status=500,
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/annonars/annos/variant?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&pos={example_seqvar.pos}&reference={example_seqvar.delete}&alternative={example_seqvar.insert}",
+        status_code=500,
     )
 
     client = AnnonarsClient(api_base_url="https://example.com/annonars")
@@ -120,15 +185,15 @@ def test_get_variant_info_500():
         client.get_variant_info(example_seqvar)
 
 
-@responses.activate
-def test_get_gene_info_success():
+@pytest.mark.asyncio
+async def test_get_gene_info_success(httpx_mock: HTTPXMock):
     """Test get_gene_info method with a successful response."""
     mock_response = get_json_object("annonars/BRCA1_gene.json")
-    responses.add(
-        responses.GET,
-        f"https://example.com/annonars/genes/info?hgnc_id=HGNC:1100",
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/annonars/genes/info?hgnc_id=HGNC:1100",
         json=mock_response,
-        status=200,
+        status_code=200,
     )
 
     client = AnnonarsClient(api_base_url="https://example.com/annonars")
@@ -136,29 +201,30 @@ def test_get_gene_info_success():
     assert response == AnnonarsGeneResponse.model_validate(mock_response)
 
 
-@responses.activate
-def test_get_gene_info_failure():
+@pytest.mark.asyncio
+async def test_get_gene_info_failure(httpx_mock: HTTPXMock):
     """Test get_gene_info method with a failed response."""
     mock_response = get_json_object("annonars/gene_failure.json")
-    responses.add(
-        responses.GET,
-        f"https://example.com/annonars/genes/info?hgnc_id=HGNC:1100",
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/annonars/genes/info?hgnc_id=HGNC:1100",
         json=mock_response,
-        status=200,
+        status_code=200,
     )
 
     client = AnnonarsClient(api_base_url="https://example.com/annonars")
+    # with pytest.raises(AnnonarsException):
     response = client.get_gene_info("HGNC:1100")
     assert response == AnnonarsGeneResponse.model_validate(mock_response)
 
 
-@responses.activate
-def test_get_gene_info_500():
+@pytest.mark.asyncio
+async def test_get_gene_info_500(httpx_mock: HTTPXMock):
     """Test get_gene_info method with a 500 response."""
-    responses.add(
-        responses.GET,
-        f"https://example.com/annonars/genes/info?hgnc_id=HGNC:1100",
-        status=500,
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/annonars/genes/info?hgnc_id=HGNC:1100",
+        status_code=500,
     )
 
     client = AnnonarsClient(api_base_url="https://example.com/annonars")

@@ -1,5 +1,5 @@
 import pytest
-import responses
+from pytest_httpx import HTTPXMock
 
 from src.api.mehari import MehariClient
 from src.defs.exceptions import MehariException
@@ -22,15 +22,15 @@ example_seqvar = SeqVar(
 example_hgnc_id = "HGNC:1234"
 
 
-@responses.activate
-def test_get_seqvar_transcripts_success():
+@pytest.mark.asyncio
+async def test_get_seqvar_transcripts_success(httpx_mock: HTTPXMock):
     """Test get_transcripts method with a successful response."""
     mock_response = get_json_object("mehari/DCDC2_seqvar.json")
-    responses.add(
-        responses.GET,
-        f"https://example.com/mehari/seqvars/csq?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&position={example_seqvar.pos}&reference={example_seqvar.delete}&alternative={example_seqvar.insert}",
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/mehari/seqvars/csq?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&position={example_seqvar.pos}&reference={example_seqvar.delete}&alternative={example_seqvar.insert}",
         json=mock_response,
-        status=200,
+        status_code=200,
     )
 
     client = MehariClient(api_base_url="https://example.com/mehari")
@@ -38,15 +38,15 @@ def test_get_seqvar_transcripts_success():
     assert response == TranscriptsSeqVar.model_validate(mock_response)
 
 
-@responses.activate
-def test_get_seqvar_transcripts_failure():
+@pytest.mark.asyncio
+async def test_get_seqvar_transcripts_failure(httpx_mock: HTTPXMock):
     """Test get_transcripts method with a failed response."""
     mock_response = get_json_object("mehari/seqvar_failure.json")
-    responses.add(
-        responses.GET,
-        f"https://example.com/mehari/seqvars/csq?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&position={example_seqvar.pos}&reference={example_seqvar.delete}&alternative={example_seqvar.insert}",
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/mehari/seqvars/csq?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&position={example_seqvar.pos}&reference={example_seqvar.delete}&alternative={example_seqvar.insert}",
         json=mock_response,
-        status=200,
+        status_code=200,
     )
 
     client = MehariClient(api_base_url="https://example.com/mehari")
@@ -54,13 +54,13 @@ def test_get_seqvar_transcripts_failure():
     assert response == TranscriptsSeqVar.model_validate(mock_response)
 
 
-@responses.activate
-def test_get_seqvar_transcripts_500():
+@pytest.mark.asyncio
+async def test_get_seqvar_transcripts_500(httpx_mock: HTTPXMock):
     """Test get_transcripts method with a 500 response."""
-    responses.add(
-        responses.GET,
-        f"https://example.com/mehari/seqvars/csq?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&position={example_seqvar.pos}&reference={example_seqvar.delete}&alternative={example_seqvar.insert}",
-        status=500,
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/mehari/seqvars/csq?genome_release={example_seqvar.genome_release.name.lower()}&chromosome={example_seqvar.chrom}&position={example_seqvar.pos}&reference={example_seqvar.delete}&alternative={example_seqvar.insert}",
+        status_code=500,
     )
 
     client = MehariClient(api_base_url="https://example.com/mehari")
@@ -68,15 +68,15 @@ def test_get_seqvar_transcripts_500():
         client.get_seqvar_transcripts(example_seqvar)
 
 
-@responses.activate
-def test_get_gene_transcripts_success():
+@pytest.mark.asyncio
+async def test_get_gene_transcripts_success(httpx_mock: HTTPXMock):
     """Test get_gene_transcripts method with a successful response."""
     mock_response = get_json_object("mehari/HAL_gene.json")
-    responses.add(
-        responses.GET,
-        f"https://example.com/mehari/genes/txs?hgncId={example_hgnc_id}&genomeBuild=GENOME_BUILD_GRCH38",
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/mehari/genes/txs?hgncId={example_hgnc_id}&genomeBuild=GENOME_BUILD_GRCH38",
         json=mock_response,
-        status=200,
+        status_code=200,
     )
 
     client = MehariClient(api_base_url="https://example.com/mehari")
@@ -84,15 +84,15 @@ def test_get_gene_transcripts_success():
     assert response == GeneTranscripts.model_validate(mock_response)
 
 
-@responses.activate
-def test_get_gene_transcripts_failure():
+@pytest.mark.asyncio
+async def test_get_gene_transcripts_failure(httpx_mock: HTTPXMock):
     """Test get_gene_transcripts method with a failed response."""
     mock_response = get_json_object("mehari/gene_failure.json")
-    responses.add(
-        responses.GET,
-        f"https://example.com/mehari/genes/txs?hgncId={example_hgnc_id}&genomeBuild=GENOME_BUILD_GRCH38",
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/mehari/genes/txs?hgncId={example_hgnc_id}&genomeBuild=GENOME_BUILD_GRCH38",
         json=mock_response,
-        status=200,
+        status_code=200,
     )
 
     client = MehariClient(api_base_url="https://example.com/mehari")
@@ -100,13 +100,13 @@ def test_get_gene_transcripts_failure():
         client.get_gene_transcripts(example_hgnc_id, GenomeRelease.GRCh38)
 
 
-@responses.activate
-def test_get_gene_transcripts_500():
+@pytest.mark.asyncio
+async def test_get_gene_transcripts_500(httpx_mock: HTTPXMock):
     """Test get_gene_transcripts method with a 500 response."""
-    responses.add(
-        responses.GET,
-        f"https://example.com/mehari/genes/txs?hgncId={example_hgnc_id}&genomeBuild=GENOME_BUILD_GRCH38",
-        status=500,
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/mehari/genes/txs?hgncId={example_hgnc_id}&genomeBuild=GENOME_BUILD_GRCH38",
+        status_code=500,
     )
 
     client = MehariClient(api_base_url="https://example.com/mehari")
