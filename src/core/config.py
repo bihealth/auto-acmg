@@ -16,7 +16,14 @@ class Settings(BaseSettings):
 
     # === General settings ===
 
+    #: Whether to enable debug mode
     DEBUG: bool = False
+    #: Whether to use cache
+    USE_CACHE: bool = True
+    #: Path to the cache directory
+    CACHE_DIR: str = os.path.join(
+        os.path.abspath(os.path.join(__file__, "..", "..", "..")), "cache"
+    )
 
     # === API settings ===
 

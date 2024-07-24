@@ -7,6 +7,7 @@ import requests
 from loguru import logger
 from pydantic import ValidationError
 
+from src.core.cache import Cache
 from src.core.config import settings
 from src.defs.annonars_gene import AnnonarsGeneResponse
 from src.defs.annonars_range import AnnonarsRangeResponse
@@ -20,7 +21,10 @@ ANNONARS_API_BASE_URL = f"{settings.API_REEV_URL}/annonars"
 
 class AnnonarsClient:
     def __init__(self, *, api_base_url: Optional[str] = None):
+        #: Annonars API base URL
         self.api_base_url = api_base_url or ANNONARS_API_BASE_URL
+        #: Persistent cache for API responses
+        self.cache = Cache()
 
     def get_variant_from_range(
         self, seqvar: SeqVar, start: int, stop: int
@@ -43,10 +47,21 @@ class AnnonarsClient:
             f"&stop={stop}"
         )
         logger.debug("GET request to: {}", url)
+
+        cached_response = self.cache.get(url)
+        if cached_response:
+            try:
+                return AnnonarsRangeResponse.model_validate(cached_response)
+            except ValidationError as e:
+                logger.exception("Validation failed for cached data: {}", e)
+                raise AnnonarsException("Cached data is invalid") from e
+
         response = requests.get(url)
         try:
             response.raise_for_status()
-            return AnnonarsRangeResponse.model_validate(response.json())
+            response_data = response.json()
+            self.cache.add(url, response_data)
+            return AnnonarsRangeResponse.model_validate(response_data)
         except requests.RequestException as e:
             logger.exception("Request failed: {}", e)
             raise AnnonarsException("Failed to get variant information.") from e
@@ -72,10 +87,21 @@ class AnnonarsClient:
             f"&alternative={seqvar.insert}"
         )
         logger.debug("GET request to: {}", url)
+
+        cached_response = self.cache.get(url)
+        if cached_response:
+            try:
+                return AnnonarsVariantResponse.model_validate(cached_response)
+            except ValidationError as e:
+                logger.exception("Validation failed for cached data: {}", e)
+                raise AnnonarsException("Cached data is invalid") from e
+
         response = requests.get(url)
         try:
             response.raise_for_status()
-            return AnnonarsVariantResponse.model_validate(response.json())
+            response_data = response.json()
+            self.cache.add(url, response_data)
+            return AnnonarsVariantResponse.model_validate(response_data)
         except requests.RequestException as e:
             logger.exception("Request failed: {}", e)
             raise AnnonarsException("Failed to get variant information.") from e
@@ -94,10 +120,21 @@ class AnnonarsClient:
         """
         url = f"{self.api_base_url}/genes/info?hgnc_id={hgnc_id}"
         logger.debug("GET request to: {}", url)
+
+        cached_response = self.cache.get(url)
+        if cached_response:
+            try:
+                return AnnonarsGeneResponse.model_validate(cached_response)
+            except ValidationError as e:
+                logger.exception("Validation failed for cached data: {}", e)
+                raise AnnonarsException("Cached data is invalid") from e
+
         response = requests.get(url)
         try:
             response.raise_for_status()
-            return AnnonarsGeneResponse.model_validate(response.json())
+            response_data = response.json()
+            self.cache.add(url, response_data)
+            return AnnonarsGeneResponse.model_validate(response_data)
         except requests.RequestException as e:
             logger.exception("Request failed: {}", e)
             raise AnnonarsException("Failed to get gene information.") from e
