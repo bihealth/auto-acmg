@@ -29,4 +29,5 @@ markers = [
 ]
 env = [
     "USE_CACHE=0",
+    "API_REEV_URL=https://reev.cubi.bihealth.org/internal/proxy",
 ]
