@@ -6,6 +6,7 @@ import requests
 from loguru import logger
 from pydantic import ValidationError
 
+from src.core.cache import Cache
 from src.core.config import settings
 from src.defs.dotty import DottySpdiResponse
 from src.defs.genome_builds import GenomeRelease
@@ -16,7 +17,10 @@ DOTTI_API_BASE_URL = f"{settings.API_REEV_URL}/dotty"
 
 class DottyClient:
     def __init__(self, *, api_base_url: Optional[str] = None):
+        #: Dotty API base URL
         self.api_base_url = api_base_url or DOTTI_API_BASE_URL
+        #: Persistent cache for API responses
+        self.cache = Cache()
 
     def to_spdi(
         self, query: str, assembly: GenomeRelease = GenomeRelease.GRCh38
@@ -33,10 +37,21 @@ class DottyClient:
         """
         url = f"{self.api_base_url}/api/v1/to-spdi?q={query}&assembly={assembly.name}"
         logger.debug("GET request to: {}", url)
+
+        cached_response = self.cache.get(url)
+        if cached_response:
+            try:
+                return DottySpdiResponse.model_validate(cached_response)
+            except ValidationError as e:
+                logger.exception("Validation failed for cached data: {}", e)
+                return None
+
         response = requests.get(url)
         try:
             response.raise_for_status()
-            return DottySpdiResponse.model_validate(response.json())
+            response_data = response.json()
+            self.cache.add(url, response_data)
+            return DottySpdiResponse.model_validate(response_data)
         except requests.RequestException as e:
             logger.exception("Request failed: {}", e)
             return None
