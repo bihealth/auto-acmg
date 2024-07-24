@@ -23,6 +23,11 @@ Homepage = "https://github.com/bihealth/auto-acmg"
 Documentation = "https://auto-acmg.readthedocs.io/en/latest"
 
 [tool.pytest.ini_options]
+required_plugins = ["pytest-env"]
 markers = [
     "remote: marks test as calling to API at https://reev.bihealth.org",
+]
+env = [
+    "USE_CACHE=0",
+    "API_REEV_URL=https://reev.cubi.bihealth.org/internal/proxy",
 ]

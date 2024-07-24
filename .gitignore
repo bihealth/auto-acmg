@@ -4,6 +4,10 @@
 # Temporary comparison results files
 src/bench/tmp/*.csv
 
+# API cache
+cache/
+cache/**
+
 # DS_Store file
 .DS_Store
 

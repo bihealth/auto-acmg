@@ -6,6 +6,7 @@ import requests
 from loguru import logger
 from pydantic import ValidationError
 
+from src.core.cache import Cache
 from src.core.config import settings
 from src.defs.exceptions import MehariException
 from src.defs.genome_builds import GenomeRelease
@@ -18,7 +19,10 @@ MEHARI_API_BASE_URL = f"{settings.API_REEV_URL}/mehari"
 
 class MehariClient:
     def __init__(self, *, api_base_url: Optional[str] = None):
+        #: Mehari API base URL
         self.api_base_url = api_base_url or MEHARI_API_BASE_URL
+        #: Persistent cache for API responses
+        self.cache = Cache()
 
     def get_seqvar_transcripts(self, seqvar: SeqVar) -> TranscriptsSeqVar:
         """
@@ -38,10 +42,21 @@ class MehariClient:
             f"&alternative={seqvar.insert}"
         )
         logger.debug("GET request to: {}", url)
+
+        cached_response = self.cache.get(url)
+        if cached_response:
+            try:
+                return TranscriptsSeqVar.model_validate(cached_response)
+            except ValidationError as e:
+                logger.exception("Validation failed for cached data: {}", e)
+                raise MehariException("Cached data is invalid") from e
+
         response = requests.get(url)
         try:
             response.raise_for_status()
-            return TranscriptsSeqVar.model_validate(response.json())
+            response_data = response.json()
+            self.cache.add(url, response_data)
+            return TranscriptsSeqVar.model_validate(response_data)
         except requests.RequestException as e:
             logger.exception("Request failed: {}", e)
             raise MehariException("Request failed") from e
@@ -70,10 +85,21 @@ class MehariClient:
             f"&genomeBuild={genome_build_mapping[genome_build]}"
         )
         logger.debug("GET request to: {}", url)
+
+        cached_response = self.cache.get(url)
+        if cached_response:
+            try:
+                return GeneTranscripts.model_validate(cached_response)
+            except ValidationError as e:
+                logger.exception("Validation failed for cached data: {}", e)
+                raise MehariException("Cached data is invalid") from e
+
         response = requests.get(url)
         try:
             response.raise_for_status()
-            return GeneTranscripts.model_validate(response.json())
+            response_data = response.json()
+            self.cache.add(url, response_data)
+            return GeneTranscripts.model_validate(response_data)
         except requests.RequestException as e:
             logger.exception("Request failed: {}", e)
             raise MehariException("Request failed") from e

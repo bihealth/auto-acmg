@@ -1,7 +1,5 @@
 """Utility functions for the AutoACMG and AutoPVS1."""
 
-import itertools
-import re
 from typing import Dict, List, Optional, Tuple
 
 from biocommons.seqrepo import SeqRepo  # type: ignore
@@ -12,7 +10,6 @@ from lib.maxentpy.maxent import load_matrix3, load_matrix5
 from src.api.annonars import AnnonarsClient
 from src.api.mehari import MehariClient
 from src.core.config import Config
-from src.defs.annonars_variant import VariantResult
 from src.defs.auto_acmg import SpliceType
 from src.defs.auto_pvs1 import (
     GenomicStrand,
