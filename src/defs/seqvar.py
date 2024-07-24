@@ -67,7 +67,7 @@ class SeqVar:
         """Return a user-friendly representation of the variant."""
         return self.user_repr
 
-    def __dict__(self):
+    def _as_dict(self):
         """Return a dictionary representation of the variant."""
         return {
             "genome_release": self.genome_release,
@@ -82,7 +82,7 @@ class SeqVar:
         """Return True if the two objects are equal."""
         if not isinstance(other, SeqVar):
             return False
-        return self.__dict__() == other.__dict__()
+        return self._as_dict() == other._as_dict()
 
 
 class SeqVarResolver:
