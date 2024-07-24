@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-import requests
+import httpx
 from loguru import logger
 from pydantic import ValidationError
 
@@ -19,6 +19,8 @@ class DottyClient:
     def __init__(self, *, api_base_url: Optional[str] = None):
         #: Dotty API base URL
         self.api_base_url = api_base_url or DOTTI_API_BASE_URL
+        #: HTTPX client
+        self.client = httpx.Client()
         #: Persistent cache for API responses
         self.cache = Cache()
 
@@ -46,13 +48,16 @@ class DottyClient:
                 logger.exception("Validation failed for cached data: {}", e)
                 return None
 
-        response = requests.get(url)
+        response = self.client.get(url)
+        if response.status_code != 200:
+            logger.error("Request failed: {}", response.text)
+            return None
         try:
             response.raise_for_status()
             response_data = response.json()
             self.cache.add(url, response_data)
             return DottySpdiResponse.model_validate(response_data)
-        except requests.RequestException as e:
+        except httpx.RequestError as e:
             logger.exception("Request failed: {}", e)
             return None
         except ValidationError as e:

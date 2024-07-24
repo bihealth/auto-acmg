@@ -1,9 +1,8 @@
 """Annonars API client."""
 
-from time import sleep
-from typing import Any, Optional
+from typing import Optional
 
-import requests
+import httpx
 from loguru import logger
 from pydantic import ValidationError
 
@@ -23,6 +22,8 @@ class AnnonarsClient:
     def __init__(self, *, api_base_url: Optional[str] = None):
         #: Annonars API base URL
         self.api_base_url = api_base_url or ANNONARS_API_BASE_URL
+        #: HTTPX client
+        self.client = httpx.Client()
         #: Persistent cache for API responses
         self.cache = Cache()
 
@@ -56,15 +57,17 @@ class AnnonarsClient:
                 logger.exception("Validation failed for cached data: {}", e)
                 raise AnnonarsException("Cached data is invalid") from e
 
-        response = requests.get(url)
+        response = self.client.get(url)
+        if response.status_code != 200:
+            logger.error("Request failed: {}", response.text)
+            raise AnnonarsException(
+                f"Request failed. Status code: {response.status_code}, Text: {response.text}"
+            )
         try:
             response.raise_for_status()
             response_data = response.json()
             self.cache.add(url, response_data)
             return AnnonarsRangeResponse.model_validate(response_data)
-        except requests.RequestException as e:
-            logger.exception("Request failed: {}", e)
-            raise AnnonarsException("Failed to get variant information.") from e
         except ValidationError as e:
             logger.exception("Validation failed: {}", e)
             raise AnnonarsException("Annonars returned non-validating data.") from e
@@ -96,15 +99,17 @@ class AnnonarsClient:
                 logger.exception("Validation failed for cached data: {}", e)
                 raise AnnonarsException("Cached data is invalid") from e
 
-        response = requests.get(url)
+        response = self.client.get(url)
+        if response.status_code != 200:
+            logger.error("Request failed: {}", response.text)
+            raise AnnonarsException(
+                f"Request failed. Status code: {response.status_code}, Text: {response.text}"
+            )
         try:
             response.raise_for_status()
             response_data = response.json()
             self.cache.add(url, response_data)
             return AnnonarsVariantResponse.model_validate(response_data)
-        except requests.RequestException as e:
-            logger.exception("Request failed: {}", e)
-            raise AnnonarsException("Failed to get variant information.") from e
         except ValidationError as e:
             logger.exception("Validation failed: {}", e)
             raise AnnonarsException("Annonars returned non-validating data.") from e
@@ -129,15 +134,16 @@ class AnnonarsClient:
                 logger.exception("Validation failed for cached data: {}", e)
                 raise AnnonarsException("Cached data is invalid") from e
 
-        response = requests.get(url)
+        response = self.client.get(url)
+        if response.status_code != 200:
+            logger.error("Request failed: {}", response.text)
+            raise AnnonarsException(
+                f"Request failed. Status code: {response.status_code}, Text: {response.text}"
+            )
         try:
-            response.raise_for_status()
             response_data = response.json()
             self.cache.add(url, response_data)
             return AnnonarsGeneResponse.model_validate(response_data)
-        except requests.RequestException as e:
-            logger.exception("Request failed: {}", e)
-            raise AnnonarsException("Failed to get gene information.") from e
         except ValidationError as e:
             logger.exception("Validation failed: {}", e)
             raise AnnonarsException("Annonars returned non-validating data.") from e
