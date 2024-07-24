@@ -95,10 +95,10 @@ class SeqVarPVS1Helper:
             raise AlgorithmError("End position is less than the start position.")
 
         response = self.annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
-        if response and response.result.clinvar:
+        if response and response.clinvar:
             pathogenic_variants = [
                 v
-                for v in response.result.clinvar
+                for v in response.clinvar
                 if v.records
                 and v.records[0].classifications
                 and v.records[0].classifications.germlineClassification
@@ -111,9 +111,9 @@ class SeqVarPVS1Helper:
             logger.debug(
                 "Pathogenic variants: {}, Total variants: {}",
                 len(pathogenic_variants),
-                len(response.result.clinvar),
+                len(response.clinvar),
             )
-            return len(pathogenic_variants), len(response.result.clinvar)
+            return len(pathogenic_variants), len(response.clinvar)
         else:
             logger.error("Failed to get variant from range. No ClinVar data.")
             raise InvalidAPIResposeError("Failed to get variant from range. No ClinVar data.")
@@ -180,10 +180,10 @@ class SeqVarPVS1Helper:
             raise AlgorithmError("End position is less than the start position.")
 
         response = self.annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
-        if response and response.result.gnomad_genomes:
+        if response and response.gnomad_genomes:
             frequent_lof_variants = 0
             lof_variants = 0
-            for variant in response.result.gnomad_genomes:
+            for variant in response.gnomad_genomes:
                 if not variant.vep:
                     continue
                 for vep in variant.vep:
