@@ -3,8 +3,8 @@ import json
 import os
 import time
 
-import pandas as pd
 import httpx
+import pandas as pd
 
 from src.auto_acmg import AutoACMG, AutoACMGPrediction
 from src.core.config import settings
