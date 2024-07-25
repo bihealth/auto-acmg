@@ -100,7 +100,7 @@ def intervar_response(variant: str):
 
     url = (
         f"http://wintervar.wglab.org/api_new.php?"
-        f"queryType={position}&chr={chromosome}&pos={position}"
+        f"queryType=position&chr={chromosome}&pos={position}"
         f"&ref={reference}&alt={alternative}&build=hg19"
     )
     print("Requesting:", url)
