@@ -214,10 +214,10 @@ class AutoPP2BP1:
                 consequence,
             ) = seqvar_transcript_helper.get_ts_info()
 
-            if not gene_transcript or consequence == SeqVarConsequence.NotSet:
-                logger.error("Transcript data is not set. Cannot initialize the PVS1 class.")
+            if not gene_transcript:
+                logger.error("Gene Transcript data is not set.")
                 raise MissingDataError(
-                    "Transcript data is not fully set. Cannot initialize the PVS1 class."
+                    "Gene Transcript data is not set. PP2 and BP1 criteria are not met."
                 )
             if consequence != SeqVarConsequence.Missense:
                 self.comment += (

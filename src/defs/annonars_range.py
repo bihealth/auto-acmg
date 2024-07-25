@@ -145,7 +145,7 @@ class GermlineClassification(BaseModel):
 
 
 class Classifications(BaseModel):
-    germlineClassification: GermlineClassification
+    germlineClassification: Optional[GermlineClassification] = None
 
 
 class SequenceLocation(BaseModel):

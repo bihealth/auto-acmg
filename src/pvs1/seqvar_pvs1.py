@@ -789,10 +789,6 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                 "Transcript data is not fully set. Cannot initialize the PVS1 class."
             )
 
-        if self._consequence == SeqVarConsequence.NotSet:
-            logger.error("Consequence is not set. Cannot initialize the PVS1 class.")
-            raise MissingDataError("Consequence is not set. Cannot initialize the PVS1 class.")
-
         # Set attributes
         logger.debug("Setting up the attributes for the PVS1 class.")
         self.consequences = self._seqvar_transcript.consequences
@@ -840,11 +836,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                 and the comment.
         """
         logger.debug("Verifying the PVS1 criteria.")
-        if (
-            not self._seqvar_transcript
-            or not self._gene_transcript
-            or self._consequence == SeqVarConsequence.NotSet
-        ):
+        if not self._seqvar_transcript or not self._gene_transcript:
             logger.error("Transcript data is not set. Did you forget to initialize the class?")
             raise AlgorithmError(
                 "Transcript data is not set. Did you forget to initialize the class?"
