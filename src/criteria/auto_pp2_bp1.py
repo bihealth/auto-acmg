@@ -162,7 +162,6 @@ class AutoPP2BP1:
             # pathogenic_variants = []
             # benign_variants = []
             # missense_variants = []
-
             # for v in response.clinvar:
             #     if (
             #         v.records
@@ -183,6 +182,7 @@ class AutoPP2BP1:
             #             "Likely benign",
             #         ]:
             #             benign_variants.append(v)
+            
             pathogenic_variants = [
                 v
                 for v in response.clinvar
