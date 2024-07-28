@@ -159,32 +159,60 @@ class AutoPP2BP1:
 
         response = self.annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
         if response and response.clinvar:
-            pathogenic_variants = []
-            benign_variants = []
-            missense_variants = []
+            # pathogenic_variants = []
+            # benign_variants = []
+            # missense_variants = []
 
-            for v in response.clinvar:
+            # for v in response.clinvar:
+            #     if (
+            #         v.records
+            #         and v.records[0].classifications
+            #         and v.records[0].classifications.germlineClassification
+            #     ):
+            #         significance = v.records[0].classifications.germlineClassification.description
+            #         if not self._is_missense(v):
+            #             continue
+            #         missense_variants.append(v)
+            #         if significance in [
+            #             "Pathogenic",
+            #             "Likely pathogenic",
+            #         ]:
+            #             pathogenic_variants.append(v)
+            #         elif significance in [
+            #             "Benign",
+            #             "Likely benign",
+            #         ]:
+            #             benign_variants.append(v)
+            pathogenic_variants = [
+                v
+                for v in response.clinvar
                 if (
                     v.records
                     and v.records[0].classifications
                     and v.records[0].classifications.germlineClassification
-                ):
-                    significance = v.records[0].classifications.germlineClassification.description
-                    if not self._is_missense(v):
-                        continue
-                    missense_variants.append(v)
-                    if significance in [
-                        "Pathogenic",
-                        "Likely pathogenic",
-                    ]:
-                        pathogenic_variants.append(v)
-                    elif significance in [
-                        "Benign",
-                        "Likely benign",
-                    ]:
-                        benign_variants.append(v)
+                    and v.records[0].classifications.germlineClassification.description
+                    in ["Pathogenic"]
+                    and v.records[0].variationType == "VARIATION_TYPE_SNV"
+                )
+            ]
+            benign_variants = [
+                v
+                for v in response.clinvar
+                if (
+                    v.records
+                    and v.records[0].classifications
+                    and v.records[0].classifications.germlineClassification
+                    and v.records[0].classifications.germlineClassification.description
+                    in ["Benign"]
+                    and v.records[0].variationType == "VARIATION_TYPE_SNV"
+                )
+            ]
 
-            return len(pathogenic_variants), len(benign_variants), len(missense_variants)
+            return (
+                len(pathogenic_variants),
+                len(benign_variants),
+                len(pathogenic_variants) + len(benign_variants),
+            )
         else:
             logger.error("Failed to get variant from range. No ClinVar data.")
             raise InvalidAPIResposeError("Failed to get variant from range. No ClinVar data.")
