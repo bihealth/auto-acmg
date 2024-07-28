@@ -240,10 +240,10 @@ stats = pd.DataFrame(
 )
 
 for i, var in enumerate(variants):
-    # Save the stats every 10 variants
-    if i % 10 == 0 and i > 0:
+    # Save the stats every 50 variants
+    if i % 50 == 0 and i > 0:
         print(f"Processed {i} variants")
-        output_path = os.path.join(path_to_root, "src", "bench", "tmp", f"pp_stats_{i}.csv")
+        output_path = os.path.join(path_to_root, "src", "bench", "tmp", f"stats_{i}.csv")
         stats.to_csv(output_path, index=False)
 
     record = {
@@ -288,49 +288,49 @@ for i, var in enumerate(variants):
     except Exception as e:
         print(f"Exception was raised for {var[0]} in AutoACMG:\n{e}")
 
-    # # Intervar
-    # try:
-    #     start_time = time.time()
-    #     resp = intervar_response(var[0])
-    #     end_time = time.time()
-    #     crit_met, tp, fn, fp = eval_intervar(resp, var[1])
-    #     record["Intervar Criteria"] = ";".join(crit_met)
-    #     record["Intervar Prediction time"] = end_time - start_time
-    #     record["Intervar True Positives"] = ";".join(tp)
-    #     record["Intervar False Negatives"] = ";".join(fn)
-    #     record["Intervar False Positives"] = ";".join(fp)
-    #     record["Intervar Full Response"] = resp
-    # except Exception as e:
-    #     print(f"Exception was raised for {var[0]} in InterVar:\n{e}")
+    # Intervar
+    try:
+        start_time = time.time()
+        resp = intervar_response(var[0])
+        end_time = time.time()
+        crit_met, tp, fn, fp = eval_intervar(resp, var[1])
+        record["Intervar Criteria"] = ";".join(crit_met)
+        record["Intervar Prediction time"] = end_time - start_time
+        record["Intervar True Positives"] = ";".join(tp)
+        record["Intervar False Negatives"] = ";".join(fn)
+        record["Intervar False Positives"] = ";".join(fp)
+        record["Intervar Full Response"] = resp
+    except Exception as e:
+        print(f"Exception was raised for {var[0]} in InterVar:\n{e}")
 
-    # # Genebe
-    # try:
-    #     start_time = time.time()
-    #     resp = genebe_response(var[0])
-    #     end_time = time.time()
-    #     crit_met, tp, fn, fp = eval_genebe(resp, var[1])
-    #     record["Genebe Criteria"] = ";".join(crit_met)
-    #     record["Genebe Prediction time"] = end_time - start_time
-    #     record["Genebe True Positives"] = ";".join(tp)
-    #     record["Genebe False Negatives"] = ";".join(fn)
-    #     record["Genebe False Positives"] = ";".join(fp)
-    #     record["Genebe Full Response"] = json.dumps(resp)
-    # except Exception as e:
-    #     print(f"Exception was raised for {var[0]} in Genebe:\n{e}")
+    # Genebe
+    try:
+        start_time = time.time()
+        resp = genebe_response(var[0])
+        end_time = time.time()
+        crit_met, tp, fn, fp = eval_genebe(resp, var[1])
+        record["Genebe Criteria"] = ";".join(crit_met)
+        record["Genebe Prediction time"] = end_time - start_time
+        record["Genebe True Positives"] = ";".join(tp)
+        record["Genebe False Negatives"] = ";".join(fn)
+        record["Genebe False Positives"] = ";".join(fp)
+        record["Genebe Full Response"] = json.dumps(resp)
+    except Exception as e:
+        print(f"Exception was raised for {var[0]} in Genebe:\n{e}")
 
-    # # Skip if both AutoACMG and Intervar did not return any criteria
-    # if (
-    #     record["AutoACMG Criteria"] == ""
-    #     and record["Intervar Criteria"] == ""
-    #     and record["Genebe Criteria"] == ""
-    # ):
-    #     print(f"Skipping {var[0]}")
-    #     continue
+    # Skip if both AutoACMG and Intervar did not return any criteria
+    if (
+        record["AutoACMG Criteria"] == ""
+        and record["Intervar Criteria"] == ""
+        and record["Genebe Criteria"] == ""
+    ):
+        print(f"Skipping {var[0]}")
+        continue
 
     # Add the record to the stats
     print(f"Record for {var[0]}: {record}")
     stats = append_row(stats, pd.Series(record))
 
 # Save the final stats
-output_path = os.path.join(path_to_root, "src", "bench", "pp_stats.csv")
+output_path = os.path.join(path_to_root, "src", "bench", "stats.csv")
 stats.to_csv(output_path, index=False)
