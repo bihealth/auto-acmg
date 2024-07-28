@@ -75,7 +75,7 @@ class AminoAcid(AutoAcmgBaseEnum):
     Val = "V"
     Trp = "W"
     Tyr = "Y"
-    Stop = "*"
+    Ter = "*"  # Termination codon
 
 
 class MissenseScore(BaseModel):

@@ -40,14 +40,13 @@ class AutoPM1:
         #: Comment to store the prediction explanation.
         self.comment: str = ""
 
-    def _count_pathogenic_vars(
-        self, seqvar: SeqVar, start_pos: int, end_pos: int
-    ) -> Tuple[int, int]:
+    def _count_vars(self, seqvar: SeqVar, start_pos: int, end_pos: int) -> Tuple[int, int]:
         """
-        Counts pathogenic variants in the specified range.
+        Counts pathogenic and benign variants in the specified range.
 
         The method retrieves variants from the specified range and iterates through the ClinVar data
-        of each variant to count the number of pathogenic variants and the total number of variants.
+        of each variant to count the number of pathogenic variants and the number of benign
+        variants.
 
         Args:
             seqvar: The sequence variant being analyzed.
@@ -55,7 +54,7 @@ class AutoPM1:
             end_pos: The end position of the range.
 
         Returns:
-            Tuple[int, int]: The number of pathogenic variants and the total number of variants.
+            Tuple[int, int]: The number of pathogenic and benign variants.
 
         Raises:
             InvalidAPIResposeError: If the API response is invalid or cannot be processed.
@@ -78,8 +77,26 @@ class AutoPM1:
                     "Pathogenic",
                     "Likely pathogenic",
                 ]
+                and v.records[0].variationType == "VARIATION_TYPE_SNV"
             ]
+<<<<<<< Updated upstream
             return len(pathogenic_variants), len(response.result.clinvar)
+=======
+            benign_variants = [
+                v
+                for v in response.clinvar
+                if v.records
+                and v.records[0].classifications
+                and v.records[0].classifications.germlineClassification
+                and v.records[0].classifications.germlineClassification.description
+                in [
+                    "Benign",
+                    "Likely benign",
+                ]
+                and v.records[0].variationType == "VARIATION_TYPE_SNV"
+            ]
+            return len(pathogenic_variants), len(benign_variants)
+>>>>>>> Stashed changes
         else:
             logger.error("Failed to get variant from range. No ClinVar data.")
             raise InvalidAPIResposeError("Failed to get variant from range. No ClinVar data.")
@@ -119,27 +136,29 @@ class AutoPM1:
                 return self.prediction, self.comment
 
             self.comment = (
-                "Counting pathogenic variants in the range of 50bp."
-                f"The range is {self.seqvar.pos - 25} - {self.seqvar.pos + 25}. => \n"
+                "Counting pathogenic variants in the range of +-21bp."
+                f"The range is {self.seqvar.pos - 21} - {self.seqvar.pos + 21}. => \n"
             )
             logger.debug(
-                "Counting pathogenic variants in the range of 50bp."
-                f"The range is {self.seqvar.pos - 25} - {self.seqvar.pos + 25}."
+                "Counting pathogenic variants in the range of +-21bp."
+                f"The range is {self.seqvar.pos - 21} - {self.seqvar.pos + 21}."
             )
-            pathogenic_count, _ = self._count_pathogenic_vars(
-                self.seqvar, self.seqvar.pos - 25, self.seqvar.pos + 25
+            pathogenic_count, benign_count = self._count_vars(
+                self.seqvar, self.seqvar.pos - 21, self.seqvar.pos + 21
             )
 
-            self.comment += f"Found {pathogenic_count} Pathogenic variants. => \n"
-            logger.debug("Found {} Pathogenic variants.", pathogenic_count)
-            if pathogenic_count >= 4:
-                self.comment += "Found 4 or more pathogenic variants. PM1 is met."
-                logger.debug("Found 4 or more pathogenic variants. PM1 is met.")
+            self.comment += f"Found {pathogenic_count} Pathogenic variants and {benign_count} Benign variants. => \n"
+            logger.debug(
+                "Found {} Pathogenic variants and {} benign one's.", pathogenic_count, benign_count
+            )
+            if pathogenic_count >= 7:
+                self.comment += "Found 7 or more pathogenic variants. PM1 is met."
+                logger.debug("Found 7 or more pathogenic variants. PM1 is met.")
                 self.prediction.PM1 = True
                 return self.prediction, self.comment
             else:
-                self.comment += "Found less than 4 pathogenic variants."
-                logger.debug("Found less than 4 pathogenic variants.")
+                self.comment += "Found less than 7 pathogenic variants."
+                logger.debug("Found less than 7 pathogenic variants.")
 
             self.comment += "Checking if the variant is in a UniProt domain. => \n"
             logger.debug("Checking if the variant is in a UniProt domain.")
@@ -159,23 +178,19 @@ class AutoPM1:
                 "Counting pathogenic variants in the UniProt domain. "
                 f"The range is {start_pos} - {end_pos}."
             )
-            pathogenic_count, _ = self._count_pathogenic_vars(self.seqvar, start_pos, end_pos)
-            if pathogenic_count >= 2:
-                self.comment += (
-                    "Found 2 or more pathogenic variants in the UniProt domain. PM1 is met."
-                )
+            pathogenic_count, benign_count = self._count_vars(self.seqvar, start_pos, end_pos)
+            self.comment += f"Found {pathogenic_count} Pathogenic variants and {benign_count} Benign variants. => \n"
+            if pathogenic_count >= (end_pos - start_pos) / 4:
+                self.comment += f"Found {pathogenic_count} pathogenic variants in the UniProt domain of length {end_pos - start_pos}. PM1 is met."
                 logger.debug(
-                    "Found 2 or more pathogenic variants in the UniProt domain. PM1 is met."
+                    f"Found {pathogenic_count} pathogenic variants in the UniProt domain of length {end_pos - start_pos}. PM1 is met."
                 )
                 self.prediction.PM1 = True
                 return self.prediction, self.comment
             else:
-                self.comment += (
-                    "Found less than 2 pathogenic variants in the UniProt domain. "
-                    "PM1 is not met."
-                )
+                self.comment += f"Found {pathogenic_count} pathogenic variants in the UniProt domain of length {end_pos - start_pos}. PM1 is not met."
                 logger.debug(
-                    "Found less than 2 pathogenic variants in the UniProt domain. PM1 is not met."
+                    f"Found {pathogenic_count} pathogenic variants in the UniProt domain of length {end_pos - start_pos}. PM1 is not met."
                 )
                 self.prediction.PM1 = False
         except AutoAcmgBaseException as e:

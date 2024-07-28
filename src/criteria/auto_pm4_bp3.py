@@ -55,7 +55,9 @@ class AutoPM4BP3:
             else:
                 path = os.path.join(settings.PATH_TO_ROOT, "lib", "rmsk", "grch38", "rmsk.bed.gz")
             tb = tabix.open(path)
-            records = tb.query(f"chr{seqvar.chrom}", seqvar.pos - 1, seqvar.pos)
+            records = tb.query(
+                f"chr{seqvar.chrom}", seqvar.pos - 1, seqvar.pos + len(seqvar.delete)
+            )
             # Check if iterator is not empty
             if any(True for _ in records):
                 self.comment += "Variant is in a repeat region.\n"

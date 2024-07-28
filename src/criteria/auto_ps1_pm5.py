@@ -150,6 +150,9 @@ class AutoPS1PM5:
             # Initialize the prediction result
             self.prediction = PS1PM5()
 
+            if not self._is_missense():
+                raise AlgorithmError("Variant is not a missense variant. PS1/PM5 not applicable.")
+
             if (
                 not self.variant_info
                 or not self.variant_info.dbnsfp
@@ -158,9 +161,6 @@ class AutoPS1PM5:
                 raise MissingDataError(
                     "No valid primary variant information for PS1/PM5 prediction."
                 )
-
-            if not self._is_missense():
-                raise AlgorithmError("Variant is not a missense variant. PS1/PM5 not applicable.")
 
             self.comment = (
                 "Extracting primary amino acid change from pHGVS: "
@@ -217,8 +217,8 @@ class AutoPS1PM5:
                     self.comment += f"Failed to get variant information for {alt_seqvar}.\n"
 
         except AutoAcmgBaseException as e:
-            logger.error("Error occurred during PS1/PM5 prediction. Error: {}", e)
-            self.comment += f"Error occurred during PS1/PM5 prediction. Error: {e}"
+            logger.error("Failed to predict PS1/PM5. Error: {}", e)
+            self.comment += f"Failed to predict PS1/PM5. Error: {e}"
             self.prediction = None
 
         # Return the prediction result and the comment with the explanation

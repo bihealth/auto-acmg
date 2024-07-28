@@ -83,15 +83,11 @@ class AutoPM2BA1BS1BS2:
             if not controls_af:
                 self.comment += "No controls allele frequency data found."
                 return None
-            if (
-                not controls_af.bySex
-                or not controls_af.bySex.overall
-                or not controls_af.bySex.overall.af
-            ):
+            if not controls_af.afPopmax:
                 self.comment += "No allele frequency found in control data.\n"
                 raise MissingDataError("No allele frequency found in control data.")
             self.comment += f"Allele frequency: {controls_af.bySex.overall.af}.\n"
-            return controls_af.bySex.overall.af
+            return controls_af.afPopmax
 
     def _get_allele_cond(self, seqvar: SeqVar) -> AlleleCondition:
         """
