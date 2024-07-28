@@ -1,6 +1,6 @@
 """Implementation of BP7 criteria."""
 
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 from loguru import logger
 
@@ -8,7 +8,7 @@ from src.api.annonars import AnnonarsClient
 from src.core.config import Config
 from src.defs.annonars_variant import VariantResult
 from src.defs.auto_acmg import BP7
-from src.defs.exceptions import AutoAcmgBaseException, MissingDataError
+from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import Exon
 from src.defs.seqvar import SeqVar
@@ -39,6 +39,32 @@ class AutoBP7:
         self.prediction: Optional[BP7] = None
         #: Comment to store the prediction explanation.
         self.comment: str = ""
+
+    def _convert_score_val(self, score_value: Optional[Union[str, float, int]]) -> Optional[float]:
+        """
+        Convert score value to float.
+
+        Since the score values can be represented as strings (with ";" as separator), we pick the
+        maximum value that is not empty ("."). If the value is already numeric, we return it as is.
+
+        Args:
+            score_value (Optional[Union[str, float, int]]): Score value to convert.
+
+        Returns:
+            Optional[float]: Converted score value.
+
+        Raises:
+            AlgorithmError: If the score value cannot be converted to float.
+        """
+        if score_value is None:
+            return None
+        if isinstance(score_value, (float, int)):
+            return float(score_value)
+        try:
+            return max(float(score) for score in score_value.split(";") if score != ".")
+        except ValueError as e:
+            logger.error("Failed to convert score value to float. Error: {}", e)
+            raise AlgorithmError("Failed to convert score value to float.") from e
 
     def _get_var_info(self, seqvar: SeqVar) -> Optional[VariantResult]:
         """
@@ -125,7 +151,7 @@ class AutoBP7:
                 return True
         return False
 
-    def _pred_spliceai(self, seqvar: SeqVar) -> bool:
+    def _pred_spliceai(self, variant_info: VariantResult) -> bool:
         """
         Predict splice site alterations using SpliceAI.
 
@@ -139,19 +165,50 @@ class AutoBP7:
         Returns:
             bool: True if the variant is a splice site alteration, False otherwise.
         """
-        variant_info = self._get_var_info(seqvar)
+        if (
+            not variant_info
+            or not variant_info.dbscsnv
+            or not variant_info.dbscsnv.ada_score
+            or not variant_info.dbscsnv.rf_score
+        ):
+            pass
+        else:
+            self.comment += f"ada_score: {variant_info.dbscsnv.ada_score}, rf_score: {variant_info.dbscsnv.rf_score}\n"
+            if variant_info.dbscsnv.ada_score > 0.957813 or variant_info.dbscsnv.rf_score > 0.584:
+                return True
         if not variant_info or not variant_info.cadd:
             raise MissingDataError("Missing CADD data for variant.")
         acc_gain = variant_info.cadd.SpliceAI_acc_gain
         acc_loss = variant_info.cadd.SpliceAI_acc_loss
         don_gain = variant_info.cadd.SpliceAI_don_gain
         don_loss = variant_info.cadd.SpliceAI_don_loss
+        self.comment += f"SpliceAI_acc_gain: {acc_gain}, SpliceAI_acc_loss: {acc_loss}, SpliceAI_don_gain: {don_gain}, SpliceAI_don_loss: {don_loss}\n"
         if (
             (acc_gain and acc_gain > 0)
             or (acc_loss and acc_loss > 0.5)
             or (don_gain and don_gain > 0)
             or (don_loss and don_loss > 0.5)
         ):
+            return True
+        return False
+
+    def _pred_conservation(self, variant_info: VariantResult) -> bool:
+        """
+        Predict if the variant is conserved.
+
+        Check if the variant is conserved using the phyloP100way_vertebrate score.
+
+        Args:
+            variant_info: The variant information.
+
+        Returns:
+            bool: True if the variant is conserved, False otherwise.
+        """
+        if not variant_info or not variant_info.cadd:
+            raise MissingDataError("Missing dbNSFP data for variant.")
+        # phylop = self._convert_score_val(variant_info.dbnsfp.phyloP100way_vertebrate)
+        phylop = variant_info.cadd.verPhyloP
+        if phylop and phylop < 3.58:
             return True
         return False
 
@@ -168,36 +225,48 @@ class AutoBP7:
 
             self.comment = "Checking for pathogenic variants in the range of 2bp. => \n"
             logger.debug("Checking for pathogenic variants in the range of 2bp.")
-            if self._check_proximity_to_pathogenic_vars(self.seqvar):
-                self.comment += "Found pathogenic variants in the range of 2bp. BP7 is not met."
-                logger.debug("Found pathogenic variants in the range of 2bp. BP7 is not met.")
-                self.prediction.BP7 = False
-                return self.prediction, self.comment
-            else:
-                self.comment += "No pathogenic variants found in the range of 2bp. => \n"
-                logger.debug("No pathogenic variants found in the range of 2bp. => \n")
-
-            self.comment += "Checking for proximity to splice site. => \n"
-            logger.debug("Checking for proximity to splice site.")
-            if self._check_proximity_to_ss(self.seqvar):
-                self.comment += "Variant is within 2bp of a splice site. BP7 is not met."
-                logger.debug("Variant is within 2bp of a splice site. BP7 is not met.")
-                self.prediction.BP7 = False
-                return self.prediction, self.comment
-            else:
-                self.comment += "Variant is not within 2bp of a splice site. => \n"
-                logger.debug("Variant is not within 2bp of a splice site. => \n")
-
-            self.comment += "Predicting splice site alterations using SpliceAI. => \n"
-            logger.debug("Predicting splice site alterations using SpliceAI.")
-            if self._pred_spliceai(self.seqvar):
-                self.comment += "Variant is a splice site alteration. BP7 is not met."
-                logger.debug("Variant is a splice site alteration. BP7 is not met.")
-                self.prediction.BP7 = False
-            else:
-                self.comment += "Variant is not a splice site alteration. BP7 is met."
-                logger.debug("Variant is not a splice site alteration. BP7 is met.")
+            # if self._pred_conservation(self.variant_info) and self._check_proximity_to_ss(
+            #     self.seqvar
+            # ):
+            if self._pred_conservation(self.variant_info):
+                self.comment += "Variant is not conserved and in +=2 bp from ss. BP7 is met."
+                logger.debug("Variant is not conserved and in +=2 bp from ss. BP7 is met.")
                 self.prediction.BP7 = True
+            else:
+                self.comment += "Variant is not conserved. => \n"
+                logger.debug("Variant is not conserved. => \n")
+                self.prediction.BP7 = False
+
+            # if self._check_proximity_to_pathogenic_vars(self.seqvar):
+            #     self.comment += "Found pathogenic variants in the range of 2bp. BP7 is not met."
+            #     logger.debug("Found pathogenic variants in the range of 2bp. BP7 is not met.")
+            #     self.prediction.BP7 = False
+            #     return self.prediction, self.comment
+            # else:
+            #     self.comment += "No pathogenic variants found in the range of 2bp. => \n"
+            #     logger.debug("No pathogenic variants found in the range of 2bp. => \n")
+
+            # self.comment += "Checking for proximity to splice site. => \n"
+            # logger.debug("Checking for proximity to splice site.")
+            # if self._check_proximity_to_ss(self.seqvar):
+            #     self.comment += "Variant is within 2bp of a splice site. BP7 is not met."
+            #     logger.debug("Variant is within 2bp of a splice site. BP7 is not met.")
+            #     self.prediction.BP7 = False
+            #     return self.prediction, self.comment
+            # else:
+            #     self.comment += "Variant is not within 2bp of a splice site. => \n"
+            #     logger.debug("Variant is not within 2bp of a splice site. => \n")
+
+            # self.comment += "Predicting splice site alterations using SpliceAI. => \n"
+            # logger.debug("Predicting splice site alterations using SpliceAI.")
+            # if self._pred_spliceai(self.seqvar):
+            #     self.comment += "Variant is a splice site alteration. BP7 is not met."
+            #     logger.debug("Variant is a splice site alteration. BP7 is not met.")
+            #     self.prediction.BP7 = False
+            # else:
+            #     self.comment += "Variant is not a splice site alteration. BP7 is met."
+            #     logger.debug("Variant is not a splice site alteration. BP7 is met.")
+            #     self.prediction.BP7 = True
         except AutoAcmgBaseException as e:
             self.comment += f"Failed to predict BP7 criterion. Error: {e}"
             logger.error("Failed to predict BP7 criterion. Error: {}", e)

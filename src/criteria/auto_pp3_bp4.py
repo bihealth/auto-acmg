@@ -106,6 +106,7 @@ class AutoPP3BP4:
                         score_value,
                         score.pathogenic_threshold,
                     )
+                    return False
             else:
                 self.comment += "Score not found. \n"
                 logger.debug("Score not found.")
@@ -150,6 +151,7 @@ class AutoPP3BP4:
                     logger.debug(
                         "Benign score({}): {} > {}", score.name, score_value, score.benign_threshold
                     )
+                    return False
             else:
                 self.comment += "Score not found. \n"
                 logger.debug("Score not found.")
@@ -243,6 +245,51 @@ class AutoPP3BP4:
             )
             return False
 
+    def _is_pathogenic_splicing(self, variant_info: VariantResult) -> bool:
+        """
+        Check if the variant is pathogenic based on splicing scores.
+
+        Args:
+            variant_info (VariantResult): Variant information.
+
+        Returns:
+            bool: True if the variant is pathogenic, False otherwise.
+
+        Raises:
+            MissingDataError: If the variant information is missing.
+        """
+        if (
+            not variant_info.dbscsnv
+            or not variant_info.dbscsnv.ada_score
+            or not variant_info.dbscsnv.rf_score
+        ):
+            logger.error("Missing dbSCSNV data.")
+            raise MissingDataError("Missing dbSCSNV data.")
+        self.comment += "Checking for pathogenic splicing scores: \n"
+        logger.debug("Checking for pathogenic splicing scores.")
+        if variant_info.dbscsnv.ada_score >= 0.957813 or variant_info.dbscsnv.rf_score >= 0.584:
+            self.comment += (
+                "Pathogenic splicing scores: "
+                f"ADA: {variant_info.dbscsnv.ada_score}, RF: {variant_info.dbscsnv.rf_score} =>\n"
+            )
+            logger.debug(
+                "Pathogenic splicing scores: ADA: {}, RF: {}",
+                variant_info.dbscsnv.ada_score,
+                variant_info.dbscsnv.rf_score,
+            )
+            return True
+        else:
+            self.comment += (
+                "Benign splicing scores: "
+                f"ADA: {variant_info.dbscsnv.ada_score}, RF: {variant_info.dbscsnv.rf_score}.\n"
+            )
+            logger.debug(
+                "Benign splicing scores: ADA: {}, RF: {}",
+                variant_info.dbscsnv.ada_score,
+                variant_info.dbscsnv.rf_score,
+            )
+            return False
+
     def predict(self) -> Tuple[Optional[PP3BP4], str]:
         """Predict PP3 and BP4 criteria."""
         self.prediction = PP3BP4()
@@ -255,30 +302,38 @@ class AutoPP3BP4:
                 self.prediction.BP4 = False
                 return self.prediction, self.comment
 
-            if not self.variant_info:
-                logger.error("Missing variant data.")
-                raise MissingDataError("Missing variant data.")
-
             # Evaluate PP3 and BP4 criteria
-            self.comment = "Checking Scores. => \n"
-            logger.debug("Checking Scores.")
-            is_pathogenic = self._is_pathogenic_score(
-                self.variant_info
-            ) or self._is_pathogenic_spliceai(self.variant_info)
-            is_benign = self._is_benign_score(self.variant_info) or self._is_benign_spliceai(
-                self.variant_info
-            )
-            self.comment += (
-                f"Result: PP3 is {'met' if is_pathogenic else 'not met'}, "
-                f"BP4 is {'met' if is_benign else 'not met'}. => \n"
-            )
-            logger.debug(
-                "Result: PP3 is {}, BP4 is {}.",
-                "met" if is_pathogenic else "not met",
-                "met" if is_benign else "not met",
-            )
-            self.prediction.PP3 = is_pathogenic
-            self.prediction.BP4 = is_benign
+            # self.comment = "Checking Scores. => \n"
+            # logger.debug("Checking Scores.")
+            # is_pathogenic = self._is_pathogenic_score(
+            #     self.variant_info
+            # ) or self._is_pathogenic_spliceai(self.variant_info)
+            # is_benign = self._is_benign_score(self.variant_info) or self._is_benign_spliceai(
+            #     self.variant_info
+            # )
+            # self.comment += (
+            #     f"Result: PP3 is {'met' if is_pathogenic else 'not met'}, "
+            #     f"BP4 is {'met' if is_benign else 'not met'}. => \n"
+            # )
+            # logger.debug(
+            #     "Result: PP3 is {}, BP4 is {}.",
+            #     "met" if is_pathogenic else "not met",
+            #     "met" if is_benign else "not met",
+            # )
+            # self.prediction.PP3 = is_pathogenic
+            # self.prediction.BP4 = is_benign
+
+            if (
+                self.variant_info.cadd
+                and self.variant_info.cadd.ConsDetail
+                and "splice" in self.variant_info.cadd.ConsDetail
+            ):
+                self.comment += "Variant is a splice variant."
+                self.prediction.PP3 = self._is_pathogenic_splicing(self.variant_info)
+            else:
+                self.prediction.PP3 = self._is_pathogenic_score(self.variant_info)
+
+            self.prediction.BP4 = self._is_benign_score(self.variant_info)
 
         except AutoAcmgBaseException as e:
             self.comment += f"An error occurred during prediction. Error: {e}"

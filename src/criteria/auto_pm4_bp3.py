@@ -89,10 +89,6 @@ class AutoPM4BP3:
         try:
             # Initialize the prediction result
             self.prediction = PM4BP3()
-
-            if not self.variant_info:
-                raise MissingDataError("No valid primary information.")
-
             self.comment = "Check consequences of the variant for PM4.\n"
             # Stop-loss variants are considered as PM4
             if self.variant_info.cadd and self.variant_info.cadd.ConsDetail == "stop_loss":

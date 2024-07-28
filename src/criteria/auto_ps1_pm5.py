@@ -155,9 +155,7 @@ class AutoPS1PM5:
                 or not self.variant_info.dbnsfp
                 or not self.variant_info.dbnsfp.HGVSp_VEP
             ):
-                raise MissingDataError(
-                    "No valid primary variant information for PS1/PM5 prediction."
-                )
+                raise MissingDataError("No dbnsfp information for PS1/PM5 prediction.")
 
             if not self._is_missense():
                 raise AlgorithmError("Variant is not a missense variant. PS1/PM5 not applicable.")
