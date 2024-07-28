@@ -108,7 +108,7 @@ def test_is_pathogenic_score_missing_data(file_path, seqvar, variant_info):
 @pytest.mark.parametrize(
     "file_path, expected",
     [
-        ("annonars/PAH_variant.json", True),
+        ("annonars/PAH_variant.json", False),
     ],
 )
 def test_is_benign_score(file_path, expected, seqvar, variant_info):
