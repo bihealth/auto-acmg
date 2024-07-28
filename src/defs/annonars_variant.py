@@ -20,6 +20,7 @@ class VariantQuery(BaseModel):
 class Cadd(BaseModel):
     ConsDetail: Optional[str] = None
     # PolyPhenVal: Optional[float] = None
+    verPhyloP: Optional[float] = None
     SpliceAI_acc_gain: Optional[float] = Field(..., alias="SpliceAI-acc-gain")
     SpliceAI_acc_loss: Optional[float] = Field(..., alias="SpliceAI-acc-loss")
     SpliceAI_don_gain: Optional[float] = Field(..., alias="SpliceAI-don-gain")
@@ -42,6 +43,8 @@ class GnomadExomes(BaseModel):
 
 
 class Dbnsfp(BaseModel):
+    AlphaMissense_score: Optional[Union[str, float, int]] = None
+    MetaRNN_score: Optional[Union[str, float, int]] = None
     BayesDel_noAF_score: Optional[Union[str, float, int]] = None
     REVEL_score: Optional[Union[str, float, int]] = None
     CADD_raw: Optional[Union[str, float, int]] = None
@@ -176,11 +179,16 @@ class GnomadMtDna(BaseModel):
     afHet: Optional[float] = None
 
 
+class Dbscsnv(BaseModel):
+    ada_score: Optional[float] = None
+    rf_score: Optional[float] = None
+
+
 class VariantResult(BaseModel):
     cadd: Optional[Cadd] = None
     dbsnp: Optional[Any] = None
     dbnsfp: Optional[Dbnsfp] = None
-    dbscsnv: Optional[Any] = None
+    dbscsnv: Optional[Dbscsnv] = None
     gnomad_mtdna: Optional[GnomadMtDna] = None
     gnomad_exomes: Optional[GnomadExomes] = None
     gnomad_genomes: Optional[GnomadGenomes] = None

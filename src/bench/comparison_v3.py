@@ -100,7 +100,7 @@ def intervar_response(variant: str):
 
     url = (
         f"http://wintervar.wglab.org/api_new.php?"
-        f"queryType={position}&chr={chromosome}&pos={position}"
+        f"queryType=position&chr={chromosome}&pos={position}"
         f"&ref={reference}&alt={alternative}&build=hg19"
     )
     print("Requesting:", url)
@@ -131,7 +131,7 @@ def genebe_response(variant: str):
     url = (
         f"https://api.genebe.net/cloud/api-public/v1/variant?"
         f"chr={chromosome}&pos={position}"
-        f"&ref={reference}&alt={alternative}&genome=hg38"
+        f"&ref={reference}&alt={alternative}&genome=hg19"
     )
     print("Requesting:", url)
     backend_resp = httpx.get(url)
@@ -243,7 +243,7 @@ for i, var in enumerate(variants):
     # Save the stats every 50 variants
     if i % 50 == 0 and i > 0:
         print(f"Processed {i} variants")
-        output_path = os.path.join(path_to_root, "src", "bench", "tmp", f"_stats_{i}.csv")
+        output_path = os.path.join(path_to_root, "src", "bench", "tmp", f"stats_{i}.csv")
         stats.to_csv(output_path, index=False)
 
     record = {
@@ -332,5 +332,5 @@ for i, var in enumerate(variants):
     stats = append_row(stats, pd.Series(record))
 
 # Save the final stats
-output_path = os.path.join(path_to_root, "src", "bench", "_stats.csv")
+output_path = os.path.join(path_to_root, "src", "bench", "stats.csv")
 stats.to_csv(output_path, index=False)

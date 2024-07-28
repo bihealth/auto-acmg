@@ -692,19 +692,12 @@ class SeqVarPVS1Helper:
             raise MissingDataError(
                 "Strand is not available. Cannot determine upstream pathogenic variants."
             )
-        start_pos, end_pos = None, None
         if strand == GenomicStrand.Plus:
             start_pos = exons[0].altStartI
-            end_pos = self._closest_alt_start_cdn(cds_info, hgvs)
+            end_pos = exons[0].altEndI
         elif strand == GenomicStrand.Minus:
-            start_pos = self._closest_alt_start_cdn(cds_info, hgvs)
+            start_pos = exons[-1].altStartI
             end_pos = exons[-1].altEndI
-
-        if not start_pos or not end_pos:
-            logger.debug("No alternative start codon found. Skipping upstream pathogenic variants.")
-            raise AlgorithmError(
-                "No alternative start codon found. Skipping upstream pathogenic variants."
-            )
 
         # Fetch and count pathogenic variants in the specified range
         try:
@@ -789,10 +782,6 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                 "Transcript data is not fully set. Cannot initialize the PVS1 class."
             )
 
-        if self._consequence == SeqVarConsequence.NotSet:
-            logger.error("Consequence is not set. Cannot initialize the PVS1 class.")
-            raise MissingDataError("Consequence is not set. Cannot initialize the PVS1 class.")
-
         # Set attributes
         logger.debug("Setting up the attributes for the PVS1 class.")
         self.consequences = self._seqvar_transcript.consequences
@@ -840,11 +829,7 @@ class SeqVarPVS1(SeqVarPVS1Helper):
                 and the comment.
         """
         logger.debug("Verifying the PVS1 criteria.")
-        if (
-            not self._seqvar_transcript
-            or not self._gene_transcript
-            or self._consequence == SeqVarConsequence.NotSet
-        ):
+        if not self._seqvar_transcript or not self._gene_transcript:
             logger.error("Transcript data is not set. Did you forget to initialize the class?")
             raise AlgorithmError(
                 "Transcript data is not set. Did you forget to initialize the class?"
