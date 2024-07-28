@@ -106,6 +106,7 @@ class AutoPP3BP4:
                         score_value,
                         score.pathogenic_threshold,
                     )
+                    return False
             else:
                 self.comment += "Score not found. \n"
                 logger.debug("Score not found.")
@@ -150,17 +151,103 @@ class AutoPP3BP4:
                     logger.debug(
                         "Benign score({}): {} > {}", score.name, score_value, score.benign_threshold
                     )
+                    return False
             else:
                 self.comment += "Score not found. \n"
                 logger.debug("Score not found.")
         return False
 
-    def _is_pathogenic_spliceai(self, variant_info: VariantResult) -> bool:
-        """
-        Check if any of the pathogenic scores meet the threshold.
+    # def _is_pathogenic_spliceai(self, variant_info: VariantResult) -> bool:
+    #     """
+    #     Check if any of the pathogenic scores meet the threshold.
 
-        Note:
-            The threshold is set to 0.2 according to doi:10.1101/2023.02.24.23286431.
+    #     Note:
+    #         The threshold is set to 0.2 according to doi:10.1101/2023.02.24.23286431.
+
+    #     Args:
+    #         variant_info (VariantResult): Variant information.
+
+    #     Returns:
+    #         bool: True if the variant is pathogenic, False otherwise.
+
+    #     Raises:
+    #         MissingDataError: If the variant information is missing.
+    #     """
+    #     if (
+    #         not variant_info.gnomad_exomes
+    #         or not variant_info.gnomad_exomes.effectInfo
+    #         or not variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
+    #     ):
+    #         logger.error("Missing GnomAD exomes data.")
+    #         raise MissingDataError("Missing GnomAD exomes data.")
+    #     self.comment += "Checking for pathogenic SpliceAI score: \n"
+    #     logger.debug("Checking for pathogenic SpliceAI score.")
+    #     if variant_info.gnomad_exomes.effectInfo.spliceaiDsMax >= 0.2:
+    #         self.comment += (
+    #             "Pathogenic SpliceAI score: "
+    #             f"{variant_info.gnomad_exomes.effectInfo.spliceaiDsMax} >= 0.2. =>\n"
+    #         )
+    #         logger.debug(
+    #             "Pathogenic SpliceAI score: {}", variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
+    #         )
+    #         return True
+    #     else:
+    #         self.comment += (
+    #             "Benign SpliceAI score: "
+    #             f"{variant_info.gnomad_exomes.effectInfo.spliceaiDsMax} < 0.2.\n"
+    #         )
+    #         logger.debug(
+    #             "Benign SpliceAI score: {}", variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
+    #         )
+    #         return False
+
+    # def _is_benign_spliceai(self, variant_info: VariantResult) -> bool:
+    #     """
+    #     Check if any of the pathogenic scores meet the threshold.
+
+    #     Note:
+    #         The threshold is set to 0.1 according to doi:10.1101/2023.02.24.23286431.
+
+    #     Args:
+    #         variant_info (VariantResult): Variant information.
+
+    #     Returns:
+    #         bool: True if the variant is benign, False otherwise.
+
+    #     Raises:
+    #         MissingDataError: If the variant information is missing.
+    #     """
+    #     if (
+    #         not variant_info.gnomad_exomes
+    #         or not variant_info.gnomad_exomes.effectInfo
+    #         or not variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
+    #     ):
+    #         logger.error("Missing GnomAD exomes data.")
+    #         raise MissingDataError("Missing GnomAD exomes data.")
+    #     self.comment += "Checking for benign SpliceAI score: \n"
+    #     logger.debug("Checking for benign SpliceAI score.")
+    #     if variant_info.gnomad_exomes.effectInfo.spliceaiDsMax <= 0.1:
+    #         self.comment += (
+    #             "Benign SpliceAI score: "
+    #             f"{variant_info.gnomad_exomes.effectInfo.spliceaiDsMax} <= 0.1. =>\n"
+    #         )
+    #         logger.debug(
+    #             "Benign SpliceAI score: {}", variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
+    #         )
+    #         return True
+    #     else:
+    #         self.comment += (
+    #             "Pathogenic SpliceAI score: "
+    #             f"{variant_info.gnomad_exomes.effectInfo.spliceaiDsMax} > 0.1.\n"
+    #         )
+    #         logger.debug(
+    #             "Pathogenic SpliceAI score: {}", variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
+    #         )
+    #         return False
+
+    def _is_pathogenic_splicing(self, variant_info: VariantResult) -> bool:
+        """
+        Check if the variant is pathogenic based on splicing scores.
 
         Args:
             variant_info (VariantResult): Variant information.
@@ -172,74 +259,34 @@ class AutoPP3BP4:
             MissingDataError: If the variant information is missing.
         """
         if (
-            not variant_info.gnomad_exomes
-            or not variant_info.gnomad_exomes.effectInfo
-            or not variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
+            not variant_info.dbscsnv
+            or not variant_info.dbscsnv.ada_score
+            or not variant_info.dbscsnv.rf_score
         ):
-            logger.error("Missing GnomAD exomes data.")
-            raise MissingDataError("Missing GnomAD exomes data.")
-        self.comment += "Checking for pathogenic SpliceAI score: \n"
-        logger.debug("Checking for pathogenic SpliceAI score.")
-        if variant_info.gnomad_exomes.effectInfo.spliceaiDsMax >= 0.2:
+            logger.error("Missing dbSCSNV data.")
+            raise MissingDataError("Missing dbSCSNV data.")
+        self.comment += "Checking for pathogenic splicing scores: \n"
+        logger.debug("Checking for pathogenic splicing scores.")
+        if variant_info.dbscsnv.ada_score >= 0.957813 or variant_info.dbscsnv.rf_score >= 0.584:
             self.comment += (
-                "Pathogenic SpliceAI score: "
-                f"{variant_info.gnomad_exomes.effectInfo.spliceaiDsMax} >= 0.2. =>\n"
+                "Pathogenic splicing scores: "
+                f"ADA: {variant_info.dbscsnv.ada_score}, RF: {variant_info.dbscsnv.rf_score} =>\n"
             )
             logger.debug(
-                "Pathogenic SpliceAI score: {}", variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
+                "Pathogenic splicing scores: ADA: {}, RF: {}",
+                variant_info.dbscsnv.ada_score,
+                variant_info.dbscsnv.rf_score,
             )
             return True
         else:
             self.comment += (
-                "Benign SpliceAI score: "
-                f"{variant_info.gnomad_exomes.effectInfo.spliceaiDsMax} < 0.2.\n"
+                "Benign splicing scores: "
+                f"ADA: {variant_info.dbscsnv.ada_score}, RF: {variant_info.dbscsnv.rf_score}.\n"
             )
             logger.debug(
-                "Benign SpliceAI score: {}", variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
-            )
-            return False
-
-    def _is_benign_spliceai(self, variant_info: VariantResult) -> bool:
-        """
-        Check if any of the pathogenic scores meet the threshold.
-
-        Note:
-            The threshold is set to 0.1 according to doi:10.1101/2023.02.24.23286431.
-
-        Args:
-            variant_info (VariantResult): Variant information.
-
-        Returns:
-            bool: True if the variant is benign, False otherwise.
-
-        Raises:
-            MissingDataError: If the variant information is missing.
-        """
-        if (
-            not variant_info.gnomad_exomes
-            or not variant_info.gnomad_exomes.effectInfo
-            or not variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
-        ):
-            logger.error("Missing GnomAD exomes data.")
-            raise MissingDataError("Missing GnomAD exomes data.")
-        self.comment += "Checking for benign SpliceAI score: \n"
-        logger.debug("Checking for benign SpliceAI score.")
-        if variant_info.gnomad_exomes.effectInfo.spliceaiDsMax <= 0.1:
-            self.comment += (
-                "Benign SpliceAI score: "
-                f"{variant_info.gnomad_exomes.effectInfo.spliceaiDsMax} <= 0.1. =>\n"
-            )
-            logger.debug(
-                "Benign SpliceAI score: {}", variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
-            )
-            return True
-        else:
-            self.comment += (
-                "Pathogenic SpliceAI score: "
-                f"{variant_info.gnomad_exomes.effectInfo.spliceaiDsMax} > 0.1.\n"
-            )
-            logger.debug(
-                "Pathogenic SpliceAI score: {}", variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
+                "Benign splicing scores: ADA: {}, RF: {}",
+                variant_info.dbscsnv.ada_score,
+                variant_info.dbscsnv.rf_score,
             )
             return False
 
@@ -255,30 +302,34 @@ class AutoPP3BP4:
                 self.prediction.BP4 = False
                 return self.prediction, self.comment
 
-            if not self.variant_info:
-                logger.error("Missing variant data.")
-                raise MissingDataError("Missing variant data.")
-
             # Evaluate PP3 and BP4 criteria
-            self.comment = "Checking Scores. => \n"
-            logger.debug("Checking Scores.")
-            is_pathogenic = self._is_pathogenic_score(
-                self.variant_info
-            ) or self._is_pathogenic_spliceai(self.variant_info)
-            is_benign = self._is_benign_score(self.variant_info) or self._is_benign_spliceai(
-                self.variant_info
-            )
-            self.comment += (
-                f"Result: PP3 is {'met' if is_pathogenic else 'not met'}, "
-                f"BP4 is {'met' if is_benign else 'not met'}. => \n"
-            )
-            logger.debug(
-                "Result: PP3 is {}, BP4 is {}.",
-                "met" if is_pathogenic else "not met",
-                "met" if is_benign else "not met",
-            )
-            self.prediction.PP3 = is_pathogenic
-            self.prediction.BP4 = is_benign
+            # self.comment = "Checking Scores. => \n"
+            # logger.debug("Checking Scores.")
+            # is_pathogenic = self._is_pathogenic_score(
+            #     self.variant_info
+            # ) or self._is_pathogenic_spliceai(self.variant_info)
+            # is_benign = self._is_benign_score(self.variant_info) or self._is_benign_spliceai(
+            #     self.variant_info
+            # )
+            # self.comment += (
+            #     f"Result: PP3 is {'met' if is_pathogenic else 'not met'}, "
+            #     f"BP4 is {'met' if is_benign else 'not met'}. => \n"
+            # )
+            # logger.debug(
+            #     "Result: PP3 is {}, BP4 is {}.",
+            #     "met" if is_pathogenic else "not met",
+            #     "met" if is_benign else "not met",
+            # )
+            # self.prediction.PP3 = is_pathogenic
+            # self.prediction.BP4 = is_benign
+
+            if self.variant_info.cadd and "splice" in self.variant_info.cadd.ConsDetail:
+                self.comment += "Variant is a splice variant."
+                self.prediction.PP3 = self._is_pathogenic_splicing(self.variant_info)
+            else:
+                self.prediction.PP3 = self._is_pathogenic_score(self.variant_info)
+
+            self.prediction.BP4 = self._is_benign_score(self.variant_info)
 
         except AutoAcmgBaseException as e:
             self.comment += f"An error occurred during prediction. Error: {e}"
