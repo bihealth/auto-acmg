@@ -4,6 +4,9 @@
 # Temporary comparison results files
 src/bench/tmp/*.csv
 
+# Temporary lock files from LibreOffice
+*.~lock.*
+
 # API cache
 cache/
 cache/**
