@@ -21,9 +21,9 @@ NM_000277.2:c.1147C>T,PVS1,Gene: PAH; p.Gln383Ter; From Recommendation 07.09.201
 NM_004360.3:c.1792C>T,PVS1,Gene: CDH1; p.Arg598Ter; From Recommendation 07.09.2018
 NM_000314.6:c.1003C>T,PVS1,PTEN,Gene: PTEN; p.Arg335Ter; From Recommendation 07.09.2018
 NM_000152.4:c.1A>G,PVS1,Gene: GAA; p.Met1Val; From Recommendation 07.09.2018
-NM_000218.2:c.2T>C,PVS1,Gene: KCNQ1; p.Met1Thr; From Recommendation 07.09.2018
+#NM_000218.2:c.2T>C,PVS1,Gene: KCNQ1; p.Met1Thr; From Recommendation 07.09.2018
 NM_000277.2:c.1A>G,PVS1,Gene: PAH; p.Met1Val; From Recommendation 07.09.2018
-NM_000314.6:c.3G>T,PVS1,Gene: PTEN; p.Met1Ile; From Recommendation 07.09.2018
+#NM_000314.6:c.3G>T,PVS1,Gene: PTEN; p.Met1Ile; From Recommendation 07.09.2018
 # Tests for different criteria,,
 NM_176795.4(HRAS):c.173C>T,PS1;PS4;PM1;PM2;PM6;PP2;PP3,from ClinGen https://erepo.clinicalgenome.org/evrepo/ui/classification/4fa14d9d-3bce-4dd8-affa-771b6298c4fc
 NM_000277.2(PAH):c.503delA,PVS1;PM2;PP4,"PAH-specific ACMG/AMP criteria applied: PVS1: Frameshift variant; PM2: Extremely low frequency. ExAC MAF: 0.00001.; PP4: Detected in PKU patient in international phase II clinical trial for sapropterin. (PMID:23430918). In summary this variant meets criteria to be classified as pathogenic for phenylketonuria in an autosomal recessive manner based on the ACMG/AMP criteria applied as specified by the PAH Expert Panel: (PVS1, PM2, PP4)."
