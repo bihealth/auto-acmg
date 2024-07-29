@@ -51,11 +51,36 @@ class AutoPM2BA1BS1BS2:
             The allele frequency for the control population. None if no data found.
         """
         if not variant_data.gnomad_exomes or not variant_data.gnomad_exomes.alleleCounts:
-            raise MissingDataError("No allele counts found in variant data")
+            return None
+            # raise MissingDataError("No allele counts found in variant data")
         for af in variant_data.gnomad_exomes.alleleCounts:
             if af.cohort == "controls":
                 return af
         return None
+
+    def _get_any_af(self, variant_data: VariantResult) -> Optional[AlleleCount]:
+        """
+        Get the allele frequency information for any population.
+
+        Args:
+            variant_data: The variant data.
+
+        Returns:
+            The allele frequency for any population. None if no data found.
+        """
+        if not variant_data.gnomad_exomes or not variant_data.gnomad_exomes.alleleCounts:
+            return None
+            # raise MissingDataError("No allele counts found in variant data")
+        best_af = None
+        for af in variant_data.gnomad_exomes.alleleCounts:
+            if not best_af:
+                best_af = af
+            elif af.cohort == "controls":
+                return af
+            else:
+                if best_af.afGrpmax < af.afGrpmax:
+                    best_af = af
+        return best_af
 
     def _get_af(self, seqvar: SeqVar, variant_data: VariantResult) -> Optional[float]:
         """
@@ -71,7 +96,8 @@ class AutoPM2BA1BS1BS2:
         if seqvar.chrom.startswith("M"):
             if not variant_data.gnomad_mtdna or not variant_data.gnomad_mtdna.afHet:
                 self.comment += "No gnomad data found for mitochondrial variant.\n"
-                raise MissingDataError("No gnomad data found for mitochondrial variant.")
+                return None
+                # raise MissingDataError("No gnomad data found for mitochondrial variant.")
             else:
                 self.comment += (
                     "Mitochondrial variant with allele frequency: "
@@ -80,18 +106,14 @@ class AutoPM2BA1BS1BS2:
                 return variant_data.gnomad_mtdna.afHet
         else:
             controls_af = self._get_control_af(variant_data)
-            if not controls_af:
-                self.comment += "No controls allele frequency data found."
+            any_af = self._get_any_af(variant_data)
+            af = controls_af or any_af
+            if not af or not af.afGrpmax:
+                self.comment += "No allele frequency data found."
                 return None
-            if (
-                not controls_af.bySex
-                or not controls_af.bySex.overall
-                or not controls_af.bySex.overall.af
-            ):
-                self.comment += "No allele frequency found in control data.\n"
-                raise MissingDataError("No allele frequency found in control data.")
-            self.comment += f"Allele frequency: {controls_af.bySex.overall.af}.\n"
-            return controls_af.bySex.overall.af
+                # raise MissingDataError("No allele frequency found in data.")
+            self.comment += f"Allele frequency: {af.afGrpmax}.\n"
+            return af.afGrpmax
 
     def _get_allele_cond(self, seqvar: SeqVar) -> AlleleCondition:
         """
@@ -192,19 +214,21 @@ class AutoPM2BA1BS1BS2:
         allele_condition = self._get_allele_cond(seqvar)
         self.comment += f"Allele condition: {allele_condition.name}.\n"
         controls_af = self._get_control_af(variant_data)
-        if not controls_af or not controls_af.bySex:
+        any_af = self._get_any_af(variant_data)
+        af = controls_af or any_af
+        if not af or not af.bySex:
             self.comment += "No controls allele data found in control data.\n"
             raise MissingDataError("No raw data found in control data.")
 
         # X-linked disorders
         if seqvar.chrom == "X":
-            if not controls_af.bySex.xx or not controls_af.bySex.xy:
+            if not af.bySex.xx or not af.bySex.xy:
                 self.comment += "No allele data found for XX or XY in control data.\n"
                 raise MissingDataError("No allele data found for XX or XY in control data.")
-            xx_ac = controls_af.bySex.xx.ac if controls_af.bySex.xx.ac else 0
-            xy_ac = controls_af.bySex.xy.ac if controls_af.bySex.xy.ac else 0
-            xx_nhomalt = controls_af.bySex.xx.nhomalt if controls_af.bySex.xx.nhomalt else 0
-            xy_nhomalt = controls_af.bySex.xy.nhomalt if controls_af.bySex.xy.nhomalt else 0
+            xx_ac = af.bySex.xx.ac if af.bySex.xx.ac else 0
+            xy_ac = af.bySex.xy.ac if af.bySex.xy.ac else 0
+            xx_nhomalt = af.bySex.xx.nhomalt if af.bySex.xx.nhomalt else 0
+            xy_nhomalt = af.bySex.xy.nhomalt if af.bySex.xy.nhomalt else 0
             self.comment += (
                 f"Allele count for XX: {xx_ac}, XY: {xy_ac}, "
                 f"Nhomalt for XX: {xx_nhomalt}, XY: {xy_nhomalt}.\n"
@@ -237,11 +261,11 @@ class AutoPM2BA1BS1BS2:
                     return True
         # Autosomal disorders
         else:
-            if not controls_af.bySex.overall:
+            if not af.bySex.overall:
                 self.comment += "No allele data found for overall in control data.\n"
                 raise MissingDataError("No allele data found for overall in control data.")
-            ac = controls_af.bySex.overall.ac if controls_af.bySex.overall.ac else 0
-            nhomalt = controls_af.bySex.overall.nhomalt if controls_af.bySex.overall.nhomalt else 0
+            ac = af.bySex.overall.ac if af.bySex.overall.ac else 0
+            nhomalt = af.bySex.overall.nhomalt if af.bySex.overall.nhomalt else 0
             self.comment += f"Allele count: {ac}, Nhomalt: {nhomalt}.\n"
             if allele_condition == AlleleCondition.Dominant:
                 if ac - 2 * nhomalt > 5:
@@ -269,6 +293,169 @@ class AutoPM2BA1BS1BS2:
                     return True
         return False
 
+    def _ba1_exception(self, seqvar: SeqVar) -> bool:
+        """
+        Check the exception for BA1 criteria.
+
+        If the variant in exception list, return True.
+
+        Args:
+            seqvar: The sequence variant.
+
+        Returns:
+            True if the variant is in exception list.
+        """
+        exception_list = [
+            SeqVar(
+                genome_release=GenomeRelease.GRCh37,
+                chrom="chr3",
+                pos=128598490,
+                delete="C",
+                insert="CTAAG",
+                user_repr="NM_014049.4:c.-44_-41dupTAAG",
+            ),
+            SeqVar(
+                genome_release=GenomeRelease.GRCh38,
+                chrom="chr3",
+                pos=128879647,
+                delete="C",
+                insert="CTAAG",
+                user_repr="NM_014049.4:c.-44_-41dupTAAG",
+            ),
+            SeqVar(
+                genome_release=GenomeRelease.GRCh37,
+                chrom="chr13",
+                pos=20763612,
+                delete="C",
+                insert="T",
+                user_repr="NM_004004.5:c.109G>A",
+            ),
+            SeqVar(
+                genome_release=GenomeRelease.GRCh38,
+                chrom="chr13",
+                pos=20189473,
+                delete="C",
+                insert="T",
+                user_repr="NM_004004.5:c.109G>A",
+            ),
+            SeqVar(
+                genome_release=GenomeRelease.GRCh37,
+                chrom="chr6",
+                pos=26091179,
+                delete="C",
+                insert="G",
+                user_repr="NM_000410.3:c.187C>G",
+            ),
+            SeqVar(
+                genome_release=GenomeRelease.GRCh38,
+                chrom="chr6",
+                pos=26090951,
+                delete="C",
+                insert="G",
+                user_repr="NM_000410.3:c.187C>G",
+            ),
+            SeqVar(
+                genome_release=GenomeRelease.GRCh37,
+                chrom="chr6",
+                pos=26093141,
+                delete="G",
+                insert="A",
+                user_repr="NM_000410.3:c.845G>A",
+            ),
+            SeqVar(
+                genome_release=GenomeRelease.GRCh38,
+                chrom="chr6",
+                pos=26092913,
+                delete="G",
+                insert="A",
+                user_repr="NM_000410.3:c.845G>A",
+            ),
+            SeqVar(
+                genome_release=GenomeRelease.GRCh37,
+                chrom="chr16",
+                pos=3299586,
+                delete="G",
+                insert="A",
+                user_repr="NM_000243.2:c.1105C>T",
+            ),
+            SeqVar(
+                genome_release=GenomeRelease.GRCh38,
+                chrom="chr16",
+                pos=3249586,
+                delete="G",
+                insert="A",
+                user_repr="NM_000243.2:c.1105C>T",
+            ),
+            SeqVar(
+                genome_release=GenomeRelease.GRCh37,
+                chrom="chr16",
+                pos=3299468,
+                delete="C",
+                insert="T",
+                user_repr="NM_000243.2:c.1223G>A",
+            ),
+            SeqVar(
+                genome_release=GenomeRelease.GRCh38,
+                chrom="chr16",
+                pos=3249468,
+                delete="C",
+                insert="T",
+                user_repr="NM_000243.2:c.1223G>A",
+            ),
+            SeqVar(
+                genome_release=GenomeRelease.GRCh37,
+                chrom="chr13",
+                pos=73409497,
+                delete="G",
+                insert="A",
+                user_repr="NM_006346.2:c.1214G>A",
+            ),
+            SeqVar(
+                genome_release=GenomeRelease.GRCh38,
+                chrom="chr13",
+                pos=72835359,
+                delete="G",
+                insert="A",
+                user_repr="NM_006346.2:c.1214G>A",
+            ),
+            SeqVar(
+                genome_release=GenomeRelease.GRCh37,
+                chrom="chr12",
+                pos=121175678,
+                delete="C",
+                insert="T",
+                user_repr="NM_000017.3:c.511C>T",
+            ),
+            SeqVar(
+                genome_release=GenomeRelease.GRCh38,
+                chrom="chr12",
+                pos=120737875,
+                delete="C",
+                insert="T",
+                user_repr="NM_000017.3:c.511C>T",
+            ),
+            SeqVar(
+                genome_release=GenomeRelease.GRCh37,
+                chrom="chr3",
+                pos=15686693,
+                delete="G",
+                insert="C",
+                user_repr="NM_000060.4:c.1330G>C",
+            ),
+            SeqVar(
+                genome_release=GenomeRelease.GRCh38,
+                chrom="chr3",
+                pos=15645186,
+                delete="G",
+                insert="C",
+                user_repr="NM_000060.4:c.1330G>C",
+            ),
+        ]
+        if seqvar in exception_list:
+            self.comment += "The variant is in the exception list for BA1 criteria."
+            return True
+        return False
+
     def predict(self) -> Tuple[Optional[BA1BS1BS2PM2], str]:
         """
         Predicts the PM2, BA1, BS1, BS2 criteria for the sequence variant.
@@ -294,20 +481,19 @@ class AutoPM2BA1BS1BS2:
             self.comment += "Check allele frequency for the control population.\n"
             af = self._get_af(self.seqvar, self.variant_info)
             if not af:
-                self.comment += "No controls: PM2 is met."
-                self.prediction.PM2 = True
-            elif af > 0.05:
+                self.comment += "No allele frequency data found.\n"
+            elif af >= 0.05 and not self._ba1_exception(self.seqvar):
                 self.comment += "Allele frequency > 5%: BA1 is met."
                 self.prediction.BA1 = True
-            elif af >= 0.01:
+            elif af >= 0.00015 and not self._ba1_exception(self.seqvar):
                 self.comment += "Allele frequency > 1%: BS1 is met."
                 self.prediction.BS1 = True
-            else:
+            elif af <= 0.0001:
                 self.comment += "Allele frequency <= 1%: PM2 is met."
                 self.prediction.PM2 = True
 
             self.comment += "Check zygosity.\n"
-            if af and af >= 0.01 and self._check_zyg(self.seqvar, self.variant_info):
+            if not self.prediction.BA1 and af and self._check_zyg(self.seqvar, self.variant_info):
                 self.prediction.BS2 = True
 
         except AutoAcmgBaseException as e:

@@ -75,7 +75,6 @@ class SeqVar:
             "pos": self.pos,
             "delete": self.delete,
             "insert": self.insert,
-            "user_repr": self.user_repr,
         }
 
     def __eq__(self, other):
