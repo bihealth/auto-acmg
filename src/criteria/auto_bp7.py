@@ -192,10 +192,10 @@ class AutoBP7:
             self.comment += "Missing SpliceAI data."
         self.comment += f"SpliceAI_acc_gain: {acc_gain}, SpliceAI_acc_loss: {acc_loss}, SpliceAI_don_gain: {don_gain}, SpliceAI_don_loss: {don_loss}\n"
         if (
-            (acc_gain and acc_gain > 0)
-            or (acc_loss and acc_loss > 0.5)
-            or (don_gain and don_gain > 0)
-            or (don_loss and don_loss > 0.5)
+            (acc_gain and acc_gain > 0.2)
+            or (acc_loss and acc_loss > 0.2)
+            or (don_gain and don_gain > 0.2)
+            or (don_loss and don_loss > 0.2)
         ):
             return True
         return False
@@ -210,7 +210,7 @@ class AutoBP7:
             variant_info: The variant information.
 
         Returns:
-            bool: True if the variant is conserved, False otherwise.
+            bool: True if the variant is not conserved, False otherwise.
         """
         if not variant_info or not variant_info.cadd:
             raise MissingDataError("Missing dbNSFP data for variant.")
@@ -236,7 +236,7 @@ class AutoBP7:
             # if self._pred_conservation(self.variant_info) and self._check_proximity_to_ss(
             #     self.seqvar
             # ):
-            if self._pred_conservation(self.variant_info) and self._pred_spliceai(
+            if self._pred_conservation(self.variant_info) and not self._pred_spliceai(
                 self.variant_info
             ):
                 self.comment += "Variant is not conserved and in +=2 bp from ss. BP7 is met."
