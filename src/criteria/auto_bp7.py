@@ -171,6 +171,7 @@ class AutoBP7:
             or not variant_info.dbscsnv.ada_score
             or not variant_info.dbscsnv.rf_score
         ):
+            self.comment += "Missing dbscsnv data."
             pass
         else:
             self.comment += f"ada_score: {variant_info.dbscsnv.ada_score}, rf_score: {variant_info.dbscsnv.rf_score}\n"
@@ -182,6 +183,13 @@ class AutoBP7:
         acc_loss = variant_info.cadd.SpliceAI_acc_loss
         don_gain = variant_info.cadd.SpliceAI_don_gain
         don_loss = variant_info.cadd.SpliceAI_don_loss
+        if (
+            (acc_gain is None or acc_gain == 0.0)
+            and (acc_loss is None or acc_loss == 0.0)
+            and (don_gain is None or don_gain == 0.0)
+            and (don_loss is None or don_loss == 0.0)
+        ):
+            self.comment += "Missing SpliceAI data."
         self.comment += f"SpliceAI_acc_gain: {acc_gain}, SpliceAI_acc_loss: {acc_loss}, SpliceAI_don_gain: {don_gain}, SpliceAI_don_loss: {don_loss}\n"
         if (
             (acc_gain and acc_gain > 0)
@@ -228,7 +236,9 @@ class AutoBP7:
             # if self._pred_conservation(self.variant_info) and self._check_proximity_to_ss(
             #     self.seqvar
             # ):
-            if self._pred_conservation(self.variant_info):
+            if self._pred_conservation(self.variant_info) and self._pred_spliceai(
+                self.variant_info
+            ):
                 self.comment += "Variant is not conserved and in +=2 bp from ss. BP7 is met."
                 logger.debug("Variant is not conserved and in +=2 bp from ss. BP7 is met.")
                 self.prediction.BP7 = True

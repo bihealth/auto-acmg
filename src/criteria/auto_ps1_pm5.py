@@ -155,6 +155,7 @@ class AutoPS1PM5:
                 or not self.variant_info.dbnsfp
                 or not self.variant_info.dbnsfp.HGVSp_VEP
             ):
+                self.comment += "Missing dbnsfp data."
                 raise MissingDataError("No dbnsfp information for PS1/PM5 prediction.")
 
             if not self._is_missense():
@@ -212,6 +213,7 @@ class AutoPS1PM5:
                                 True  # Different amino acid change at same residue, pathogenic
                             )
                 else:
+                    self.comment += "Missing dbnsfp data."
                     self.comment += f"Failed to get variant information for {alt_seqvar}.\n"
 
         except AutoAcmgBaseException as e:
