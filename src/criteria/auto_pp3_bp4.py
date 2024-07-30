@@ -80,6 +80,7 @@ class AutoPP3BP4:
             MissingDataError: If the variant information is missing.
         """
         if not variant_info.dbnsfp:
+            self.comment += "Missing dbNSFP data."
             logger.error("Missing dbNSFP data.")
             raise MissingDataError("Missing dbNSFP data.")
         self.comment += "Checking for pathogenic scores: \n"
@@ -128,6 +129,7 @@ class AutoPP3BP4:
             MissingDataError: If the variant information is missing.
         """
         if not variant_info.dbnsfp:
+            self.comment += "Missing dbNSFP data."
             logger.error("Missing dbNSFP data.")
             raise MissingDataError("Missing dbNSFP data.")
         self.comment += "Checking for benign scores: \n"
@@ -178,6 +180,7 @@ class AutoPP3BP4:
             or not variant_info.gnomad_exomes.effectInfo
             or not variant_info.gnomad_exomes.effectInfo.spliceaiDsMax
         ):
+            self.comment += "Missing gnomad data."
             logger.error("Missing GnomAD exomes data.")
             raise MissingDataError("Missing GnomAD exomes data.")
         self.comment += "Checking for pathogenic SpliceAI score: \n"

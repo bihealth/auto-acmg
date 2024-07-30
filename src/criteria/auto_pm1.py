@@ -93,6 +93,7 @@ class AutoPM1:
             ]
             return len(pathogenic_variants), len(benign_variants)
         else:
+            self.comment += "Missing ClinVar data."
             logger.error("Failed to get variant from range. No ClinVar data.")
             raise InvalidAPIResposeError("Failed to get variant from range. No ClinVar data.")
 

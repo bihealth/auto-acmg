@@ -318,14 +318,14 @@ for i, var in enumerate(variants):
     except Exception as e:
         print(f"Exception was raised for {var[0]} in Genebe:\n{e}")
 
-    # Skip if both AutoACMG and Intervar did not return any criteria
-    if (
-        record["AutoACMG Criteria"] == ""
-        and record["Intervar Criteria"] == ""
-        and record["Genebe Criteria"] == ""
-    ):
-        print(f"Skipping {var[0]}")
-        continue
+    # # Skip if both AutoACMG and Intervar did not return any criteria
+    # if (
+    #     record["AutoACMG Criteria"] == ""
+    #     and record["Intervar Criteria"] == ""
+    #     and record["Genebe Criteria"] == ""
+    # ):
+    #     print(f"Skipping {var[0]}")
+    #     continue
 
     # Add the record to the stats
     print(f"Record for {var[0]}: {record}")

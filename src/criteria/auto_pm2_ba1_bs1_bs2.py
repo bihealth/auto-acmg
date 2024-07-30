@@ -69,6 +69,7 @@ class AutoPM2BA1BS1BS2:
             The allele frequency for any population. None if no data found.
         """
         if not variant_data.gnomad_exomes or not variant_data.gnomad_exomes.alleleCounts:
+            self.comment += "Missing gnomad data."
             return None
             # raise MissingDataError("No allele counts found in variant data")
         best_af = None
