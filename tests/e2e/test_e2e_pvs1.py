@@ -19,6 +19,8 @@ Pvs1TestData = List[Tuple[str, GenomeRelease, PVS1Prediction, PVS1PredictionSeqV
 PVS1_TEST_DATA: Pvs1TestData = load_test_data_pvs1("tests/assets/e2e_variants/pvs1.csv")
 
 
+@pytest.mark.default_cassette("e2e_pvs1.yaml")
+@pytest.mark.vcr
 @pytest.mark.remote
 @pytest.mark.parametrize(
     "variant_name, genome_release, expected_prediction, expected_path",
@@ -42,6 +44,8 @@ def pvs1_seqvar_test_helper(
     assert path == expected_path
 
 
+@pytest.mark.default_cassette("e2e_pvs1.yaml")
+@pytest.mark.vcr
 @pytest.mark.remote
 @pytest.mark.parametrize(
     "variant_name, genome_release, expected_prediction, expected_path",
@@ -60,6 +64,8 @@ def test_pvs1_seqvar_csv(
     )
 
 
+@pytest.mark.default_cassette("e2e_pvs1.yaml")
+@pytest.mark.vcr
 @pytest.mark.remote
 @pytest.mark.parametrize(
     "variant_name, genome_release, expected_prediction, expected_path",
