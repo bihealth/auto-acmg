@@ -84,6 +84,7 @@ endif
 test-remote:
 	pipenv run pytest \
 		-m "remote" \
+		--record-mode=new_episodes \
 		tests/
 
 .PHONY: test
@@ -95,6 +96,7 @@ test:
 .PHONY: test-all
 test-all:
 	pipenv run pytest \
+		--record-mode=new_episodes \
 		tests/
 
 .PHONY: ci-unit-test
@@ -110,6 +112,7 @@ ci-unit-test:
 ci-e2e-test:
 	pipenv run pytest \
 		-m "remote" \
+		--record-mode=new_episodes \
 		--capture=no \
 		tests/
 

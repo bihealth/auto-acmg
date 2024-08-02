@@ -18,6 +18,8 @@ AcmgTestData = List[Tuple[str, GenomeRelease, AutoACMGResult, str]]
 ACMG_TEST_DATA: AcmgTestData = load_test_data("tests/assets/e2e_variants/other_criteria.csv")
 
 
+@pytest.mark.default_cassette("e2e_crit.yaml")
+@pytest.mark.vcr
 @pytest.mark.remote
 @pytest.mark.parametrize(
     "variant_name, genome_release, expected_prediction, comment",
@@ -47,6 +49,8 @@ def acmg_criteria_test_helper(
             assert crit["prediction"] != ACMGPrediction.Met, f"Failed for {variant_name}: {comment}"
 
 
+@pytest.mark.default_cassette("e2e_crit.yaml")
+@pytest.mark.vcr
 @pytest.mark.remote
 @pytest.mark.parametrize(
     "variant_name, genome_release, expected_prediction, comment",
