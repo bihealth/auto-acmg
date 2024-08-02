@@ -7,7 +7,9 @@ lib/uniprot/**/*.gz filter=lfs diff=lfs merge=lfs -text
 lib/uniprot/**/*.tbi filter=lfs diff=lfs merge=lfs -text
 tests/e2e/cassettes/** filter=lfs diff=lfs merge=lfs -text
 tests/e2e/cassettes/**/** filter=lfs diff=lfs merge=lfs -text
+tests/e2e/cassettes/**/*.yaml filter=lfs diff=lfs merge=lfs -text
 tests/integ/cassettes/** filter=lfs diff=lfs merge=lfs -text
 tests/integ/cassettes/**/** filter=lfs diff=lfs merge=lfs -text
+tests/integ/cassettes/**/*.yaml filter=lfs diff=lfs merge=lfs -text
 tests/e2e/cassettes/**/* filter=lfs diff=lfs merge=lfs -text
 tests/integ/cassettes/**/* filter=lfs diff=lfs merge=lfs -text
