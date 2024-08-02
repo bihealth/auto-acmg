@@ -13,6 +13,8 @@ from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 
 
+@pytest.mark.default_cassette("integ_pm2_ba1_bs1_bs2.yaml")
+@pytest.mark.vcr
 @pytest.mark.remote
 @pytest.mark.parametrize(
     "variant_name, genome_release, expected_prediction",
