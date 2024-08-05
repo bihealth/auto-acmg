@@ -7,13 +7,14 @@ from loguru import logger
 
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config
+from src.criteria.auto_criteria import AutoACMGCriteria
 from src.defs.annonars_variant import AnnonarsVariantResponse, VariantResult
-from src.defs.auto_acmg import PS1PM5, AminoAcid
+from src.defs.auto_acmg import PS1PM5, AminoAcid, AutoACMGData, AutoACMGPrediction
 from src.defs.auto_pvs1 import SeqVarConsequence
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
-from src.utils import SeqVarTranscriptsHelper
+from src.utils import AutoACMGHelper, SeqVarTranscriptsHelper
 
 #: DNA bases
 DNA_BASES = ["A", "C", "G", "T"]
@@ -22,30 +23,15 @@ DNA_BASES = ["A", "C", "G", "T"]
 REGEX_HGVSP = re.compile(r"p\.(\D+)(\d+)(\D+)")
 
 
-class AutoPS1PM5:
+class AutoPS1PM5(AutoACMGHelper):
     """Predicts PS1 and PM5 criteria for sequence variants."""
 
-    def __init__(
-        self,
-        seqvar: SeqVar,
-        variant_info: VariantResult,
-        *,
-        config: Optional[Config] = None,
-    ):
-        #: Configuration to use.
-        self.config: Config = config or Config()
-        #: Sequence variant to predict.
-        self.seqvar: SeqVar = seqvar
-        #: Variant information.
-        self.variant_info: VariantResult = variant_info
-        #: Annonars client.
-        self.annonars_client: AnnonarsClient = AnnonarsClient(
-            api_base_url=self.config.api_base_url_annonars
-        )
+    def __init__(self):
+        super().__init__()
         #: Prediction result.
-        self.prediction: Optional[PS1PM5] = None
+        self.prediction_ps1pm5: Optional[PS1PM5] = None
         #: Comment to store the prediction explanation.
-        self.comment: str = ""
+        self.comment_ps1pm5: str = ""
 
     def _get_var_info(self, seqvar: SeqVar) -> Optional[AnnonarsVariantResponse]:
         """Get variant information from Annonars.
@@ -105,22 +91,25 @@ class AutoPS1PM5:
                     return True
         return False
 
-    def _is_missense(self) -> bool:
+    def _is_missense(self, var_data: AutoACMGData) -> bool:
         """
         Check if the variant is a missense variant.
 
-        Fetches the transcript information for the sequence variant and checks if the variant
-        consequence is missense.
+        Args:
+            var_data (AutoACMGData): The variant information.
 
         Returns:
-            bool: True if the variant is a missense variant.
+            bool: True if the variant is a missense variant, False otherwise.
         """
-        seqvar_transcript_helper = SeqVarTranscriptsHelper(self.seqvar, config=self.config)
-        seqvar_transcript_helper.initialize()
-        (_, _, _, _, consequence) = seqvar_transcript_helper.get_ts_info()
-        return consequence == SeqVarConsequence.Missense
+        if "missense" in var_data.consequence.cadd:
+            return True
+        if any("missense" in cons for cons in var_data.consequence.mehari):
+            return True
+        return False
 
-    def predict(self) -> Tuple[Optional[PS1PM5], str]:
+    def predict_ps1pm5(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """
         Predicts the criteria PS1 and PM5 for the provided sequence variant.
 
@@ -146,80 +135,96 @@ class AutoPS1PM5:
         Returns:
             Tuple[Optional[PS1PM5], str]: Prediction result and the comment with the explanation.
         """
+
+        # Initialize the prediction result
+        self.prediction_ps1pm5 = PS1PM5()
         try:
-            # Initialize the prediction result
-            self.prediction = PS1PM5()
-
-            if (
-                not self.variant_info
-                or not self.variant_info.dbnsfp
-                or not self.variant_info.dbnsfp.HGVSp_VEP
-            ):
-                self.comment += "Missing dbnsfp data."
-                raise MissingDataError("No dbnsfp information for PS1/PM5 prediction.")
-
             if not self._is_missense():
                 raise AlgorithmError("Variant is not a missense variant. PS1/PM5 not applicable.")
 
-            self.comment = (
-                "Extracting primary amino acid change from pHGVS: "
-                f"{self.variant_info.dbnsfp.HGVSp_VEP}.\n"
-            )
-            primary_aa_change = self._parse_HGVSp(self.variant_info.dbnsfp.HGVSp_VEP)
+            primary_aa_change = self._parse_HGVSp(var_data.pHGVS)
             if not primary_aa_change:
                 raise AlgorithmError("No valid primary amino acid change for PS1/PM5 prediction.")
 
-            self.comment += f"Primary amino acid change: {primary_aa_change.name}. =>\n"
+            self.comment_ps1pm5 += f"Primary amino acid change: {primary_aa_change.name}. "
             for alt_base in DNA_BASES:
                 # Skip the same base insert
-                if alt_base == self.seqvar.insert:
+                if alt_base == seqvar.insert:
                     continue
 
-                self.comment += f"Analysing alternative variant with base: {alt_base}.\n"
+                self.comment_ps1pm5 += f"Analysing alternative variant with base: {alt_base}."
                 alt_seqvar = SeqVar(
-                    genome_release=self.seqvar.genome_release,
-                    chrom=self.seqvar.chrom,
-                    pos=self.seqvar.pos,
-                    delete=self.seqvar.delete,
+                    genome_release=seqvar.genome_release,
+                    chrom=seqvar.chrom,
+                    pos=seqvar.pos,
+                    delete=seqvar.delete,
                     insert=alt_base,
                 )
                 alt_info = self._get_var_info(alt_seqvar)
 
                 if alt_info and alt_info.result.dbnsfp and alt_info.result.dbnsfp.HGVSp_VEP:
-                    self.comment += (
+                    self.comment_ps1pm5 += (
                         f"Extracting alternative amino acid change from pHGVS: "
-                        f"{alt_info.result.dbnsfp.HGVSp_VEP}.\n"
+                        f"{alt_info.result.dbnsfp.HGVSp_VEP}."
                     )
                     alt_aa_change = self._parse_HGVSp(alt_info.result.dbnsfp.HGVSp_VEP)
-                    self.comment += (
+                    self.comment_ps1pm5 += (
                         "Alternative amino acid change: "
-                        f"{alt_aa_change.name if alt_aa_change else "N/A"}. =>\n"
+                        f"{alt_aa_change.name if alt_aa_change else "N/A"}. "
                     )
                     if alt_aa_change and self._is_pathogenic(alt_info.result):
                         if primary_aa_change == alt_aa_change:
-                            self.comment += (
+                            self.comment_ps1pm5 += (
                                 "Alternative variant is pathogenic "
-                                "and amino acid change is the same as primary variant.\n"
-                                "Result: PS1 is met.\n"
+                                "and amino acid change is the same as primary variant."
+                                "Result: PS1 is met."
                             )
-                            self.prediction.PS1 = True  # Same amino acid change and pathogenic
+                            self.prediction_ps1pm5.PS1 = (
+                                True  # Same amino acid change and pathogenic
+                            )
                         if primary_aa_change != alt_aa_change:
-                            self.comment += (
+                            self.comment_ps1pm5 += (
                                 "Alternative variant is pathogenic "
-                                "and amino acid change is different from primary variant.\n"
-                                "Result: PM5 is met.\n"
+                                "and amino acid change is different from primary variant."
+                                "Result: PM5 is met."
                             )
-                            self.prediction.PM5 = (
+                            self.prediction_ps1pm5.PM5 = (
                                 True  # Different amino acid change at same residue, pathogenic
                             )
                 else:
-                    self.comment += "Missing dbnsfp data."
-                    self.comment += f"Failed to get variant information for {alt_seqvar}.\n"
+                    self.comment_ps1pm5 += "Missing dbnsfp data."
+                    self.comment_ps1pm5 += f"Failed to get variant information for {alt_seqvar}."
 
         except AutoAcmgBaseException as e:
             logger.error("Error occurred during PS1/PM5 prediction. Error: {}", e)
-            self.comment += f"Error occurred during PS1/PM5 prediction. Error: {e}"
-            self.prediction = None
+            self.comment_ps1pm5 += f"Error occurred during PS1/PM5 prediction. Error: {e}"
+            self.prediction_ps1pm5 = None
 
-        # Return the prediction result and the comment with the explanation
-        return self.prediction, self.comment
+        return (
+            AutoACMGCriteria(
+                name="PS1",
+                summary=self.comment_ps1pm5,
+                prediction=(
+                    AutoACMGPrediction.Met
+                    if self.prediction_ps1pm5.PS1
+                    else (
+                        AutoACMGPrediction.NotMet
+                        if self.prediction_ps1pm5.PS1 is False
+                        else AutoACMGPrediction.Failed
+                    )
+                ),
+            ),
+            AutoACMGCriteria(
+                name="PM5",
+                summary=self.comment_ps1pm5,
+                prediction=(
+                    AutoACMGPrediction.Met
+                    if self.prediction_ps1pm5.PM5
+                    else (
+                        AutoACMGPrediction.NotMet
+                        if self.prediction_ps1pm5.PM5 is False
+                        else AutoACMGPrediction.Failed
+                    )
+                ),
+            ),
+        )

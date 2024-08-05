@@ -8,35 +8,27 @@ from loguru import logger
 
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config, settings
+from src.criteria.auto_criteria import AutoACMGCriteria
 from src.defs.annonars_variant import AnnonarsVariantResponse, VariantResult
-from src.defs.auto_acmg import PM4BP3
+from src.defs.auto_acmg import PM4BP3, AutoACMGData, AutoACMGPrediction
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.utils import AutoACMGHelper
 
 
-class AutoPM4BP3:
+class AutoPM4BP3(AutoACMGHelper):
     """Predicts PM4 and BP3 criteria for sequence variants."""
 
-    def __init__(
-        self,
-        seqvar: SeqVar,
-        variant_info: VariantResult,
-        *,
-        config: Optional[Config] = None,
-    ):
-        #: Configuration to use.
-        self.config: Config = config or Config()
-        #: Sequence variant to predict.
-        self.seqvar: SeqVar = seqvar
-        #: Variant information.
-        self.variant_info: VariantResult = variant_info
+    def __init__(self):
+        super().__init__()
         #: Prediction result.
-        self.prediction: Optional[PM4BP3] = None
+        self.prediction_pm4bp3: Optional[PM4BP3] = None
         #: Comment to store the prediction explanation.
-        self.comment: str = ""
+        self.comment_pm4bp3: str = ""
 
-    def _in_repeat_region(self, seqvar: SeqVar) -> bool:
+    @staticmethod
+    def _in_repeat_region(seqvar: SeqVar) -> bool:
         """Check if the variant is in a repeat region.
 
         Check if the variant is in a repeat region using the RepeatMasker track.
@@ -47,7 +39,6 @@ class AutoPM4BP3:
         Returns:
             bool: True if the variant is in a repeat region, False otherwise.
         """
-        self.comment += "Check if the variant is in a repeat region.\n"
         try:
             # Find path to the lib file
             if seqvar.genome_release == GenomeRelease.GRCh37:
@@ -58,16 +49,52 @@ class AutoPM4BP3:
             records = tb.query(f"chr{seqvar.chrom}", seqvar.pos - 1, seqvar.pos)
             # Check if iterator is not empty
             if any(True for _ in records):
-                self.comment += "Variant is in a repeat region.\n"
                 return True
             else:
-                self.comment += "Variant is not in a repeat region.\n"
                 return False
         except tabix.TabixError as e:
             logger.error("Failed to check if the variant is in a repeat region. Error: {}", e)
             raise AlgorithmError("Failed to check if the variant is in a repeat region.") from e
 
-    def predict(self) -> Tuple[Optional[PM4BP3], str]:
+    @staticmethod
+    def _is_stop_loss(var_data: AutoACMGData) -> bool:
+        """Check if the variant is a stop-loss variant.
+
+        Args:
+            var_data (AutoACMGData): The variant information.
+
+        Returns:
+            bool: True if the variant is a stop-loss variant, False otherwise.
+        """
+        if "stop_loss" in var_data.consequence.cadd:
+            return True
+        if any("stop_loss" in cons for cons in var_data.consequence.mehari):
+            return True
+        return False
+
+    @staticmethod
+    def is_inframe_delins(var_data: AutoACMGData) -> bool:
+        """Check if the variant is an in-frame deletion/insertion.
+
+        Args:
+            var_data (AutoACMGData): The variant information.
+
+        Returns:
+            bool: True if the variant is an in-frame deletion/insertion, False otherwise.
+        """
+        if "inframe_deletion" in var_data.consequence.cadd:
+            return True
+        if "inframe_insertion" in var_data.consequence.cadd:
+            return True
+        if any("inframe_deletion" in cons for cons in var_data.consequence.mehari):
+            return True
+        if any("inframe_insertion" in cons for cons in var_data.consequence.mehari):
+            return True
+        return False
+
+    def predict_pm4bp3(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Predicts PM4 and BP3 criteria for the provided sequence variant.
 
         Implementation of the rule:
@@ -86,42 +113,63 @@ class AutoPM4BP3:
         Returns:
             PM4BP3: PM4 and BP3 prediction.
         """
+        self.prediction_pm4bp3 = PM4BP3()
         try:
-            # Initialize the prediction result
-            self.prediction = PM4BP3()
-            self.comment = "Check consequences of the variant for PM4.\n"
             # Stop-loss variants are considered as PM4
-            if self.variant_info.cadd and self.variant_info.cadd.ConsDetail == "stop_loss":
-                self.comment += f"Variant consequence is stop-loss. PM4 is met."
-                self.prediction.PM4 = True
+            if self._is_stop_loss(var_data):
+                self.comment_pm4bp3 = "Variant consequence is stop-loss. PM4 is met."
+                self.prediction_pm4bp3.PM4 = True
             # In-frame deletions/insertions
-            elif self.variant_info.cadd and self.variant_info.cadd.ConsDetail in [
-                "inframe_deletion",
-                "inframe_insertion",
-            ]:
-                self.comment += f"Variant consequence is in-frame deletion/insertion.\n"
-                if not self._in_repeat_region(self.seqvar):
-                    self.comment += (
+            elif self.is_inframe_delins(var_data):
+                self.comment_pm4bp3 += f"Variant consequence is in-frame deletion/insertion.\n"
+                if not self._in_repeat_region(seqvar):
+                    self.comment_pm4bp3 += (
                         "Variant is not in a repeat region or a conserved domain. PM4 is met."
                     )
-                    self.prediction.PM4 = True
+                    self.prediction_pm4bp3.PM4 = True
                 else:
-                    self.comment += (
+                    self.comment_pm4bp3 += (
                         "Variant is in a repeat region or not in a conserved domain. BP3 is met."
                     )
-                    self.prediction.BP3 = True
+                    self.prediction_pm4bp3.BP3 = True
             else:
-                self.comment += (
+                self.comment_pm4bp3 = (
                     "Variant consequence is not indel or stop-loss. PM4 and BP3 are not met."
                 )
-                self._in_repeat_region(self.seqvar)
-                self.prediction.PM4 = False
-                self.prediction.BP3 = False
+                self._in_repeat_region(seqvar)
+                self.prediction_pm4bp3.PM4 = False
+                self.prediction_pm4bp3.BP3 = False
 
         except AutoAcmgBaseException as e:
             logger.error("Failed to predict PM4 and BP3 criteria. Error: {}", e)
-            self.comment += f"An error occured while predicting PM4 and BP3 criteria: {e}"
-            self.prediction = None
+            self.comment_pm4bp3 += f"An error occured while predicting PM4 and BP3 criteria: {e}"
+            self.prediction_pm4bp3 = None
 
-        # Return the prediction and the explanation
-        return self.prediction, self.comment
+        return (
+            AutoACMGCriteria(
+                name="PM4",
+                summary=self.comment_pm4bp3,
+                prediction=(
+                    AutoACMGPrediction.Met
+                    if self.prediction_pm4bp3.PM4
+                    else (
+                        AutoACMGPrediction.NotMet
+                        if self.prediction_pm4bp3.PM4 is False
+                        else AutoACMGPrediction.Failed
+                    )
+                ),
+            ),
+            AutoACMGCriteria(
+                name="BP3",
+                summary=self.comment_pm4bp3,
+                prediction=(
+                    AutoACMGPrediction.Met
+                    if self.prediction_pm4bp3.BP3
+                    else (
+                        AutoACMGPrediction.NotMet
+                        if self.prediction_pm4bp3.BP3 is False
+                        else AutoACMGPrediction.Failed
+                    )
+                ),
+            ),
+        )

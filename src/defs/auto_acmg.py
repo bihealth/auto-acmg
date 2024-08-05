@@ -4,6 +4,8 @@ from typing import Any, List, Optional
 from pydantic import BaseModel
 
 from src.defs.exceptions import AutoAcmgBaseException
+from src.defs.mehari import Exon
+from src.defs.seqvar import SeqVar
 
 
 class AutoAcmgBaseEnumMeta(EnumMeta):
@@ -121,13 +123,13 @@ class PM4BP3(BaseModel):
     BP3: bool = False
 
 
-class BA1BS1BS2PM2(BaseModel):
+class PM2BA1BS1BS2(BaseModel):
     """BA1, BS1, BS2, and PM2 criteria prediction."""
 
+    PM2: bool = False
     BA1: bool = False
     BS1: bool = False
     BS2: bool = False
-    PM2: bool = False
 
 
 class PM1(BaseModel):
@@ -197,7 +199,8 @@ class AutoACMGPrediction(AutoAcmgBaseEnum):
     NotAutomated = auto()
     Depricated = auto()
     Met = auto()
-    Unmet = auto()
+    NotMet = auto()
+    Failed = auto()
 
 
 class AutoACMGCriteria(BaseModel):
@@ -209,8 +212,7 @@ class AutoACMGCriteria(BaseModel):
     description: str = ""
 
 
-class AutoACMGResult(BaseModel):
-    """Response of the ACMG criteria prediction."""
+class AutoACMGCriteriaResult(BaseModel):
 
     pvs1: AutoACMGCriteria = AutoACMGCriteria(name="PVS1")
     ps1: AutoACMGCriteria = AutoACMGCriteria(name="PS1")
@@ -241,11 +243,104 @@ class AutoACMGResult(BaseModel):
     bp6: AutoACMGCriteria = AutoACMGCriteria(name="BP6", prediction=AutoACMGPrediction.Depricated)
     bp7: AutoACMGCriteria = AutoACMGCriteria(name="BP7")
 
-    def export(self, filename: Optional[str] = None) -> None:
-        """Export the ACMG criteria prediction to a JSON file."""
-        data = self.model_dump_json(indent=4)
-        if not filename:
-            filename = f"acmg_criteria_prediction.json"
-        with open(filename, "w") as file:
-            for line in data.splitlines():
-                file.write(line)
+
+class AutoACMGConsequence(BaseModel):
+
+    mehari: List[str] = []
+    cadd: str = ""
+    cadd_consequence: str = ""
+
+
+class AutoACMGCADD(BaseModel):
+
+    phyloP100: Optional[float] = None
+    spliceAI_acceptor_gain: Optional[float] = None
+    spliceAI_acceptor_loss: Optional[float] = None
+    spliceAI_donor_gain: Optional[float] = None
+    spliceAI_donor_loss: Optional[float] = None
+    ada: Optional[float] = None
+    rf: Optional[float] = None
+
+
+class AutoACMGDbnsfp(BaseModel):
+
+    alpha_missense: Optional[float] = None
+    metaRNN: Optional[float] = None
+    bayesDel_noAF: Optional[float] = None
+    revel: Optional[float] = None
+    phyloP100: Optional[float] = None
+
+
+class AutoACMGDbscsnv(BaseModel):
+
+    ada: Optional[float] = None
+    rf: Optional[float] = None
+
+
+class AutoACMGScores(BaseModel):
+    """ACMG scores."""
+
+    cadd: AutoACMGCADD = AutoACMGCADD()
+    dbnsfp: AutoACMGDbnsfp = AutoACMGDbnsfp()
+    dbscsnv: AutoACMGDbscsnv = AutoACMGDbscsnv()
+
+
+class AutoACMGTresholds(BaseModel):
+    """ACMG thresholds."""
+
+    #: Conservation threshold from VarSome
+    phyloP100: float = 3.58
+    #: SpliceAI acceptor gain threshold
+    spliceAI_acceptor_gain: float = 0.2
+    #: SpliceAI acceptor loss threshold
+    spliceAI_acceptor_loss: float = 0.2
+    #: SpliceAI donor gain threshold
+    spliceAI_donor_gain: float = 0.2
+    #: SpliceAI donor loss threshold
+    spliceAI_donor_loss: float = 0.2
+    #: Ada threshold
+    ada: float = 0.957813
+    #: RF threshold
+    rf: float = 0.584
+    #: MetaRNN pathogenic threshold
+    metaRNN_pathogenic: float = 0.841
+    #: BayesDel_noAF pathogenic threshold
+    bayesDel_noAF_pathogenic: float = 0.521
+    #: MetaRNN benign threshold
+    metaRNN_benign: float = 0.267
+    #: BayesDel_noAF benign threshold
+    bayesDel_noAF_benign: float = -0.476
+    #: PP2 and BP1 pathogenic threshold
+    pp2bp1_pathogenic: float = 0.808
+    #: PP2 and BP1 benign threshold
+    pp2bp1_benign: float = 0.569
+    #: PM1 variants count threshold
+    pm1_pathogenic: float = 8
+
+
+class AutoACMGData(BaseModel):
+    """Response of the ACMG criteria prediction."""
+
+    consequence: AutoACMGConsequence = AutoACMGConsequence()
+    gene_symbol: str = ""
+    hgnc_id: str = ""
+    transcript_id: str = ""
+    transcript_tags: List[str] = []
+    pHGVS: str = ""
+    cds_start: int = 0
+    cds_end: int = 0
+    strand: str = ""
+    exons: List[Exon] = []
+    scores: AutoACMGScores = AutoACMGScores()
+    thresholds: AutoACMGTresholds = AutoACMGTresholds()
+
+
+class AutoACMGResult(BaseModel):
+    """Response of the ACMG criteria prediction."""
+
+    #: Sequence variant for which the ACMG criteria are predicted
+    seqvar: Optional[SeqVar] = None
+    #: Data, which was used for the prediction
+    data: AutoACMGData = AutoACMGData()
+    # ; ACMG criteria prediction
+    criteria: AutoACMGCriteriaResult = AutoACMGCriteriaResult()

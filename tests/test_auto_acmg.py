@@ -151,7 +151,7 @@ def test_auto_acmg_predict_failure_pvs1(
     assert mock_seqvar_resolver.resolve_seqvar.called
     assert mock_auto_pvs1_failure.predict.called
     assert auto_acmg.seqvar == mock_seqvar
-    assert auto_acmg.prediction is not None
+    assert auto_acmg.result is not None
 
 
 def test_auto_acmg_predict_failure_criteria(
@@ -169,4 +169,4 @@ def test_auto_acmg_predict_failure_criteria(
     assert mock_auto_pvs1_success.predict.called
     assert mock_auto_criteria_failure.predict.called
     assert auto_acmg.seqvar == mock_seqvar
-    assert auto_acmg.prediction is not None
+    assert auto_acmg.result is not None

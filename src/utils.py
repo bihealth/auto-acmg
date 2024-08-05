@@ -23,6 +23,16 @@ from src.defs.mehari import Exon, TranscriptGene, TranscriptSeqvar
 from src.defs.seqvar import SeqVar
 
 
+class AutoACMGHelper:
+    """Helper class for the AutoACMG algorithm."""
+
+    def __init__(self, *, config: Optional[Config] = None):
+        #: Configuration settings.
+        self.config: Config = config or Config()
+        #: Annonars client for the API.
+        self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
+
+
 class SplicingPrediction:
     """Splicing prediction for a sequence variant."""
 
