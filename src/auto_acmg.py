@@ -7,21 +7,27 @@ from loguru import logger
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config
 from src.criteria.auto_bp7 import AutoBP7
-from src.criteria.auto_criteria import AutoACMGCriteria
 from src.criteria.auto_pm1 import AutoPM1
 from src.criteria.auto_pm2_ba1_bs1_bs2 import AutoPM2BA1BS1BS2
 from src.criteria.auto_pm4_bp3 import AutoPM4BP3
 from src.criteria.auto_pp2_bp1 import AutoPP2BP1
 from src.criteria.auto_pp3_bp4 import AutoPP3BP4
 from src.criteria.auto_ps1_pm5 import AutoPS1PM5
+from src.criteria.auto_pvs1 import AutoPVS1
 from src.defs.annonars_variant import VariantResult
 from src.defs.auto_acmg import ACMGPrediction, AutoACMGPrediction, AutoACMGResult
-from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionPathMapping, PVS1PredictionStrucVarPath
+from src.defs.auto_pvs1 import (
+    CdsInfo,
+    GenomicStrand,
+    PVS1Prediction,
+    PVS1PredictionPathMapping,
+    PVS1PredictionStrucVarPath,
+)
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, ParseError
 from src.defs.genome_builds import GenomeRelease
+from src.defs.mehari import ProteinPos, TxPos
 from src.defs.seqvar import SeqVar, SeqVarResolver
 from src.defs.strucvar import StrucVar, StrucVarResolver
-from src.pvs1.auto_pvs1 import AutoPVS1
 from src.utils import SeqVarTranscriptsHelper
 
 #: Pathogenic PVS1 predictions of sequence variants.
@@ -48,7 +54,9 @@ NOT_IMPLEMENTED_CRITERIA: List[str] = [
 ]
 
 
-class AutoACMG(AutoPS1PM5, AutoPM1, AutoPM2BA1BS1BS2, AutoPM4BP3, AutoPP2BP1, AutoPP3BP4, AutoBP7):
+class AutoACMG(
+    AutoPVS1, AutoPS1PM5, AutoPM1, AutoPM2BA1BS1BS2, AutoPM4BP3, AutoPP2BP1, AutoPP3BP4, AutoBP7
+):
     """Class for predicting ACMG criteria.
 
     This class handles both sequence variants and structural variants to determine their potential
@@ -88,7 +96,7 @@ class AutoACMG(AutoPS1PM5, AutoPM1, AutoPM2BA1BS1BS2, AutoPM4BP3, AutoPP2BP1, Au
         #: Prediction result.
         self.result: AutoACMGResult = AutoACMGResult()
 
-    def _get_var_info(self, seqvar: SeqVar) -> Optional[VariantResult]:
+    def _get_variant_info(self, seqvar: SeqVar) -> Optional[VariantResult]:
         """
         Get variant information from Annonars.
 
@@ -163,7 +171,7 @@ class AutoACMG(AutoPS1PM5, AutoPM1, AutoPM2BA1BS1BS2, AutoPM4BP3, AutoPP2BP1, Au
         # Mehari data
         ts_helper = SeqVarTranscriptsHelper(seqvar)
         ts_helper.initialize()
-        seqvar_transcript, gene_transcript, _, _, _ = ts_helper.get_ts_info()
+        seqvar_transcript, gene_transcript, _, all_genes_tx, _ = ts_helper.get_ts_info()
         if not seqvar_transcript or not gene_transcript:
             raise AutoAcmgBaseException("Transcript information is missing.")
 
@@ -172,13 +180,39 @@ class AutoACMG(AutoPS1PM5, AutoPM1, AutoPM2BA1BS1BS2, AutoPM4BP3, AutoPP2BP1, Au
         self.result.data.hgnc_id = seqvar_transcript.gene_id
         self.result.data.transcript_id = seqvar_transcript.feature_id
         self.result.data.transcript_tags = seqvar_transcript.feature_tag
+        self.result.data.tx_pos_utr = (
+            seqvar_transcript.tx_pos.ord if isinstance(seqvar_transcript.tx_pos, TxPos) else -1
+        )
+        self.result.data.prot_pos = (
+            seqvar_transcript.protein_pos.ord
+            if isinstance(seqvar_transcript.protein_pos, ProteinPos)
+            else -1
+        )
+        self.result.data.prot_length = (
+            seqvar_transcript.protein_pos.total
+            if isinstance(seqvar_transcript.protein_pos, ProteinPos)
+            else -1
+        )
+        self.result.data.cds_info = {
+            ts.id: CdsInfo(
+                start_codon=ts.startCodon,
+                stop_codon=ts.stopCodon,
+                cds_start=ts.genomeAlignments[0].cdsStart,
+                cds_end=ts.genomeAlignments[0].cdsEnd,
+                cds_strand=GenomicStrand.from_string(ts.genomeAlignments[0].strand),
+                exons=ts.genomeAlignments[0].exons,
+            )
+            for ts in all_genes_tx
+        }
         self.result.data.cds_start = gene_transcript.genomeAlignments[0].cdsStart
         self.result.data.cds_end = gene_transcript.genomeAlignments[0].cdsEnd
-        self.result.data.strand = gene_transcript.genomeAlignments[0].strand
+        self.result.data.strand = GenomicStrand.from_string(
+            gene_transcript.genomeAlignments[0].strand
+        )
         self.result.data.exons = gene_transcript.genomeAlignments[0].exons
 
         # Annonars data
-        variant_info = self._get_var_info(seqvar)
+        variant_info = self._get_variant_info(seqvar)
         if not variant_info:
             logger.error("Failed to get variant information.")
             raise AutoAcmgBaseException("Failed to get variant information.")
@@ -209,6 +243,8 @@ class AutoACMG(AutoPS1PM5, AutoPM1, AutoPM2BA1BS1BS2, AutoPM4BP3, AutoPP2BP1, Au
         if dbscsnv := variant_info.dbscsnv:
             self.result.data.scores.dbscsnv.ada = dbscsnv.ada_score
             self.result.data.scores.dbscsnv.rf = dbscsnv.rf_score
+        self.result.data.gnomad_exomes = variant_info.gnomad_exomes
+        self.result.data.gnomad_mtdna = variant_info.gnomad_mtdna
 
         # Thresholds
         pass
@@ -248,7 +284,7 @@ class AutoACMG(AutoPS1PM5, AutoPM1, AutoPM2BA1BS1BS2, AutoPM4BP3, AutoPP2BP1, Au
             )
 
             # PVS1
-            pass
+            self.result.criteria.pvs1 = self.predict_pvs1(self.seqvar, self.result.data)
 
             # PS1 and PM5
             self.result.criteria.ps1, self.result.criteria.pm5 = self.predict_ps1pm5(

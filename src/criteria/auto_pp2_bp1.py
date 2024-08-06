@@ -6,10 +6,9 @@ from loguru import logger
 
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config
-from src.criteria.auto_criteria import AutoACMGCriteria
 from src.defs.annonars_range import ClinvarItem
 from src.defs.annonars_variant import VariantResult
-from src.defs.auto_acmg import PP2BP1, AutoACMGData, AutoACMGPrediction
+from src.defs.auto_acmg import PP2BP1, AutoACMGCriteria, AutoACMGData, AutoACMGPrediction
 from src.defs.auto_pvs1 import SeqVarConsequence, SeqvarConsequenceMapping
 from src.defs.exceptions import (
     AlgorithmError,
@@ -116,11 +115,10 @@ class AutoPP2BP1(AutoACMGHelper):
             return True
         return False
 
-    def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
-    ) -> Tuple[Optional[PP2BP1], str]:
+    def verify_pp2bp1(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PP2BP1], str]:
         """Predict PP2 and BP1 criteria."""
         self.prediction_pp2bp1 = PP2BP1()
+        self.comment_pp2bp1 = ""
         if seqvar.chrom == "MT":
             self.comment_pp2bp1 = (
                 "Variant is in mitochondrial DNA. PP2 and BP1 criteria are not met."
@@ -166,35 +164,44 @@ class AutoPP2BP1(AutoACMGHelper):
                     self.comment_pp2bp1 += f"Benign ratio is less than {var_data.thresholds.pp2bp1_benign}. BP1 is not met."
 
             except AutoAcmgBaseException as e:
-                self.comment_pp2bp1 += f"Error occurred during PP2 and BP1 prediction. Error: {e}"
                 logger.error("Failed to predict PP2 and BP1 criteria. Error: {}", e)
+                self.comment_pp2bp1 = f"Error occurred during PP2 and BP1 prediction. Error: {e}"
                 self.prediction_pp2bp1 = None
 
+        return self.prediction_pp2bp1, self.comment_pp2bp1
+
+    def predict_pp2bp1(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Predict PP2 and BP1 criteria for the provided sequence variant.
+
+        Returns:
+            AutoACMGCriteria: PP2 and BP1 prediction.
+        """
+        pred, comment = self.verify_pp2bp1(seqvar, var_data)
+        if pred:
+            pp2_pred = (
+                AutoACMGPrediction.Met
+                if pred.PP2
+                else (AutoACMGPrediction.NotMet if pred.PP2 is False else AutoACMGPrediction.Failed)
+            )
+            bp1_pred = (
+                AutoACMGPrediction.Met
+                if pred.BP1
+                else (AutoACMGPrediction.NotMet if pred.BP1 is False else AutoACMGPrediction.Failed)
+            )
+        else:
+            pp2_pred = AutoACMGPrediction.Failed
+            bp1_pred = AutoACMGPrediction.Failed
         return (
             AutoACMGCriteria(
                 name="PP2",
-                summary=self.comment_pp2bp1,
-                prediction=(
-                    AutoACMGPrediction.Met
-                    if self.prediction_pp2bp1.PP2
-                    else (
-                        AutoACMGPrediction.NotMet
-                        if self.prediction_pp2bp1.PP2 is False
-                        else AutoACMGPrediction.Failed
-                    )
-                ),
+                prediction=pp2_pred,
+                summary=comment,
             ),
             AutoACMGCriteria(
                 name="BP1",
-                summary=self.comment_pp2bp1,
-                prediction=(
-                    AutoACMGPrediction.Met
-                    if self.prediction_pp2bp1.BP1
-                    else (
-                        AutoACMGPrediction.NotMet
-                        if self.prediction_pp2bp1.BP1 is False
-                        else AutoACMGPrediction.Failed
-                    )
-                ),
+                prediction=bp1_pred,
+                summary=comment,
             ),
         )

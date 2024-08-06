@@ -1,29 +1,13 @@
-from enum import Enum, EnumMeta, auto
-from typing import Any, List, Optional
+from enum import auto
+from typing import Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
-from src.defs.exceptions import AutoAcmgBaseException
+from src.defs.annonars_variant import GnomadExomes, GnomadMtDna
+from src.defs.auto_pvs1 import CdsInfo, GenomicStrand
+from src.defs.core import AutoAcmgBaseEnum
 from src.defs.mehari import Exon
 from src.defs.seqvar import SeqVar
-
-
-class AutoAcmgBaseEnumMeta(EnumMeta):
-    def __getitem__(cls, name: Any) -> Any:
-        """Override __getitem__ to raise an AutoAcmgBaseException if the KeyError is raised."""
-        try:
-            return super().__getitem__(name)
-        except KeyError:
-            raise AutoAcmgBaseException(f"Invalid {cls.__name__} value: {name}")
-
-
-class AutoAcmgBaseEnum(Enum, metaclass=AutoAcmgBaseEnumMeta):
-    """Base enumeration for ACMG criteria."""
-
-    @classmethod
-    def _missing_(cls, value: Any) -> Any:
-        """Override _missing_ to raise an AutoAcmgBaseException if the ValueError is raised."""
-        raise AutoAcmgBaseException(f"Invalid {cls.__name__} value: {value}")
 
 
 class SpliceType(AutoAcmgBaseEnum):
@@ -326,17 +310,25 @@ class AutoACMGData(BaseModel):
     hgnc_id: str = ""
     transcript_id: str = ""
     transcript_tags: List[str] = []
+    tx_pos_utr: int = -1
+    prot_pos: int = -1
+    prot_length: int = -1
+    cds_info: Dict[str, CdsInfo] = {}
     pHGVS: str = ""
     cds_start: int = 0
     cds_end: int = 0
-    strand: str = ""
+    strand: Optional[GenomicStrand] = None
     exons: List[Exon] = []
     scores: AutoACMGScores = AutoACMGScores()
     thresholds: AutoACMGTresholds = AutoACMGTresholds()
+    gnomad_exomes: Optional[GnomadExomes] = None
+    gnomad_mtdna: Optional[GnomadMtDna] = None
 
 
 class AutoACMGResult(BaseModel):
     """Response of the ACMG criteria prediction."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     #: Sequence variant for which the ACMG criteria are predicted
     seqvar: Optional[SeqVar] = None

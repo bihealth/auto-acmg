@@ -1,0 +1,27 @@
+{
+  "server_version": "0.36.1",
+  "query": {
+    "genome_release": "grch37",
+    "chromosome": "1",
+    "start": 55506888,
+    "stop": 55506887
+  },
+  "result": {
+    "cadd": {
+
+    },
+    "dbsnp": [],
+    "dbnsfp": {
+
+    },
+    "dbscsnv": {
+
+    },
+    "gnomad_mtdna": [],
+    "gnomad_exomes": [],
+    "gnomad_genomes": [],
+    "helixmtdb": [],
+    "ucsc_conservation": [],
+    "clinvar": []
+  }
+}

@@ -7,9 +7,8 @@ from loguru import logger
 
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config
-from src.criteria.auto_criteria import AutoACMGCriteria
 from src.defs.annonars_variant import AnnonarsVariantResponse, VariantResult
-from src.defs.auto_acmg import PS1PM5, AminoAcid, AutoACMGData, AutoACMGPrediction
+from src.defs.auto_acmg import PS1PM5, AminoAcid, AutoACMGCriteria, AutoACMGData, AutoACMGPrediction
 from src.defs.auto_pvs1 import SeqVarConsequence
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
 from src.defs.genome_builds import GenomeRelease
@@ -107,9 +106,7 @@ class AutoPS1PM5(AutoACMGHelper):
             return True
         return False
 
-    def predict_ps1pm5(
-        self, seqvar: SeqVar, var_data: AutoACMGData
-    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+    def verify_ps1pm5(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PS1PM5], str]:
         """
         Predicts the criteria PS1 and PM5 for the provided sequence variant.
 
@@ -120,6 +117,7 @@ class AutoPS1PM5(AutoACMGHelper):
             information.
             - Parsing the alternative amino acid change & checking if the alternative variant is
             pathogenic.
+
             - If the alternative variant is pathogenic and the amino acid change is the same as the
             primary variant, then PS1 is set to True.
             - If the alternative variant is pathogenic and the amino acid change is different from
@@ -138,8 +136,9 @@ class AutoPS1PM5(AutoACMGHelper):
 
         # Initialize the prediction result
         self.prediction_ps1pm5 = PS1PM5()
+        self.comment_ps1pm5 = ""
         try:
-            if not self._is_missense():
+            if not self._is_missense(var_data):
                 raise AlgorithmError("Variant is not a missense variant. PS1/PM5 not applicable.")
 
             primary_aa_change = self._parse_HGVSp(var_data.pHGVS)
@@ -197,34 +196,38 @@ class AutoPS1PM5(AutoACMGHelper):
 
         except AutoAcmgBaseException as e:
             logger.error("Error occurred during PS1/PM5 prediction. Error: {}", e)
-            self.comment_ps1pm5 += f"Error occurred during PS1/PM5 prediction. Error: {e}"
+            self.comment_ps1pm5 = f"Error occurred during PS1/PM5 prediction. Error: {e}"
             self.prediction_ps1pm5 = None
 
+        return self.prediction_ps1pm5, self.comment_ps1pm5
+
+    def predict_ps1pm5(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        pred, comment = self.verify_ps1pm5(seqvar, var_data)
+        if pred:
+            ps1_pred = (
+                AutoACMGPrediction.Met
+                if pred.PS1
+                else (AutoACMGPrediction.NotMet if pred.PS1 is False else AutoACMGPrediction.Failed)
+            )
+            pm5_pred = (
+                AutoACMGPrediction.Met
+                if pred.PM5
+                else (AutoACMGPrediction.NotMet if pred.PM5 is False else AutoACMGPrediction.Failed)
+            )
+        else:
+            ps1_pred = AutoACMGPrediction.Failed
+            pm5_pred = AutoACMGPrediction.Failed
         return (
             AutoACMGCriteria(
                 name="PS1",
-                summary=self.comment_ps1pm5,
-                prediction=(
-                    AutoACMGPrediction.Met
-                    if self.prediction_ps1pm5.PS1
-                    else (
-                        AutoACMGPrediction.NotMet
-                        if self.prediction_ps1pm5.PS1 is False
-                        else AutoACMGPrediction.Failed
-                    )
-                ),
+                summary=comment,
+                prediction=ps1_pred,
             ),
             AutoACMGCriteria(
                 name="PM5",
-                summary=self.comment_ps1pm5,
-                prediction=(
-                    AutoACMGPrediction.Met
-                    if self.prediction_ps1pm5.PM5
-                    else (
-                        AutoACMGPrediction.NotMet
-                        if self.prediction_ps1pm5.PM5 is False
-                        else AutoACMGPrediction.Failed
-                    )
-                ),
+                summary=comment,
+                prediction=pm5_pred,
             ),
         )

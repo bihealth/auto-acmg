@@ -2,7 +2,7 @@
 
 from enum import auto
 
-from src.defs.auto_acmg import AutoAcmgBaseEnum
+from src.defs.core import AutoAcmgBaseEnum
 from src.defs.exceptions import MappingError
 
 
@@ -21,6 +21,8 @@ class GenomeRelease(AutoAcmgBaseEnum):
             "hg38": "GRCh38",
             "grch37": "GRCh37",
             "grch38": "GRCh38",
+            "GRCh37": "GRCh37",
+            "GRCh38": "GRCh38",
         }
         value_mapped = genome_mapping.get(value, value)
         for member in GenomeRelease:

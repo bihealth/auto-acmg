@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
-from src.defs.auto_acmg import AutoAcmgBaseEnum
+from src.defs.core import AutoAcmgBaseEnum
 from src.defs.mehari import Exon, TranscriptGene, TranscriptSeqvar
 
 

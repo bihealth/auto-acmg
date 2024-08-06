@@ -1,0 +1,180 @@
+{
+  "server_version": "0.38.0",
+  "query": {
+    "genome_release": "grch37",
+    "chromosome": "MT",
+    "pos": 7497,
+    "reference": "G",
+    "alternative": "A"
+  },
+  "result": {
+    "cadd": null,
+    "dbsnp": {
+      "chrom": "MT",
+      "pos": 7497,
+      "refAllele": "G",
+      "altAllele": "A",
+      "rsId": 387906419
+    },
+    "dbnsfp": null,
+    "dbscsnv": null,
+    "gnomad_mtdna": {
+      "chrom": "MT",
+      "pos": 7497,
+      "refAllele": "G",
+      "altAllele": "A",
+      "variantCollapsed": "G7497A",
+      "excludedAc": 5,
+      "an": 56429,
+      "acHet": 2,
+      "afHet": 0.000035442801163299,
+      "mitotipScore": 18.480899810791,
+      "mitotipTrnaPrediction": "likely_pathogenic",
+      "ponMtTrnaPrediction": "likely_pathogenic",
+      "vep": [
+        {
+          "allele": "A",
+          "consequence": "non_coding_transcript_exon_variant",
+          "impact": "MODIFIER",
+          "symbol": "MT-TS1",
+          "gene": "ENSG00000210151",
+          "featureType": "Transcript",
+          "feature": "ENST00000387416",
+          "featureBiotype": "Mt_tRNA",
+          "exon": "1/1",
+          "hgvsc": "ENST00000387416.2:n.18C\u003ET",
+          "cdnaPosition": "18",
+          "dbsnpId": "1",
+          "strand": "-1",
+          "variantClass": "SNV",
+          "symbolSource": "HGNC",
+          "hgncId": "HGNC:7497",
+          "canonical": true,
+          "genePheno": "1"
+        }
+      ]
+    },
+    "gnomad_exomes": null,
+    "gnomad_genomes": null,
+    "helixmtdb": {
+      "chrom": "chrM",
+      "pos": 7497,
+      "refAllele": "G",
+      "altAllele": "A",
+      "numTotal": 196554,
+      "numHet": 1,
+      "featureType": "tRNA_gene",
+      "geneName": "MT-TS1"
+    },
+    "ucsc_conservation": [],
+    "clinvar": {
+      "records": [
+        {
+          "accession": {
+            "accession": "VCV000009569",
+            "version": 5
+          },
+          "rcvs": [
+            {
+              "accession": {
+                "accession": "RCV000010182",
+                "version": 3
+              },
+              "title": "NC_012920.1(MT-TS1):m.7497G\u003EA AND Exercise intolerance, muscle pain, and lactic acidemia",
+              "classifications": {
+                "germlineClassification": {
+                  "reviewStatus": "AGGREGATE_GERMLINE_REVIEW_STATUS_NO_ASSERTION_CRITERIA_PROVIDED",
+                  "description": {
+                    "value": "Pathogenic",
+                    "dateLastEvaluated": "2003-01-01T00:00:00+00:00",
+                    "submissionCount": 1
+                  }
+                }
+              }
+            },
+            {
+              "accession": {
+                "accession": "RCV000850901",
+                "version": 1
+              },
+              "title": "NC_012920.1(MT-TS1):m.7497G\u003EA AND Juvenile myopathy, encephalopathy, lactic acidosis AND stroke",
+              "classifications": {
+                "germlineClassification": {
+                  "reviewStatus": "AGGREGATE_GERMLINE_REVIEW_STATUS_CRITERIA_PROVIDED_SINGLE_SUBMITTER",
+                  "description": {
+                    "value": "Pathogenic",
+                    "dateLastEvaluated": "2019-07-12T00:00:00+00:00",
+                    "submissionCount": 1
+                  }
+                }
+              }
+            },
+            {
+              "accession": {
+                "accession": "RCV002247288",
+                "version": 1
+              },
+              "title": "NC_012920.1(MT-TS1):m.7497G\u003EA AND Mitochondrial complex IV deficiency, nuclear type 1",
+              "classifications": {
+                "germlineClassification": {
+                  "reviewStatus": "AGGREGATE_GERMLINE_REVIEW_STATUS_CRITERIA_PROVIDED_SINGLE_SUBMITTER",
+                  "description": {
+                    "value": "Pathogenic",
+                    "dateLastEvaluated": "2022-05-04T00:00:00+00:00",
+                    "submissionCount": 1
+                  }
+                }
+              }
+            },
+            {
+              "accession": {
+                "accession": "RCV003319162",
+                "version": 1
+              },
+              "title": "NC_012920.1(MT-TS1):m.7497G\u003EA AND Mitochondrial disease",
+              "classifications": {
+                "germlineClassification": {
+                  "reviewStatus": "AGGREGATE_GERMLINE_REVIEW_STATUS_REVIEWED_BY_EXPERT_PANEL",
+                  "description": {
+                    "value": "Likely pathogenic",
+                    "dateLastEvaluated": "2023-04-17T00:00:00+00:00",
+                    "submissionCount": 1
+                  }
+                }
+              }
+            }
+          ],
+          "name": "NC_012920.1(MT-TS1):m.7497G\u003EA",
+          "variationType": "VARIATION_TYPE_SNV",
+          "classifications": {
+            "germlineClassification": {
+              "reviewStatus": "AGGREGATE_GERMLINE_REVIEW_STATUS_REVIEWED_BY_EXPERT_PANEL",
+              "description": "Likely pathogenic",
+              "dateLastEvaluated": "2023-04-17T00:00:00+00:00",
+              "dateCreated": "2013-04-04T00:00:00+00:00",
+              "mostRecentSubmission": "2023-08-05T00:00:00+00:00",
+              "numberOfSubmitters": 4,
+              "numberOfSubmissions": 4
+            }
+          },
+          "sequenceLocation": {
+            "assembly": "GRCh37",
+            "chr": "CHROMOSOME_MT",
+            "accession": "NC_012920.1",
+            "start": 7497,
+            "stop": 7497,
+            "displayStart": 7497,
+            "displayStop": 7497,
+            "variantLength": 1,
+            "positionVcf": 7497,
+            "referenceAlleleVcf": "G",
+            "alternateAlleleVcf": "A"
+          },
+          "hgncIds": [
+            "HGNC:7497"
+          ]
+        }
+      ]
+    }
+  }
+}

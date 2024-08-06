@@ -8,9 +8,8 @@ from loguru import logger
 
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config, settings
-from src.criteria.auto_criteria import AutoACMGCriteria
 from src.defs.annonars_variant import VariantResult
-from src.defs.auto_acmg import PM1, AutoACMGData, AutoACMGPrediction
+from src.defs.auto_acmg import PM1, AutoACMGCriteria, AutoACMGData, AutoACMGPrediction
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, InvalidAPIResposeError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
@@ -107,13 +106,14 @@ class AutoPM1(AutoACMGHelper):
             logger.error("Failed to check if the variant is in a UniProt domain. Error: {}", e)
             raise AlgorithmError("Failed to check if the variant is in a UniProt domain.") from e
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def verify_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PM1], str]:
         """Predict PM1 criteria."""
-        self.prediction = PM1()
+        self.prediction_pm1 = PM1()
+        self.comment_pm1 = ""
         if seqvar.chrom == "MT":
             # skipped according to McCormick et al. (2020).
             self.comment_pm1 = "The variant is in the mitochondrial genome. PM1 is not met."
-            self.prediction.PM1 = False
+            self.prediction_pm1.PM1 = False
         else:
             try:
                 pathogenic_count, benign_count = self._count_vars(
@@ -121,39 +121,44 @@ class AutoPM1(AutoACMGHelper):
                 )
                 if pathogenic_count >= var_data.thresholds.pm1_pathogenic:
                     self.comment_pm1 += "Found 8 or more pathogenic variants. PM1 is met."
-                    self.prediction.PM1 = True
-                    return self.prediction, self.comment_pm1
+                    self.prediction_pm1.PM1 = True
+                    return self.prediction_pm1, self.comment_pm1
                 else:
                     self.comment_pm1 += "Found less than 8 pathogenic variants."
 
                 uniprot_domain = self._get_uniprot_domain(seqvar)
                 if not uniprot_domain:
-                    self.prediction.PM1 = False
-                    return self.prediction, self.comment_pm1
+                    self.prediction_pm1.PM1 = False
+                    return self.prediction_pm1, self.comment_pm1
 
                 start_pos, end_pos = uniprot_domain
                 pathogenic_count, benign_count = self._count_vars(seqvar, start_pos, end_pos)
                 self.comment_pm1 += f"Found {pathogenic_count} Pathogenic variants and {benign_count} Benign variants."
                 if pathogenic_count >= (end_pos - start_pos) / 4:
-                    self.prediction.PM1 = True
-                    return self.prediction, self.comment_pm1
+                    self.prediction_pm1.PM1 = True
+                    return self.prediction_pm1, self.comment_pm1
                 else:
-                    self.prediction.PM1 = False
+                    self.prediction_pm1.PM1 = False
             except AutoAcmgBaseException as e:
-                self.comment_pm1 += f"Error occurred during PM1 prediction. Error: {e}"
                 logger.error("Error occurred during PM1 prediction. Error: {}", e)
-                self.prediction = None
+                self.comment_pm1 = f"Error occurred during PM1 prediction. Error: {e}"
+                self.prediction_pm1 = None
 
+        return self.prediction_pm1, self.comment_pm1
+
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+        """Predict PM1 criteria."""
+        pred, comment = self.verify_pm1(seqvar, var_data)
+        if pred:
+            pm1_pred = (
+                AutoACMGPrediction.Met
+                if pred.PM1
+                else (AutoACMGPrediction.NotMet if pred.PM1 is False else AutoACMGPrediction.Failed)
+            )
+        else:
+            pm1_pred = AutoACMGPrediction.Failed
         return AutoACMGCriteria(
             name="PM1",
-            summary=self.comment_pm1,
-            prediction=(
-                AutoACMGPrediction.Met
-                if self.prediction.PM1
-                else (
-                    AutoACMGPrediction.NotMet
-                    if self.prediction.PM1 is False
-                    else AutoACMGPrediction.Failed
-                )
-            ),
+            prediction=pm1_pred,
+            summary=comment,
         )

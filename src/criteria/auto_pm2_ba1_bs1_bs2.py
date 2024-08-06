@@ -7,7 +7,6 @@ from loguru import logger
 
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config
-from src.criteria.auto_criteria import AutoACMGCriteria
 from src.defs.annonars_variant import (
     AlleleCount,
     AnnonarsVariantResponse,
@@ -18,6 +17,7 @@ from src.defs.annonars_variant import (
 from src.defs.auto_acmg import (
     PM2BA1BS1BS2,
     AlleleCondition,
+    AutoACMGCriteria,
     AutoACMGData,
     AutoACMGPrediction,
     ClingenDosageMap,
@@ -461,9 +461,12 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
             return True
         return False
 
-    def predict_pm2ba1bs1bs2(
-        self, seqvar: SeqVar, gnomad_exones: GnomadExomes, gnomad_mrdna: GnomadMtDna
-    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
+    def verify_pm2ba1bs1bs2(
+        self,
+        seqvar: SeqVar,
+        gnomad_exones: Optional[GnomadExomes],
+        gnomad_mtdna: Optional[GnomadMtDna],
+    ) -> Tuple[Optional[PM2BA1BS1BS2], str]:
         """
         Predicts the PM2, BA1, BS1, BS2 criteria for the sequence variant.
 
@@ -482,11 +485,11 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
         Returns:
             BA1BS1BS2PM2: The prediction result.
         """
+        self.prediction_pm2ba1bs1bs2 = PM2BA1BS1BS2()
+        self.comment_pm2ba1bs1bs2 = ""
         try:
-            self.prediction_pm2ba1bs1bs2 = PM2BA1BS1BS2()
-
             self.comment_pm2ba1bs1bs2 += "Check allele frequency for the control population.\n"
-            af = self._get_af(seqvar, gnomad_mrdna, gnomad_exones)
+            af = self._get_af(seqvar, gnomad_mtdna, gnomad_exones)
             if not af:
                 self.comment_pm2ba1bs1bs2 += "No allele frequency data found.\n"
             elif af >= 0.05 and not self._ba1_exception(seqvar):
@@ -509,62 +512,74 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
 
         except AutoAcmgBaseException as e:
             logger.error("Error occurred during PM2, BA1, BS1, BS2 prediction. Error: {}", e)
-            self.comment_pm2ba1bs1bs2 += (
+            self.comment_pm2ba1bs1bs2 = (
                 f"An error occurred while predicting PM2, BA1, BS1, BS2 criteria: {e}"
             )
             self.prediction_pm2ba1bs1bs2 = None
 
+        return self.prediction_pm2ba1bs1bs2, self.comment_pm2ba1bs1bs2
+
+    def predict_pm2ba1bs1bs2(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
+        """
+        Predicts the PM2, BA1, BS1, BS2 criteria for the sequence variant.
+
+        Args:
+            seqvar: The sequence variant.
+            var_data: The variant data.
+
+        Returns:
+            The prediction result.
+        """
+        pred, comment = self.verify_pm2ba1bs1bs2(
+            seqvar, var_data.gnomad_exomes, var_data.gnomad_mtdna
+        )
+        if pred:
+            pm2_pred = (
+                AutoACMGPrediction.Met
+                if pred.PM2
+                else (AutoACMGPrediction.NotMet if pred.PM2 is False else AutoACMGPrediction.Failed)
+            )
+            ba1_pred = (
+                AutoACMGPrediction.Met
+                if pred.BA1
+                else (AutoACMGPrediction.NotMet if pred.BA1 is False else AutoACMGPrediction.Failed)
+            )
+            bs1_pred = (
+                AutoACMGPrediction.Met
+                if pred.BS1
+                else (AutoACMGPrediction.NotMet if pred.BS1 is False else AutoACMGPrediction.Failed)
+            )
+            bs2_pred = (
+                AutoACMGPrediction.Met
+                if pred.BS2
+                else (AutoACMGPrediction.NotMet if pred.BS2 is False else AutoACMGPrediction.Failed)
+            )
+        else:
+            pm2_pred = AutoACMGPrediction.Failed
+            ba1_pred = AutoACMGPrediction.Failed
+            bs1_pred = AutoACMGPrediction.Failed
+            bs2_pred = AutoACMGPrediction.Failed
         return (
             AutoACMGCriteria(
                 name="PM2",
-                summary=self.comment_pm2ba1bs1bs2,
-                prediction=(
-                    AutoACMGPrediction.Met
-                    if self.prediction_pm2ba1bs1bs2.PM2
-                    else (
-                        AutoACMGPrediction.NotMet
-                        if self.prediction_pm2ba1bs1bs2.PM2 is False
-                        else AutoACMGPrediction.Failed
-                    )
-                ),
+                summary=comment,
+                prediction=pm2_pred,
             ),
             AutoACMGCriteria(
                 name="BA1",
-                summary=self.comment_pm2ba1bs1bs2,
-                prediction=(
-                    AutoACMGPrediction.Met
-                    if self.prediction_pm2ba1bs1bs2.BA1
-                    else (
-                        AutoACMGPrediction.NotMet
-                        if self.prediction_pm2ba1bs1bs2.BA1 is False
-                        else AutoACMGPrediction.Failed
-                    )
-                ),
+                summary=comment,
+                prediction=ba1_pred,
             ),
             AutoACMGCriteria(
                 name="BS1",
-                summary=self.comment_pm2ba1bs1bs2,
-                prediction=(
-                    AutoACMGPrediction.Met
-                    if self.prediction_pm2ba1bs1bs2.BS1
-                    else (
-                        AutoACMGPrediction.NotMet
-                        if self.prediction_pm2ba1bs1bs2.BS1 is False
-                        else AutoACMGPrediction.Failed
-                    )
-                ),
+                summary=comment,
+                prediction=bs1_pred,
             ),
             AutoACMGCriteria(
                 name="BS2",
-                summary=self.comment_pm2ba1bs1bs2,
-                prediction=(
-                    AutoACMGPrediction.Met
-                    if self.prediction_pm2ba1bs1bs2.BS2
-                    else (
-                        AutoACMGPrediction.NotMet
-                        if self.prediction_pm2ba1bs1bs2.BS2 is False
-                        else AutoACMGPrediction.Failed
-                    )
-                ),
+                summary=comment,
+                prediction=bs2_pred,
             ),
         )

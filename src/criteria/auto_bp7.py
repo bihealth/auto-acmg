@@ -65,9 +65,10 @@ class AutoBP7(AutoACMGHelper):
             return True
         return False
 
-    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def verify_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[BP7], str]:
         """Predict BP7 criterion."""
         self.prediction_bp7 = BP7()
+        self.comment_bp7 = ""
         try:
             if seqvar.chrom == "MT":
                 self.comment_bp7 = "Variant is in the mitochondrial genome. BP7 is not met."
@@ -98,20 +99,25 @@ class AutoBP7(AutoACMGHelper):
                 self.prediction_bp7.BP7 = False
 
         except AutoAcmgBaseException as e:
-            self.comment_bp7 += f"Failed to predict BP7 criterion. Error: {e}"
             logger.error("Failed to predict BP7 criterion. Error: {}", e)
+            self.comment_bp7 = f"Failed to predict BP7 criterion. Error: {e}"
             self.prediction_bp7 = None
 
+        return self.prediction_bp7, self.comment_bp7
+
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+        """Predict BP7 criterion."""
+        pred, comment = self.verify_bp7(seqvar, var_data)
+        if pred:
+            pred_bp7 = (
+                AutoACMGPrediction.Met
+                if pred.BP7
+                else (AutoACMGPrediction.NotMet if pred.BP7 is False else AutoACMGPrediction.Failed)
+            )
+        else:
+            pred_bp7 = AutoACMGPrediction.Failed
         return AutoACMGCriteria(
             name="BP7",
-            summary=self.comment_bp7,
-            prediction=(
-                AutoACMGPrediction.Met
-                if self.prediction_bp7.BP7
-                else (
-                    AutoACMGPrediction.NotMet
-                    if self.prediction_bp7.BP7 is False
-                    else AutoACMGPrediction.Failed
-                )
-            ),
+            prediction=pred_bp7,
+            summary=comment,
         )

@@ -8,9 +8,8 @@ from loguru import logger
 
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config, settings
-from src.criteria.auto_criteria import AutoACMGCriteria
 from src.defs.annonars_variant import AnnonarsVariantResponse, VariantResult
-from src.defs.auto_acmg import PM4BP3, AutoACMGData, AutoACMGPrediction
+from src.defs.auto_acmg import PM4BP3, AutoACMGCriteria, AutoACMGData, AutoACMGPrediction
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
@@ -92,9 +91,7 @@ class AutoPM4BP3(AutoACMGHelper):
             return True
         return False
 
-    def predict_pm4bp3(
-        self, seqvar: SeqVar, var_data: AutoACMGData
-    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+    def verify_pm4bp3(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PM4BP3], str]:
         """Predicts PM4 and BP3 criteria for the provided sequence variant.
 
         Implementation of the rule:
@@ -114,6 +111,7 @@ class AutoPM4BP3(AutoACMGHelper):
             PM4BP3: PM4 and BP3 prediction.
         """
         self.prediction_pm4bp3 = PM4BP3()
+        self.comment_pm4bp3 = ""
         try:
             # Stop-loss variants are considered as PM4
             if self._is_stop_loss(var_data):
@@ -142,34 +140,43 @@ class AutoPM4BP3(AutoACMGHelper):
 
         except AutoAcmgBaseException as e:
             logger.error("Failed to predict PM4 and BP3 criteria. Error: {}", e)
-            self.comment_pm4bp3 += f"An error occured while predicting PM4 and BP3 criteria: {e}"
+            self.comment_pm4bp3 = f"An error occured while predicting PM4 and BP3 criteria: {e}"
             self.prediction_pm4bp3 = None
 
+        return self.prediction_pm4bp3, self.comment_pm4bp3
+
+    def predict_pm4bp3(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Predict PM4 and BP3 criteria for the provided sequence variant.
+
+        Returns:
+            AutoACMGCriteria: PM4 and BP3 prediction.
+        """
+        pred, comment = self.verify_pm4bp3(seqvar, var_data)
+        if pred:
+            pm4_pred = (
+                AutoACMGPrediction.Met
+                if pred.PM4
+                else (AutoACMGPrediction.NotMet if pred.PM4 is False else AutoACMGPrediction.Failed)
+            )
+            bp3_pred = (
+                AutoACMGPrediction.Met
+                if pred.BP3
+                else (AutoACMGPrediction.NotMet if pred.BP3 is False else AutoACMGPrediction.Failed)
+            )
+        else:
+            pm4_pred = AutoACMGPrediction.Failed
+            bp3_pred = AutoACMGPrediction.Failed
         return (
             AutoACMGCriteria(
                 name="PM4",
-                summary=self.comment_pm4bp3,
-                prediction=(
-                    AutoACMGPrediction.Met
-                    if self.prediction_pm4bp3.PM4
-                    else (
-                        AutoACMGPrediction.NotMet
-                        if self.prediction_pm4bp3.PM4 is False
-                        else AutoACMGPrediction.Failed
-                    )
-                ),
+                prediction=pm4_pred,
+                summary=comment,
             ),
             AutoACMGCriteria(
                 name="BP3",
-                summary=self.comment_pm4bp3,
-                prediction=(
-                    AutoACMGPrediction.Met
-                    if self.prediction_pm4bp3.BP3
-                    else (
-                        AutoACMGPrediction.NotMet
-                        if self.prediction_pm4bp3.BP3 is False
-                        else AutoACMGPrediction.Failed
-                    )
-                ),
+                prediction=bp3_pred,
+                summary=comment,
             ),
         )

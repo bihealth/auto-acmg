@@ -1,0 +1,1281 @@
+{
+  "server_version": "0.38.0",
+  "query": {
+    "genome_release": "grch37",
+    "chromosome": "1",
+    "start": 55506888,
+    "stop": 55506920
+  },
+  "result": {
+    "cadd": {
+      "Chrom": "1",
+      "Pos": 55506888,
+      "Ref": "T",
+      "Alt": "A",
+      "Type": "SNV",
+      "Length": 0,
+      "AnnoType": "Transcript",
+      "Consequence": "INTRONIC",
+      "ConsScore": 2,
+      "ConsDetail": "intron",
+      "GC": 0.55,
+      "CpG": 0.027,
+      "motifECount": null,
+      "motifEName": null,
+      "motifEHIPos": null,
+      "motifEScoreChng": null,
+      "oAA": null,
+      "nAA": null,
+      "GeneID": "ENSG00000169174",
+      "FeatureID": "ENST00000302118",
+      "GeneName": "PCSK9",
+      "CCDS": "CCDS603.1",
+      "Intron": "1/11",
+      "Exon": null,
+      "cDNApos": null,
+      "relcDNApos": null,
+      "CDSpos": null,
+      "relCDSpos": null,
+      "protPos": null,
+      "relProtPos": null,
+      "Domain": null,
+      "Dst2Splice": null,
+      "Dst2SplType": null,
+      "minDistTSS": 993,
+      "minDistTSE": 11537,
+      "SIFTcat": null,
+      "SIFTval": null,
+      "PolyPhenCat": null,
+      "PolyPhenVal": null,
+      "priPhCons": 0.04,
+      "mamPhCons": 0,
+      "verPhCons": 0,
+      "priPhyloP": -0.352,
+      "mamPhyloP": -0.598,
+      "verPhyloP": -0.559,
+      "bStatistic": 912,
+      "targetScan": null,
+      "mirSVR-Score": null,
+      "mirSVR-E": null,
+      "mirSVR-Aln": null,
+      "cHmmTssA": 0.024,
+      "cHmmTssAFlnk": 0.079,
+      "cHmmTxFlnk": 0.008,
+      "cHmmTx": 0,
+      "cHmmTxWk": 0.039,
+      "cHmmEnhG": 0,
+      "cHmmEnh": 0.024,
+      "cHmmZnfRpts": 0,
+      "cHmmHet": 0,
+      "cHmmTssBiv": 0.039,
+      "cHmmBivFlnk": 0.071,
+      "cHmmEnhBiv": 0.079,
+      "cHmmReprPC": 0.457,
+      "cHmmReprPCWk": 0.142,
+      "cHmmQuies": 0.039,
+      "GerpRS": null,
+      "GerpRSpval": null,
+      "GerpN": 1.65,
+      "GerpS": -2.58,
+      "TFBS": 1,
+      "TFBSPeaks": 1,
+      "TFBSPeaksMax": 27.4282,
+      "tOverlapMotifs": null,
+      "motifDist": null,
+      "Segway": "GM1",
+      "EncH3K27Ac": 19.76,
+      "EncH3K4Me1": 20.64,
+      "EncH3K4Me3": 70.72,
+      "EncExp": 11.59,
+      "EncNucleo": 2.9,
+      "EncOCC": 3,
+      "EncOCCombPVal": 4.6,
+      "EncOCDNasePVal": 5.01,
+      "EncOCFairePVal": 1.99,
+      "EncOCpolIIPVal": 1.58,
+      "EncOCctcfPVal": 1.37,
+      "EncOCmycPVal": 1.53,
+      "EncOCDNaseSig": 0.1545,
+      "EncOCFaireSig": 0.02,
+      "EncOCpolIISig": 0.0303,
+      "EncOCctcfSig": 0.1153,
+      "EncOCmycSig": 0.0709,
+      "Grantham": null,
+      "SpliceAI-acc-gain": 0,
+      "SpliceAI-acc-loss": 0,
+      "SpliceAI-don-gain": 0,
+      "SpliceAI-don-loss": 0,
+      "MMSp_acceptorIntron": null,
+      "MMSp_acceptor": null,
+      "MMSp_exon": null,
+      "MMSp_donor": null,
+      "MMSp_donorIntron": null,
+      "Dist2Mutation": 17,
+      "Freq100bp": 0,
+      "Rare100bp": 1,
+      "Sngl100bp": 3,
+      "Freq1000bp": 2,
+      "Rare1000bp": 6,
+      "Sngl1000bp": 56,
+      "Freq10000bp": 28,
+      "Rare10000bp": 69,
+      "Sngl10000bp": 571,
+      "dbscSNV-ada_score": null,
+      "dbscSNV-rf_score": null,
+      "RawScore": 0.112553,
+      "PHRED": 4.47
+    },
+    "dbsnp": [
+      {
+        "chrom": "1",
+        "pos": 55506895,
+        "refAllele": "G",
+        "altAllele": "C",
+        "rsId": 1199945721
+      },
+      {
+        "chrom": "1",
+        "pos": 55506896,
+        "refAllele": "C",
+        "altAllele": "T",
+        "rsId": 999787054
+      },
+      {
+        "chrom": "1",
+        "pos": 55506903,
+        "refAllele": "C",
+        "altAllele": "T",
+        "rsId": 141907042
+      },
+      {
+        "chrom": "1",
+        "pos": 55506906,
+        "refAllele": "C",
+        "altAllele": "T",
+        "rsId": 1266462708
+      }
+    ],
+    "dbnsfp": {
+
+    },
+    "dbscsnv": {
+
+    },
+    "gnomad_mtdna": [],
+    "gnomad_exomes": [],
+    "gnomad_genomes": [
+      {
+        "chrom": "1",
+        "pos": 55506903,
+        "refAllele": "C",
+        "altAllele": "T",
+        "vep": [
+          {
+            "allele": "T",
+            "consequence": "intron_variant",
+            "impact": "MODIFIER",
+            "symbol": "PCSK9",
+            "gene": "ENSG00000169174",
+            "featureType": "Transcript",
+            "feature": "ENST00000302118",
+            "featureBiotype": "protein_coding",
+            "intron": "1/11",
+            "hgvsc": "ENST00000302118.5:c.207+1186C\u003ET",
+            "existingVariation": "rs141907042",
+            "dbsnpId": "1",
+            "strand": "1",
+            "variantClass": "SNV",
+            "minimised": "1",
+            "symbolSource": "HGNC",
+            "hgncId": "20001",
+            "canonical": true,
+            "ccds": "CCDS603.1",
+            "ensp": "ENSP00000303208",
+            "swissprot": "Q8NBP7",
+            "uniparc": "UPI00001615E1",
+            "genePheno": "1",
+            "gmaf": 0.00039999998989515,
+            "amrMaf": 0.0007999999797903,
+            "easMaf": 0.00139999995008111,
+            "eurMaf": 0,
+            "sasMaf": 0,
+            "aaMaf": 0
+          },
+          {
+            "allele": "T",
+            "consequence": "intron_variant",
+            "impact": "MODIFIER",
+            "symbol": "PCSK9",
+            "gene": "ENSG00000169174",
+            "featureType": "Transcript",
+            "feature": "ENST00000452118",
+            "featureBiotype": "protein_coding",
+            "intron": "1/5",
+            "hgvsc": "ENST00000452118.2:c.207+1186C\u003ET",
+            "existingVariation": "rs141907042",
+            "dbsnpId": "1",
+            "strand": "1",
+            "variantClass": "SNV",
+            "minimised": "1",
+            "symbolSource": "HGNC",
+            "hgncId": "20001",
+            "ensp": "ENSP00000401598",
+            "trembl": "B4DEZ9",
+            "uniparc": "UPI00017A6F55",
+            "genePheno": "1",
+            "gmaf": 0.00039999998989515,
+            "amrMaf": 0.0007999999797903,
+            "easMaf": 0.00139999995008111,
+            "eurMaf": 0,
+            "sasMaf": 0,
+            "aaMaf": 0
+          },
+          {
+            "allele": "T",
+            "consequence": "intron_variant",
+            "impact": "MODIFIER",
+            "symbol": "PCSK9",
+            "gene": "ENSG00000169174",
+            "featureType": "Transcript",
+            "feature": "ENST00000543384",
+            "featureBiotype": "protein_coding",
+            "intron": "1/9",
+            "hgvsc": "ENST00000543384.1:c.-78+827C\u003ET",
+            "existingVariation": "rs141907042",
+            "dbsnpId": "1",
+            "strand": "1",
+            "variantClass": "SNV",
+            "minimised": "1",
+            "symbolSource": "HGNC",
+            "hgncId": "20001",
+            "ensp": "ENSP00000441859",
+            "trembl": "F5GWF0",
+            "uniparc": "UPI000206501F",
+            "genePheno": "1",
+            "gmaf": 0.00039999998989515,
+            "amrMaf": 0.0007999999797903,
+            "easMaf": 0.00139999995008111,
+            "eurMaf": 0,
+            "sasMaf": 0,
+            "aaMaf": 0
+          },
+          {
+            "allele": "T",
+            "consequence": "regulatory_region_variant",
+            "impact": "MODIFIER",
+            "featureType": "RegulatoryFeature",
+            "feature": "ENSR00001037993",
+            "featureBiotype": "promoter",
+            "existingVariation": "rs141907042",
+            "dbsnpId": "1",
+            "variantClass": "SNV",
+            "minimised": "1",
+            "gmaf": 0.00039999998989515,
+            "amrMaf": 0.0007999999797903,
+            "easMaf": 0.00139999995008111,
+            "eurMaf": 0,
+            "sasMaf": 0,
+            "aaMaf": 0
+          }
+        ],
+        "alleleCounts": [
+          {
+            "byPopulation": [
+              {
+                "population": "afr",
+                "counts": {
+                  "overall": {
+                    "ac": 39,
+                    "an": 8712,
+                    "af": 0.00447657983750105
+                  },
+                  "xx": {
+                    "ac": 18,
+                    "an": 3680,
+                    "af": 0.00489130010828376
+                  },
+                  "xy": {
+                    "ac": 21,
+                    "an": 5032,
+                    "af": 0.00417328998446465
+                  }
+                },
+                "faf95": 0.00336545007303357,
+                "faf99": 0.00336540001444519
+              },
+              {
+                "population": "amr",
+                "counts": {
+                  "overall": {
+                    "an": 848
+                  },
+                  "xx": {
+                    "an": 414
+                  },
+                  "xy": {
+                    "an": 434
+                  }
+                },
+                "faf95": 0,
+                "faf99": 0
+              },
+              {
+                "population": "asj",
+                "counts": {
+                  "overall": {
+                    "an": 290
+                  },
+                  "xx": {
+                    "an": 80
+                  },
+                  "xy": {
+                    "an": 210
+                  }
+                }
+              },
+              {
+                "population": "eas",
+                "counts": {
+                  "overall": {
+                    "an": 1558
+                  },
+                  "xx": {
+                    "an": 538
+                  },
+                  "xy": {
+                    "an": 1020
+                  }
+                },
+                "faf95": 0,
+                "faf99": 0
+              },
+              {
+                "population": "eas_jpn",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "eas_oea",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "eas_kor",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "fin",
+                "counts": {
+                  "overall": {
+                    "an": 3472
+                  },
+                  "xx": {
+                    "an": 1846
+                  },
+                  "xy": {
+                    "an": 1626
+                  }
+                }
+              },
+              {
+                "population": "nfe",
+                "counts": {
+                  "overall": {
+                    "an": 15428
+                  },
+                  "xx": {
+                    "an": 6806
+                  },
+                  "xy": {
+                    "an": 8622
+                  }
+                },
+                "faf95": 0,
+                "faf99": 0
+              },
+              {
+                "population": "nfe_bgr",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "nfe_est",
+                "counts": {
+                  "overall": {
+                    "an": 4586
+                  }
+                }
+              },
+              {
+                "population": "nfe_nwe",
+                "counts": {
+                  "overall": {
+                    "an": 8598
+                  }
+                }
+              },
+              {
+                "population": "nfe_onf",
+                "counts": {
+                  "overall": {
+                    "an": 2138
+                  }
+                }
+              },
+              {
+                "population": "nfe_seu",
+                "counts": {
+                  "overall": {
+                    "an": 106
+                  }
+                }
+              },
+              {
+                "population": "nfe_swe",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "oth",
+                "counts": {
+                  "overall": {
+                    "an": 1088
+                  },
+                  "xx": {
+                    "an": 562
+                  },
+                  "xy": {
+                    "an": 526
+                  }
+                }
+              },
+              {
+                "population": "sas",
+                "counts": {
+
+                }
+              }
+            ],
+            "bySex": {
+              "overall": {
+                "ac": 39,
+                "an": 31396,
+                "af": 0.0012422000290826
+              },
+              "xx": {
+                "ac": 18,
+                "an": 13926,
+                "af": 0.00129255000501871
+              },
+              "xy": {
+                "ac": 21,
+                "an": 17470,
+                "af": 0.00120206002611667
+              }
+            },
+            "raw": {
+              "ac": 39,
+              "an": 31416,
+              "af": 0.00124141003470868
+            },
+            "popmax": "afr",
+            "afPopmax": 0.00447657983750105,
+            "acPopmax": 39,
+            "anPopmax": 8712,
+            "nhomaltPopmax": 0
+          },
+          {
+            "cohort": "controls",
+            "byPopulation": [
+              {
+                "population": "afr",
+                "counts": {
+                  "overall": {
+                    "ac": 9,
+                    "an": 2574,
+                    "af": 0.00349649996496737
+                  },
+                  "xx": {
+                    "ac": 3,
+                    "an": 1166,
+                    "af": 0.0025728999171406
+                  },
+                  "xy": {
+                    "ac": 6,
+                    "an": 1408,
+                    "af": 0.00426136003807187
+                  }
+                },
+                "faf95": 0.00336545007303357,
+                "faf99": 0.00336540001444519
+              },
+              {
+                "population": "amr",
+                "counts": {
+                  "overall": {
+                    "an": 246
+                  },
+                  "xx": {
+                    "an": 120
+                  },
+                  "xy": {
+                    "an": 126
+                  }
+                },
+                "faf95": 0,
+                "faf99": 0
+              },
+              {
+                "population": "asj",
+                "counts": {
+                  "overall": {
+                    "an": 38
+                  },
+                  "xx": {
+                    "an": 24
+                  },
+                  "xy": {
+                    "an": 14
+                  }
+                }
+              },
+              {
+                "population": "eas",
+                "counts": {
+                  "overall": {
+                    "an": 914
+                  },
+                  "xx": {
+                    "an": 342
+                  },
+                  "xy": {
+                    "an": 572
+                  }
+                },
+                "faf95": 0,
+                "faf99": 0
+              },
+              {
+                "population": "eas_jpn",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "eas_oea",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "eas_kor",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "fin",
+                "counts": {
+                  "overall": {
+                    "an": 1162
+                  },
+                  "xx": {
+                    "an": 556
+                  },
+                  "xy": {
+                    "an": 606
+                  }
+                }
+              },
+              {
+                "population": "nfe",
+                "counts": {
+                  "overall": {
+                    "an": 5516
+                  },
+                  "xx": {
+                    "an": 2576
+                  },
+                  "xy": {
+                    "an": 2940
+                  }
+                },
+                "faf95": 0,
+                "faf99": 0
+              },
+              {
+                "population": "nfe_bgr",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "nfe_est",
+                "counts": {
+                  "overall": {
+                    "an": 4098
+                  }
+                }
+              },
+              {
+                "population": "nfe_nwe",
+                "counts": {
+                  "overall": {
+                    "an": 922
+                  }
+                }
+              },
+              {
+                "population": "nfe_onf",
+                "counts": {
+                  "overall": {
+                    "an": 440
+                  }
+                }
+              },
+              {
+                "population": "nfe_seu",
+                "counts": {
+                  "overall": {
+                    "an": 56
+                  }
+                }
+              },
+              {
+                "population": "nfe_swe",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "oth",
+                "counts": {
+                  "overall": {
+                    "an": 424
+                  },
+                  "xx": {
+                    "an": 226
+                  },
+                  "xy": {
+                    "an": 198
+                  }
+                }
+              },
+              {
+                "population": "sas",
+                "counts": {
+
+                }
+              }
+            ],
+            "bySex": {
+              "overall": {
+                "ac": 9,
+                "an": 10874,
+                "af": 0.000827662006486207
+              },
+              "xx": {
+                "ac": 3,
+                "an": 5010,
+                "af": 0.000598801998421549
+              },
+              "xy": {
+                "ac": 6,
+                "an": 5864,
+                "af": 0.00102318997960538
+              }
+            },
+            "raw": {
+              "ac": 9,
+              "an": 10884,
+              "af": 0.00082690198905766
+            },
+            "popmax": "afr",
+            "afPopmax": 0.00349649996496737,
+            "acPopmax": 9,
+            "anPopmax": 2574,
+            "nhomaltPopmax": 0
+          },
+          {
+            "cohort": "non_cancer",
+            "byPopulation": [
+              {
+                "population": "afr",
+                "counts": {
+
+                },
+                "faf95": 0.00336545007303357,
+                "faf99": 0.00336540001444519
+              },
+              {
+                "population": "amr",
+                "counts": {
+
+                },
+                "faf95": 0,
+                "faf99": 0
+              },
+              {
+                "population": "asj",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "eas",
+                "counts": {
+
+                },
+                "faf95": 0,
+                "faf99": 0
+              },
+              {
+                "population": "eas_jpn",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "eas_oea",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "eas_kor",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "fin",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "nfe",
+                "counts": {
+
+                },
+                "faf95": 0,
+                "faf99": 0
+              },
+              {
+                "population": "nfe_bgr",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "nfe_est",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "nfe_nwe",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "nfe_onf",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "nfe_seu",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "nfe_swe",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "oth",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "sas",
+                "counts": {
+
+                }
+              }
+            ],
+            "bySex": {
+
+            }
+          },
+          {
+            "cohort": "non_neuro",
+            "byPopulation": [
+              {
+                "population": "afr",
+                "counts": {
+                  "overall": {
+                    "ac": 12,
+                    "an": 3388,
+                    "af": 0.0035419100895524
+                  },
+                  "xx": {
+                    "ac": 6,
+                    "an": 1780,
+                    "af": 0.00337079004384577
+                  },
+                  "xy": {
+                    "ac": 6,
+                    "an": 1608,
+                    "af": 0.00373133993707597
+                  }
+                },
+                "faf95": 0.00336545007303357,
+                "faf99": 0.00336540001444519
+              },
+              {
+                "population": "amr",
+                "counts": {
+                  "overall": {
+                    "an": 554
+                  },
+                  "xx": {
+                    "an": 310
+                  },
+                  "xy": {
+                    "an": 244
+                  }
+                },
+                "faf95": 0,
+                "faf99": 0
+              },
+              {
+                "population": "asj",
+                "counts": {
+                  "overall": {
+                    "an": 246
+                  },
+                  "xx": {
+                    "an": 60
+                  },
+                  "xy": {
+                    "an": 186
+                  }
+                }
+              },
+              {
+                "population": "eas",
+                "counts": {
+                  "overall": {
+                    "an": 1558
+                  },
+                  "xx": {
+                    "an": 538
+                  },
+                  "xy": {
+                    "an": 1020
+                  }
+                },
+                "faf95": 0,
+                "faf99": 0
+              },
+              {
+                "population": "eas_jpn",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "eas_oea",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "eas_kor",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "fin",
+                "counts": {
+                  "overall": {
+                    "an": 1164
+                  },
+                  "xx": {
+                    "an": 558
+                  },
+                  "xy": {
+                    "an": 606
+                  }
+                }
+              },
+              {
+                "population": "nfe",
+                "counts": {
+                  "overall": {
+                    "an": 13618
+                  },
+                  "xx": {
+                    "an": 5982
+                  },
+                  "xy": {
+                    "an": 7636
+                  }
+                },
+                "faf95": 0,
+                "faf99": 0
+              },
+              {
+                "population": "nfe_bgr",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "nfe_est",
+                "counts": {
+                  "overall": {
+                    "an": 4140
+                  }
+                }
+              },
+              {
+                "population": "nfe_nwe",
+                "counts": {
+                  "overall": {
+                    "an": 7702
+                  }
+                }
+              },
+              {
+                "population": "nfe_onf",
+                "counts": {
+                  "overall": {
+                    "an": 1722
+                  }
+                }
+              },
+              {
+                "population": "nfe_seu",
+                "counts": {
+                  "overall": {
+                    "an": 54
+                  }
+                }
+              },
+              {
+                "population": "nfe_swe",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "oth",
+                "counts": {
+                  "overall": {
+                    "an": 734
+                  },
+                  "xx": {
+                    "an": 364
+                  },
+                  "xy": {
+                    "an": 370
+                  }
+                }
+              },
+              {
+                "population": "sas",
+                "counts": {
+
+                }
+              }
+            ],
+            "bySex": {
+              "overall": {
+                "ac": 12,
+                "an": 21262,
+                "af": 0.000564387009944766
+              },
+              "xx": {
+                "ac": 6,
+                "an": 9592,
+                "af": 0.000625521002802997
+              },
+              "xy": {
+                "ac": 6,
+                "an": 11670,
+                "af": 0.000514139013830572
+              }
+            },
+            "raw": {
+              "ac": 12,
+              "an": 21272,
+              "af": 0.000564121990464627
+            },
+            "popmax": "afr",
+            "afPopmax": 0.0035419100895524,
+            "acPopmax": 12,
+            "anPopmax": 3388,
+            "nhomaltPopmax": 0
+          },
+          {
+            "cohort": "non_topmed",
+            "byPopulation": [
+              {
+                "population": "afr",
+                "counts": {
+                  "overall": {
+                    "ac": 38,
+                    "an": 8550,
+                    "af": 0.00444443989545107
+                  },
+                  "xx": {
+                    "ac": 18,
+                    "an": 3612,
+                    "af": 0.00498339021578431
+                  },
+                  "xy": {
+                    "ac": 20,
+                    "an": 4938,
+                    "af": 0.0040502198971808
+                  }
+                },
+                "faf95": 0.00336545007303357,
+                "faf99": 0.00336540001444519
+              },
+              {
+                "population": "amr",
+                "counts": {
+                  "overall": {
+                    "an": 810
+                  },
+                  "xx": {
+                    "an": 394
+                  },
+                  "xy": {
+                    "an": 416
+                  }
+                },
+                "faf95": 0,
+                "faf99": 0
+              },
+              {
+                "population": "asj",
+                "counts": {
+                  "overall": {
+                    "an": 138
+                  },
+                  "xx": {
+                    "an": 62
+                  },
+                  "xy": {
+                    "an": 76
+                  }
+                }
+              },
+              {
+                "population": "eas",
+                "counts": {
+                  "overall": {
+                    "an": 1520
+                  },
+                  "xx": {
+                    "an": 520
+                  },
+                  "xy": {
+                    "an": 1000
+                  }
+                },
+                "faf95": 0,
+                "faf99": 0
+              },
+              {
+                "population": "eas_jpn",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "eas_oea",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "eas_kor",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "fin",
+                "counts": {
+                  "overall": {
+                    "an": 3472
+                  },
+                  "xx": {
+                    "an": 1846
+                  },
+                  "xy": {
+                    "an": 1626
+                  }
+                }
+              },
+              {
+                "population": "nfe",
+                "counts": {
+                  "overall": {
+                    "an": 11086
+                  },
+                  "xx": {
+                    "an": 5610
+                  },
+                  "xy": {
+                    "an": 5476
+                  }
+                },
+                "faf95": 0,
+                "faf99": 0
+              },
+              {
+                "population": "nfe_bgr",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "nfe_est",
+                "counts": {
+                  "overall": {
+                    "an": 4564
+                  }
+                }
+              },
+              {
+                "population": "nfe_nwe",
+                "counts": {
+                  "overall": {
+                    "an": 4900
+                  }
+                }
+              },
+              {
+                "population": "nfe_onf",
+                "counts": {
+                  "overall": {
+                    "an": 1516
+                  }
+                }
+              },
+              {
+                "population": "nfe_seu",
+                "counts": {
+                  "overall": {
+                    "an": 106
+                  }
+                }
+              },
+              {
+                "population": "nfe_swe",
+                "counts": {
+
+                }
+              },
+              {
+                "population": "oth",
+                "counts": {
+                  "overall": {
+                    "an": 1012
+                  },
+                  "xx": {
+                    "an": 546
+                  },
+                  "xy": {
+                    "an": 466
+                  }
+                }
+              },
+              {
+                "population": "sas",
+                "counts": {
+
+                }
+              }
+            ],
+            "bySex": {
+              "overall": {
+                "ac": 38,
+                "an": 26588,
+                "af": 0.00142921996302903
+              },
+              "xx": {
+                "ac": 18,
+                "an": 12590,
+                "af": 0.0014297099551186
+              },
+              "xy": {
+                "ac": 20,
+                "an": 13998,
+                "af": 0.00142878002952784
+              }
+            },
+            "raw": {
+              "ac": 38,
+              "an": 26608,
+              "af": 0.00142813997808844
+            },
+            "popmax": "afr",
+            "afPopmax": 0.00444443989545107,
+            "acPopmax": 38,
+            "anPopmax": 8550,
+            "nhomaltPopmax": 0
+          }
+        ],
+        "variantInfo": {
+          "variantType": "snv",
+          "alleleType": "snv",
+          "nAltAlleles": 1
+        },
+        "qualityInfo": {
+          "fs": 0,
+          "inbreedingCoeff": -0.00100000004749745,
+          "mq": 60,
+          "mqRankSum": -0.136000007390976,
+          "qd": 11.5200004577637,
+          "readPosRankSum": 0.555999994277954,
+          "vqsrPositiveTrainSite": true,
+          "baseQRankSum": 0.0759999975562096,
+          "clippingRankSum": -0.0240000002086163,
+          "sor": 0.643999993801117,
+          "dp": 647867,
+          "vqslod": 17.9099998474121,
+          "vqsrCulprit": "MQ",
+          "pabMax": 1
+        },
+        "ageInfo": {
+          "ageHistHomNSmaller": 0,
+          "ageHistHomNLarger": 0,
+          "ageHistHetNSmaller": 17,
+          "ageHistHetNLarger": 0
+        }
+      }
+    ],
+    "helixmtdb": [],
+    "ucsc_conservation": [],
+    "clinvar": []
+  }
+}
