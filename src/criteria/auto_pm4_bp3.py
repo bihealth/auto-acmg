@@ -119,6 +119,7 @@ class AutoPM4BP3(AutoACMGHelper):
             PM4BP3: PM4 and BP3 prediction.
         """
         self.prediction_pm4bp3 = PM4BP3()
+        self.comment_pm4bp3 = ""
         try:
             # Stop-loss variants are considered as PM4
             if self._is_stop_loss(var_data):

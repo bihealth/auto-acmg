@@ -128,7 +128,8 @@ class AutoACMG(
         if isinstance(score_value, (float, int)):
             return float(score_value)
         try:
-            return max(float(score) for score in score_value.split(";") if score != ".")
+            scores = [float(score) for score in score_value.split(";") if score != "."]
+            return max(scores) if scores else None
         except ValueError as e:
             logger.error("Failed to convert score value to float. Error: {}", e)
             raise AlgorithmError("Failed to convert score value to float.") from e
@@ -159,7 +160,7 @@ class AutoACMG(
             logger.error("An unexpected error occurred: {}", e)
             return None
 
-    def parse_data(self, seqvar: SeqVar) -> None:
+    def parse_data(self, seqvar: SeqVar) -> AutoACMGResult:
         """Parses the data for the prediction."""
         # Mehari data
         ts_helper = SeqVarTranscriptsHelper(seqvar)
@@ -241,6 +242,7 @@ class AutoACMG(
 
         # Thresholds
         pass
+        return self.result
 
     def predict(self) -> Optional[AutoACMGResult]:
         """

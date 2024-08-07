@@ -470,6 +470,7 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
             BA1BS1BS2PM2: The prediction result.
         """
         self.prediction_pm2ba1bs1bs2 = PM2BA1BS1BS2()
+        self.comment_pm2ba1bs1bs2 = ""
         try:
             af = self._get_af(seqvar, var_data.gnomad_mtdna, var_data.gnomad_exomes)
             if not af:

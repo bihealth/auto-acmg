@@ -114,6 +114,7 @@ class AutoPP2BP1(AutoACMGHelper):
     def verify_pp2bp1(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PP2BP1], str]:
         """Predict PP2 and BP1 criteria."""
         self.prediction_pp2bp1 = PP2BP1()
+        self.comment_pp2bp1 = ""
         if seqvar.chrom == "MT":
             self.comment_pp2bp1 = (
                 "Variant is in mitochondrial DNA. PP2 and BP1 criteria are not met."

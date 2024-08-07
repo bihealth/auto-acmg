@@ -126,6 +126,7 @@ class AutoPM1(AutoACMGHelper):
     def verify_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PM1], str]:
         """Predict PM1 criteria."""
         self.prediction_pm1 = PM1()
+        self.comment_pm1 = ""
         if seqvar.chrom == "MT":
             # skipped according to McCormick et al. (2020).
             self.comment_pm1 = "The variant is in the mitochondrial genome. PM1 is not met."

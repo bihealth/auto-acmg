@@ -136,8 +136,8 @@ class AutoPS1PM5(AutoACMGHelper):
         Returns:
             Tuple[Optional[PS1PM5], str]: Prediction result and the comment with the explanation.
         """
-        # Initialize the prediction result
         self.prediction_ps1pm5 = PS1PM5()
+        self.comment_ps1pm5 = ""
         try:
             if not self._is_missense(var_data):
                 raise AlgorithmError("Variant is not a missense variant. PS1/PM5 not applicable.")

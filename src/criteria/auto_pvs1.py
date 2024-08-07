@@ -908,6 +908,8 @@ class AutoPVS1(SeqVarPVS1Helper):
             PVS1Prediction.PVS1_Moderate: AutoACMGStrength.PathogenicModerate,
             PVS1Prediction.PVS1_Supporting: AutoACMGStrength.PathogenicSupporting,
             PVS1Prediction.NotPVS1: AutoACMGStrength.PathogenicVeryStrong,
+            PVS1Prediction.UnsupportedConsequence: AutoACMGStrength.PathogenicVeryStrong,
+            PVS1Prediction.NotSet: AutoACMGStrength.PathogenicVeryStrong,
         }
         return AutoACMGCriteria(
             name="PVS1",

@@ -47,8 +47,8 @@ class AutoBP7(AutoACMGHelper):
             "spliceAI_donor_loss": var_data.thresholds.spliceAI_donor_loss,
         }
         return any(
-            getattr(var_data.scores.cadd, score_type, 0) > threshold
-            for score_type, threshold in score_checks.items()
+            (getattr(var_data.scores.cadd, score_name) or 0) > threshold
+            for score_name, threshold in score_checks.items()
         )
 
     @staticmethod
