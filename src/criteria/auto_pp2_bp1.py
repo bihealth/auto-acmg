@@ -43,14 +43,15 @@ class AutoPP2BP1(AutoACMGHelper):
 
         Returns:
             Tuple[int, int, int]: The number of pathogenic variants, benign variants, and the total
-            number of variants.
+            number of missense variants.
 
         Raises:
+            AlgorithmError: If end position is less than the start position.
             InvalidAPIResposeError: If the API response is invalid or cannot be processed.
         """
         if end_pos < start_pos:
             logger.error(
-                "End position is less than the start position." "Positions given: {} - {}",
+                "End position is less than the start position. Positions given: {} - {}",
                 start_pos,
                 end_pos,
             )
@@ -93,7 +94,8 @@ class AutoPP2BP1(AutoACMGHelper):
             logger.error("Failed to get variant from range. No ClinVar data.")
             raise InvalidAPIResposeError("Failed to get variant from range. No ClinVar data.")
 
-    def _is_missense(self, var_data: AutoACMGData) -> bool:
+    @staticmethod
+    def _is_missense(var_data: AutoACMGData) -> bool:
         """
         Check if the variant is a missense variant.
 
@@ -112,7 +114,6 @@ class AutoPP2BP1(AutoACMGHelper):
     def verify_pp2bp1(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PP2BP1], str]:
         """Predict PP2 and BP1 criteria."""
         self.prediction_pp2bp1 = PP2BP1()
-        self.comment_pp2bp1 = ""
         if seqvar.chrom == "MT":
             self.comment_pp2bp1 = (
                 "Variant is in mitochondrial DNA. PP2 and BP1 criteria are not met."
@@ -131,37 +132,46 @@ class AutoPP2BP1(AutoACMGHelper):
                 start_pos, end_pos = min(var_data.cds_start, var_data.cds_end), max(
                     var_data.cds_start, var_data.cds_end
                 )
-                self.comment_pp2bp1 += (
-                    f"Count missense variants on range: {start_pos} - {end_pos}. "
-                )
                 pathogenic_count, benign_count, total_count = self._get_missense_vars(
                     seqvar, start_pos, end_pos
                 )
                 pathogenic_ratio = pathogenic_count / total_count
                 benign_ratio = benign_count / total_count
-                self.comment_pp2bp1 += (
-                    f"Pathogenic missense variants: {pathogenic_count}, "
-                    f"Benign missense variants: {benign_count}, "
-                    f"Total missense variants: {total_count}. => \n"
-                    f"Pathogenic ratio: {pathogenic_ratio}, Benign ratio: {benign_ratio}. => \n"
+                self.comment_pp2bp1 = (
+                    f"Found pathogenic missense variants: {pathogenic_count}, "
+                    f"benign missense variants: {benign_count}, "
+                    f"total missense variants: {total_count} "
+                    f"in the range {start_pos}-{end_pos}. "
+                    f"Pathogenic ratio: {pathogenic_ratio}, Benign ratio: {benign_ratio}. "
                 )
 
                 if pathogenic_ratio > var_data.thresholds.pp2bp1_pathogenic:
-                    self.comment_pp2bp1 += f"Pathogenic ratio is greater than {var_data.thresholds.pp2bp1_pathogenic}. PP2 is met."
+                    self.comment_pp2bp1 += (
+                        f"Pathogenic ratio is greater than {var_data.thresholds.pp2bp1_pathogenic}. "
+                        "PP2 is met. "
+                    )
                     self.prediction_pp2bp1.PP2 = True
                 else:
-                    self.comment_pp2bp1 += f"Pathogenic ratio is less than {var_data.thresholds.pp2bp1_pathogenic}. PP2 is not met."
+                    self.comment_pp2bp1 += (
+                        f"Pathogenic ratio is less than {var_data.thresholds.pp2bp1_pathogenic}. "
+                        "PP2 is not met. "
+                    )
                 if benign_ratio > var_data.thresholds.pp2bp1_benign:
-                    self.comment_pp2bp1 += f"Benign ratio is greater than {var_data.thresholds.pp2bp1_benign}. BP1 is met."
+                    self.comment_pp2bp1 += (
+                        f"Benign ratio is greater than {var_data.thresholds.pp2bp1_benign}. "
+                        "BP1 is met."
+                    )
                     self.prediction_pp2bp1.BP1 = True
                 else:
-                    self.comment_pp2bp1 += f"Benign ratio is less than {var_data.thresholds.pp2bp1_benign}. BP1 is not met."
+                    self.comment_pp2bp1 += (
+                        f"Benign ratio is less than {var_data.thresholds.pp2bp1_benign}. "
+                        "BP1 is not met."
+                    )
 
             except AutoAcmgBaseException as e:
                 logger.error("Failed to predict PP2 and BP1 criteria. Error: {}", e)
                 self.comment_pp2bp1 = f"Error occurred during PP2 and BP1 prediction. Error: {e}"
                 self.prediction_pp2bp1 = None
-
         return self.prediction_pp2bp1, self.comment_pp2bp1
 
     def predict_pp2bp1(
@@ -184,20 +194,24 @@ class AutoPP2BP1(AutoACMGHelper):
                 if pred.BP1
                 else (AutoACMGPrediction.NotMet if pred.BP1 is False else AutoACMGPrediction.Failed)
             )
+            pp2_strength = pred.PP2_strength
+            bp1_strength = pred.BP1_strength
         else:
             pp2_pred = AutoACMGPrediction.Failed
             bp1_pred = AutoACMGPrediction.Failed
+            pp2_strength = AutoACMGStrength.PathogenicSupporting
+            bp1_strength = AutoACMGStrength.BenignSupporting
         return (
             AutoACMGCriteria(
                 name="PP2",
                 prediction=pp2_pred,
-                strength=pred.PP2_strength if pred else AutoACMGStrength.PathogenicSupporting,
+                strength=pp2_strength,
                 summary=comment,
             ),
             AutoACMGCriteria(
                 name="BP1",
                 prediction=bp1_pred,
-                strength=pred.BP1_strength if pred else AutoACMGStrength.BenignSupporting,
+                strength=bp1_strength,
                 summary=comment,
             ),
         )

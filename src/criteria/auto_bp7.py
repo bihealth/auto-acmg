@@ -32,7 +32,7 @@ class AutoBP7(AutoACMGHelper):
         Predict splice site alterations using SpliceAI.
 
         If any of SpliceAI scores are greater than specific thresholds, the variant is considered a
-        splice site alteration.
+        splice site alteration. The thresholds are defined in the variant data thresholds.
 
         Args:
             var_data: The data containing variant scores and thresholds.
@@ -120,11 +120,13 @@ class AutoBP7(AutoACMGHelper):
                 if pred.BP7
                 else (AutoACMGPrediction.NotMet if pred.BP7 is False else AutoACMGPrediction.Failed)
             )
+            strength_bp7 = pred.BP7_strength
         else:
             pred_bp7 = AutoACMGPrediction.Failed
+            strength_bp7 = AutoACMGStrength.BenignSupporting
         return AutoACMGCriteria(
             name="BP7",
             prediction=pred_bp7,
-            strength=pred.BP7_strength if pred else AutoACMGStrength.BenignSupporting,
+            strength=strength_bp7,
             summary=comment,
         )

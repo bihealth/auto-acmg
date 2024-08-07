@@ -381,6 +381,12 @@ class AutoACMGTresholds(BaseModel):
     pp2bp1_benign: float = 0.569
     #: PM1 variants count threshold
     pm1_pathogenic: float = 8
+    #: BA1 variants count threshold
+    ba1_benign: float = 0.05
+    #: BS1 variants count threshold
+    bs1_benign: float = 0.00015
+    #: PM2 variants count threshold
+    pm2_pathogenic: float = 0.0001
 
 
 class AutoACMGData(BaseModel):

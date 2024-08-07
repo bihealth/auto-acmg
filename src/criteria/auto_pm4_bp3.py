@@ -32,8 +32,7 @@ class AutoPM4BP3(AutoACMGHelper):
 
     @staticmethod
     def _in_repeat_region(seqvar: SeqVar) -> bool:
-        """Check if the variant is in a repeat region.
-
+        """
         Check if the variant is in a repeat region using the RepeatMasker track.
 
         Args:
@@ -41,6 +40,9 @@ class AutoPM4BP3(AutoACMGHelper):
 
         Returns:
             bool: True if the variant is in a repeat region, False otherwise.
+
+        Raises:
+            AlgorithmError: If tabix fails to query the RepeatMasker track.
         """
         try:
             # Find path to the lib file
@@ -61,7 +63,8 @@ class AutoPM4BP3(AutoACMGHelper):
 
     @staticmethod
     def _is_stop_loss(var_data: AutoACMGData) -> bool:
-        """Check if the variant is a stop-loss variant.
+        """
+        Check if the variant's consequence is a stop-loss.
 
         Args:
             var_data (AutoACMGData): The variant information.
@@ -77,7 +80,8 @@ class AutoPM4BP3(AutoACMGHelper):
 
     @staticmethod
     def is_inframe_delins(var_data: AutoACMGData) -> bool:
-        """Check if the variant is an in-frame deletion/insertion.
+        """
+        Check if the variant's consequence is an in-frame deletion/insertion.
 
         Args:
             var_data (AutoACMGData): The variant information.
@@ -115,30 +119,31 @@ class AutoPM4BP3(AutoACMGHelper):
             PM4BP3: PM4 and BP3 prediction.
         """
         self.prediction_pm4bp3 = PM4BP3()
-        self.comment_pm4bp3 = ""
         try:
             # Stop-loss variants are considered as PM4
             if self._is_stop_loss(var_data):
                 self.comment_pm4bp3 = "Variant consequence is stop-loss. PM4 is met."
                 self.prediction_pm4bp3.PM4 = True
+                self.prediction_pm4bp3.BP3 = False
             # In-frame deletions/insertions
             elif self.is_inframe_delins(var_data):
-                self.comment_pm4bp3 += f"Variant consequence is in-frame deletion/insertion.\n"
+                self.comment_pm4bp3 = f"Variant consequence is in-frame deletion/insertion. "
                 if not self._in_repeat_region(seqvar):
                     self.comment_pm4bp3 += (
                         "Variant is not in a repeat region or a conserved domain. PM4 is met."
                     )
                     self.prediction_pm4bp3.PM4 = True
+                    self.prediction_pm4bp3.BP3 = False
                 else:
                     self.comment_pm4bp3 += (
                         "Variant is in a repeat region or not in a conserved domain. BP3 is met."
                     )
+                    self.prediction_pm4bp3.PM4 = False
                     self.prediction_pm4bp3.BP3 = True
             else:
                 self.comment_pm4bp3 = (
                     "Variant consequence is not indel or stop-loss. PM4 and BP3 are not met."
                 )
-                self._in_repeat_region(seqvar)
                 self.prediction_pm4bp3.PM4 = False
                 self.prediction_pm4bp3.BP3 = False
 
@@ -146,7 +151,6 @@ class AutoPM4BP3(AutoACMGHelper):
             logger.error("Failed to predict PM4 and BP3 criteria. Error: {}", e)
             self.comment_pm4bp3 = f"An error occured while predicting PM4 and BP3 criteria: {e}"
             self.prediction_pm4bp3 = None
-
         return self.prediction_pm4bp3, self.comment_pm4bp3
 
     def predict_pm4bp3(
@@ -169,20 +173,24 @@ class AutoPM4BP3(AutoACMGHelper):
                 if pred.BP3
                 else (AutoACMGPrediction.NotMet if pred.BP3 is False else AutoACMGPrediction.Failed)
             )
+            pm4_strength = pred.PM4_strength
+            bp3_strength = pred.BP3_strength
         else:
             pm4_pred = AutoACMGPrediction.Failed
             bp3_pred = AutoACMGPrediction.Failed
+            pm4_strength = AutoACMGStrength.PathogenicModerate
+            bp3_strength = AutoACMGStrength.BenignSupporting
         return (
             AutoACMGCriteria(
                 name="PM4",
                 prediction=pm4_pred,
-                strength=pred.PM4_strength if pred else AutoACMGStrength.PathogenicModerate,
+                strength=pm4_strength,
                 summary=comment,
             ),
             AutoACMGCriteria(
                 name="BP3",
                 prediction=bp3_pred,
-                strength=pred.BP3_strength if pred else AutoACMGStrength.BenignSupporting,
+                strength=bp3_strength,
                 summary=comment,
             ),
         )

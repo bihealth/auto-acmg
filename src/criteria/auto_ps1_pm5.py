@@ -42,13 +42,12 @@ class AutoPS1PM5(AutoACMGHelper):
             AnnonarsVariantResponse: Annonars response.
         """
         try:
-            logger.debug("Getting variant information for {}.", seqvar)
             return self.annonars_client.get_variant_info(seqvar)
         except AutoAcmgBaseException as e:
-            logger.error("Failed to get variant information. Error: {}", e)
             return None
 
-    def _parse_HGVSp(self, pHGVSp: str) -> Optional[AminoAcid]:
+    @staticmethod
+    def _parse_HGVSp(pHGVSp: str) -> Optional[AminoAcid]:
         """Parse the pHGVSp from VEP into its components.
 
         Args:
@@ -70,8 +69,9 @@ class AutoPS1PM5(AutoACMGHelper):
             logger.debug("Invalid pHGVSp: {}", pHGVSp)
             return None
 
-    def _is_pathogenic(self, variant_info: VariantResult) -> bool:
-        """Check if the variant is pathogenic.
+    @staticmethod
+    def _is_pathogenic(variant_info: VariantResult) -> bool:
+        """Check if the variant is pathogenic based on ClinVar data.
 
         Args:
             variant_info (dict): Annonars variant information
@@ -93,9 +93,10 @@ class AutoPS1PM5(AutoACMGHelper):
                     return True
         return False
 
-    def _is_missense(self, var_data: AutoACMGData) -> bool:
+    @staticmethod
+    def _is_missense(var_data: AutoACMGData) -> bool:
         """
-        Check if the variant is a missense variant.
+        Check if the variant's consequence is missense.
 
         Args:
             var_data (AutoACMGData): The variant information.
@@ -136,10 +137,8 @@ class AutoPS1PM5(AutoACMGHelper):
         Returns:
             Tuple[Optional[PS1PM5], str]: Prediction result and the comment with the explanation.
         """
-
         # Initialize the prediction result
         self.prediction_ps1pm5 = PS1PM5()
-        self.comment_ps1pm5 = ""
         try:
             if not self._is_missense(var_data):
                 raise AlgorithmError("Variant is not a missense variant. PS1/PM5 not applicable.")
@@ -148,13 +147,13 @@ class AutoPS1PM5(AutoACMGHelper):
             if not primary_aa_change:
                 raise AlgorithmError("No valid primary amino acid change for PS1/PM5 prediction.")
 
-            self.comment_ps1pm5 += f"Primary amino acid change: {primary_aa_change.name}. "
+            self.comment_ps1pm5 = f"Primary amino acid change: {primary_aa_change.name}. "
             for alt_base in DNA_BASES:
                 # Skip the same base insert
                 if alt_base == seqvar.insert:
                     continue
 
-                self.comment_ps1pm5 += f"Analysing alternative variant with base: {alt_base}."
+                self.comment_ps1pm5 += f"Analysing alternative variant with base: {alt_base}. "
                 alt_seqvar = SeqVar(
                     genome_release=seqvar.genome_release,
                     chrom=seqvar.chrom,
@@ -165,10 +164,6 @@ class AutoPS1PM5(AutoACMGHelper):
                 alt_info = self._get_var_info(alt_seqvar)
 
                 if alt_info and alt_info.result.dbnsfp and alt_info.result.dbnsfp.HGVSp_VEP:
-                    self.comment_ps1pm5 += (
-                        f"Extracting alternative amino acid change from pHGVS: "
-                        f"{alt_info.result.dbnsfp.HGVSp_VEP}."
-                    )
                     alt_aa_change = self._parse_HGVSp(alt_info.result.dbnsfp.HGVSp_VEP)
                     self.comment_ps1pm5 += (
                         "Alternative amino acid change: "
@@ -181,27 +176,22 @@ class AutoPS1PM5(AutoACMGHelper):
                                 "and amino acid change is the same as primary variant."
                                 "Result: PS1 is met."
                             )
-                            self.prediction_ps1pm5.PS1 = (
-                                True  # Same amino acid change and pathogenic
-                            )
+                            self.prediction_ps1pm5.PS1 = True
                         if primary_aa_change != alt_aa_change:
                             self.comment_ps1pm5 += (
                                 "Alternative variant is pathogenic "
                                 "and amino acid change is different from primary variant."
                                 "Result: PM5 is met."
                             )
-                            self.prediction_ps1pm5.PM5 = (
-                                True  # Different amino acid change at same residue, pathogenic
-                            )
+                            self.prediction_ps1pm5.PM5 = True
                 else:
                     self.comment_ps1pm5 += "Missing dbnsfp data."
-                    self.comment_ps1pm5 += f"Failed to get variant information for {alt_seqvar}."
+                    self.comment_ps1pm5 += f"Failed to get variant information for {alt_seqvar}. "
 
         except AutoAcmgBaseException as e:
             logger.error("Error occurred during PS1/PM5 prediction. Error: {}", e)
             self.comment_ps1pm5 = f"Error occurred during PS1/PM5 prediction. Error: {e}"
             self.prediction_ps1pm5 = None
-
         return self.prediction_ps1pm5, self.comment_ps1pm5
 
     def predict_ps1pm5(
@@ -219,20 +209,24 @@ class AutoPS1PM5(AutoACMGHelper):
                 if pred.PM5
                 else (AutoACMGPrediction.NotMet if pred.PM5 is False else AutoACMGPrediction.Failed)
             )
+            ps1_strength = pred.PS1_strength
+            pm5_strength = pred.PM5_strength
         else:
             ps1_pred = AutoACMGPrediction.Failed
             pm5_pred = AutoACMGPrediction.Failed
+            ps1_strength = AutoACMGStrength.PathogenicStrong
+            pm5_strength = AutoACMGStrength.PathogenicModerate
         return (
             AutoACMGCriteria(
                 name="PS1",
                 prediction=ps1_pred,
-                strength=pred.PS1_strength if pred else AutoACMGStrength.PathogenicStrong,
+                strength=ps1_strength,
                 summary=comment,
             ),
             AutoACMGCriteria(
                 name="PM5",
                 prediction=pm5_pred,
-                strength=pred.PM5_strength if pred else AutoACMGStrength.PathogenicModerate,
+                strength=pm5_strength,
                 summary=comment,
             ),
         )

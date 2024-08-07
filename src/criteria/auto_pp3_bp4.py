@@ -26,9 +26,10 @@ class AutoPP3BP4(AutoACMGHelper):
         #: Comment to store the prediction explanation.
         self.comment_pp3bp4: str = ""
 
-    def _splice_variant(self, var_data: AutoACMGData) -> bool:
+    @staticmethod
+    def _splice_variant(var_data: AutoACMGData) -> bool:
         """
-        Check if the variant is a splice variant.
+        Check if the variant's consequence is a splice related.
 
         Args:
             var_data (AutoACMGData): The variant information.
@@ -42,7 +43,8 @@ class AutoPP3BP4(AutoACMGHelper):
             return True
         return False
 
-    def _is_pathogenic_score(self, var_data: AutoACMGData) -> bool:
+    @staticmethod
+    def _is_pathogenic_score(var_data: AutoACMGData) -> bool:
         """
         Check if any of the pathogenic scores meet the threshold.
 
@@ -70,7 +72,8 @@ class AutoPP3BP4(AutoACMGHelper):
             return True
         return False
 
-    def _is_benign_score(self, var_data: AutoACMGData) -> bool:
+    @staticmethod
+    def _is_benign_score(var_data: AutoACMGData) -> bool:
         """
         Check if any of the benign scores meet the threshold.
 
@@ -98,7 +101,8 @@ class AutoPP3BP4(AutoACMGHelper):
             return True
         return False
 
-    def _is_pathogenic_splicing(self, var_data: AutoACMGData) -> bool:
+    @staticmethod
+    def _is_pathogenic_splicing(var_data: AutoACMGData) -> bool:
         """
         Check if the variant is pathogenic based on splicing scores.
 
@@ -123,7 +127,8 @@ class AutoPP3BP4(AutoACMGHelper):
                 return True
         return False
 
-    def _is_benign_splicing(self, var_data: AutoACMGData) -> bool:
+    @staticmethod
+    def _is_benign_splicing(var_data: AutoACMGData) -> bool:
         """
         Check if the variant is benign based on splicing scores.
 
@@ -160,19 +165,30 @@ class AutoPP3BP4(AutoACMGHelper):
         else:
             try:
                 if self._splice_variant(var_data):
-                    self.comment_pp3bp4 += "Variant is a splice variant."
+                    self.comment_pp3bp4 = "Variant is a splice variant."
                     self.prediction_pp3bp4.PP3 = self._is_pathogenic_splicing(var_data)
                     self.prediction_pp3bp4.BP4 = self._is_benign_splicing(var_data)
+                    self.comment_pp3bp4 += (
+                        f"Ada score: {var_data.scores.dbscsnv.ada}, "
+                        f"Ada threshold: {var_data.thresholds.ada}. "
+                        f"RF score: {var_data.scores.dbscsnv.rf}, "
+                        f"RF threshold: {var_data.thresholds.rf}. "
+                    )
                 else:
-                    self.comment_pp3bp4 += "Variant is not a splice variant."
+                    self.comment_pp3bp4 = "Variant is not a splice variant."
                     self.prediction_pp3bp4.PP3 = self._is_pathogenic_score(var_data)
                     self.prediction_pp3bp4.BP4 = self._is_benign_score(var_data)
+                    self.comment_pp3bp4 += (
+                        f"MetaRNN score: {var_data.scores.dbnsfp.metaRNN}, "
+                        f"MetaRNN threshold: {var_data.thresholds.metaRNN_pathogenic}. "
+                        f"BayesDel_noAF score: {var_data.scores.dbnsfp.bayesDel_noAF}, "
+                        f"BayesDel_noAF threshold: {var_data.thresholds.bayesDel_noAF_pathogenic}. "
+                    )
 
             except AutoAcmgBaseException as e:
                 logger.error("Failed to predict PP3 and BP4 criteria. Error: {}", e)
                 self.comment_pp3bp4 = f"An error occurred during prediction. Error: {e}"
                 self.prediction_pp3bp4 = None
-
         return self.prediction_pp3bp4, self.comment_pp3bp4
 
     def predict_pp3bp4(
@@ -191,20 +207,24 @@ class AutoPP3BP4(AutoACMGHelper):
                 if pred.BP4
                 else (AutoACMGPrediction.NotMet if pred.BP4 is False else AutoACMGPrediction.Failed)
             )
+            pp3_strength = pred.PP3_strength
+            bp4_strength = pred.BP4_strength
         else:
             pp3_pred = AutoACMGPrediction.Failed
             bp4_pred = AutoACMGPrediction.Failed
+            pp3_strength = AutoACMGStrength.PathogenicSupporting
+            bp4_strength = AutoACMGStrength.BenignSupporting
         return (
             AutoACMGCriteria(
                 name="PP3",
                 prediction=pp3_pred,
-                strength=pred.PP3_strength if pred else AutoACMGStrength.PathogenicSupporting,
+                strength=pp3_strength,
                 summary=comment,
             ),
             AutoACMGCriteria(
                 name="BP4",
                 prediction=bp4_pred,
-                strength=pred.BP4_strength if pred else AutoACMGStrength.BenignSupporting,
+                strength=bp4_strength,
                 summary=comment,
             ),
         )

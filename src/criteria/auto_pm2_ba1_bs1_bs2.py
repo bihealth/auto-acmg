@@ -19,6 +19,154 @@ from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.utils import AutoACMGHelper, SeqVarTranscriptsHelper
 
+#: Exception list for BA1 criteria.
+BA1_ESCEPTION_LIST = [
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr3",
+        pos=128598490,
+        delete="C",
+        insert="CTAAG",
+        user_repr="NM_014049.4:c.-44_-41dupTAAG",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr3",
+        pos=128879647,
+        delete="C",
+        insert="CTAAG",
+        user_repr="NM_014049.4:c.-44_-41dupTAAG",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr13",
+        pos=20763612,
+        delete="C",
+        insert="T",
+        user_repr="NM_004004.5:c.109G>A",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr13",
+        pos=20189473,
+        delete="C",
+        insert="T",
+        user_repr="NM_004004.5:c.109G>A",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr6",
+        pos=26091179,
+        delete="C",
+        insert="G",
+        user_repr="NM_000410.3:c.187C>G",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr6",
+        pos=26090951,
+        delete="C",
+        insert="G",
+        user_repr="NM_000410.3:c.187C>G",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr6",
+        pos=26093141,
+        delete="G",
+        insert="A",
+        user_repr="NM_000410.3:c.845G>A",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr6",
+        pos=26092913,
+        delete="G",
+        insert="A",
+        user_repr="NM_000410.3:c.845G>A",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr16",
+        pos=3299586,
+        delete="G",
+        insert="A",
+        user_repr="NM_000243.2:c.1105C>T",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr16",
+        pos=3249586,
+        delete="G",
+        insert="A",
+        user_repr="NM_000243.2:c.1105C>T",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr16",
+        pos=3299468,
+        delete="C",
+        insert="T",
+        user_repr="NM_000243.2:c.1223G>A",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr16",
+        pos=3249468,
+        delete="C",
+        insert="T",
+        user_repr="NM_000243.2:c.1223G>A",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr13",
+        pos=73409497,
+        delete="G",
+        insert="A",
+        user_repr="NM_006346.2:c.1214G>A",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr13",
+        pos=72835359,
+        delete="G",
+        insert="A",
+        user_repr="NM_006346.2:c.1214G>A",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr12",
+        pos=121175678,
+        delete="C",
+        insert="T",
+        user_repr="NM_000017.3:c.511C>T",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr12",
+        pos=120737875,
+        delete="C",
+        insert="T",
+        user_repr="NM_000017.3:c.511C>T",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr3",
+        pos=15686693,
+        delete="G",
+        insert="C",
+        user_repr="NM_000060.4:c.1330G>C",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr3",
+        pos=15645186,
+        delete="G",
+        insert="C",
+        user_repr="NM_000060.4:c.1330G>C",
+    ),
+]
+
 
 class AutoPM2BA1BS1BS2(AutoACMGHelper):
     """Predicts PM2, BA1, BS1, BS2 criteria for sequence variants."""
@@ -30,38 +178,37 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
         #: comment_pm2ba1bs1bs2 to store the prediction explanation.
         self.comment_pm2ba1bs1bs2: str = ""
 
-    def _get_control_af(self, gnomad_exomes: Optional[GnomadExomes]) -> Optional[AlleleCount]:
+    @staticmethod
+    def _get_control_af(gnomad_exomes: Optional[GnomadExomes]) -> Optional[AlleleCount]:
         """
         Get the allele frequency information for the control population.
 
         Args:
-            variant_data: The variant data.
+            gnoma_exomes: The gnomad exomes data.
 
         Returns:
             The allele frequency for the control population. None if no data found.
         """
         if not gnomad_exomes or not gnomad_exomes.alleleCounts:
             return None
-            # raise MissingDataError("No allele counts found in variant data")
         for af in gnomad_exomes.alleleCounts:
             if af.cohort == "controls":
                 return af
         return None
 
-    def _get_any_af(self, gnomad_exomes: Optional[GnomadExomes]) -> Optional[AlleleCount]:
+    @staticmethod
+    def _get_any_af(gnomad_exomes: Optional[GnomadExomes]) -> Optional[AlleleCount]:
         """
-        Get the allele frequency information for any population.
+        Get the highest allele frequency information for any population.
 
         Args:
-            variant_data: The variant data.
+            gnoma_exomes: The gnomad exomes data.
 
         Returns:
-            The allele frequency for any population. None if no data found.
+            The highest allele frequency for any population. None if no data found.
         """
         if not gnomad_exomes or not gnomad_exomes.alleleCounts:
-            self.comment_pm2ba1bs1bs2 += "Missing gnomad data."
             return None
-            # raise MissingDataError("No allele counts found in variant data")
         best_af = None
         for af in gnomad_exomes.alleleCounts:
             if not best_af:
@@ -91,23 +238,15 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
         """
         if seqvar.chrom.startswith("M"):
             if not gnomad_mtdna or not gnomad_mtdna.afHet:
-                self.comment_pm2ba1bs1bs2 += "No gnomad data found for mitochondrial variant.\n"
-                return None
-                # raise MissingDataError("No gnomad data found for mitochondrial variant.")
+                raise MissingDataError("No allele frequency found in mitochondrial gnomad data.")
             else:
-                self.comment_pm2ba1bs1bs2 += (
-                    "Mitochondrial variant with allele frequency: " f"{gnomad_mtdna.afHet}.\n"
-                )
                 return gnomad_mtdna.afHet
         else:
             controls_af = self._get_control_af(gnomad_exomes=gnomad_exomes)
             any_af = self._get_any_af(gnomad_exomes=gnomad_exomes)
             af = controls_af or any_af
             if not af or not af.afGrpmax:
-                self.comment_pm2ba1bs1bs2 += "No allele frequency data found."
-                return None
-                # raise MissingDataError("No allele frequency found in data.")
-            self.comment_pm2ba1bs1bs2 += f"Allele frequency: {af.afGrpmax}.\n"
+                raise MissingDataError("No allele frequency found in gnomad data.")
             return af.afGrpmax
 
     def _get_allele_cond(self, seqvar: SeqVar) -> AlleleCondition:
@@ -290,11 +429,12 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
                     return True
         return False
 
-    def _ba1_exception(self, seqvar: SeqVar) -> bool:
+    @staticmethod
+    def _ba1_exception(seqvar: SeqVar) -> bool:
         """
         Check the exception for BA1 criteria.
 
-        If the variant in exception list, return True.
+        If the variant in the exception list, return True.
 
         Args:
             seqvar: The sequence variant.
@@ -302,162 +442,14 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
         Returns:
             True if the variant is in exception list.
         """
-        exception_list = [
-            SeqVar(
-                genome_release=GenomeRelease.GRCh37,
-                chrom="chr3",
-                pos=128598490,
-                delete="C",
-                insert="CTAAG",
-                user_repr="NM_014049.4:c.-44_-41dupTAAG",
-            ),
-            SeqVar(
-                genome_release=GenomeRelease.GRCh38,
-                chrom="chr3",
-                pos=128879647,
-                delete="C",
-                insert="CTAAG",
-                user_repr="NM_014049.4:c.-44_-41dupTAAG",
-            ),
-            SeqVar(
-                genome_release=GenomeRelease.GRCh37,
-                chrom="chr13",
-                pos=20763612,
-                delete="C",
-                insert="T",
-                user_repr="NM_004004.5:c.109G>A",
-            ),
-            SeqVar(
-                genome_release=GenomeRelease.GRCh38,
-                chrom="chr13",
-                pos=20189473,
-                delete="C",
-                insert="T",
-                user_repr="NM_004004.5:c.109G>A",
-            ),
-            SeqVar(
-                genome_release=GenomeRelease.GRCh37,
-                chrom="chr6",
-                pos=26091179,
-                delete="C",
-                insert="G",
-                user_repr="NM_000410.3:c.187C>G",
-            ),
-            SeqVar(
-                genome_release=GenomeRelease.GRCh38,
-                chrom="chr6",
-                pos=26090951,
-                delete="C",
-                insert="G",
-                user_repr="NM_000410.3:c.187C>G",
-            ),
-            SeqVar(
-                genome_release=GenomeRelease.GRCh37,
-                chrom="chr6",
-                pos=26093141,
-                delete="G",
-                insert="A",
-                user_repr="NM_000410.3:c.845G>A",
-            ),
-            SeqVar(
-                genome_release=GenomeRelease.GRCh38,
-                chrom="chr6",
-                pos=26092913,
-                delete="G",
-                insert="A",
-                user_repr="NM_000410.3:c.845G>A",
-            ),
-            SeqVar(
-                genome_release=GenomeRelease.GRCh37,
-                chrom="chr16",
-                pos=3299586,
-                delete="G",
-                insert="A",
-                user_repr="NM_000243.2:c.1105C>T",
-            ),
-            SeqVar(
-                genome_release=GenomeRelease.GRCh38,
-                chrom="chr16",
-                pos=3249586,
-                delete="G",
-                insert="A",
-                user_repr="NM_000243.2:c.1105C>T",
-            ),
-            SeqVar(
-                genome_release=GenomeRelease.GRCh37,
-                chrom="chr16",
-                pos=3299468,
-                delete="C",
-                insert="T",
-                user_repr="NM_000243.2:c.1223G>A",
-            ),
-            SeqVar(
-                genome_release=GenomeRelease.GRCh38,
-                chrom="chr16",
-                pos=3249468,
-                delete="C",
-                insert="T",
-                user_repr="NM_000243.2:c.1223G>A",
-            ),
-            SeqVar(
-                genome_release=GenomeRelease.GRCh37,
-                chrom="chr13",
-                pos=73409497,
-                delete="G",
-                insert="A",
-                user_repr="NM_006346.2:c.1214G>A",
-            ),
-            SeqVar(
-                genome_release=GenomeRelease.GRCh38,
-                chrom="chr13",
-                pos=72835359,
-                delete="G",
-                insert="A",
-                user_repr="NM_006346.2:c.1214G>A",
-            ),
-            SeqVar(
-                genome_release=GenomeRelease.GRCh37,
-                chrom="chr12",
-                pos=121175678,
-                delete="C",
-                insert="T",
-                user_repr="NM_000017.3:c.511C>T",
-            ),
-            SeqVar(
-                genome_release=GenomeRelease.GRCh38,
-                chrom="chr12",
-                pos=120737875,
-                delete="C",
-                insert="T",
-                user_repr="NM_000017.3:c.511C>T",
-            ),
-            SeqVar(
-                genome_release=GenomeRelease.GRCh37,
-                chrom="chr3",
-                pos=15686693,
-                delete="G",
-                insert="C",
-                user_repr="NM_000060.4:c.1330G>C",
-            ),
-            SeqVar(
-                genome_release=GenomeRelease.GRCh38,
-                chrom="chr3",
-                pos=15645186,
-                delete="G",
-                insert="C",
-                user_repr="NM_000060.4:c.1330G>C",
-            ),
-        ]
-        if seqvar in exception_list:
-            self.comment_pm2ba1bs1bs2 += "The variant is in the exception list for BA1 criteria."
+        if seqvar in BA1_ESCEPTION_LIST:
             return True
         return False
 
     def verify_pm2ba1bs1bs2(
         self,
         seqvar: SeqVar,
-        gnomad_exones: Optional[GnomadExomes],
-        gnomad_mtdna: Optional[GnomadMtDna],
+        var_data: AutoACMGData,
     ) -> Tuple[Optional[PM2BA1BS1BS2], str]:
         """
         Predicts the PM2, BA1, BS1, BS2 criteria for the sequence variant.
@@ -478,28 +470,32 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
             BA1BS1BS2PM2: The prediction result.
         """
         self.prediction_pm2ba1bs1bs2 = PM2BA1BS1BS2()
-        self.comment_pm2ba1bs1bs2 = ""
         try:
-            self.comment_pm2ba1bs1bs2 += "Check allele frequency for the control population.\n"
-            af = self._get_af(seqvar, gnomad_mtdna, gnomad_exones)
+            af = self._get_af(seqvar, var_data.gnomad_mtdna, var_data.gnomad_exomes)
             if not af:
-                self.comment_pm2ba1bs1bs2 += "No allele frequency data found.\n"
-            elif af >= 0.05 and not self._ba1_exception(seqvar):
-                self.comment_pm2ba1bs1bs2 += "Allele frequency > 5%: BA1 is met."
+                self.comment_pm2ba1bs1bs2 = "No allele frequency data found. "
+            elif self._ba1_exception(seqvar):
+                self.comment_pm2ba1bs1bs2 = "The variant is in the exception list for BA1 criteria."
+                self.prediction_pm2ba1bs1bs2.BA1 = False
+                self.prediction_pm2ba1bs1bs2.BS1 = False
+            elif af >= var_data.thresholds.ba1_benign:
+                self.comment_pm2ba1bs1bs2 = "Allele frequency > 5%: BA1 is met. "
                 self.prediction_pm2ba1bs1bs2.BA1 = True
-            elif af >= 0.00015 and not self._ba1_exception(seqvar):
-                self.comment_pm2ba1bs1bs2 += "Allele frequency > 1%: BS1 is met."
+            elif af >= var_data.thresholds.bs1_benign:
+                self.comment_pm2ba1bs1bs2 = "Allele frequency > 1%: BS1 is met. "
                 self.prediction_pm2ba1bs1bs2.BS1 = True
-            elif af <= 0.0001:
-                self.comment_pm2ba1bs1bs2 += "Allele frequency <= 1%: PM2 is met."
+            elif af <= var_data.thresholds.pm2_pathogenic:
+                self.comment_pm2ba1bs1bs2 = "Allele frequency <= 1%: PM2 is met. "
                 self.prediction_pm2ba1bs1bs2.PM2 = True
 
-            self.comment_pm2ba1bs1bs2 += "Check zygosity.\n"
             if (
                 not self.prediction_pm2ba1bs1bs2.BA1
                 and af
-                and self._check_zyg(seqvar, gnomad_exones)
+                and self._check_zyg(seqvar, var_data.gnomad_exomes)
             ):
+                self.comment_pm2ba1bs1bs2 += (
+                    "The variant is in a recessive, dominant, or X-linked disorder: BS2 is met."
+                )
                 self.prediction_pm2ba1bs1bs2.BS2 = True
 
         except AutoAcmgBaseException as e:
@@ -524,9 +520,7 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
         Returns:
             The prediction result.
         """
-        pred, comment = self.verify_pm2ba1bs1bs2(
-            seqvar, var_data.gnomad_exomes, var_data.gnomad_mtdna
-        )
+        pred, comment = self.verify_pm2ba1bs1bs2(seqvar, var_data)
         if pred:
             pm2_pred = (
                 AutoACMGPrediction.Met
@@ -548,34 +542,42 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
                 if pred.BS2
                 else (AutoACMGPrediction.NotMet if pred.BS2 is False else AutoACMGPrediction.Failed)
             )
+            pm2_strength = pred.PM2_strength
+            ba1_strength = pred.BA1_strength
+            bs1_strength = pred.BS1_strength
+            bs2_strength = pred.BS2_strength
         else:
             pm2_pred = AutoACMGPrediction.Failed
             ba1_pred = AutoACMGPrediction.Failed
             bs1_pred = AutoACMGPrediction.Failed
             bs2_pred = AutoACMGPrediction.Failed
+            pm2_strength = AutoACMGStrength.PathogenicModerate
+            ba1_strength = AutoACMGStrength.BenignStandAlone
+            bs1_strength = AutoACMGStrength.BenignStrong
+            bs2_strength = AutoACMGStrength.BenignStrong
         return (
             AutoACMGCriteria(
                 name="PM2",
                 prediction=pm2_pred,
-                strength=pred.PM2_strength if pred else AutoACMGStrength.PathogenicModerate,
+                strength=pm2_strength,
                 summary=comment,
             ),
             AutoACMGCriteria(
                 name="BA1",
                 prediction=ba1_pred,
-                strength=pred.BA1_strength if pred else AutoACMGStrength.BenignStandAlone,
+                strength=ba1_strength,
                 summary=comment,
             ),
             AutoACMGCriteria(
                 name="BS1",
                 prediction=bs1_pred,
-                strength=pred.BS1_strength if pred else AutoACMGStrength.BenignStrong,
+                strength=bs1_strength,
                 summary=comment,
             ),
             AutoACMGCriteria(
                 name="BS2",
                 prediction=bs2_pred,
-                strength=pred.BS2_strength if pred else AutoACMGStrength.BenignStrong,
+                strength=bs2_strength,
                 summary=comment,
             ),
         )
