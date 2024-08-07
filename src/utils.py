@@ -2,7 +2,7 @@
 
 from typing import Dict, List, Optional, Tuple
 
-from biocommons.seqrepo import SeqRepo  # type: ignore
+from biocommons.seqrepo import SeqRepo
 from loguru import logger
 
 from lib.maxentpy import maxent
