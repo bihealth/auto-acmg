@@ -8,8 +8,15 @@ from loguru import logger
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config
 from src.defs.annonars_variant import AnnonarsVariantResponse, VariantResult
-from src.defs.auto_acmg import PS1PM5, AminoAcid, AutoACMGCriteria, AutoACMGData, AutoACMGPrediction
-from src.defs.auto_pvs1 import SeqVarConsequence
+from src.defs.auto_acmg import (
+    PS1PM5,
+    AminoAcid,
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+)
+from src.defs.auto_pvs1 import SeqVarPVS1Consequence
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
@@ -222,12 +229,14 @@ class AutoPS1PM5(AutoACMGHelper):
         return (
             AutoACMGCriteria(
                 name="PS1",
-                summary=comment,
                 prediction=ps1_pred,
+                strength=pred.PS1_strength if pred else AutoACMGStrength.PathogenicStrong,
+                summary=comment,
             ),
             AutoACMGCriteria(
                 name="PM5",
-                summary=comment,
                 prediction=pm5_pred,
+                strength=pred.PM5_strength if pred else AutoACMGStrength.PathogenicModerate,
+                summary=comment,
             ),
         )

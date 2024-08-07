@@ -20,6 +20,7 @@ from src.defs.auto_acmg import (
     AutoACMGCriteria,
     AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGStrength,
     ClingenDosageMap,
 )
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
@@ -564,22 +565,26 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
         return (
             AutoACMGCriteria(
                 name="PM2",
-                summary=comment,
                 prediction=pm2_pred,
+                strength=pred.PM2_strength if pred else AutoACMGStrength.PathogenicModerate,
+                summary=comment,
             ),
             AutoACMGCriteria(
                 name="BA1",
-                summary=comment,
                 prediction=ba1_pred,
+                strength=pred.BA1_strength if pred else AutoACMGStrength.BenignStandAlone,
+                summary=comment,
             ),
             AutoACMGCriteria(
                 name="BS1",
-                summary=comment,
                 prediction=bs1_pred,
+                strength=pred.BS1_strength if pred else AutoACMGStrength.BenignStrong,
+                summary=comment,
             ),
             AutoACMGCriteria(
                 name="BS2",
-                summary=comment,
                 prediction=bs2_pred,
+                strength=pred.BS2_strength if pred else AutoACMGStrength.BenignStrong,
+                summary=comment,
             ),
         )

@@ -9,7 +9,13 @@ from loguru import logger
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config, settings
 from src.defs.annonars_variant import VariantResult
-from src.defs.auto_acmg import PM1, AutoACMGCriteria, AutoACMGData, AutoACMGPrediction
+from src.defs.auto_acmg import (
+    PM1,
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+)
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, InvalidAPIResposeError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
@@ -160,5 +166,6 @@ class AutoPM1(AutoACMGHelper):
         return AutoACMGCriteria(
             name="PM1",
             prediction=pm1_pred,
+            strength=pred.PM1_strength if pred else AutoACMGStrength.PathogenicModerate,
             summary=comment,
         )

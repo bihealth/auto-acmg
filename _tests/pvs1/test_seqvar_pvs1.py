@@ -9,7 +9,7 @@ from src.defs.auto_pvs1 import (
     GenomicStrand,
     PVS1Prediction,
     PVS1PredictionSeqVarPath,
-    SeqVarConsequence,
+    SeqVarPVS1Consequence,
 )
 from src.defs.exceptions import AlgorithmError, MissingDataError
 from src.defs.genome_builds import GenomeRelease
@@ -174,7 +174,7 @@ def test_find_aff_exon_pos(var_pos, exons, expected_result):
     "value,expected_result",
     [
         (
-            SeqVarConsequence.NonsenseFrameshift,
+            SeqVarPVS1Consequence.NonsenseFrameshift,
             [
                 "3_prime_utr_variant",
                 "3_prime_UTR_variant",
@@ -183,7 +183,7 @@ def test_find_aff_exon_pos(var_pos, exons, expected_result):
             ],
         ),
         (
-            SeqVarConsequence.InitiationCodon,
+            SeqVarPVS1Consequence.InitiationCodon,
             [
                 "upstream_gene_variant",
                 "downstream_gene_variant",
@@ -193,7 +193,7 @@ def test_find_aff_exon_pos(var_pos, exons, expected_result):
             ],
         ),
         (
-            SeqVarConsequence.SpliceSites,
+            SeqVarPVS1Consequence.SpliceSites,
             [
                 "splice_region_variant",
                 "splice_donor_variant",
@@ -203,7 +203,7 @@ def test_find_aff_exon_pos(var_pos, exons, expected_result):
                 "splice_acceptor_variant",
             ],
         ),
-        (SeqVarConsequence.Missense, ["missense_variant"]),
+        (SeqVarPVS1Consequence.Missense, ["missense_variant"]),
     ],
 )
 def test_get_conseq(value, expected_result):
@@ -727,7 +727,7 @@ def test_init(seqvar):
     assert pvs1.seqvar == seqvar
     assert pvs1._seqvar_transcript is None
     assert pvs1._gene_transcript is None
-    assert pvs1._consequence == SeqVarConsequence.NotSet
+    assert pvs1._consequence == SeqVarPVS1Consequence.NotSet
     assert pvs1.HGVS == ""
     assert pvs1.HGNC_id == ""
     assert len(pvs1.transcript_tags) == 0

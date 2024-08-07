@@ -4,14 +4,20 @@ from typing import Optional, Tuple
 
 from loguru import logger
 
-from src.defs.auto_acmg import BP7, AutoACMGCriteria, AutoACMGData, AutoACMGPrediction
+from src.defs.auto_acmg import (
+    BP7,
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+)
 from src.defs.exceptions import AutoAcmgBaseException, MissingDataError
 from src.defs.seqvar import SeqVar
 from src.utils import AutoACMGHelper
 
 
 class AutoBP7(AutoACMGHelper):
-    """Class for automatic BP7 prediction."""
+    """Class for BP7 prediction."""
 
     def __init__(self):
         super().__init__()
@@ -119,5 +125,6 @@ class AutoBP7(AutoACMGHelper):
         return AutoACMGCriteria(
             name="BP7",
             prediction=pred_bp7,
+            strength=pred.BP7_strength if pred else AutoACMGStrength.BenignSupporting,
             summary=comment,
         )

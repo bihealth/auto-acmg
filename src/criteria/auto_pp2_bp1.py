@@ -8,8 +8,14 @@ from src.api.annonars import AnnonarsClient
 from src.core.config import Config
 from src.defs.annonars_range import ClinvarItem
 from src.defs.annonars_variant import VariantResult
-from src.defs.auto_acmg import PP2BP1, AutoACMGCriteria, AutoACMGData, AutoACMGPrediction
-from src.defs.auto_pvs1 import SeqVarConsequence, SeqvarConsequenceMapping
+from src.defs.auto_acmg import (
+    PP2BP1,
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+)
+from src.defs.auto_pvs1 import SeqvarConsequenceMapping, SeqVarPVS1Consequence
 from src.defs.exceptions import (
     AlgorithmError,
     AutoAcmgBaseException,
@@ -197,11 +203,13 @@ class AutoPP2BP1(AutoACMGHelper):
             AutoACMGCriteria(
                 name="PP2",
                 prediction=pp2_pred,
+                strength=pred.PP2_strength if pred else AutoACMGStrength.PathogenicSupporting,
                 summary=comment,
             ),
             AutoACMGCriteria(
                 name="BP1",
                 prediction=bp1_pred,
+                strength=pred.BP1_strength if pred else AutoACMGStrength.BenignSupporting,
                 summary=comment,
             ),
         )

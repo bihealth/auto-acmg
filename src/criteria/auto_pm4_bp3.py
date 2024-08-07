@@ -9,7 +9,13 @@ from loguru import logger
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config, settings
 from src.defs.annonars_variant import AnnonarsVariantResponse, VariantResult
-from src.defs.auto_acmg import PM4BP3, AutoACMGCriteria, AutoACMGData, AutoACMGPrediction
+from src.defs.auto_acmg import (
+    PM4BP3,
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+)
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
@@ -172,11 +178,13 @@ class AutoPM4BP3(AutoACMGHelper):
             AutoACMGCriteria(
                 name="PM4",
                 prediction=pm4_pred,
+                strength=pred.PM4_strength if pred else AutoACMGStrength.PathogenicModerate,
                 summary=comment,
             ),
             AutoACMGCriteria(
                 name="BP3",
                 prediction=bp3_pred,
+                strength=pred.BP3_strength if pred else AutoACMGStrength.BenignSupporting,
                 summary=comment,
             ),
         )

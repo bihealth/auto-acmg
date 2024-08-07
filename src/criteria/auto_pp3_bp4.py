@@ -4,7 +4,13 @@ from typing import Optional, Tuple
 
 from loguru import logger
 
-from src.defs.auto_acmg import PP3BP4, AutoACMGCriteria, AutoACMGData, AutoACMGPrediction
+from src.defs.auto_acmg import (
+    PP3BP4,
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+)
 from src.defs.exceptions import AutoAcmgBaseException, MissingDataError
 from src.defs.seqvar import SeqVar
 from src.utils import AutoACMGHelper
@@ -192,11 +198,13 @@ class AutoPP3BP4(AutoACMGHelper):
             AutoACMGCriteria(
                 name="PP3",
                 prediction=pp3_pred,
+                strength=pred.PP3_strength if pred else AutoACMGStrength.PathogenicSupporting,
                 summary=comment,
             ),
             AutoACMGCriteria(
                 name="BP4",
                 prediction=bp4_pred,
+                strength=pred.BP4_strength if pred else AutoACMGStrength.BenignSupporting,
                 summary=comment,
             ),
         )

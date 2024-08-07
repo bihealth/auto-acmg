@@ -4,7 +4,7 @@ import pytest
 
 from src.api.mehari import MehariClient
 from src.defs.auto_acmg import SpliceType
-from src.defs.auto_pvs1 import GenomicStrand, SeqVarConsequence
+from src.defs.auto_pvs1 import GenomicStrand, SeqVarPVS1Consequence
 from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import GeneTranscripts, TranscriptsSeqVar
 from src.defs.seqvar import SeqVar
@@ -78,7 +78,7 @@ def test_get_ts_info_success(ts_helper):
     ts_helper.gene_transcript = GeneTranscripts.model_validate(
         get_json_object("mehari/HAL_gene.json")
     ).transcripts
-    ts_helper.consequence = SeqVarConsequence.InitiationCodon
+    ts_helper.consequence = SeqVarPVS1Consequence.InitiationCodon
 
     seqvar_transcript, gene_transcript, seqvar_ts_info, gene_ts_info, consequence = (
         ts_helper.get_ts_info()
@@ -88,7 +88,7 @@ def test_get_ts_info_success(ts_helper):
     assert gene_transcript is not None
     assert seqvar_ts_info is not None
     assert gene_ts_info is not None
-    assert consequence == SeqVarConsequence.InitiationCodon
+    assert consequence == SeqVarPVS1Consequence.InitiationCodon
 
 
 def test_get_ts_info_failure(ts_helper):
@@ -101,7 +101,7 @@ def test_get_ts_info_failure(ts_helper):
     assert gene_transcript is None
     assert seqvar_ts_info == []
     assert gene_ts_info == []
-    assert consequence == SeqVarConsequence.NotSet
+    assert consequence == SeqVarPVS1Consequence.NotSet
 
 
 @patch.object(MehariClient, "get_seqvar_transcripts")
@@ -161,14 +161,14 @@ def test_initialize_no_seqvar(mock_get_gene_transcripts, mock_get_seqvar_transcr
 @pytest.mark.parametrize(
     "consequence_input, expected_consequence",
     [
-        (["splice_region_variant"], SeqVarConsequence.SpliceSites),
-        (["splice_donor_variant"], SeqVarConsequence.SpliceSites),
-        (["frameshift_variant"], SeqVarConsequence.NonsenseFrameshift),
-        (["initiator_codon_variant"], SeqVarConsequence.InitiationCodon),
-        (["unknown_consequence"], SeqVarConsequence.NotSet),
-        (["regulatory_region_amplification"], SeqVarConsequence.NotSet),
-        ([""], SeqVarConsequence.NotSet),
-        ([], SeqVarConsequence.NotSet),
+        (["splice_region_variant"], SeqVarPVS1Consequence.SpliceSites),
+        (["splice_donor_variant"], SeqVarPVS1Consequence.SpliceSites),
+        (["frameshift_variant"], SeqVarPVS1Consequence.NonsenseFrameshift),
+        (["initiator_codon_variant"], SeqVarPVS1Consequence.InitiationCodon),
+        (["unknown_consequence"], SeqVarPVS1Consequence.NotSet),
+        (["regulatory_region_amplification"], SeqVarPVS1Consequence.NotSet),
+        ([""], SeqVarPVS1Consequence.NotSet),
+        ([], SeqVarPVS1Consequence.NotSet),
     ],
 )
 def test_get_consequence_various_cases(consequence_input, expected_consequence, seqvar_transcripts):
@@ -182,7 +182,7 @@ def test_get_consequence_various_cases(consequence_input, expected_consequence, 
 def test_get_consequence_none_input():
     """Test get_consequence method with None input."""
     consequence = SeqVarTranscriptsHelper._get_consequence(None)
-    assert consequence == SeqVarConsequence.NotSet
+    assert consequence == SeqVarPVS1Consequence.NotSet
 
 
 # TODO: Add more use cases for the choose_transcript method

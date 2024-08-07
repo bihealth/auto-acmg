@@ -7,15 +7,21 @@ from loguru import logger
 
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, SpliceType
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    SpliceType,
+)
 from src.defs.auto_pvs1 import (
     CdsInfo,
     GenomicStrand,
     PVS1Prediction,
     PVS1PredictionPathMapping,
     PVS1PredictionSeqVarPath,
-    SeqVarConsequence,
     SeqvarConsequenceMapping,
+    SeqVarPVS1Consequence,
 )
 from src.defs.exceptions import (
     AlgorithmError,
@@ -135,7 +141,7 @@ class SeqVarPVS1Helper(AutoACMGHelper):
         logger.debug("Affected exon not found. Variant position: {}. Exons: {}", var_pos, exons)
         raise AlgorithmError("Affected exon not found.")
 
-    def _get_conseq(self, val: SeqVarConsequence) -> List[str]:
+    def _get_conseq(self, val: SeqVarPVS1Consequence) -> List[str]:
         """
         Get the VEP consequence of the sequence variant by value.
 
@@ -183,7 +189,9 @@ class SeqVarPVS1Helper(AutoACMGHelper):
                 if not variant.vep:
                     continue
                 for vep in variant.vep:
-                    if vep.consequence in self._get_conseq(SeqVarConsequence.NonsenseFrameshift):
+                    if vep.consequence in self._get_conseq(
+                        SeqVarPVS1Consequence.NonsenseFrameshift
+                    ):
                         lof_variants += 1
                         if not variant.alleleCounts:
                             continue
@@ -721,7 +729,7 @@ class AutoPVS1(SeqVarPVS1Helper):
         self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
         self.prediction_path: PVS1PredictionSeqVarPath = PVS1PredictionSeqVarPath.NotSet
 
-    def _convert_consequence(self, var_data: AutoACMGData) -> SeqVarConsequence:
+    def _convert_consequence(self, var_data: AutoACMGData) -> SeqVarPVS1Consequence:
         """
         Convert the VEP consequence of the sequence variant to the internal representation.
 
@@ -736,7 +744,7 @@ class AutoPVS1(SeqVarPVS1Helper):
                 return SeqvarConsequenceMapping[conseq]
         if var_data.consequence.cadd in SeqvarConsequenceMapping:
             return SeqvarConsequenceMapping[var_data.consequence.cadd]
-        return SeqVarConsequence.NotSet
+        return SeqVarPVS1Consequence.NotSet
 
     def verify_pvs1(
         self, seqvar: SeqVar, var_data: AutoACMGData
@@ -751,7 +759,7 @@ class AutoPVS1(SeqVarPVS1Helper):
                 and the comment.
         """
         cons = self._convert_consequence(var_data)
-        if cons == SeqVarConsequence.NonsenseFrameshift:
+        if cons == SeqVarPVS1Consequence.NonsenseFrameshift:
             self.comment_pvs1 = "Analysing as nonsense or frameshift variant. =>\n"
             if var_data.hgnc_id == "HGNC:9588":  # Follow guidelines for PTEN
                 if var_data.prot_pos < 374:
@@ -795,7 +803,7 @@ class AutoPVS1(SeqVarPVS1Helper):
                             self.prediction = PVS1Prediction.PVS1_Moderate
                             self.prediction_path = PVS1PredictionSeqVarPath.NF6
 
-        elif cons == SeqVarConsequence.SpliceSites:
+        elif cons == SeqVarPVS1Consequence.SpliceSites:
             self.comment_pvs1 = "Analysing as splice site variant. =>\n"
             if self.exon_skip_or_cryptic_ss_disrupt(
                 seqvar, var_data.exons, var_data.consequence.mehari, var_data.strand
@@ -854,7 +862,7 @@ class AutoPVS1(SeqVarPVS1Helper):
                             self.prediction = PVS1Prediction.PVS1_Moderate
                             self.prediction_path = PVS1PredictionSeqVarPath.SS9
 
-        elif cons == SeqVarConsequence.InitiationCodon:
+        elif cons == SeqVarPVS1Consequence.InitiationCodon:
             self.comment_pvs1 = "Analysing as initiation codon variant. =>\n"
             if self.alt_start_cdn(var_data.cds_info, var_data.transcript_id):
                 self.prediction = PVS1Prediction.NotPVS1
@@ -898,10 +906,15 @@ class AutoPVS1(SeqVarPVS1Helper):
                 and the comment.
         """
         pred, path, comment = self.verify_pvs1(seqvar, var_data)
+        evidence_strength_mapping: Dict[PVS1Prediction, AutoACMGStrength] = {
+            PVS1Prediction.PVS1: AutoACMGStrength.PathogenicVeryStrong,
+            PVS1Prediction.PVS1_Strong: AutoACMGStrength.PathogenicStrong,
+            PVS1Prediction.PVS1_Moderate: AutoACMGStrength.PathogenicModerate,
+            PVS1Prediction.PVS1_Supporting: AutoACMGStrength.PathogenicSupporting,
+            PVS1Prediction.NotPVS1: AutoACMGStrength.PathogenicVeryStrong,
+        }
         return AutoACMGCriteria(
             name="PVS1",
-            summary=comment,
-            description=f"Evidence strength: {pred.name}. Prediction path: {PVS1PredictionPathMapping[path]}",
             prediction=(
                 AutoACMGPrediction.Met
                 if pred
@@ -913,4 +926,7 @@ class AutoPVS1(SeqVarPVS1Helper):
                 ]
                 else AutoACMGPrediction.NotMet
             ),
+            strength=evidence_strength_mapping[pred],
+            summary=comment,
+            description=f"Prediction path: {PVS1PredictionPathMapping[path]}",
         )
