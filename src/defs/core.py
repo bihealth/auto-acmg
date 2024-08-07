@@ -27,5 +27,6 @@ class AutoAcmgBaseEnum(Enum, metaclass=AutoAcmgBaseEnumMeta):
 class AutoAcmgBaseModel(BaseModel):
     """Base model for ACMG criteria."""
 
-    class Config:
-        use_enum_values = True
+    # class Config:
+    #     use_enum_values = True
+    #     arbitrary_types_allowed = True

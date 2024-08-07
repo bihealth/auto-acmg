@@ -46,7 +46,15 @@ class SeqVar(BaseModel):
     insert: str
     user_repr: Optional[str] = None
 
-    def __init__(self, genome_release, chrom, pos, delete, insert, user_repr=None):
+    def __init__(
+        self,
+        genome_release: GenomeRelease,
+        chrom: str,
+        pos: int,
+        delete: str,
+        insert: str,
+        user_repr: Optional[str] = None,
+    ):
         chrom = chrom.lower().replace("chr", "").replace("m", "mt").replace("mtt", "mt").upper()
         delete = delete.upper()
         insert = insert.upper()
