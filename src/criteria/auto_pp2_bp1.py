@@ -4,10 +4,6 @@ from typing import Optional, Tuple
 
 from loguru import logger
 
-from src.api.annonars import AnnonarsClient
-from src.core.config import Config
-from src.defs.annonars_range import ClinvarItem
-from src.defs.annonars_variant import VariantResult
 from src.defs.auto_acmg import (
     PP2BP1,
     AutoACMGCriteria,
@@ -15,17 +11,9 @@ from src.defs.auto_acmg import (
     AutoACMGPrediction,
     AutoACMGStrength,
 )
-from src.defs.auto_pvs1 import SeqvarConsequenceMapping, SeqVarPVS1Consequence
-from src.defs.exceptions import (
-    AlgorithmError,
-    AutoAcmgBaseException,
-    InvalidAPIResposeError,
-    MissingDataError,
-)
-from src.defs.genome_builds import GenomeRelease
-from src.defs.mehari import TranscriptGene, TranscriptSeqvar
+from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, InvalidAPIResposeError
 from src.defs.seqvar import SeqVar
-from src.utils import AutoACMGHelper, SeqVarTranscriptsHelper
+from src.utils import AutoACMGHelper
 
 
 class AutoPP2BP1(AutoACMGHelper):

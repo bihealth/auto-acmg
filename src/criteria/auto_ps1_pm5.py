@@ -5,8 +5,6 @@ from typing import Optional, Tuple
 
 from loguru import logger
 
-from src.api.annonars import AnnonarsClient
-from src.core.config import Config
 from src.defs.annonars_variant import AnnonarsVariantResponse, VariantResult
 from src.defs.auto_acmg import (
     PS1PM5,
@@ -16,11 +14,9 @@ from src.defs.auto_acmg import (
     AutoACMGPrediction,
     AutoACMGStrength,
 )
-from src.defs.auto_pvs1 import SeqVarPVS1Consequence
-from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
-from src.defs.genome_builds import GenomeRelease
+from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException
 from src.defs.seqvar import SeqVar
-from src.utils import AutoACMGHelper, SeqVarTranscriptsHelper
+from src.utils import AutoACMGHelper
 
 #: DNA bases
 DNA_BASES = ["A", "C", "G", "T"]

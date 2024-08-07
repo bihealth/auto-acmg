@@ -6,9 +6,7 @@ from typing import Optional, Tuple
 import tabix  # type: ignore
 from loguru import logger
 
-from src.api.annonars import AnnonarsClient
-from src.core.config import Config, settings
-from src.defs.annonars_variant import AnnonarsVariantResponse, VariantResult
+from src.core.config import settings
 from src.defs.auto_acmg import (
     PM4BP3,
     AutoACMGCriteria,
@@ -16,7 +14,7 @@ from src.defs.auto_acmg import (
     AutoACMGPrediction,
     AutoACMGStrength,
 )
-from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
+from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.utils import AutoACMGHelper

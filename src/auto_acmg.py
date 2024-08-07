@@ -15,19 +15,12 @@ from src.criteria.auto_pp3_bp4 import AutoPP3BP4
 from src.criteria.auto_ps1_pm5 import AutoPS1PM5
 from src.criteria.auto_pvs1 import AutoPVS1
 from src.defs.annonars_variant import VariantResult
-from src.defs.auto_acmg import ACMGPrediction, AutoACMGPrediction, AutoACMGResult
-from src.defs.auto_pvs1 import (
-    CdsInfo,
-    GenomicStrand,
-    PVS1Prediction,
-    PVS1PredictionPathMapping,
-    PVS1PredictionStrucVarPath,
-)
+from src.defs.auto_acmg import AutoACMGResult, CdsInfo, GenomicStrand
+from src.defs.auto_pvs1 import PVS1Prediction
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, ParseError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import ProteinPos, TxPos
 from src.defs.seqvar import SeqVar, SeqVarResolver
-from src.defs.strucvar import StrucVar, StrucVarResolver
 from src.utils import SeqVarTranscriptsHelper
 
 #: Pathogenic PVS1 predictions of sequence variants.

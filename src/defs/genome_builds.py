@@ -6,7 +6,6 @@ from src.defs.core import AutoAcmgBaseEnum
 from src.defs.exceptions import MappingError
 
 
-#: Enumeration for genome release
 class GenomeRelease(AutoAcmgBaseEnum):
     """Enumeration for allowed genome release values."""
 

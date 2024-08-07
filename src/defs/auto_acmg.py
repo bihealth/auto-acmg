@@ -4,14 +4,15 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel, ConfigDict
 
 from src.defs.annonars_variant import GnomadExomes, GnomadMtDna
-from src.defs.auto_pvs1 import CdsInfo, GenomicStrand
 from src.defs.core import AutoAcmgBaseEnum
-from src.defs.mehari import Exon
+from src.defs.mehari import Exon, TranscriptGene, TranscriptSeqvar
 from src.defs.seqvar import SeqVar
+
+# ============ General ACMG Definitions ============
 
 
 class SpliceType(AutoAcmgBaseEnum):
-    """Splice type enumeration."""
+    """Splicing type enumeration."""
 
     Donor = "donor"
     Acceptor = "acceptor"
@@ -19,14 +20,35 @@ class SpliceType(AutoAcmgBaseEnum):
     Unknown = "unknown"
 
 
+class GenomicStrand(AutoAcmgBaseEnum):
+    """Genomic strand enumeration."""
+
+    Plus = auto()
+    Minus = auto()
+
+    @staticmethod
+    def from_string(value: str):
+        """Converts string to enum member if possible, otherwise returns None."""
+        strand_mapping = {
+            "STRAND_PLUS": "Plus",
+            "STRAND_MINUS": "Minus",
+        }
+        value_mapped = strand_mapping.get(value, value)
+        for member in GenomicStrand:
+            if member.name == value_mapped:
+                return member
+        return None
+
+
 class AlleleCondition(AutoAcmgBaseEnum):
-    """Allele condition enumeration."""
+    """Allele condition enumeration. Used for BS2 criteria."""
 
     Dominant = "dominant"
     Recessive = "recessive"
     Unknown = "unknown"
 
 
+#: Mapping of Clingen Dosage Map to Allele Condition
 ClingenDosageMap: dict[str, AlleleCondition] = {
     "CLINGEN_DOSAGE_SCORE_UNKNOWN": AlleleCondition.Unknown,
     "CLINGEN_DOSAGE_SCORE_SUFFICIENT_EVIDENCE_AVAILABLE": AlleleCondition.Dominant,
@@ -39,7 +61,7 @@ ClingenDosageMap: dict[str, AlleleCondition] = {
 
 
 class AminoAcid(AutoAcmgBaseEnum):
-    """Amino acid enumeration."""
+    """Amino acids enumeration."""
 
     Ala = "A"
     Cys = "C"
@@ -64,66 +86,7 @@ class AminoAcid(AutoAcmgBaseEnum):
     Stop = "*"
 
 
-class MissenseScore(BaseModel):
-    """Missense score."""
-
-    name: str
-    benign_threshold: float = 0.0
-    pathogenic_threshold: float = 0.0
-
-
-# MissenseScores: List[MissenseScore] = [
-#     MissenseScore(name="BayesDel_noAF_score", benign_threshold=-0.476, pathogenic_threshold=0.521),
-#     MissenseScore(name="REVEL_score", benign_threshold=0.133, pathogenic_threshold=0.946),
-#     MissenseScore(name="CADD_raw", benign_threshold=16.1, pathogenic_threshold=33),
-#     MissenseScore(name="PrimateAI_score", benign_threshold=0.362, pathogenic_threshold=0.895),
-#     # MissenseScore(name="FATHMM", benign_threshold=4.69, pathogenic_threshold=-5.04),  # is <=
-#     # MissenseScore(name="MutPred2", benign_threshold=0.197, pathogenic_threshold=0.829),  # We don't have the right score for this
-#     MissenseScore(name="Polyphen2_HVAR_score", benign_threshold=0.001, pathogenic_threshold=1),
-#     # MissenseScore(name="SIFT_score", benign_threshold=0.327, pathogenic_threshold=0.001),   # is <=
-#     # MissenseScore(name="VEST4_score", benign_threshold=0.302, pathogenic_threshold=0.861),
-#     MissenseScore(
-#         name="phyloP100way_vertebrate", benign_threshold=-1.04, pathogenic_threshold=9.88
-#     ),  # Not sure about 100/470/17 way
-# ]
-
-MissenseScores: List[MissenseScore] = [
-    MissenseScore(name="MetaRNN_score", benign_threshold=0.267, pathogenic_threshold=0.841),
-    MissenseScore(name="BayesDel_noAF_score", benign_threshold=-0.476, pathogenic_threshold=0.521),
-]
-
-
-class ACMGPrediction(AutoAcmgBaseEnum):
-    """ACMG prediction enumeration."""
-
-    NotSet = auto()
-    Met = auto()
-    Unmet = auto()
-
-
-class ACMGCriteria(BaseModel):
-
-    prediction: ACMGPrediction = ACMGPrediction.NotSet
-    comment: str = ""
-
-
-class ACMGResult(BaseModel):
-    """ACMG criteria prediction. Note: without PVS1."""
-
-    PS1: ACMGCriteria = ACMGCriteria()
-    PM1: ACMGCriteria = ACMGCriteria()
-    PM2: ACMGCriteria = ACMGCriteria()
-    PM4: ACMGCriteria = ACMGCriteria()
-    PM5: ACMGCriteria = ACMGCriteria()
-    PP2: ACMGCriteria = ACMGCriteria()
-    PP3: ACMGCriteria = ACMGCriteria()
-    BA1: ACMGCriteria = ACMGCriteria()
-    BS1: ACMGCriteria = ACMGCriteria()
-    BS2: ACMGCriteria = ACMGCriteria()
-    BP1: ACMGCriteria = ACMGCriteria()
-    BP3: ACMGCriteria = ACMGCriteria()
-    BP4: ACMGCriteria = ACMGCriteria()
-    BP7: ACMGCriteria = ACMGCriteria()
+# ============ Definitions for algorithms ============
 
 
 class AutoACMGPrediction(AutoAcmgBaseEnum):
@@ -149,6 +112,27 @@ class AutoACMGStrength(AutoAcmgBaseEnum):
     BenignStandAlone = auto()
     BenignStrong = auto()
     BenignSupporting = auto()
+
+
+# ============ Data Structures ============
+
+
+class CdsInfo(BaseModel):
+    """Information about the coding sequence."""
+
+    start_codon: int
+    stop_codon: int
+    cds_start: int
+    cds_end: int
+    cds_strand: GenomicStrand
+    exons: List[Exon]
+
+
+class TranscriptInfo(BaseModel):
+    """Information about a transcript. Used in `SeqVarTranscriptsHelper`."""
+
+    seqvar: Optional[TranscriptSeqvar]
+    gene: Optional[TranscriptGene]
 
 
 class PS1PM5(BaseModel):
@@ -225,6 +209,7 @@ class AutoACMGCriteria(BaseModel):
 
 
 class AutoACMGCriteriaResult(BaseModel):
+    """ACMG criteria prediction."""
 
     pvs1: AutoACMGCriteria = AutoACMGCriteria(
         name="PVS1", strength=AutoACMGStrength.PathogenicVeryStrong

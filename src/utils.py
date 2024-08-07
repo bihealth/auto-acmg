@@ -10,13 +10,8 @@ from lib.maxentpy.maxent import load_matrix3, load_matrix5
 from src.api.annonars import AnnonarsClient
 from src.api.mehari import MehariClient
 from src.core.config import Config
-from src.defs.auto_acmg import SpliceType
-from src.defs.auto_pvs1 import (
-    GenomicStrand,
-    SeqvarConsequenceMapping,
-    SeqVarPVS1Consequence,
-    TranscriptInfo,
-)
+from src.defs.auto_acmg import GenomicStrand, SpliceType, TranscriptInfo
+from src.defs.auto_pvs1 import SeqvarConsequenceMapping, SeqVarPVS1Consequence
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException
 from src.defs.genome_builds import CHROM_REFSEQ_37, CHROM_REFSEQ_38, GenomeRelease
 from src.defs.mehari import Exon, TranscriptGene, TranscriptSeqvar

@@ -1,19 +1,10 @@
 """Implementation of BA1, BS1, BS2, PM2 prediction for sequence variants."""
 
-import re
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 
 from loguru import logger
 
-from src.api.annonars import AnnonarsClient
-from src.core.config import Config
-from src.defs.annonars_variant import (
-    AlleleCount,
-    AnnonarsVariantResponse,
-    GnomadExomes,
-    GnomadMtDna,
-    VariantResult,
-)
+from src.defs.annonars_variant import AlleleCount, GnomadExomes, GnomadMtDna
 from src.defs.auto_acmg import (
     PM2BA1BS1BS2,
     AlleleCondition,

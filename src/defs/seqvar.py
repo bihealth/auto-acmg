@@ -3,8 +3,6 @@
 import re
 from typing import Optional
 
-from pydantic import BaseModel
-
 from src.api.dotty import DottyClient
 from src.core.config import Config
 from src.defs.exceptions import AutoAcmgBaseException, InvalidPos, ParseError

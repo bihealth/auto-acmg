@@ -6,9 +6,7 @@ from typing import Optional, Tuple
 import tabix  # type: ignore
 from loguru import logger
 
-from src.api.annonars import AnnonarsClient
-from src.core.config import Config, settings
-from src.defs.annonars_variant import VariantResult
+from src.core.config import settings
 from src.defs.auto_acmg import (
     PM1,
     AutoACMGCriteria,

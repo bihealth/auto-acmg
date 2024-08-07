@@ -1,22 +1,18 @@
 """PVS1 criteria for Sequence Variants (SeqVar)."""
 
-import re
 from typing import Dict, List, Optional, Tuple
 
 from loguru import logger
 
-from src.api.annonars import AnnonarsClient
-from src.core.config import Config
 from src.defs.auto_acmg import (
     AutoACMGCriteria,
     AutoACMGData,
     AutoACMGPrediction,
     AutoACMGStrength,
-    SpliceType,
-)
-from src.defs.auto_pvs1 import (
     CdsInfo,
     GenomicStrand,
+)
+from src.defs.auto_pvs1 import (
     PVS1Prediction,
     PVS1PredictionPathMapping,
     PVS1PredictionSeqVarPath,
@@ -29,9 +25,9 @@ from src.defs.exceptions import (
     InvalidAPIResposeError,
     MissingDataError,
 )
-from src.defs.mehari import Exon, ProteinPos, TranscriptGene, TranscriptSeqvar, TxPos
+from src.defs.mehari import Exon
 from src.defs.seqvar import SeqVar
-from src.utils import AutoACMGHelper, SeqVarTranscriptsHelper, SplicingPrediction
+from src.utils import AutoACMGHelper, SplicingPrediction
 
 
 class SeqVarPVS1Helper(AutoACMGHelper):

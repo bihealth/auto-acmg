@@ -1,53 +1,13 @@
-from enum import auto
-from typing import Dict, List, Optional, Union
+"""PVS1 related definitions."""
 
-from pydantic import BaseModel
+from enum import auto
+from typing import Dict, Union
 
 from src.defs.core import AutoAcmgBaseEnum
-from src.defs.mehari import Exon, TranscriptGene, TranscriptSeqvar
 
 
-class GenomicStrand(AutoAcmgBaseEnum):
-    """Enumeration for genomic strand."""
-
-    Plus = auto()
-    Minus = auto()
-
-    @staticmethod
-    def from_string(value: str):
-        """Converts string to enum member if possible, otherwise returns None."""
-        strand_mapping = {
-            "STRAND_PLUS": "Plus",
-            "STRAND_MINUS": "Minus",
-        }
-        value_mapped = strand_mapping.get(value, value)
-        for member in GenomicStrand:
-            if member.name == value_mapped:
-                return member
-        return None
-
-
-class TranscriptInfo(BaseModel):
-    """Information about a transcript."""
-
-    seqvar: Optional[TranscriptSeqvar]
-    gene: Optional[TranscriptGene]
-
-
-class CdsInfo(BaseModel):
-    """Information about the coding sequence."""
-
-    start_codon: int
-    stop_codon: int
-    cds_start: int
-    cds_end: int
-    cds_strand: GenomicStrand
-    exons: List[Exon]
-
-
-#: Enumeration for sequence variant consequence
 class SeqVarPVS1Consequence(AutoAcmgBaseEnum):
-    """Consequence of a sequence variant."""
+    """Consequence of a sequence variant specifically for PVS1."""
 
     Missense = auto()
     NonsenseFrameshift = auto()
@@ -56,7 +16,6 @@ class SeqVarPVS1Consequence(AutoAcmgBaseEnum):
     NotSet = auto()
 
 
-#: Enumeration for PVS1 prediction status
 class PVS1Prediction(AutoAcmgBaseEnum):
     """PVS1 prediction."""
 
