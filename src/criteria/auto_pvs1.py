@@ -280,7 +280,7 @@ class SeqVarPVS1Helper(AutoACMGHelper):
         self,
         var_pos: int,
         hgnc_id: str,
-        strand: Optional[GenomicStrand],
+        strand: GenomicStrand,
         exons: List[Exon],
     ) -> bool:
         """
@@ -317,7 +317,7 @@ class SeqVarPVS1Helper(AutoACMGHelper):
                 "Always predicted to undergo NMD."
             )
             return True
-        if not strand or not exons:
+        if strand == GenomicStrand.NotSet or not exons:
             logger.error("Strand information or exons are not available. Cannot determine NMD.")
             raise MissingDataError(
                 "Strand information or exons are not available. Cannot determine NMD."
@@ -369,7 +369,7 @@ class SeqVarPVS1Helper(AutoACMGHelper):
         self,
         seqvar: SeqVar,
         exons: List[Exon],
-        strand: Optional[GenomicStrand],
+        strand: GenomicStrand,
     ) -> bool:
         """
         Checks if the truncated or altered region is critical for the protein function.
@@ -404,7 +404,7 @@ class SeqVarPVS1Helper(AutoACMGHelper):
             InvalidAPIResponseError: If the API response is invalid or cannot be processed.
         """
         logger.debug("Checking if the altered region is critical for the protein function.")
-        if not strand or not exons:
+        if strand == GenomicStrand.NotSet or not exons:
             logger.error(
                 "Genomic strand or exons are not available. " "Cannot determine criticality."
             )
@@ -446,7 +446,7 @@ class SeqVarPVS1Helper(AutoACMGHelper):
         self,
         seqvar: SeqVar,
         exons: List[Exon],
-        strand: Optional[GenomicStrand],
+        strand: GenomicStrand,
     ) -> bool:
         """
         Checks if the Loss-of-Function (LoF) variants in the exon are frequent in the general
@@ -479,7 +479,7 @@ class SeqVarPVS1Helper(AutoACMGHelper):
             InvalidAPIResponseError: If the API response is invalid or cannot be processed.
         """
         logger.debug("Checking if LoF variants are frequent in the general population.")
-        if not strand:
+        if strand == GenomicStrand.NotSet:
             logger.error("Genomic strand is not available. Cannot determine LoF frequency.")
             raise MissingDataError(
                 "Genomic strand position is not available. Cannot determine LoF frequency."
@@ -544,7 +544,7 @@ class SeqVarPVS1Helper(AutoACMGHelper):
         seqvar: SeqVar,
         exons: List[Exon],
         consequences: List[str],
-        strand: Optional[GenomicStrand],
+        strand: GenomicStrand,
     ) -> bool:
         """
         Check if the variant causes exon skipping or cryptic splice site disruption.
@@ -575,7 +575,7 @@ class SeqVarPVS1Helper(AutoACMGHelper):
         logger.debug(
             "Checking if the variant causes exon skipping or cryptic splice site disruption."
         )
-        if not strand:
+        if strand == GenomicStrand.NotSet:
             logger.error("Strand is not available. Cannot determine exon skipping.")
             raise MissingDataError("Strand is not available. Cannot determine exon skipping.")
         start_pos, end_pos = self._skipping_exon_pos(seqvar, exons)
@@ -662,9 +662,7 @@ class SeqVarPVS1Helper(AutoACMGHelper):
         self,
         seqvar: SeqVar,
         exons: List[Exon],
-        strand: Optional[GenomicStrand],
-        cds_info: Dict[str, CdsInfo],
-        hgvs: str,
+        strand: GenomicStrand,
     ) -> bool:
         """
         Look for pathogenic variants upstream of the closest potential in-frame start codon.
@@ -680,8 +678,6 @@ class SeqVarPVS1Helper(AutoACMGHelper):
             cds_pos: The position of the variant in the coding sequence.
             exons: A list of exons of the gene where the variant occurs.
             strand: The genomic strand of the gene.
-            cds_info: A dictionary containing the CDS information for all transcripts.
-            hgvs: The main transcript ID.
 
         Returns:
             bool: True if pathogenic variants are found upstream of the closest potential in-frame
@@ -691,7 +687,7 @@ class SeqVarPVS1Helper(AutoACMGHelper):
             "Checking for pathogenic variants upstream of the closest in-frame start codon."
         )
 
-        if not strand:
+        if strand == GenomicStrand.NotSet:
             logger.error("Strand is not available. Cannot determine upstream pathogenic variants.")
             raise MissingDataError(
                 "Strand is not available. Cannot determine upstream pathogenic variants."
@@ -869,8 +865,6 @@ class AutoPVS1(SeqVarPVS1Helper):
                     seqvar,
                     var_data.exons,
                     var_data.strand,
-                    var_data.cds_info,
-                    var_data.transcript_id,
                 ):
                     self.prediction = PVS1Prediction.PVS1_Moderate
                     self.prediction_path = PVS1PredictionSeqVarPath.IC1

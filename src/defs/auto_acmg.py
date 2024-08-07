@@ -1,10 +1,8 @@
 from enum import auto
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict
-
 from src.defs.annonars_variant import GnomadExomes, GnomadMtDna
-from src.defs.core import AutoAcmgBaseEnum
+from src.defs.core import AutoAcmgBaseEnum, AutoAcmgBaseModel
 from src.defs.mehari import Exon, TranscriptGene, TranscriptSeqvar
 from src.defs.seqvar import SeqVar
 
@@ -23,8 +21,9 @@ class SpliceType(AutoAcmgBaseEnum):
 class GenomicStrand(AutoAcmgBaseEnum):
     """Genomic strand enumeration."""
 
-    Plus = auto()
-    Minus = auto()
+    Plus = "plus"
+    Minus = "minus"
+    NotSet = "not_set"
 
     @staticmethod
     def from_string(value: str):
@@ -92,32 +91,32 @@ class AminoAcid(AutoAcmgBaseEnum):
 class AutoACMGPrediction(AutoAcmgBaseEnum):
     """ACMG criteria prediction enumeration."""
 
-    NotSet = auto()
-    NotApplicable = auto()
-    NotAutomated = auto()
-    Depricated = auto()
-    Met = auto()
-    NotMet = auto()
-    Failed = auto()
+    NotSet = "not_set"
+    NotApplicable = "not_applicable"
+    NotAutomated = "not_automated"
+    Depricated = "depricated"
+    Met = "met"
+    NotMet = "not_met"
+    Failed = "failed"
 
 
 class AutoACMGStrength(AutoAcmgBaseEnum):
     """ACMG criteria strength enumeration."""
 
-    NotSet = auto()
-    PathogenicVeryStrong = auto()
-    PathogenicStrong = auto()
-    PathogenicModerate = auto()
-    PathogenicSupporting = auto()
-    BenignStandAlone = auto()
-    BenignStrong = auto()
-    BenignSupporting = auto()
+    NotSet = "not_set"
+    PathogenicVeryStrong = "pathogenic_very_strong"
+    PathogenicStrong = "pathogenic_strong"
+    PathogenicModerate = "pathogenic_moderate"
+    PathogenicSupporting = "pathogenic_supporting"
+    BenignStandAlone = "benign_stand_alone"
+    BenignStrong = "benign_strong"
+    BenignSupporting = "benign_supporting"
 
 
 # ============ Data Structures ============
 
 
-class CdsInfo(BaseModel):
+class CdsInfo(AutoAcmgBaseModel):
     """Information about the coding sequence."""
 
     start_codon: int
@@ -128,14 +127,14 @@ class CdsInfo(BaseModel):
     exons: List[Exon]
 
 
-class TranscriptInfo(BaseModel):
+class TranscriptInfo(AutoAcmgBaseModel):
     """Information about a transcript. Used in `SeqVarTranscriptsHelper`."""
 
     seqvar: Optional[TranscriptSeqvar]
     gene: Optional[TranscriptGene]
 
 
-class PS1PM5(BaseModel):
+class PS1PM5(AutoAcmgBaseModel):
     """PS1 and PM5 criteria prediction."""
 
     PS1: bool = False
@@ -144,7 +143,7 @@ class PS1PM5(BaseModel):
     PM5_strength: AutoACMGStrength = AutoACMGStrength.PathogenicModerate
 
 
-class PM4BP3(BaseModel):
+class PM4BP3(AutoAcmgBaseModel):
     """PM4 and BP3 criteria prediction."""
 
     PM4: bool = False
@@ -153,7 +152,7 @@ class PM4BP3(BaseModel):
     BP3_strength: AutoACMGStrength = AutoACMGStrength.BenignSupporting
 
 
-class PM2BA1BS1BS2(BaseModel):
+class PM2BA1BS1BS2(AutoAcmgBaseModel):
     """BA1, BS1, BS2, and PM2 criteria prediction."""
 
     PM2: bool = False
@@ -166,14 +165,14 @@ class PM2BA1BS1BS2(BaseModel):
     BS2_strength: AutoACMGStrength = AutoACMGStrength.BenignStrong
 
 
-class PM1(BaseModel):
+class PM1(AutoAcmgBaseModel):
     """PM1 criteria prediction."""
 
     PM1: bool = False
     PM1_strength: AutoACMGStrength = AutoACMGStrength.PathogenicModerate
 
 
-class PP2BP1(BaseModel):
+class PP2BP1(AutoAcmgBaseModel):
     """PP2 and BP6 criteria prediction."""
 
     PP2: bool = False
@@ -182,14 +181,14 @@ class PP2BP1(BaseModel):
     BP1_strength: AutoACMGStrength = AutoACMGStrength.BenignSupporting
 
 
-class BP7(BaseModel):
+class BP7(AutoAcmgBaseModel):
     """BP7 criteria prediction."""
 
     BP7: bool = False
     BP7_strength: AutoACMGStrength = AutoACMGStrength.BenignSupporting
 
 
-class PP3BP4(BaseModel):
+class PP3BP4(AutoAcmgBaseModel):
     """PP3 and BP4 criteria prediction."""
 
     PP3: bool = False
@@ -198,7 +197,7 @@ class PP3BP4(BaseModel):
     BP4_strength: AutoACMGStrength = AutoACMGStrength.BenignSupporting
 
 
-class AutoACMGCriteria(BaseModel):
+class AutoACMGCriteria(AutoAcmgBaseModel):
     """Criteria prediction."""
 
     name: str
@@ -208,7 +207,7 @@ class AutoACMGCriteria(BaseModel):
     description: str = ""
 
 
-class AutoACMGCriteriaResult(BaseModel):
+class AutoACMGCriteriaResult(AutoAcmgBaseModel):
     """ACMG criteria prediction."""
 
     pvs1: AutoACMGCriteria = AutoACMGCriteria(
@@ -309,14 +308,14 @@ class AutoACMGCriteriaResult(BaseModel):
     bp7: AutoACMGCriteria = AutoACMGCriteria(name="BP7", strength=AutoACMGStrength.BenignSupporting)
 
 
-class AutoACMGConsequence(BaseModel):
+class AutoACMGConsequence(AutoAcmgBaseModel):
 
     mehari: List[str] = []
     cadd: str = ""
     cadd_consequence: str = ""
 
 
-class AutoACMGCADD(BaseModel):
+class AutoACMGCADD(AutoAcmgBaseModel):
 
     phyloP100: Optional[float] = None
     spliceAI_acceptor_gain: Optional[float] = None
@@ -327,7 +326,7 @@ class AutoACMGCADD(BaseModel):
     rf: Optional[float] = None
 
 
-class AutoACMGDbnsfp(BaseModel):
+class AutoACMGDbnsfp(AutoAcmgBaseModel):
 
     alpha_missense: Optional[float] = None
     metaRNN: Optional[float] = None
@@ -336,13 +335,13 @@ class AutoACMGDbnsfp(BaseModel):
     phyloP100: Optional[float] = None
 
 
-class AutoACMGDbscsnv(BaseModel):
+class AutoACMGDbscsnv(AutoAcmgBaseModel):
 
     ada: Optional[float] = None
     rf: Optional[float] = None
 
 
-class AutoACMGScores(BaseModel):
+class AutoACMGScores(AutoAcmgBaseModel):
     """ACMG scores."""
 
     cadd: AutoACMGCADD = AutoACMGCADD()
@@ -350,7 +349,7 @@ class AutoACMGScores(BaseModel):
     dbscsnv: AutoACMGDbscsnv = AutoACMGDbscsnv()
 
 
-class AutoACMGTresholds(BaseModel):
+class AutoACMGTresholds(AutoAcmgBaseModel):
     """ACMG thresholds."""
 
     #: Conservation threshold from VarSome
@@ -389,7 +388,7 @@ class AutoACMGTresholds(BaseModel):
     pm2_pathogenic: float = 0.0001
 
 
-class AutoACMGData(BaseModel):
+class AutoACMGData(AutoAcmgBaseModel):
     """Response of the ACMG criteria prediction."""
 
     consequence: AutoACMGConsequence = AutoACMGConsequence()
@@ -404,7 +403,7 @@ class AutoACMGData(BaseModel):
     pHGVS: str = ""
     cds_start: int = 0
     cds_end: int = 0
-    strand: Optional[GenomicStrand] = None
+    strand: GenomicStrand = GenomicStrand.NotSet
     exons: List[Exon] = []
     scores: AutoACMGScores = AutoACMGScores()
     thresholds: AutoACMGTresholds = AutoACMGTresholds()
@@ -412,10 +411,8 @@ class AutoACMGData(BaseModel):
     gnomad_mtdna: Optional[GnomadMtDna] = None
 
 
-class AutoACMGResult(BaseModel):
+class AutoACMGResult(AutoAcmgBaseModel):
     """Response of the ACMG criteria prediction."""
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     #: Sequence variant for which the ACMG criteria are predicted
     seqvar: Optional[SeqVar] = None

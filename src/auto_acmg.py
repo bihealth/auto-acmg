@@ -261,6 +261,7 @@ class AutoACMG(
         """
         logger.info("Predicting ACMG criteria for variant: {}", self.variant_name)
         self.seqvar = self.resolve_variant()
+        self.result.seqvar = self.seqvar
         if not self.seqvar:
             logger.error("Unable to make a prediction for the variant: {}", self.variant_name)
             return None
