@@ -6,9 +6,9 @@ import pytest
 
 from src.auto_acmg import AutoACMG
 from src.core.config import Config
-from src.criteria.auto_criteria import AutoACMGCriteria
 from src.criteria.auto_pm4_bp3 import AutoPM4BP3
 from src.defs.annonars_variant import AnnonarsVariantResponse
+from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGResult
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 
@@ -43,17 +43,11 @@ def test_pm4_bp3(
     auto_acmg = AutoACMG(variant_name, genome_release, config=config)
     seqvar = auto_acmg.resolve_variant()
     assert isinstance(seqvar, SeqVar)
-    # Then, fetch the variant_info from Annonars
-    auto_acmg_criteria = AutoACMGCriteria(seqvar, config=config)
-    variant_info = auto_acmg_criteria._get_variant_info(seqvar)
-    assert isinstance(variant_info, AnnonarsVariantResponse)
-    # Then, make prediction
-    auto_pm4_bp3 = AutoPM4BP3(seqvar, variant_info.result, config=config)
-    prediction, details = auto_pm4_bp3.predict()
-    print(details)
-    if expected_prediction is None:
-        assert prediction is None, f"Failed for {variant_name}"
-    else:
-        assert prediction
-        assert prediction.PM4 == expected_prediction[0]
-        assert prediction.BP3 == expected_prediction[1]
+    # Then, setup the data
+    auto_acmg_result = auto_acmg.parse_data(seqvar)
+    assert isinstance(auto_acmg_result, AutoACMGResult)
+    # Then, predict PM4 and BP3
+    auto_pm4_bp3 = AutoPM4BP3()
+    pm4_bp3 = auto_pm4_bp3.predict_pm4bp3(seqvar, auto_acmg_result.data)
+    assert pm4_bp3[0].name == "PM4"
+    assert pm4_bp3[1].name == "BP3"

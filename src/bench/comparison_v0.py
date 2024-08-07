@@ -1,11 +1,12 @@
 import csv
 import os
 import time
+from typing import List
 
 import httpx
 import pandas as pd
 
-from src.auto_acmg import AutoACMG, AutoACMGPrediction
+from src.auto_acmg import AutoACMG
 from src.core.config import settings
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
@@ -30,10 +31,10 @@ print(f"Number of variants: {len(variants)}")
 
 
 def eval_autoacmg(pred, expected):
-    crit_met = []
-    for crit in pred.model_dump().values():
-        if crit["prediction"] == AutoACMGPrediction.Met:
-            crit_met.append(crit["name"])
+    crit_met: List[str] = []
+    # for crit in pred.model_dump().values():
+    #     if crit["prediction"] == AutoACMGPrediction.Met:
+    #         crit_met.append(crit["name"])
     tp = list(set(expected) & set(crit_met))
     fn = list(set(expected) - set(crit_met))
     fp = list(set(crit_met) - set(expected))

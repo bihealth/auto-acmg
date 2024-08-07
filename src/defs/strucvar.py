@@ -5,7 +5,7 @@ from enum import auto
 from typing import Optional
 
 from src.core.config import Config
-from src.defs.auto_acmg import AutoAcmgBaseEnum
+from src.defs.core import AutoAcmgBaseEnum
 from src.defs.exceptions import InvalidPos, ParseError
 from src.defs.genome_builds import CHROM_LENGTHS_37, CHROM_LENGTHS_38, GenomeRelease
 

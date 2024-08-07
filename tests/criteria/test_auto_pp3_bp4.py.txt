@@ -59,8 +59,8 @@ def test_auto_pp3bp4_initialization(seqvar, variant_info):
     assert auto_pp3bp4.variant_info == variant_info.result
     assert isinstance(auto_pp3bp4.config, Config)
     assert isinstance(auto_pp3bp4.annonars_client, AnnonarsClient)
-    assert auto_pp3bp4.prediction is None
-    assert auto_pp3bp4.comment == ""
+    assert auto_pp3bp4.prediction_pp3bp4 is None
+    assert auto_pp3bp4.comment_pp3bp4 == ""
 
 
 @pytest.mark.parametrize(

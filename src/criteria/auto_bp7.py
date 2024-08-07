@@ -1,210 +1,62 @@
 """Implementation of BP7 criteria."""
 
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Tuple
 
 from loguru import logger
 
-from src.api.annonars import AnnonarsClient
-from src.core.config import Config
-from src.defs.annonars_variant import VariantResult
-from src.defs.auto_acmg import BP7
-from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
-from src.defs.genome_builds import GenomeRelease
-from src.defs.mehari import Exon
+from src.defs.auto_acmg import (
+    BP7,
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+)
+from src.defs.exceptions import AutoAcmgBaseException, MissingDataError
 from src.defs.seqvar import SeqVar
-from src.utils import SeqVarTranscriptsHelper, SplicingPrediction
+from src.utils import AutoACMGHelper
 
 
-class AutoBP7:
-    """Class for automatic BP7 prediction."""
+class AutoBP7(AutoACMGHelper):
+    """Class for BP7 prediction."""
 
-    def __init__(
-        self,
-        seqvar: SeqVar,
-        variant_info: VariantResult,
-        *,
-        config: Optional[Config] = None,
-    ):
-        #: Configuration to use.
-        self.config: Config = config or Config()
-        #: Sequence variant to predict.
-        self.seqvar: SeqVar = seqvar
-        #: Variant information.
-        self.variant_info: VariantResult = variant_info
-        #: Annonars client.
-        self.annonars_client: AnnonarsClient = AnnonarsClient(
-            api_base_url=self.config.api_base_url_annonars
-        )
+    def __init__(self):
+        super().__init__()
         #: Prediction result.
-        self.prediction: Optional[BP7] = None
+        self.prediction_bp7: Optional[BP7] = None
         #: Comment to store the prediction explanation.
-        self.comment: str = ""
+        self.comment_bp7: str = ""
 
-    def _convert_score_val(self, score_value: Optional[Union[str, float, int]]) -> Optional[float]:
-        """
-        Convert score value to float.
-
-        Since the score values can be represented as strings (with ";" as separator), we pick the
-        maximum value that is not empty ("."). If the value is already numeric, we return it as is.
-
-        Args:
-            score_value (Optional[Union[str, float, int]]): Score value to convert.
-
-        Returns:
-            Optional[float]: Converted score value.
-
-        Raises:
-            AlgorithmError: If the score value cannot be converted to float.
-        """
-        if score_value is None:
-            return None
-        if isinstance(score_value, (float, int)):
-            return float(score_value)
-        try:
-            return max(float(score) for score in score_value.split(";") if score != ".")
-        except ValueError as e:
-            logger.error("Failed to convert score value to float. Error: {}", e)
-            raise AlgorithmError("Failed to convert score value to float.") from e
-
-    def _get_var_info(self, seqvar: SeqVar) -> Optional[VariantResult]:
-        """
-        Get variant information from Annonars.
-
-        Args:
-            seqvar: The variant to get information for.
-
-        Returns:
-            Optional[VariantResult]: The variant information. None if the information is not
-            available.
-        """
-        try:
-            logger.debug("Getting variant information for {}.", seqvar)
-            return self.annonars_client.get_variant_info(seqvar).result
-        except AutoAcmgBaseException as e:
-            logger.error("Failed to get variant information. Error: {}", e)
-            return None
-
-    def _check_proximity_to_pathogenic_vars(self, seqvar: SeqVar) -> bool:
-        """
-        Check for pathogenic variants +/- 2bp of the position in ClinVar.
-
-        Check if there are pathogenic variants within 2bp of the position in ClinVar.
-
-        Args:
-            seqvar: The variant to check.
-
-        Returns:
-            bool: True if pathogenic variants are found, False otherwise.
-        """
-        response = self.annonars_client.get_variant_from_range(
-            seqvar, seqvar.pos - 2, seqvar.pos + 2
-        )
-        if response and response.clinvar:
-            pathogenic_variants = [
-                v
-                for v in response.clinvar
-                if v.records
-                and v.records[0].classifications
-                and v.records[0].classifications.germlineClassification
-                and v.records[0].classifications.germlineClassification.description
-                in [
-                    "Pathogenic",
-                    "Likely pathogenic",
-                ]
-            ]
-            return len(pathogenic_variants) > 0
-        return False
-
-    def _check_proximity_to_ss(self, seqvar: SeqVar) -> bool:
-        """
-        Check if the variant is closer than 2bp to a splice site.
-
-        Check if the variant is located within 2bp of a splice site.
-
-        Args:
-            seqvar: The variant to check.
-
-        Returns:
-            bool: True if the variant is within 2bp of a splice site, False otherwise.
-        """
-        # Fetch transcript data
-        seqvar_transcript_helper = SeqVarTranscriptsHelper(seqvar, config=self.config)
-        seqvar_transcript_helper.initialize()
-        (
-            _,
-            gene_transcript,
-            _,
-            _,
-            _,
-        ) = seqvar_transcript_helper.get_ts_info()
-        if (
-            not gene_transcript
-            or not gene_transcript.genomeAlignments
-            or not gene_transcript.genomeAlignments[0].exons
-        ):
-            logger.warning("No exons found for the transcript.")
-            return False
-
-        # Check if the variant is within 2bp of a start or end of an exon
-        for exon in gene_transcript.genomeAlignments[0].exons:
-            if abs(seqvar.pos - exon.altCdsStartI) <= 2 or abs(exon.altCdsEndI - seqvar.pos) <= 2:
-                return True
-        return False
-
-    def _pred_spliceai(self, variant_info: VariantResult) -> bool:
+    @staticmethod
+    def _spliceai_impact(var_data: AutoACMGData) -> bool:
         """
         Predict splice site alterations using SpliceAI.
 
-        Fetch the SpliceAI data from CADD and predict if the variant is a splice site alteration.
-        If any of SpliceAI scores are greater than 0, the variant is considered a splice site
-        alteration.
+        If any of SpliceAI scores are greater than specific thresholds, the variant is considered a
+        splice site alteration. The thresholds are defined in the variant data thresholds.
 
         Args:
-            seqvar: The variant to check.
+            var_data: The data containing variant scores and thresholds.
 
         Returns:
             bool: True if the variant is a splice site alteration, False otherwise.
         """
-        if (
-            not variant_info
-            or not variant_info.dbscsnv
-            or not variant_info.dbscsnv.ada_score
-            or not variant_info.dbscsnv.rf_score
-        ):
-            self.comment += "Missing dbscsnv data."
-            pass
-        else:
-            self.comment += f"ada_score: {variant_info.dbscsnv.ada_score}, rf_score: {variant_info.dbscsnv.rf_score}\n"
-            if variant_info.dbscsnv.ada_score > 0.957813 or variant_info.dbscsnv.rf_score > 0.584:
-                return True
-        if not variant_info or not variant_info.cadd:
-            raise MissingDataError("Missing CADD data for variant.")
-        acc_gain = variant_info.cadd.SpliceAI_acc_gain
-        acc_loss = variant_info.cadd.SpliceAI_acc_loss
-        don_gain = variant_info.cadd.SpliceAI_don_gain
-        don_loss = variant_info.cadd.SpliceAI_don_loss
-        if (
-            (acc_gain is None or acc_gain == 0.0)
-            and (acc_loss is None or acc_loss == 0.0)
-            and (don_gain is None or don_gain == 0.0)
-            and (don_loss is None or don_loss == 0.0)
-        ):
-            self.comment += "Missing SpliceAI data."
-        self.comment += f"SpliceAI_acc_gain: {acc_gain}, SpliceAI_acc_loss: {acc_loss}, SpliceAI_don_gain: {don_gain}, SpliceAI_don_loss: {don_loss}\n"
-        if (
-            (acc_gain and acc_gain > 0.2)
-            or (acc_loss and acc_loss > 0.2)
-            or (don_gain and don_gain > 0.2)
-            or (don_loss and don_loss > 0.2)
-        ):
-            return True
-        return False
+        score_checks = {
+            "spliceAI_acceptor_gain": var_data.thresholds.spliceAI_acceptor_gain,
+            "spliceAI_acceptor_loss": var_data.thresholds.spliceAI_acceptor_loss,
+            "spliceAI_donor_gain": var_data.thresholds.spliceAI_donor_gain,
+            "spliceAI_donor_loss": var_data.thresholds.spliceAI_donor_loss,
+        }
+        return any(
+            (getattr(var_data.scores.cadd, score_name) or 0) > threshold
+            for score_name, threshold in score_checks.items()
+        )
 
-    def _pred_conservation(self, variant_info: VariantResult) -> bool:
+    @staticmethod
+    def _is_conserved(var_data: AutoACMGData) -> bool:
         """
         Predict if the variant is conserved.
 
-        Check if the variant is conserved using the phyloP100way_vertebrate score.
+        Check if the variant is conserved using the phyloP100 score.
 
         Args:
             variant_info: The variant information.
@@ -212,74 +64,69 @@ class AutoBP7:
         Returns:
             bool: True if the variant is not conserved, False otherwise.
         """
-        if not variant_info or not variant_info.cadd:
-            raise MissingDataError("Missing dbNSFP data for variant.")
-        # phylop = self._convert_score_val(variant_info.dbnsfp.phyloP100way_vertebrate)
-        phylop = variant_info.cadd.verPhyloP
-        if phylop and phylop < 3.58:
+        phylop = var_data.scores.cadd.phyloP100 or var_data.scores.dbnsfp.phyloP100
+        if not phylop:
+            raise MissingDataError("Missing phyloP100 score.")
+        if phylop >= var_data.thresholds.phyloP100:
             return True
         return False
 
-    def predict(self) -> Tuple[Optional[BP7], str]:
+    def verify_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[BP7], str]:
         """Predict BP7 criterion."""
-        self.prediction = BP7()
+        self.prediction_bp7 = BP7()
+        self.comment_bp7 = ""
         try:
-            if self.seqvar.chrom == "MT":
-                # skipped according to McCormick et al. (2020).
-                self.comment = "Variant is in the mitochondrial genome. BP7 is not met."
-                logger.debug("Variant is in the mitochondrial genome. BP7 is not met.")
-                self.prediction.BP7 = False
-                return self.prediction, self.comment
+            if seqvar.chrom == "MT":
+                self.comment_bp7 = "Variant is in the mitochondrial genome. BP7 is not met."
+                self.prediction_bp7.BP7 = False
+                return self.prediction_bp7, self.comment_bp7
 
-            self.comment = "Checking for pathogenic variants in the range of 2bp. => \n"
-            logger.debug("Checking for pathogenic variants in the range of 2bp.")
-            # if self._pred_conservation(self.variant_info) and self._check_proximity_to_ss(
-            #     self.seqvar
-            # ):
-            if self._pred_conservation(self.variant_info) and not self._pred_spliceai(
-                self.variant_info
-            ):
-                self.comment += "Variant is not conserved and in +=2 bp from ss. BP7 is met."
-                logger.debug("Variant is not conserved and in +=2 bp from ss. BP7 is met.")
-                self.prediction.BP7 = True
+            if not self._is_conserved(var_data) and not self._spliceai_impact(var_data):
+                self.comment_bp7 += (
+                    "Variant is not conserved and not predicted to affect splicing. "
+                    f"PhyloP100 score: {var_data.scores.cadd.phyloP100}. "
+                    f"SpliceAI scores: {var_data.scores.cadd.spliceAI_acceptor_gain},"
+                    f"{var_data.scores.cadd.spliceAI_acceptor_loss}, "
+                    f"{var_data.scores.cadd.spliceAI_donor_gain}, "
+                    f"{var_data.scores.cadd.spliceAI_donor_loss}. "
+                    "BP7 is met."
+                )
+                self.prediction_bp7.BP7 = True
             else:
-                self.comment += "Variant is not conserved. => \n"
-                logger.debug("Variant is not conserved. => \n")
-                self.prediction.BP7 = False
+                self.comment_bp7 += (
+                    "Variant is conserved or predicted to affect splicing. "
+                    f"PhyloP100 score: {var_data.scores.cadd.phyloP100}. "
+                    f"SpliceAI scores: {var_data.scores.cadd.spliceAI_acceptor_gain},"
+                    f"{var_data.scores.cadd.spliceAI_acceptor_loss}, "
+                    f"{var_data.scores.cadd.spliceAI_donor_gain}, "
+                    f"{var_data.scores.cadd.spliceAI_donor_loss}. "
+                    "BP7 is not met."
+                )
+                self.prediction_bp7.BP7 = False
 
-            # if self._check_proximity_to_pathogenic_vars(self.seqvar):
-            #     self.comment += "Found pathogenic variants in the range of 2bp. BP7 is not met."
-            #     logger.debug("Found pathogenic variants in the range of 2bp. BP7 is not met.")
-            #     self.prediction.BP7 = False
-            #     return self.prediction, self.comment
-            # else:
-            #     self.comment += "No pathogenic variants found in the range of 2bp. => \n"
-            #     logger.debug("No pathogenic variants found in the range of 2bp. => \n")
-
-            # self.comment += "Checking for proximity to splice site. => \n"
-            # logger.debug("Checking for proximity to splice site.")
-            # if self._check_proximity_to_ss(self.seqvar):
-            #     self.comment += "Variant is within 2bp of a splice site. BP7 is not met."
-            #     logger.debug("Variant is within 2bp of a splice site. BP7 is not met.")
-            #     self.prediction.BP7 = False
-            #     return self.prediction, self.comment
-            # else:
-            #     self.comment += "Variant is not within 2bp of a splice site. => \n"
-            #     logger.debug("Variant is not within 2bp of a splice site. => \n")
-
-            # self.comment += "Predicting splice site alterations using SpliceAI. => \n"
-            # logger.debug("Predicting splice site alterations using SpliceAI.")
-            # if self._pred_spliceai(self.seqvar):
-            #     self.comment += "Variant is a splice site alteration. BP7 is not met."
-            #     logger.debug("Variant is a splice site alteration. BP7 is not met.")
-            #     self.prediction.BP7 = False
-            # else:
-            #     self.comment += "Variant is not a splice site alteration. BP7 is met."
-            #     logger.debug("Variant is not a splice site alteration. BP7 is met.")
-            #     self.prediction.BP7 = True
         except AutoAcmgBaseException as e:
-            self.comment += f"Failed to predict BP7 criterion. Error: {e}"
             logger.error("Failed to predict BP7 criterion. Error: {}", e)
-            self.prediction = None
+            self.comment_bp7 = f"Failed to predict BP7 criterion. Error: {e}"
+            self.prediction_bp7 = None
 
-        return self.prediction, self.comment
+        return self.prediction_bp7, self.comment_bp7
+
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+        """Predict BP7 criterion."""
+        pred, comment = self.verify_bp7(seqvar, var_data)
+        if pred:
+            pred_bp7 = (
+                AutoACMGPrediction.Met
+                if pred.BP7
+                else (AutoACMGPrediction.NotMet if pred.BP7 is False else AutoACMGPrediction.Failed)
+            )
+            strength_bp7 = pred.BP7_strength
+        else:
+            pred_bp7 = AutoACMGPrediction.Failed
+            strength_bp7 = AutoACMGStrength.BenignSupporting
+        return AutoACMGCriteria(
+            name="BP7",
+            prediction=pred_bp7,
+            strength=strength_bp7,
+            summary=comment,
+        )

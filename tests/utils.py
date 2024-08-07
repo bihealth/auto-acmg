@@ -3,11 +3,8 @@
 import csv
 import json
 import os
-from typing import Any, Dict, List, Tuple, Type
+from typing import Any, Dict, List, Tuple
 
-from pydantic import BaseModel
-
-from src.defs.auto_acmg import ACMGResult
 from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionSeqVarPath
 from src.defs.genome_builds import GenomeRelease
 

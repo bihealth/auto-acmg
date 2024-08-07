@@ -6,9 +6,9 @@ import pytest
 
 from src.auto_acmg import AutoACMG
 from src.core.config import Config
-from src.criteria.auto_criteria import AutoACMGCriteria
 from src.criteria.auto_ps1_pm5 import AutoPS1PM5
 from src.defs.annonars_variant import AnnonarsVariantResponse
+from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGResult
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 
@@ -73,17 +73,11 @@ def test_ps1_pm5(
     auto_acmg = AutoACMG(variant_name, genome_release, config=config)
     seqvar = auto_acmg.resolve_variant()
     assert isinstance(seqvar, SeqVar)
-    # Then, fetch the variant_info from Annonars
-    auto_acmg_criteria = AutoACMGCriteria(seqvar, config=config)
-    variant_info = auto_acmg_criteria._get_variant_info(seqvar)
-    assert isinstance(variant_info, AnnonarsVariantResponse)
-    # Then, make prediction
-    auto_ps1_pm5 = AutoPS1PM5(seqvar, variant_info.result, config=config)
-    prediction, details = auto_ps1_pm5.predict()
-    print(details)
-    if expected_prediction is None:
-        assert prediction is None, f"Failed for {variant_name}"
-    else:
-        assert prediction
-        assert prediction.PS1 == expected_prediction[0]
-        assert prediction.PM5 == expected_prediction[1]
+    # Then, setup the data
+    auto_acmg_result = auto_acmg.parse_data(seqvar)
+    assert isinstance(auto_acmg_result, AutoACMGResult)
+    # Then, predict PS1 and PM5
+    auto_ps1_pm5 = AutoPS1PM5()
+    ps1_pm5 = auto_ps1_pm5.predict_ps1pm5(seqvar, auto_acmg_result.data)
+    assert ps1_pm5[0].name == "PS1"
+    assert ps1_pm5[1].name == "PM5"

@@ -6,9 +6,9 @@ import pytest
 
 from src.auto_acmg import AutoACMG
 from src.core.config import Config
-from src.criteria.auto_criteria import AutoACMGCriteria
 from src.criteria.auto_pm2_ba1_bs1_bs2 import AutoPM2BA1BS1BS2
 from src.defs.annonars_variant import AnnonarsVariantResponse
+from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGResult
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 
@@ -72,29 +72,23 @@ from src.defs.seqvar import SeqVar
         # ("NM_000277.2(PAH):c.504C>A", GenomeRelease.GRCh37, (False, False, False, True)),
     ],
 )
-def test_pm2_ba1_bs1_bs2(
+def test_pm2ba1bs1bs2(
     variant_name: str,
     genome_release: GenomeRelease,
-    expected_prediction: Tuple[bool, bool, bool, bool],
+    expected_prediction: bool,
     config: Config,
 ):
     # First, resolve variant
     auto_acmg = AutoACMG(variant_name, genome_release, config=config)
     seqvar = auto_acmg.resolve_variant()
     assert isinstance(seqvar, SeqVar)
-    # Then, fetch the variant_info from Annonars
-    auto_acmg_criteria = AutoACMGCriteria(seqvar, config=config)
-    variant_info = auto_acmg_criteria._get_variant_info(seqvar)
-    assert isinstance(variant_info, AnnonarsVariantResponse)
+    # Then, setup the data
+    auto_acmg_result = auto_acmg.parse_data(seqvar)
+    assert isinstance(auto_acmg_result, AutoACMGResult)
     # Then, predict PM2, BA1, BS1, BS2
-    auto_pm2_ba1_bs1_bs2 = AutoPM2BA1BS1BS2(seqvar, variant_info.result, config=config)
-    prediction, details = auto_pm2_ba1_bs1_bs2.predict()
-    print(details)
-    if expected_prediction is None:
-        assert prediction is None, f"Failed for {variant_name}"
-    else:
-        assert prediction
-        assert prediction.PM2 == expected_prediction[0], f"Failed for {variant_name}"
-        assert prediction.BA1 == expected_prediction[1], f"Failed for {variant_name}"
-        assert prediction.BS1 == expected_prediction[2], f"Failed for {variant_name}"
-        assert prediction.BS2 == expected_prediction[3], f"Failed for {variant_name}"
+    auto_pm2ba1bs1bs2 = AutoPM2BA1BS1BS2()
+    pm2ba1bs1bs2 = auto_pm2ba1bs1bs2.predict_pm2ba1bs1bs2(seqvar, auto_acmg_result.data)
+    assert pm2ba1bs1bs2[0].name == "PM2"
+    assert pm2ba1bs1bs2[1].name == "BA1"
+    assert pm2ba1bs1bs2[2].name == "BS1"
+    assert pm2ba1bs1bs2[3].name == "BS2"

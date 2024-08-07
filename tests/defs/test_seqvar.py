@@ -20,6 +20,14 @@ def dotty_response_success():
     return DottySpdiResponse.model_validate(get_json_object("dotty/dotty_spdi_success.json"))
 
 
+@pytest.fixture
+def dotty_response_failure():
+    response = MagicMock()
+    response.success = False
+    response.value = None
+    return response
+
+
 # ===== SeqVar tests =====
 
 
@@ -94,7 +102,6 @@ def test_normalize_chrom(seqvar_resolver, input_chrom, expected_normalized_chrom
     assert seqvar_resolver._normalize_chrom(input_chrom) == expected_normalized_chrom
 
 
-# TODO: Add more test cases for gnomad and spdi representations
 @pytest.mark.parametrize(
     "representation, expected",
     [
@@ -125,7 +132,6 @@ def test_parse_separated_seqvar_fail(seqvar_resolver, representation):
         seqvar_resolver._parse_separated_seqvar(representation)
 
 
-# TODO: Add more test cases for canonical spdi representation
 @pytest.mark.parametrize(
     "value, expected",
     [
@@ -173,8 +179,13 @@ def test_resolve_seqvar_success(mock_to_spdi, seqvar_resolver, dotty_response_su
     assert variant.insert == "GA"
 
 
-@patch.object(DottyClient, "to_spdi")
-def test_resolve_seqvar_failure(mock_to_spdi, seqvar_resolver):
-    mock_to_spdi.side_effect = MagicMock(success=False)
-    with pytest.raises(ParseError):
+@patch("src.api.dotty.DottyClient.to_spdi")
+def test_resolve_seqvar_failure(mock_to_spdi, seqvar_resolver, dotty_response_failure):
+    """Test resolve_seqvar method handling an invalid response from dotty_client.to_spdi."""
+    mock_to_spdi.return_value = dotty_response_failure
+
+    with pytest.raises(ParseError) as exc_info:
         seqvar_resolver.resolve_seqvar("Example.3:c.1085delT", GenomeRelease.GRCh38)
+
+    assert "Unable to resolve seqvar" in str(exc_info.value)
+    mock_to_spdi.assert_called_once_with("Example.3:c.1085delT", assembly=GenomeRelease.GRCh38)

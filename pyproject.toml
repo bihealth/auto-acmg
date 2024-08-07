@@ -31,3 +31,20 @@ env = [
     "USE_CACHE=0",
     "API_REEV_URL=https://reev.cubi.bihealth.org/internal/proxy",
 ]
+
+
+[tool.mypy]
+# Paths to search for import modules, including stubs.
+mypy_path = ["stubs"]
+
+# Treats missing imports as errors.
+ignore_missing_imports = true
+
+# Runs type checking on all files, even those without type hints.
+check_untyped_defs = true
+
+# Allows specifying per-module configurations.
+[[tool.mypy.overrides]]
+module = "tabix"
+disallow_untyped_defs = false  # Allow untyped definitions in the tabix module
+

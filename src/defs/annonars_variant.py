@@ -19,12 +19,15 @@ class VariantQuery(BaseModel):
 
 class Cadd(BaseModel):
     ConsDetail: Optional[str] = None
+    Consequence: Optional[str] = None
     # PolyPhenVal: Optional[float] = None
     verPhyloP: Optional[float] = None
     SpliceAI_acc_gain: Optional[float] = Field(..., alias="SpliceAI-acc-gain")
     SpliceAI_acc_loss: Optional[float] = Field(..., alias="SpliceAI-acc-loss")
     SpliceAI_don_gain: Optional[float] = Field(..., alias="SpliceAI-don-gain")
     SpliceAI_don_loss: Optional[float] = Field(..., alias="SpliceAI-don-loss")
+    dbscSNV_ada: Optional[float] = Field(..., alias="dbscSNV-ada_score")
+    dbscSNV_rf: Optional[float] = Field(..., alias="dbscSNV-rf_score")
 
 
 class EffectInfo(BaseModel):

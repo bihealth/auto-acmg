@@ -2,7 +2,7 @@
 
 from typing import Dict, List, Optional, Tuple
 
-from biocommons.seqrepo import SeqRepo  # type: ignore
+from biocommons.seqrepo import SeqRepo
 from loguru import logger
 
 from lib.maxentpy import maxent
@@ -10,17 +10,22 @@ from lib.maxentpy.maxent import load_matrix3, load_matrix5
 from src.api.annonars import AnnonarsClient
 from src.api.mehari import MehariClient
 from src.core.config import Config
-from src.defs.auto_acmg import SpliceType
-from src.defs.auto_pvs1 import (
-    GenomicStrand,
-    SeqVarConsequence,
-    SeqvarConsequenceMapping,
-    TranscriptInfo,
-)
+from src.defs.auto_acmg import GenomicStrand, SpliceType, TranscriptInfo
+from src.defs.auto_pvs1 import SeqvarConsequenceMapping, SeqVarPVS1Consequence
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException
 from src.defs.genome_builds import CHROM_REFSEQ_37, CHROM_REFSEQ_38, GenomeRelease
 from src.defs.mehari import Exon, TranscriptGene, TranscriptSeqvar
 from src.defs.seqvar import SeqVar
+
+
+class AutoACMGHelper:
+    """Helper class for the AutoACMG algorithm."""
+
+    def __init__(self, *, config: Optional[Config] = None):
+        #: Configuration settings.
+        self.config: Config = config or Config()
+        #: Annonars client for the API.
+        self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
 
 
 class SplicingPrediction:
@@ -323,7 +328,7 @@ class SeqVarTranscriptsHelper:
         self.seqvar_transcript: TranscriptSeqvar | None = None
         self.gene_ts_info: List[TranscriptGene] = []
         self.gene_transcript: TranscriptGene | None = None
-        self.consequence: SeqVarConsequence = SeqVarConsequence.NotSet
+        self.consequence: SeqVarPVS1Consequence = SeqVarPVS1Consequence.NotSet
 
     def get_ts_info(
         self,
@@ -332,7 +337,7 @@ class SeqVarTranscriptsHelper:
         TranscriptGene | None,
         List[TranscriptSeqvar],
         List[TranscriptGene],
-        SeqVarConsequence,
+        SeqVarPVS1Consequence,
     ]:
         """Return the transcript information.
 
@@ -364,7 +369,7 @@ class SeqVarTranscriptsHelper:
             if not self.seqvar_ts_info or len(self.seqvar_ts_info) == 0:
                 self.seqvar_transcript = None
                 self.gene_transcript = None
-                self.consequence = SeqVarConsequence.NotSet
+                self.consequence = SeqVarPVS1Consequence.NotSet
                 logger.warning("No transcripts found for the sequence variant.")
                 return
 
@@ -391,14 +396,14 @@ class SeqVarTranscriptsHelper:
             else:
                 self.seqvar_transcript = None
                 self.gene_transcript = None
-                self.consequence = SeqVarConsequence.NotSet
+                self.consequence = SeqVarPVS1Consequence.NotSet
 
         except AutoAcmgBaseException as e:
             logger.error("Failed to get transcripts for the sequence variant. Error: {}", e)
             raise AlgorithmError("Failed to get transcripts for the sequence variant.") from e
 
     @staticmethod
-    def _get_consequence(seqvar_transcript: TranscriptSeqvar | None) -> SeqVarConsequence:
+    def _get_consequence(seqvar_transcript: TranscriptSeqvar | None) -> SeqVarPVS1Consequence:
         """Get the consequence of the sequence variant.
 
         Args:
@@ -408,12 +413,12 @@ class SeqVarTranscriptsHelper:
             SeqVarConsequence: The consequence of the sequence variant.
         """
         if not seqvar_transcript:
-            return SeqVarConsequence.NotSet
+            return SeqVarPVS1Consequence.NotSet
         else:
             for consequence in seqvar_transcript.consequences:
                 if consequence in SeqvarConsequenceMapping:
                     return SeqvarConsequenceMapping[consequence]
-            return SeqVarConsequence.NotSet
+            return SeqVarPVS1Consequence.NotSet
 
     @staticmethod
     def _choose_transcript(

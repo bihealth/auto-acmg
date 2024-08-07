@@ -59,7 +59,8 @@ class SeqVar:
             else f"{genome_release.name}-{self.chrom}-{pos}-{delete}-{insert}"
         )
 
-    def _normalize_chromosome(self, chrom: str) -> str:
+    @staticmethod
+    def _normalize_chromosome(chrom: str) -> str:
         """Normalize the chromosome name."""
         return chrom.lower().replace("chr", "").replace("m", "mt").replace("mtt", "mt").upper()
 
@@ -231,13 +232,10 @@ class SeqVarResolver:
             raise ParseError(f"Invalid position: {e}")
 
         try:
-            if genome_release is None:
-                spdi = self.dotty_client.to_spdi(value)
-            else:
-                spdi = self.dotty_client.to_spdi(value, assembly=genome_release)
+            spdi = self.dotty_client.to_spdi(value, assembly=genome_release)
             if spdi is not None and spdi.success and spdi.value is not None:
                 return SeqVar(
-                    genome_release=GenomeRelease[spdi.value.assembly],
+                    genome_release=GenomeRelease.from_string(spdi.value.assembly),
                     chrom=spdi.value.contig,
                     pos=spdi.value.pos,
                     delete=spdi.value.reference_deleted,

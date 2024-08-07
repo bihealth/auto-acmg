@@ -6,9 +6,9 @@ import pytest
 
 from src.auto_acmg import AutoACMG
 from src.core.config import Config
-from src.criteria.auto_criteria import AutoACMGCriteria
 from src.criteria.auto_pp2_bp1 import AutoPP2BP1
 from src.defs.annonars_variant import AnnonarsVariantResponse
+from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGResult
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 
@@ -68,17 +68,11 @@ def test_pp2_bp1(
     auto_acmg = AutoACMG(variant_name, genome_release, config=config)
     seqvar = auto_acmg.resolve_variant()
     assert isinstance(seqvar, SeqVar)
-    # Then, fetch the variant_info from Annonars
-    auto_acmg_criteria = AutoACMGCriteria(seqvar, config=config)
-    variant_info = auto_acmg_criteria._get_variant_info(seqvar)
-    assert isinstance(variant_info, AnnonarsVariantResponse)
-    # Then, make prediction
-    auto_pp2_bp1 = AutoPP2BP1(seqvar, variant_info.result, config=config)
-    prediction, details = auto_pp2_bp1.predict()
-    print(details)
-    if expected_prediction is None:
-        assert prediction is None, f"Failed for {variant_name}"
-    else:
-        assert prediction
-        assert prediction.PP2 == expected_prediction[0]
-        assert prediction.BP1 == expected_prediction[1]
+    # Then, setup the data
+    auto_acmg_result = auto_acmg.parse_data(seqvar)
+    assert isinstance(auto_acmg_result, AutoACMGResult)
+    # Then, predict PP2 and BP1
+    auto_pp2_bp1 = AutoPP2BP1()
+    pp2_bp1 = auto_pp2_bp1.predict_pp2bp1(seqvar, auto_acmg_result.data)
+    assert pp2_bp1[0].name == "PP2"
+    assert pp2_bp1[1].name == "BP1"

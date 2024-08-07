@@ -3,42 +3,32 @@
 import os
 from typing import Optional, Tuple
 
-import tabix  # type: ignore
+import tabix
 from loguru import logger
 
-from src.api.annonars import AnnonarsClient
-from src.core.config import Config, settings
-from src.defs.annonars_variant import VariantResult
-from src.defs.auto_acmg import PM1
+from src.core.config import settings
+from src.defs.auto_acmg import (
+    PM1,
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+)
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, InvalidAPIResposeError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.utils import AutoACMGHelper
 
 
-class AutoPM1:
+class AutoPM1(AutoACMGHelper):
     """Class for automatic PM1 prediction."""
 
-    def __init__(
-        self,
-        seqvar: SeqVar,
-        variant_info: VariantResult,
-        *,
-        config: Optional[Config] = None,
-    ):
-        #: Configuration to use.
-        self.config: Config = config or Config()
-        #: Sequence variant to predict.
-        self.seqvar: SeqVar = seqvar
-        #: Variant information.
-        self.variant_info: VariantResult = variant_info
-        #: Annonars client.
-        self.annonars_client: AnnonarsClient = AnnonarsClient(
-            api_base_url=self.config.api_base_url_annonars
-        )
+    def __init__(self):
+        super().__init__()
         #: Prediction result.
-        self.prediction: Optional[PM1] = None
-        #: Comment to store the prediction explanation.
-        self.comment: str = ""
+        self.prediction_pm1: Optional[PM1] = None
+        #: comment_pm1 to store the prediction explanation.
+        self.comment_pm1: str = ""
 
     def _count_vars(self, seqvar: SeqVar, start_pos: int, end_pos: int) -> Tuple[int, int]:
         """
@@ -56,11 +46,11 @@ class AutoPM1:
             Tuple[int, int]: The number of pathogenic and benign variants.
 
         Raises:
+            AlgorithmError: If end position is less than the start position.
             InvalidAPIResposeError: If the API response is invalid or cannot be processed.
         """
         if end_pos < start_pos:
             logger.error("End position is less than the start position.")
-            logger.debug("Positions given: {} - {}", start_pos, end_pos)
             raise AlgorithmError("End position is less than the start position.")
 
         response = self.annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
@@ -93,13 +83,25 @@ class AutoPM1:
             ]
             return len(pathogenic_variants), len(benign_variants)
         else:
-            self.comment += "Missing ClinVar data."
             logger.error("Failed to get variant from range. No ClinVar data.")
             raise InvalidAPIResposeError("Failed to get variant from range. No ClinVar data.")
 
-    def _get_uniprot_domain(self, seqvar: SeqVar) -> Optional[Tuple[int, int]]:
-        """Check if the variant is in a UniProt domain."""
-        self.comment += "Check if the variant is in a UniProt domain.\n"
+    @staticmethod
+    def _get_uniprot_domain(seqvar: SeqVar) -> Optional[Tuple[int, int]]:
+        """
+        Retrieve the UniProt domain for the variant and return the start and end positions if found
+        or None otherwise.
+
+        Args:
+            seqvar: The sequence variant being analyzed.
+
+        Returns:
+            Optional[Tuple[int, int]]: The start and end positions of the UniProt domain if found,
+            None otherwise.
+
+        Raises:
+            AlgorithmError: If an error occurs while checking if the variant is in a UniProt domain.
+        """
         try:
             # Find path to the lib file
             if seqvar.genome_release == GenomeRelease.GRCh37:
@@ -121,93 +123,74 @@ class AutoPM1:
             logger.error("Failed to check if the variant is in a UniProt domain. Error: {}", e)
             raise AlgorithmError("Failed to check if the variant is in a UniProt domain.") from e
 
-    def predict(self) -> Tuple[Optional[PM1], str]:
+    def verify_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PM1], str]:
         """Predict PM1 criteria."""
-        self.prediction = PM1()
-        try:
-            if self.seqvar.chrom == "MT":
-                # skipped according to McCormick et al. (2020).
-                self.comment = "The variant is in the mitochondrial genome. PM1 is not met."
-                self.prediction.PM1 = False
-                return self.prediction, self.comment
-
-            self.comment = (
-                "Counting pathogenic variants in the range of 50bp."
-                f"The range is {self.seqvar.pos - 25} - {self.seqvar.pos + 25}. => \n"
-            )
-            logger.debug(
-                "Counting pathogenic variants in the range of 50bp."
-                f"The range is {self.seqvar.pos - 25} - {self.seqvar.pos + 25}."
-            )
-            pathogenic_count, benign_count = self._count_vars(
-                self.seqvar, self.seqvar.pos - 25, self.seqvar.pos + 25
-            )
-
-            self.comment += (
-                f"Found {pathogenic_count} Pathogenic and {benign_count} Benign variants. => \n"
-            )
-            logger.debug(
-                "Found {} Pathogenic and {} Benign variants.", pathogenic_count, benign_count
-            )
-            if pathogenic_count >= 8:
-                self.comment += "Found 8 or more pathogenic variants. PM1 is met."
-                logger.debug("Found 8 or more pathogenic variants. PM1 is met.")
-                self.prediction.PM1 = True
-                return self.prediction, self.comment
-            else:
-                self.comment += "Found less than 8 pathogenic variants."
-                logger.debug("Found less than 8 pathogenic variants.")
-
-            self.comment += "Checking if the variant is in a UniProt domain. => \n"
-            logger.debug("Checking if the variant is in a UniProt domain.")
-            uniprot_domain = self._get_uniprot_domain(self.seqvar)
-            if not uniprot_domain:
-                self.comment += "The variant is not in a UniProt domain."
-                logger.debug("The variant is not in a UniProt domain.")
-                self.prediction.PM1 = False
-                return self.prediction, self.comment
-
-            start_pos, end_pos = uniprot_domain
-            self.comment += (
-                "Counting pathogenic variants in the UniProt domain. "
-                f"The range is {start_pos} - {end_pos}. => \n"
-            )
-            logger.debug(
-                "Counting pathogenic variants in the UniProt domain. "
-                f"The range is {start_pos} - {end_pos}."
-            )
-            pathogenic_count, benign_count = self._count_vars(self.seqvar, start_pos, end_pos)
-            self.comment += (
-                f"Found {pathogenic_count} Pathogenic variants and {benign_count} Benign variants."
-            )
-            if pathogenic_count >= (end_pos - start_pos) / 4:
-                self.comment += (
-                    f"Found {pathogenic_count} pathogenic variants in the UniProt domain of length "
-                    f"{end_pos - start_pos}. PM1 is met."
+        self.prediction_pm1 = PM1()
+        self.comment_pm1 = ""
+        if seqvar.chrom == "MT":
+            # skipped according to McCormick et al. (2020).
+            self.comment_pm1 = "The variant is in the mitochondrial genome. PM1 is not met."
+            self.prediction_pm1.PM1 = False
+        else:
+            try:
+                pathogenic_count, benign_count = self._count_vars(
+                    seqvar, seqvar.pos - 25, seqvar.pos + 25
                 )
-                logger.debug(
-                    (
-                        f"Found {pathogenic_count} pathogenic variants in the UniProt domain of "
-                        "length {end_pos - start_pos}. PM1 is met."
+                if pathogenic_count >= var_data.thresholds.pm1_pathogenic:
+                    self.comment_pm1 += (
+                        f"Found {var_data.thresholds.pm1_pathogenic} or more pathogenic variants. "
+                        "PM1 is met."
                     )
-                )
-                self.prediction.PM1 = True
-                return self.prediction, self.comment
-            else:
-                self.comment += (
-                    f"Found {pathogenic_count} pathogenic variants in the UniProt "
-                    "domain of length {end_pos - start_pos}. PM1 is not met."
-                )
-                logger.debug(
-                    (
-                        f"Found {pathogenic_count} pathogenic variants in the UniProt domain of "
-                        "length {end_pos - start_pos}. PM1 is not met."
+                    self.prediction_pm1.PM1 = True
+                    return self.prediction_pm1, self.comment_pm1
+                else:
+                    self.comment_pm1 += (
+                        f"Found less than {var_data.thresholds.pm1_pathogenic} pathogenic "
+                        "variants. "
                     )
-                )
-                self.prediction.PM1 = False
-        except AutoAcmgBaseException as e:
-            self.comment += f"Error occurred during PM1 prediction. Error: {e}"
-            logger.error("Error occurred during PM1 prediction. Error: {}", e)
-            self.prediction = None
 
-        return self.prediction, self.comment
+                uniprot_domain = self._get_uniprot_domain(seqvar)
+                if not uniprot_domain:
+                    self.comment_pm1 += "Variant is not in a UniProt domain. PM1 is not met."
+                    self.prediction_pm1.PM1 = False
+                    return self.prediction_pm1, self.comment_pm1
+
+                start_pos, end_pos = uniprot_domain
+                pathogenic_count, benign_count = self._count_vars(seqvar, start_pos, end_pos)
+                self.comment_pm1 += (
+                    f"Found {pathogenic_count} Pathogenic variants "
+                    f"and {benign_count} Benign variants "
+                    f"in Uniprot Domain: {start_pos}-{end_pos}. "
+                )
+                if pathogenic_count >= (end_pos - start_pos) / 4:
+                    self.comment_pm1 += "PM1 is met."
+                    self.prediction_pm1.PM1 = True
+                    return self.prediction_pm1, self.comment_pm1
+                else:
+                    self.comment_pm1 += "PM1 is not met."
+                    self.prediction_pm1.PM1 = False
+            except AutoAcmgBaseException as e:
+                logger.error("Error occurred during PM1 prediction. Error: {}", e)
+                self.comment_pm1 = f"Error occurred during PM1 prediction. Error: {e}"
+                self.prediction_pm1 = None
+        return self.prediction_pm1, self.comment_pm1
+
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+        """Predict PM1 criteria."""
+        pred, comment = self.verify_pm1(seqvar, var_data)
+        if pred:
+            pm1_pred = (
+                AutoACMGPrediction.Met
+                if pred.PM1
+                else (AutoACMGPrediction.NotMet if pred.PM1 is False else AutoACMGPrediction.Failed)
+            )
+            pm1_strength = pred.PM1_strength
+        else:
+            pm1_pred = AutoACMGPrediction.Failed
+            pm1_strength = AutoACMGStrength.PathogenicModerate
+        return AutoACMGCriteria(
+            name="PM1",
+            prediction=pm1_pred,
+            strength=pm1_strength,
+            summary=comment,
+        )
