@@ -121,7 +121,6 @@ class AutoPS1PM5(AutoACMGHelper):
             information.
             - Parsing the alternative amino acid change & checking if the alternative variant is
             pathogenic.
-
             - If the alternative variant is pathogenic and the amino acid change is the same as the
             primary variant, then PS1 is set to True.
             - If the alternative variant is pathogenic and the amino acid change is different from

@@ -4,6 +4,8 @@
 Usage
 =====
 
+**Note**: The following section is outdated and will be updated soon!
+
 The following section describe the usage of the AutoACMG package.
 
 .. _installation:
