@@ -580,7 +580,7 @@ class SeqVarPVS1Helper(AutoACMGHelper):
             raise MissingDataError("Strand is not available. Cannot determine exon skipping.")
         start_pos, end_pos = self._skipping_exon_pos(seqvar, exons)
         self.comment_pvs1 += f"Variant's exon position: {start_pos} - {end_pos}."
-        if (end_pos - start_pos) % 3 != 0:
+        if (end_pos - start_pos + 1) % 3 != 0:
             logger.debug("Exon length is not a multiple of 3. Predicted to cause exon skipping.")
             self.comment_pvs1 += (
                 "Exon length is not a multiple of 3. Predicted to cause exon skipping."
@@ -599,14 +599,14 @@ class SeqVarPVS1Helper(AutoACMGHelper):
         cryptic_sites = sp.get_cryptic_ss(refseq, splice_type)
         if len(cryptic_sites) > 0:
             for site in cryptic_sites:
-                if abs(site[0] - seqvar.pos) % 3 != 0:
+                if abs(site[0] - seqvar.pos + 1) % 3 != 0:
                     logger.debug("Cryptic splice site disruption predicted.")
                     self.comment_pvs1 += (
                         "Cryptic splice site disruption predicted. "
                         f"Cryptic splice site: position {site[0]}, splice context {site[1]}, "
                         f"maximnum entropy score {site[2]}. "
                         f"Cryptic splice site - variant position ({seqvar.pos}) = "
-                        f"{abs(site[0] - seqvar.pos)} is not devisible by 3."
+                        f"{abs(site[0] - seqvar.pos + 1)} is not devisible by 3."
                     )
                     return True
             logger.debug("Cryptic splice site disruption not predicted.")
@@ -616,7 +616,7 @@ class SeqVarPVS1Helper(AutoACMGHelper):
                     f"Cryptic splice site {i}: position {site[0]}, splice context {site[1]}, "
                     f"maximnum entropy score {site[2]}. "
                     f"Cryptic splice site - variant position ({seqvar.pos}) = "
-                    f"{abs(site[0] - seqvar.pos)} is devisible by 3."
+                    f"{abs(site[0] - seqvar.pos + 1)} is devisible by 3."
                 )
         else:
             logger.debug("No cryptic splice site found. Predicted to preserve reading frame.")

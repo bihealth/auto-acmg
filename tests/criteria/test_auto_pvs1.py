@@ -512,58 +512,97 @@ def test_lof_rm_gt_10pct_of_prot(prot_pos, prot_length, expected_result):
     assert result == expected_result
 
 
-# @pytest.mark.parametrize(
-#     "skipping_exon_pos_output, consequences, strand, cryptic_ss_output, expected",
-#     [
-#         (
-#             (90, 120),  # _skipping_exon_pos output
-#             ["splice_donor_variant"],  # consequences
-#             GenomicStrand.Plus,  # strand
-#             [(95, "some_seq", 5.0)],  # get_cryptic_ss output
-#             True,
-#         ),
-#         (
-#             (90, 123),
-#             ["splice_acceptor_variant"],
-#             GenomicStrand.Plus,
-#             [],
-#             False,
-#         ),
-#         (
-#             (90, 120),
-#             ["splice_donor_variant"],
-#             GenomicStrand.Minus,
-#             [(101, "some_seq", 5.0)],
-#             True,
-#         ),
-#         (
-#             (90, 120),
-#             ["splice_donor_variant"],
-#             GenomicStrand.Minus,
-#             [(103, "some_seq", 5.0)],
-#             False,
-#         ),
-#     ],
-# )
-# def test_exon_skip_or_cryptic_ss_disrupt(
-#     seqvar, skipping_exon_pos_output, consequences, strand, cryptic_ss_output, expected
-# ):
-#     """Test the _exon_skip_or_cryptic_ss_disrupt method."""
-#     exons = [MockExon(90, 120, 90, 120)]
+# ============== _exon_skip_or_cryptic_ss_disrupt ==============
 
-#     # Mock the SplicingPrediction class
-#     sp_mock = MagicMock()
-#     sp_mock.get_sequence.return_value = "some_sequence"
-#     sp_mock.get_cryptic_ss.return_value = cryptic_ss_output
 
-#     with patch.object(
-#         SeqVarPVS1Helper, "_skipping_exon_pos", return_value=skipping_exon_pos_output
-#     ):
-#         with patch("src.utils.SplicingPrediction", return_value=sp_mock):
-#             result = SeqVarPVS1Helper()._exon_skip_or_cryptic_ss_disrupt(
-#                 seqvar, exons, consequences, strand  # type: ignore
-#             )
-#             assert result == expected, f"Expected {expected}, but got {result}"
+@pytest.fixture
+def seqvar_ss():
+    return SeqVar(genome_release=GenomeRelease.GRCh37, chrom="1", pos=100, delete="A", insert="T")
+
+
+@pytest.fixture
+def exons():
+    return [MagicMock(start=90, end=110), MagicMock(start=120, end=140)]
+
+
+@pytest.fixture
+def consequences():
+    return ["splice_acceptor_variant", "splice_donor_variant"]
+
+
+@pytest.fixture
+def helper():
+    return SeqVarPVS1Helper()
+
+
+@patch("src.criteria.auto_pvs1.SeqVarPVS1Helper._skipping_exon_pos", return_value=(90, 111))
+def test_exon_skip_or_cryptic_ss_disrupt_exon_skipping(
+    mock_skipping_exon_pos, helper, seqvar_ss, exons, consequences
+):
+    """Test when the exon length is not a multiple of 3, predicting exon skipping."""
+    result = helper.exon_skip_or_cryptic_ss_disrupt(
+        seqvar_ss, exons, consequences, GenomicStrand.Plus
+    )
+    assert result is True
+    assert (
+        "Exon length is not a multiple of 3. Predicted to cause exon skipping."
+        in helper.comment_pvs1
+    )
+
+
+@patch("src.criteria.auto_pvs1.SeqVarPVS1Helper._skipping_exon_pos", return_value=(90, 110))
+@patch("src.criteria.auto_pvs1.SplicingPrediction.get_sequence", return_value="ATGC" * 10)
+@patch("src.criteria.auto_pvs1.SplicingPrediction.determine_splice_type", return_value="donor")
+@patch("src.criteria.auto_pvs1.SplicingPrediction.get_cryptic_ss", return_value=[(95, "GT", 5)])
+def test_exon_skip_or_cryptic_ss_disrupt_cryptic_splice_site_disruption(
+    mock_get_sequence,
+    mock_determine_splice_type,
+    mock_get_cryptic_ss,
+    mock_skipping_exon_pos,
+    helper,
+    seqvar_ss,
+    exons,
+    consequences,
+):
+    """Test when there is a cryptic splice site disruption."""
+    result = helper.exon_skip_or_cryptic_ss_disrupt(
+        seqvar_ss, exons, consequences, GenomicStrand.Plus
+    )
+    assert result is True
+    assert "Cryptic splice site disruption predicted." in helper.comment_pvs1
+
+
+@patch("src.criteria.auto_pvs1.SeqVarPVS1Helper._skipping_exon_pos", return_value=(90, 110))
+@patch("src.criteria.auto_pvs1.SplicingPrediction.get_sequence", return_value="ATGC" * 10)
+@patch("src.criteria.auto_pvs1.SplicingPrediction.determine_splice_type", return_value="donor")
+@patch("src.criteria.auto_pvs1.SplicingPrediction.get_cryptic_ss", return_value=[])
+def test_exon_skip_or_cryptic_ss_disrupt_preserve_reading_frame(
+    mock_get_sequence,
+    mock_determine_splice_type,
+    mock_get_cryptic_ss,
+    mock_skipping_exon_pos,
+    helper,
+    seqvar_ss,
+    exons,
+    consequences,
+):
+    """Test when there is no cryptic splice site and exon length is a multiple of 3, preserving the reading frame."""
+    result = helper.exon_skip_or_cryptic_ss_disrupt(
+        seqvar_ss, exons, consequences, GenomicStrand.Plus
+    )
+    assert result is False
+    assert (
+        "No cryptic splice site found. Predicted to preserve reading frame." in helper.comment_pvs1
+    )
+
+
+def test_exon_skip_or_cryptic_ss_disrupt_missing_strand(helper, seqvar_ss, exons, consequences):
+    """Test when the strand is not set, raising MissingDataError."""
+    with pytest.raises(MissingDataError):
+        helper.exon_skip_or_cryptic_ss_disrupt(seqvar_ss, exons, consequences, GenomicStrand.NotSet)
+
+
+# ============== _alt_start_codon ==============
 
 
 @pytest.mark.parametrize(
