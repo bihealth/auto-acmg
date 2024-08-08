@@ -5,6 +5,7 @@ import tabix
 
 from src.criteria.auto_pm1 import AutoPM1
 from src.defs.auto_acmg import PM1, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.exceptions import AlgorithmError, InvalidAPIResposeError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 
@@ -21,7 +22,7 @@ def auto_pm1():
 
 # ============== _count_vars =================
 
-# TODO: Fix the unit test patching. The current path doesn't patch existing annonars_client.
+# TODO: Annonars client is not mocked properly. Fix this!
 
 # @pytest.fixture
 # def mock_response():
@@ -50,39 +51,47 @@ def auto_pm1():
 #     return response
 
 
-# @patch("src.criteria.auto_pm1.AutoACMGHelper.annonars_client")
-# def test_count_vars_success(mock_annonars_client, auto_pm1, seqvar, mock_response):
+# @pytest.fixture
+# def auto_pm1_mocked():
+#     with patch('src.api.annonars.AnnonarsClient') as mocked_annonars:
+#         pm1_instance = AutoPM1()
+#         mocked_annonars.return_value.get_variant_from_range.return_value = MagicMock()
+#         yield pm1_instance, mocked_annonars
+
+
+# def test_count_vars_success(auto_pm1_mocked, seqvar, mock_response):
 #     """Test counting pathogenic and benign variants successfully."""
-#     mock_annonars_client.get_variant_from_range.return_value = mock_response
-#     pathogenic, benign = auto_pm1._count_vars(seqvar, 75, 125)
+#     pm1_instance, mocked_annonars = auto_pm1_mocked
+#     mocked_annonars.get_variant_from_range.return_value = mock_response
+#     pathogenic, benign = pm1_instance._count_vars(seqvar, 75, 125)
 #     assert pathogenic == 1
 #     assert benign == 1
 
 
-# def test_count_vars_invalid_range(auto_pm1, seqvar):
+# def test_count_vars_invalid_range(auto_pm1_mocked, seqvar):
 #     """Test error handling when the end position is less than the start position."""
+#     pm1_instance, _ = auto_pm1_mocked
 #     with pytest.raises(AlgorithmError) as excinfo:
-#         auto_pm1._count_vars(seqvar, 150, 100)
+#         pm1_instance._count_vars(seqvar, 150, 100)
 #     assert "End position is less than the start position" in str(excinfo.value)
 
 
-# @patch("src.criteria.auto_pm1.AutoACMGHelper.annonars_client")
-# def test_count_vars_api_failure(mock_annonars_client, auto_pm1, seqvar):
+# def test_count_vars_api_failure(auto_pm1_mocked, seqvar):
 #     """Test handling API response failures."""
-#     mock_annonars_client.get_variant_from_range.return_value = None
+#     pm1_instance, mocked_annonars = auto_pm1_mocked
+#     mocked_annonars.get_variant_from_range.return_value = None
 #     with pytest.raises(InvalidAPIResposeError) as excinfo:
-#         auto_pm1._count_vars(seqvar, 75, 125)
+#         pm1_instance._count_vars(seqvar, 75, 125)
 #     assert "Failed to get variant from range. No ClinVar data." in str(excinfo.value)
 
 
-# @patch("src.criteria.auto_pm1.AutoACMGHelper.annonars_client")
-# def test_count_vars_no_clinvar_data(mock_annonars_client, auto_pm1, seqvar):
+# def test_count_vars_no_clinvar_data(auto_pm1_mocked, seqvar):
 #     """Test handling missing ClinVar data in the response."""
-#     response = MagicMock()
-#     response.clinvar = []
-#     mock_annonars_client.get_variant_from_range.return_value = response
+#     pm1_instance, mocked_annonars = auto_pm1_mocked
+#     response = MagicMock(clinvar=[])
+#     mocked_annonars.get_variant_from_range.return_value = response
 #     with pytest.raises(InvalidAPIResposeError) as excinfo:
-#         auto_pm1._count_vars(seqvar, 75, 125)
+#         pm1_instance._count_vars(seqvar, 75, 125)
 #     assert "Failed to get variant from range. No ClinVar data." in str(excinfo.value)
 
 
