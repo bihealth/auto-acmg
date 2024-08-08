@@ -418,7 +418,7 @@ def test_undergo_nmd(gene_transcripts_file, transcript_id, hgnc_id, var_pos, exp
 )
 def test_in_bio_relevant_tsx(transcript_tags, expected_result):
     """Test the _in_bio_relevant_tsx method."""
-    result = SeqVarPVS1Helper().in_bio_relevant_tsx(transcript_tags)
+    result = SeqVarPVS1Helper().in_bio_relevant_tx(transcript_tags)
     assert result == expected_result, f"Failed for transcript_tags: {transcript_tags}"
 
 

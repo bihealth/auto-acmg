@@ -344,7 +344,7 @@ class SeqVarPVS1Helper(AutoACMGHelper):
         )
         return var_pos <= nmd_cutoff
 
-    def in_bio_relevant_tsx(self, transcript_tags: List[str]) -> bool:
+    def in_bio_relevant_tx(self, transcript_tags: List[str]) -> bool:
         """
         Checks if the exon with SeqVar is in a biologically relevant transcript.
 
@@ -768,7 +768,7 @@ class AutoPVS1(SeqVarPVS1Helper):
                 var_data.tx_pos_utr, var_data.hgnc_id, var_data.strand, var_data.exons
             ):
                 self.comment_pvs1 += " =>\n"
-                if self.in_bio_relevant_tsx(var_data.transcript_tags):
+                if self.in_bio_relevant_tx(var_data.transcript_tags):
                     self.prediction = PVS1Prediction.PVS1
                     self.prediction_path = PVS1PredictionSeqVarPath.NF1
                 else:
@@ -783,7 +783,7 @@ class AutoPVS1(SeqVarPVS1Helper):
                     self.comment_pvs1 += " =>\n"
                     if self.lof_freq_in_pop(
                         seqvar, var_data.exons, var_data.strand
-                    ) or not self.in_bio_relevant_tsx(var_data.transcript_tags):
+                    ) or not self.in_bio_relevant_tx(var_data.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionSeqVarPath.NF4
                     else:
@@ -803,7 +803,7 @@ class AutoPVS1(SeqVarPVS1Helper):
                 var_data.tx_pos_utr, var_data.hgnc_id, var_data.strand, var_data.exons
             ):
                 self.comment_pvs1 += " =>\n"
-                if self.in_bio_relevant_tsx(var_data.transcript_tags):
+                if self.in_bio_relevant_tx(var_data.transcript_tags):
                     self.prediction = PVS1Prediction.PVS1
                     self.prediction_path = PVS1PredictionSeqVarPath.SS1
                 else:
@@ -822,7 +822,7 @@ class AutoPVS1(SeqVarPVS1Helper):
                     self.comment_pvs1 += " =>\n"
                     if self.lof_freq_in_pop(
                         seqvar, var_data.exons, var_data.strand
-                    ) or not self.in_bio_relevant_tsx(var_data.transcript_tags):
+                    ) or not self.in_bio_relevant_tx(var_data.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionSeqVarPath.SS4
                     else:
@@ -842,7 +842,7 @@ class AutoPVS1(SeqVarPVS1Helper):
                     self.comment_pvs1 += " =>\n"
                     if self.lof_freq_in_pop(
                         seqvar, var_data.exons, var_data.strand
-                    ) or not self.in_bio_relevant_tsx(var_data.transcript_tags):
+                    ) or not self.in_bio_relevant_tx(var_data.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionSeqVarPath.SS7
                     else:
