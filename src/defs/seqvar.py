@@ -3,6 +3,8 @@
 import re
 from typing import Optional
 
+from pydantic import BaseModel, field_validator
+
 from src.api.dotty import DottyClient
 from src.core.config import Config
 from src.defs.exceptions import AutoAcmgBaseException, InvalidPos, ParseError
@@ -36,8 +38,13 @@ REGEX_CLINVAR_ID = re.compile(
 )
 
 
-class SeqVar:
-    """A class to represent a sequence variant."""
+class SeqVar(BaseModel):
+    genome_release: GenomeRelease
+    chrom: str
+    pos: int
+    delete: str
+    insert: str
+    user_repr: Optional[str] = None
 
     def __init__(
         self,
@@ -48,41 +55,31 @@ class SeqVar:
         insert: str,
         user_repr: Optional[str] = None,
     ):
-        self.genome_release = genome_release
-        self.chrom = self._normalize_chromosome(chrom)
-        self.pos = pos
-        self.delete = delete.upper()
-        self.insert = insert.upper()
-        self.user_repr = (
-            user_repr
-            if user_repr
-            else f"{genome_release.name}-{self.chrom}-{pos}-{delete}-{insert}"
+        chrom = chrom.lower().replace("chr", "").replace("m", "mt").replace("mtt", "mt").upper()
+        delete = delete.upper()
+        insert = insert.upper()
+        user_repr = (
+            user_repr if user_repr else f"{genome_release.name}-{chrom}-{pos}-{delete}-{insert}"
+        )
+        super().__init__(
+            genome_release=genome_release,
+            chrom=chrom,
+            pos=pos,
+            delete=delete,
+            insert=insert,
+            user_repr=user_repr,
         )
 
-    @staticmethod
-    def _normalize_chromosome(chrom: str) -> str:
-        """Normalize the chromosome name."""
-        return chrom.lower().replace("chr", "").replace("m", "mt").replace("mtt", "mt").upper()
+    @field_validator("chrom")
+    def normalize_chromosome(cls, v):
+        return v.lower().replace("chr", "").replace("m", "mt").replace("mtt", "mt").upper()
 
-    def __repr__(self):
-        """Return a user-friendly representation of the variant."""
+    @field_validator("delete", "insert")
+    def uppercase_sequence(cls, v):
+        return v.upper()
+
+    def __str__(self):
         return self.user_repr
-
-    def _as_dict(self):
-        """Return a dictionary representation of the variant."""
-        return {
-            "genome_release": self.genome_release,
-            "chrom": self.chrom,
-            "pos": self.pos,
-            "delete": self.delete,
-            "insert": self.insert,
-        }
-
-    def __eq__(self, other):
-        """Return True if the two objects are equal."""
-        if not isinstance(other, SeqVar):
-            return False
-        return self._as_dict() == other._as_dict()
 
 
 class SeqVarResolver:

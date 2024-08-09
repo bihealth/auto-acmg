@@ -3,7 +3,7 @@
 import os
 from typing import Optional, Tuple
 
-import tabix  # type: ignore
+import tabix
 from loguru import logger
 
 from src.core.config import settings

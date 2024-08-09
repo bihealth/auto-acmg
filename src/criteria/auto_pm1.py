@@ -98,30 +98,18 @@ class AutoPM1(AutoACMGHelper):
         Returns:
             Optional[Tuple[int, int]]: The start and end positions of the UniProt domain if found,
             None otherwise.
-
-        Raises:
-            AlgorithmError: If an error occurs while checking if the variant is in a UniProt domain.
         """
-        try:
-            # Find path to the lib file
-            if seqvar.genome_release == GenomeRelease.GRCh37:
-                path = os.path.join(
-                    settings.PATH_TO_ROOT, "lib", "uniprot", "grch37", "uniprot.bed.gz"
-                )
-            else:
-                path = os.path.join(
-                    settings.PATH_TO_ROOT, "lib", "uniprot", "grch38", "uniprot.bed.gz"
-                )
-            tb = tabix.open(path)
-            records = tb.query(f"chr{seqvar.chrom}", seqvar.pos - 1, seqvar.pos)
-            # Return the first record
-            for record in records:
-                return int(record[1]), int(record[2])
-            return None
-
-        except tabix.TabixError as e:
-            logger.error("Failed to check if the variant is in a UniProt domain. Error: {}", e)
-            raise AlgorithmError("Failed to check if the variant is in a UniProt domain.") from e
+        # Find path to the lib file
+        if seqvar.genome_release == GenomeRelease.GRCh37:
+            path = os.path.join(settings.PATH_TO_ROOT, "lib", "uniprot", "grch37", "uniprot.bed.gz")
+        else:
+            path = os.path.join(settings.PATH_TO_ROOT, "lib", "uniprot", "grch38", "uniprot.bed.gz")
+        tb = tabix.open(path)
+        records = tb.query(f"chr{seqvar.chrom}", seqvar.pos - 1, seqvar.pos)
+        # Return the first record
+        for record in records:
+            return int(record[1]), int(record[2])
+        return None
 
     def verify_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PM1], str]:
         """Predict PM1 criteria."""

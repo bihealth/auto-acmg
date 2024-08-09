@@ -8,7 +8,7 @@ from src.auto_acmg import AutoACMG
 from src.core.config import Config
 from src.criteria.auto_pm4_bp3 import AutoPM4BP3
 from src.defs.annonars_variant import AnnonarsVariantResponse
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGResult
+from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGPrediction, AutoACMGResult
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 
@@ -25,9 +25,21 @@ from src.defs.seqvar import SeqVar
         # ("NM_001110792.2(MECP2):c.1497A>G", GenomeRelease.GRCh37, (True, False)),
         # ("NM_000277.1(PAH):c.967_969delACA", GenomeRelease.GRCh37, (True, False)),
         # ("NM_206933.2(USH2A):c.8559-2A>G", GenomeRelease.GRCh37, (True, False)),
-        ("NM_000277.2(PAH):c.1092_1094del", GenomeRelease.GRCh37, (True, False)),
-        ("NM_000277.2(PAH):c.1092_1106del", GenomeRelease.GRCh37, (True, False)),
-        ("NM_000277.1(PAH):c.208_210delTCT", GenomeRelease.GRCh37, (True, False)),
+        (
+            "NM_000277.2(PAH):c.1092_1094del",
+            GenomeRelease.GRCh37,
+            (AutoACMGPrediction.Met, AutoACMGPrediction.NotMet),
+        ),
+        (
+            "NM_000277.2(PAH):c.1092_1106del",
+            GenomeRelease.GRCh37,
+            (AutoACMGPrediction.Met, AutoACMGPrediction.NotMet),
+        ),
+        (
+            "NM_000277.1(PAH):c.208_210delTCT",
+            GenomeRelease.GRCh37,
+            (AutoACMGPrediction.Met, AutoACMGPrediction.NotMet),
+        ),
         # ("NM_005249.4(FOXG1):c.209_232del24", GenomeRelease.GRCh37, (False, True)),
         # ("NM_005249.5(FOXG1):c.209_235del", GenomeRelease.GRCh37, (False, True)),
         # ("NM_005249.5(FOXG1):c.209_235dup", GenomeRelease.GRCh37, (False, True)),
@@ -50,4 +62,6 @@ def test_pm4_bp3(
     auto_pm4_bp3 = AutoPM4BP3()
     pm4_bp3 = auto_pm4_bp3.predict_pm4bp3(seqvar, auto_acmg_result.data)
     assert pm4_bp3[0].name == "PM4"
+    assert pm4_bp3[0].prediction == expected_prediction[0]
     assert pm4_bp3[1].name == "BP3"
+    assert pm4_bp3[1].prediction == expected_prediction[1]

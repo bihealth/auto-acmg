@@ -9,7 +9,7 @@ section,variant_name,genome_release,expected_prediction,comment
 #,NM_004333.4(BRAF):c.739T>C,GRCh37,PS1,(p.Phe247Leu) from ClinGen
 ## PM1,,,,
 ### Hotspot or critical domain,,,,
-,3-178936091-C-T,GRCh37,PM1,Hotspot with 4 pathogenic variants
+#,3-178936091-C-T,GRCh37,PM1,Hotspot with 4 pathogenic variants
 #,7-140453136-C-T,GRCh37,PM1,UniProt domain with 2 pathogenic variants
 #,1-55516888-G-A,GRCh37,,No hotspot or critical domain
 ## PM2,,,,

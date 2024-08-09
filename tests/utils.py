@@ -5,6 +5,7 @@ import json
 import os
 from typing import Any, Dict, List, Tuple
 
+from src.auto_acmg import AutoACMG
 from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionSeqVarPath
 from src.defs.genome_builds import GenomeRelease
 
@@ -85,3 +86,22 @@ def load_test_data(
                 )
             )
     return result
+
+
+def save_json_data(variant_name: str, genome_release: GenomeRelease = GenomeRelease.GRCh37) -> None:
+    """
+    Save JSON test data.
+
+    :param variant_name: The name of the variant.
+    :type variant_name: str
+    :param genome_release: The genome release.
+    :type genome_release: GenomeRelease
+    """
+    auto_acmg = AutoACMG(variant_name=variant_name, genome_release=genome_release)
+    output = auto_acmg.predict()
+    output_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "assets", "var_data", f"{variant_name}.json")
+    )
+    print(f"Saving JSON data to {output_path}")
+    with open(output_path, "w") as file:
+        json.dump(output, file, indent=4)

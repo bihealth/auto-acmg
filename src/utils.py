@@ -77,6 +77,9 @@ class SplicingPrediction:
             return self._find_refseq_plus_strand()
         elif self.strand == GenomicStrand.Minus:
             return self._find_refseq_minus_strand()
+        else:
+            logger.error("Invalid genomic strand: {}", self.strand.name)
+            raise AlgorithmError("Invalid genomic strand.")
 
     def _find_refseq_plus_strand(self) -> Tuple[int, int, str]:
         refseq = ""

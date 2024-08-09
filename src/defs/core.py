@@ -1,6 +1,8 @@
 from enum import Enum, EnumMeta
 from typing import Any
 
+from pydantic import BaseModel
+
 from src.defs.exceptions import AutoAcmgBaseException
 
 
@@ -20,3 +22,11 @@ class AutoAcmgBaseEnum(Enum, metaclass=AutoAcmgBaseEnumMeta):
     def _missing_(cls, value: Any) -> Any:
         """Override _missing_ to raise an AutoAcmgBaseException if the ValueError is raised."""
         raise AutoAcmgBaseException(f"Invalid {cls.__name__} value: {value}")
+
+
+class AutoAcmgBaseModel(BaseModel):
+    """Base model for ACMG criteria."""
+
+    # class Config:
+    #     use_enum_values = True
+    #     arbitrary_types_allowed = True

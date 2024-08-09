@@ -1,6 +1,5 @@
 """PVS1 related definitions."""
 
-from enum import auto
 from typing import Dict, Union
 
 from src.defs.core import AutoAcmgBaseEnum
@@ -9,73 +8,73 @@ from src.defs.core import AutoAcmgBaseEnum
 class SeqVarPVS1Consequence(AutoAcmgBaseEnum):
     """Consequence of a sequence variant specifically for PVS1."""
 
-    Missense = auto()
-    NonsenseFrameshift = auto()
-    SpliceSites = auto()
-    InitiationCodon = auto()
-    NotSet = auto()
+    Missense = "missense"
+    NonsenseFrameshift = "nonsense_frameshift"
+    SpliceSites = "splice_sites"
+    InitiationCodon = "initiation_codon"
+    NotSet = "not_set"
 
 
 class PVS1Prediction(AutoAcmgBaseEnum):
     """PVS1 prediction."""
 
-    NotSet = auto()
-    PVS1 = auto()
-    PVS1_Strong = auto()
-    PVS1_Moderate = auto()
-    PVS1_Supporting = auto()
-    NotPVS1 = auto()
-    UnsupportedConsequence = auto()
+    NotSet = "not_set"
+    PVS1 = "pvs1"
+    PVS1_Strong = "pvs1_strong"
+    PVS1_Moderate = "pvs1_moderate"
+    PVS1_Supporting = "pvs1_supporting"
+    NotPVS1 = "not_pvs1"
+    UnsupportedConsequence = "unsupported_consequence"
 
 
 #: Enumeration for PVS1 prediction path for sequence variant
 class PVS1PredictionSeqVarPath(AutoAcmgBaseEnum):
     """PVS1 prediction path."""
 
-    NotSet = auto()
-    PTEN = auto()
-    NF1 = auto()
-    NF2 = auto()
-    NF3 = auto()
-    NF4 = auto()
-    NF5 = auto()
-    NF6 = auto()
-    SS1 = auto()
-    SS2 = auto()
-    SS3 = auto()
-    SS4 = auto()
-    SS5 = auto()
-    SS6 = auto()
-    SS7 = auto()
-    SS8 = auto()
-    SS9 = auto()
-    SS10 = auto()
-    IC1 = auto()
-    IC2 = auto()
-    IC3 = auto()
+    NotSet = "not_set"
+    PTEN = "pten"
+    NF1 = "nf1"
+    NF2 = "nf2"
+    NF3 = "nf3"
+    NF4 = "nf4"
+    NF5 = "nf5"
+    NF6 = "nf6"
+    SS1 = "ss1"
+    SS2 = "ss2"
+    SS3 = "ss3"
+    SS4 = "ss4"
+    SS5 = "ss5"
+    SS6 = "ss6"
+    SS7 = "ss7"
+    SS8 = "ss8"
+    SS9 = "ss9"
+    SS10 = "ss10"
+    IC1 = "ic1"
+    IC2 = "ic2"
+    IC3 = "ic3"
 
 
 #: Enumeration for PVS1 prediction path for structural variant
 class PVS1PredictionStrucVarPath(AutoAcmgBaseEnum):
     """PVS1 prediction path for structure variants."""
 
-    NotSet = auto()
-    DEL1 = auto()
-    DEL2 = auto()
-    DEL3 = auto()
-    DEL4 = auto()
-    DEL5_1 = auto()
-    DEL6_1 = auto()
-    DEL7_1 = auto()
-    DEL5_2 = auto()
-    DEL6_2 = auto()
-    DEL7_2 = auto()
-    DEL8 = auto()
-    DUP1 = auto()
-    DUP2_1 = auto()
-    DUP2_2 = auto()
-    DUP3 = auto()
-    DUP4 = auto()
+    NotSet = "not_set"
+    DEL1 = "del1"
+    DEL2 = "del2"
+    DEL3 = "del3"
+    DEL4 = "del4"
+    DEL5_1 = "del5_1"
+    DEL6_1 = "del6_1"
+    DEL7_1 = "del7_1"
+    DEL5_2 = "del5_2"
+    DEL6_2 = "del6_2"
+    DEL7_2 = "del7_2"
+    DEL8 = "del8"
+    DUP1 = "dup1"
+    DUP2_1 = "dup2_1"
+    DUP2_2 = "dup2_2"
+    DUP3 = "dup3"
+    DUP4 = "dup4"
 
 
 #: Mapping of consequence from transcript info to SeqVarConsequence
