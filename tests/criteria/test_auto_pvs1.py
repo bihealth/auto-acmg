@@ -6,8 +6,13 @@ from src.api.annonars import AnnonarsClient
 from src.api.mehari import MehariClient
 from src.criteria.auto_pvs1 import AutoPVS1, SeqVarPVS1Helper
 from src.defs.annonars_range import AnnonarsRangeResponse
-from src.defs.auto_acmg import GenomicStrand
-from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionSeqVarPath, SeqVarPVS1Consequence
+from src.defs.auto_acmg import AutoACMGPrediction, AutoACMGStrength, GenomicStrand
+from src.defs.auto_pvs1 import (
+    PVS1Prediction,
+    PVS1PredictionSeqVarPath,
+    SeqvarConsequenceMapping,
+    SeqVarPVS1Consequence,
+)
 from src.defs.exceptions import AlgorithmError, MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import Exon, GeneTranscripts, TranscriptsSeqVar
@@ -512,7 +517,7 @@ def test_lof_rm_gt_10pct_of_prot(prot_pos, prot_length, expected_result):
     assert result == expected_result
 
 
-# ============== _exon_skip_or_cryptic_ss_disrupt ==============
+# ============== exon_skip_or_cryptic_ss_disrupt ==============
 
 
 @pytest.fixture
@@ -606,9 +611,6 @@ def test_exon_skip_or_cryptic_ss_disrupt_missing_strand(helper, seqvar_ss, exons
     """Test when the strand is not set, raising MissingDataError."""
     with pytest.raises(MissingDataError):
         helper.exon_skip_or_cryptic_ss_disrupt(seqvar_ss, exons, consequences, GenomicStrand.NotSet)
-
-
-# ============== _alt_start_codon ==============
 
 
 @pytest.mark.parametrize(
@@ -755,3 +757,259 @@ def test_up_pathogenic_vars(
 
     result = SeqVarPVS1Helper().up_pathogenic_vars(seqvar, exons, strand)
     assert result == expected_result
+
+
+# ============== AutoPVS1 ==============
+
+
+@pytest.fixture
+def auto_pvs1():
+    return AutoPVS1()
+
+
+@pytest.fixture
+def seqvar_a():
+    return SeqVar(genome_release=GenomeRelease.GRCh38, chrom="1", pos=100, delete="A", insert="T")
+
+
+@pytest.fixture
+def var_data():
+    return MagicMock(
+        hgnc_id="HGNC:12345",
+        prot_pos=100,
+        prot_length=500,
+        transcript_tags=["important_tag"],
+        consequence=MagicMock(mehari=["splice_acceptor_variant"], cadd=""),
+        tx_pos_utr=0,
+        exons=[],
+        strand=GenomicStrand.Plus,
+        transcript_id="transcript_1",
+    )
+
+
+def test_convert_consequence_mapped_mehari(auto_pvs1, var_data):
+    """Test _convert_consequence when a Mehari consequence is mapped."""
+    var_data.consequence.mehari = ["nonsense"]
+    SeqvarConsequenceMapping["nonsense"] = SeqVarPVS1Consequence.NonsenseFrameshift
+
+    result = auto_pvs1._convert_consequence(var_data)
+
+    assert (
+        result == SeqVarPVS1Consequence.NonsenseFrameshift
+    ), "The consequence should be mapped correctly from Mehari."
+
+
+def test_convert_consequence_mapped_cadd(auto_pvs1, var_data):
+    """Test _convert_consequence when a CADD consequence is mapped."""
+    var_data.consequence.cadd = "splice_donor_variant"
+    SeqvarConsequenceMapping["splice_donor_variant"] = SeqVarPVS1Consequence.SpliceSites
+
+    result = auto_pvs1._convert_consequence(var_data)
+
+    assert (
+        result == SeqVarPVS1Consequence.SpliceSites
+    ), "The consequence should be mapped correctly from CADD."
+
+
+def test_convert_consequence_no_mapping(auto_pvs1, var_data):
+    """Test _convert_consequence when no consequence is mapped."""
+    var_data.consequence.mehari = ["nonexistent_consequence"]
+    var_data.consequence.cadd = "another_nonexistent_consequence"
+
+    result = auto_pvs1._convert_consequence(var_data)
+
+    assert (
+        result == SeqVarPVS1Consequence.NotSet
+    ), "The consequence should be set to NotSet when no mapping is found."
+
+
+def test_convert_consequence_mapped_mehari_priority(auto_pvs1, var_data):
+    """Test _convert_consequence gives priority to Mehari consequence."""
+    var_data.consequence.mehari = ["frameshift_variant"]
+    var_data.consequence.cadd = "splice_acceptor_variant"
+    SeqvarConsequenceMapping["frameshift_variant"] = SeqVarPVS1Consequence.NonsenseFrameshift
+    SeqvarConsequenceMapping["splice_acceptor_variant"] = SeqVarPVS1Consequence.SpliceSites
+
+    result = auto_pvs1._convert_consequence(var_data)
+
+    assert (
+        result == SeqVarPVS1Consequence.NonsenseFrameshift
+    ), "The Mehari consequence should take priority if present."
+
+
+@patch.object(AutoPVS1, "undergo_nmd", return_value=True)
+@patch.object(AutoPVS1, "in_bio_relevant_tx", return_value=True)
+@patch.object(AutoPVS1, "crit4prot_func", return_value=False)
+@patch.object(AutoPVS1, "lof_freq_in_pop", return_value=False)
+@patch.object(AutoPVS1, "lof_rm_gt_10pct_of_prot", return_value=False)
+@patch.object(
+    AutoPVS1, "_convert_consequence", return_value=SeqVarPVS1Consequence.NonsenseFrameshift
+)
+def test_verify_pvs1_nonsense_frameshift(
+    mock_convert_consequence,
+    mock_lof_rm_gt_10pct_of_prot,
+    mock_lof_freq_in_pop,
+    mock_crit4prot_func,
+    mock_in_bio_relevant_tx,
+    mock_undergo_nmd,
+    auto_pvs1,
+    seqvar_a,
+    var_data,
+):
+    """Test verify_pvs1 for nonsense/frameshift variant prediction."""
+    var_data.hgnc_id = "HGNC:9588"
+    var_data.prot_pos = 200
+
+    prediction, path, comment = auto_pvs1.verify_pvs1(seqvar_a, var_data)
+
+    assert prediction == PVS1Prediction.PVS1, "Expected PVS1 prediction for PTEN gene."
+    assert path == PVS1PredictionSeqVarPath.PTEN, "Expected PTEN prediction path."
+    assert "The alteration results in a premature stop codon" in comment
+
+
+@patch.object(AutoPVS1, "exon_skip_or_cryptic_ss_disrupt", return_value=True)
+@patch.object(AutoPVS1, "undergo_nmd", return_value=True)
+@patch.object(AutoPVS1, "in_bio_relevant_tx", return_value=True)
+@patch.object(AutoPVS1, "_convert_consequence", return_value=SeqVarPVS1Consequence.SpliceSites)
+def test_verify_pvs1_splice_sites(
+    mock_convert_consequence,
+    mock_in_bio_relevant_tx,
+    mock_undergo_nmd,
+    mock_exon_skip_or_cryptic_ss_disrupt,
+    auto_pvs1,
+    seqvar_a,
+    var_data,
+):
+    """Test verify_pvs1 for splice site variant prediction."""
+    prediction, path, comment = auto_pvs1.verify_pvs1(seqvar_a, var_data)
+
+    assert prediction == PVS1Prediction.PVS1, "Expected PVS1 prediction for splice site variant."
+    assert path == PVS1PredictionSeqVarPath.SS1, "Expected SS1 prediction path."
+    assert "Analysing as splice site variant" in comment
+
+
+@patch.object(AutoPVS1, "alt_start_cdn", return_value=True)
+@patch.object(AutoPVS1, "_convert_consequence", return_value=SeqVarPVS1Consequence.InitiationCodon)
+def test_verify_pvs1_initiation_codon(
+    mock_convert_consequence, mock_alt_start_cdn, auto_pvs1, seqvar_a, var_data
+):
+    """Test verify_pvs1 for initiation codon variant prediction."""
+    prediction, path, comment = auto_pvs1.verify_pvs1(seqvar_a, var_data)
+
+    assert prediction == PVS1Prediction.NotPVS1, "Expected NotPVS1 prediction for alt start codon."
+    assert path == PVS1PredictionSeqVarPath.IC3, "Expected IC3 prediction path."
+    assert "Analysing as initiation codon variant" in comment
+
+
+@patch.object(AutoPVS1, "_convert_consequence", return_value=SeqVarPVS1Consequence.Missense)
+def test_verify_pvs1_unsupported_consequence(
+    mock_convert_consequence, auto_pvs1, seqvar_a, var_data
+):
+    """Test verify_pvs1 for unsupported consequence."""
+    prediction, path, comment = auto_pvs1.verify_pvs1(seqvar_a, var_data)
+
+    assert prediction == PVS1Prediction.UnsupportedConsequence, "Expected UnsupportedConsequence."
+    assert path == PVS1PredictionSeqVarPath.NotSet, "Expected NotSet prediction path."
+    assert "PVS1 criteria cannot be applied" in comment
+
+
+@patch.object(AutoPVS1, "verify_pvs1")
+def test_predict_pvs1_met(mock_verify_pvs1, auto_pvs1, seqvar, var_data):
+    """Test predict_pvs1 when PVS1 criteria is met."""
+    mock_verify_pvs1.return_value = (
+        PVS1Prediction.PVS1,
+        PVS1PredictionSeqVarPath.NF1,
+        "PVS1 criteria met.",
+    )
+
+    result = auto_pvs1.predict_pvs1(seqvar, var_data)
+
+    assert result.name == "PVS1", "Criteria name should be PVS1."
+    assert result.prediction == AutoACMGPrediction.Met, "Prediction should be Met."
+    assert (
+        result.strength == AutoACMGStrength.PathogenicVeryStrong
+    ), "Strength should be Very Strong."
+    assert "PVS1 criteria met." in result.summary, "Summary should contain the correct comment."
+    assert "Prediction path: " in result.description, "Description should contain prediction path."
+
+
+@patch.object(AutoPVS1, "verify_pvs1")
+def test_predict_pvs1_not_met(mock_verify_pvs1, auto_pvs1, seqvar, var_data):
+    """Test predict_pvs1 when PVS1 criteria is not met."""
+    mock_verify_pvs1.return_value = (
+        PVS1Prediction.NotPVS1,
+        PVS1PredictionSeqVarPath.NF4,
+        "PVS1 criteria not met.",
+    )
+
+    result = auto_pvs1.predict_pvs1(seqvar, var_data)
+
+    assert result.name == "PVS1", "Criteria name should be PVS1."
+    assert result.prediction == AutoACMGPrediction.NotMet, "Prediction should be Not Met."
+    assert (
+        result.strength == AutoACMGStrength.PathogenicVeryStrong
+    ), "Strength should be Very Strong."
+    assert "PVS1 criteria not met." in result.summary, "Summary should contain the correct comment."
+    assert "Prediction path: " in result.description, "Description should contain prediction path."
+
+
+@patch.object(AutoPVS1, "verify_pvs1")
+def test_predict_pvs1_strong(mock_verify_pvs1, auto_pvs1, seqvar, var_data):
+    """Test predict_pvs1 when PVS1 criteria is met with Strong strength."""
+    mock_verify_pvs1.return_value = (
+        PVS1Prediction.PVS1_Strong,
+        PVS1PredictionSeqVarPath.NF3,
+        "PVS1 strong criteria met.",
+    )
+
+    result = auto_pvs1.predict_pvs1(seqvar, var_data)
+
+    assert result.name == "PVS1", "Criteria name should be PVS1."
+    assert result.prediction == AutoACMGPrediction.Met, "Prediction should be Met."
+    assert result.strength == AutoACMGStrength.PathogenicStrong, "Strength should be Strong."
+    assert (
+        "PVS1 strong criteria met." in result.summary
+    ), "Summary should contain the correct comment."
+    assert "Prediction path: " in result.description, "Description should contain prediction path."
+
+
+@patch.object(AutoPVS1, "verify_pvs1")
+def test_predict_pvs1_moderate(mock_verify_pvs1, auto_pvs1, seqvar, var_data):
+    """Test predict_pvs1 when PVS1 criteria is met with Moderate strength."""
+    mock_verify_pvs1.return_value = (
+        PVS1Prediction.PVS1_Moderate,
+        PVS1PredictionSeqVarPath.SS6,
+        "PVS1 moderate criteria met.",
+    )
+
+    result = auto_pvs1.predict_pvs1(seqvar, var_data)
+
+    assert result.name == "PVS1", "Criteria name should be PVS1."
+    assert result.prediction == AutoACMGPrediction.Met, "Prediction should be Met."
+    assert result.strength == AutoACMGStrength.PathogenicModerate, "Strength should be Moderate."
+    assert (
+        "PVS1 moderate criteria met." in result.summary
+    ), "Summary should contain the correct comment."
+    assert "Prediction path: " in result.description, "Description should contain prediction path."
+
+
+@patch.object(AutoPVS1, "verify_pvs1")
+def test_predict_pvs1_supporting(mock_verify_pvs1, auto_pvs1, seqvar, var_data):
+    """Test predict_pvs1 when PVS1 criteria is met with Supporting strength."""
+    mock_verify_pvs1.return_value = (
+        PVS1Prediction.PVS1_Supporting,
+        PVS1PredictionSeqVarPath.IC1,
+        "PVS1 supporting criteria met.",
+    )
+
+    result = auto_pvs1.predict_pvs1(seqvar, var_data)
+
+    assert result.name == "PVS1", "Criteria name should be PVS1."
+    assert result.prediction == AutoACMGPrediction.Met, "Prediction should be Met."
+    assert (
+        result.strength == AutoACMGStrength.PathogenicSupporting
+    ), "Strength should be Supporting."
+    assert (
+        "PVS1 supporting criteria met." in result.summary
+    ), "Summary should contain the correct comment."
+    assert "Prediction path: " in result.description, "Description should contain prediction path."
