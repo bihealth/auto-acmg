@@ -30,6 +30,6 @@ If you want to **use** auto-acmg, the best place is to start at :ref:`usage`.
 
 .. toctree::
    :maxdepth: 2
-   :caption: API Documentation:
+   :caption: Internal API Documentation:
 
-   api_reference
+   internal_api

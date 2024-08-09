@@ -1,8 +1,8 @@
-.. _api_reference:
+.. _internal_api:
 
-=============
-API Reference
-=============
+======================
+Internal API Reference
+======================
 
 This section contains the API reference, which we use for data retrieval.
 
