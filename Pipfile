@@ -42,6 +42,7 @@ seaborn = "*"
 pytest-env = "*"
 pytest-httpx = "*"
 pytest-recording = "*"
+pytest-asyncio = "*"
 
 [requires]
 python_version = "3.12"

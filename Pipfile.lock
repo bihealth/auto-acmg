@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "da353303040ece514981832b4589a5846c30e5c5b6022f1398f01d74bccb773d"
+            "sha256": "c4ae4459c99fcfeceafc8ce7b90202d89a6cd101075ced4a4edd40f0da4f096e"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -769,6 +769,14 @@
             "markers": "python_version >= '3.8'",
             "version": "==4.4.0"
         },
+        "appnope": {
+            "hashes": [
+                "sha256:1de3860566df9caf38f01f86f65e0e13e379af54f9e4bee1e66b48f2efffd1ee",
+                "sha256:502575ee11cd7a28c0205f379b525beefebab9d161b7c964670864014ed7213c"
+            ],
+            "markers": "platform_system == 'Darwin'",
+            "version": "==0.1.4"
+        },
         "argcomplete": {
             "hashes": [
                 "sha256:4349400469dccfb7950bb60334a680c58d88699bff6159df61251878dc6bf74b",
@@ -845,11 +853,11 @@
         },
         "babel": {
             "hashes": [
-                "sha256:08706bdad8d0a3413266ab61bd6c34d0c28d6e1e7badf40a2cebe67644e2e1fb",
-                "sha256:8daf0e265d05768bc6c7a314cf1321e9a123afc328cc635c18622a2f30a04413"
+                "sha256:368b5b98b37c06b7daf6696391c3240c938b37767d4584413e8438c5c435fa8b",
+                "sha256:d1f3554ca26605fe173f3de0c65f750f5a42f924499bf134de6423582298e316"
             ],
             "markers": "python_version >= '3.8'",
-            "version": "==2.15.0"
+            "version": "==2.16.0"
         },
         "beautifulsoup4": {
             "hashes": [
@@ -2667,6 +2675,15 @@
             "index": "pypi",
             "markers": "python_version >= '3.8'",
             "version": "==8.3.2"
+        },
+        "pytest-asyncio": {
+            "hashes": [
+                "sha256:50265d892689a5faefb84df80819d1ecef566eb3549cf915dfb33569359d1ce2",
+                "sha256:759b10b33a6dc61cce40a8bd5205e302978bbbcc00e279a8b61d9a6a3c82e4d3"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.8'",
+            "version": "==0.23.8"
         },
         "pytest-cov": {
             "hashes": [
