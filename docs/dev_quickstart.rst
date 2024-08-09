@@ -122,6 +122,19 @@ Then you can initialize the SeqRepo instance:
 
 2. Download the reference genomes:
 
+The following command downloads the reference sequences. Note, that it'll take some time.
+
+**Important**: There might be a bug in the SeqRepo that causes the download to fail (refer to the 
+`github issue <https://github.com/biocommons/biocommons.seqrepo/issues/166>`__). If this happens,
+modify the source code by running the following command:
+
+.. code-block:: bash
+
+    sed -i -e 's/if aliases_cur.fetchone() is not None/if next(aliases_cur, None) is not None/' \
+    <your-path-to-lib>/biocommons/seqrepo/cli.py
+
+And the actual download command:
+
 .. code-block:: bash
 
     pipenv run seqrepo fetch-load -i auto-acmg -n RefSeq NC_000001.10 NC_000002.11 NC_000003.11 NC_000004.11 NC_000005.9 NC_000006.11 NC_000007.13 NC_000008.10 NC_000009.11 NC_000010.10 NC_000011.9 NC_000012.11 NC_000013.10 NC_000014.8 NC_000015.9 NC_000016.9 NC_000017.10 NC_000018.9 NC_000019.9 NC_000020.10 NC_000021.8 NC_000022.10 NC_000023.10 NC_000024.9 NC_012920.1 NC_000001.11 NC_000002.12 NC_000003.12 NC_000004.12 NC_000005.10 NC_000006.12 NC_000007.14 NC_000008.11 NC_000009.12 NC_000010.11 NC_000011.10 NC_000012.12 NC_000013.11 NC_000014.9 NC_000015.10 NC_000016.10 NC_000017.11 NC_000018.10 NC_000019.10 NC_000020.11 NC_000021.9 NC_000022.11 NC_000023.11 NC_000024.10 NC_012920.1
