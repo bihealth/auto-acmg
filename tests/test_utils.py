@@ -310,7 +310,11 @@ CHROM_REFSEQ_38 = {"1": "NC_000001.11"}
 
 
 @pytest.fixture
-def splicing_prediction(seqvar_ss):
+@patch("src.utils.SeqRepo")
+def splicing_prediction(mock_seqrepo, seqvar_ss):
+    """Fixture for initializing SplicingPrediction with a mocked SeqRepo."""
+    mock_seqrepo.return_value = MagicMock()
+
     return SplicingPrediction(
         seqvar=seqvar_ss,
         strand=GenomicStrand.Plus,
