@@ -1,6 +1,6 @@
 sphinxawesome-theme
 sphinxcontrib-bibtex
-aiohttp
+httpx
 pydantic_settings
 typer
 loguru
