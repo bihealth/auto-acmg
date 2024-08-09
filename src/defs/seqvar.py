@@ -78,19 +78,6 @@ class SeqVar(BaseModel):
     def uppercase_sequence(cls, v):
         return v.upper()
 
-    @field_validator("user_repr")
-    def set_default_user_repr(cls, v, values):
-        if v is None:
-            genome_release = (
-                values.get("genome_release").name if values.get("genome_release") else ""
-            )
-            chrom = values.get("chrom", "")
-            pos = values.get("pos", "")
-            delete = values.get("delete", "")
-            insert = values.get("insert", "")
-            return f"{genome_release}-{chrom}-{pos}-{delete}-{insert}"
-        return v
-
     def __str__(self):
         return self.user_repr
 
