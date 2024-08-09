@@ -26,7 +26,6 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinxcontrib.bibtex",
-    "sphinxawesome_theme.highlighting",
 ]
 bibtex_bibfiles = ["refs.bib"]
 
