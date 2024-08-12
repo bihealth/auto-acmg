@@ -9,8 +9,8 @@ from src.defs.exceptions import MappingError
 class GenomeRelease(AutoAcmgBaseEnum):
     """Enumeration for allowed genome release values."""
 
-    GRCh37 = auto()
-    GRCh38 = auto()
+    GRCh37 = "GRCh37"
+    GRCh38 = "GRCh38"
 
     @staticmethod
     def from_string(value: str):
