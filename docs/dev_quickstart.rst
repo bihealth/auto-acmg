@@ -61,6 +61,12 @@ Clone Rsepository
 
     git clone git@github.com:bihealth/auto-acmg.git
 
+Then you need to pull large files from the LFS:
+
+.. code-block:: bash
+
+    git lfs pull
+
 --------------------
 Install Dependencies
 --------------------
@@ -79,11 +85,33 @@ AutoACMG uses the SeqRepo to fetch the reference sequences.
 To set up the SeqRepo, you'll need to have the RefSeq reference genomes of versions GRCh37 and
 GRCh38. You can get them as follows:
 
-1. Initialize the SeqRepo:
+1. Install dependencies for SeqRepo:
+SeqRepo uses tabix and bgzip to index and compress the reference genomes. You can install them
+using the following command for Linux:
 
 .. code-block:: bash
 
-    seqrepo init -i auto-acmg
+    sudo apt-get install tabix bgzip
+
+and for MacOS:
+
+.. code-block:: bash
+
+    brew install htslib
+
+2. Initialize the SeqRepo:
+First, you'll need to setup the SeqRepo instance. You can do this by running the following command:
+
+.. code-block:: bash
+
+    sudo chown $USER /usr/local/share/seqrepo
+    sudo mkdir -p /usr/local/share/seqrepo
+
+Then you can initialize the SeqRepo instance:
+
+.. code-block:: bash
+
+    pipenv run seqrepo init -i auto-acmg
 
 .. note::
 
@@ -94,9 +122,22 @@ GRCh38. You can get them as follows:
 
 2. Download the reference genomes:
 
+The following command downloads the reference sequences. Note, that it'll take some time.
+
+**Important**: There might be a bug in the SeqRepo that causes the download to fail (refer to the 
+`github issue <https://github.com/biocommons/biocommons.seqrepo/issues/166>`__). If this happens,
+modify the source code by running the following command:
+
 .. code-block:: bash
 
-    seqrepo fetch-load -i auto-acmg -n RefSeq NC_000001.10 NC_000002.11 NC_000003.11 NC_000004.11 NC_000005.9 NC_000006.11 NC_000007.13 NC_000008.10 NC_000009.11 NC_000010.10 NC_000011.9 NC_000012.11 NC_000013.10 NC_000014.8 NC_000015.9 NC_000016.9 NC_000017.10 NC_000018.9 NC_000019.9 NC_000020.10 NC_000021.8 NC_000022.10 NC_000023.10 NC_000024.9 NC_012920.1 NC_000001.11 NC_000002.12 NC_000003.12 NC_000004.12 NC_000005.10 NC_000006.12 NC_000007.14 NC_000008.11 NC_000009.12 NC_000010.11 NC_000011.10 NC_000012.12 NC_000013.11 NC_000014.9 NC_000015.10 NC_000016.10 NC_000017.11 NC_000018.10 NC_000019.10 NC_000020.11 NC_000021.9 NC_000022.11 NC_000023.11 NC_000024.10 NC_012920.1
+    sed -i -e 's/if aliases_cur.fetchone() is not None/if next(aliases_cur, None) is not None/' \
+    <your-path-to-lib>/biocommons/seqrepo/cli.py
+
+And the actual download command:
+
+.. code-block:: bash
+
+    pipenv run seqrepo fetch-load -i auto-acmg -n RefSeq NC_000001.10 NC_000002.11 NC_000003.11 NC_000004.11 NC_000005.9 NC_000006.11 NC_000007.13 NC_000008.10 NC_000009.11 NC_000010.10 NC_000011.9 NC_000012.11 NC_000013.10 NC_000014.8 NC_000015.9 NC_000016.9 NC_000017.10 NC_000018.9 NC_000019.9 NC_000020.10 NC_000021.8 NC_000022.10 NC_000023.10 NC_000024.9 NC_012920.1 NC_000001.11 NC_000002.12 NC_000003.12 NC_000004.12 NC_000005.10 NC_000006.12 NC_000007.14 NC_000008.11 NC_000009.12 NC_000010.11 NC_000011.10 NC_000012.12 NC_000013.11 NC_000014.9 NC_000015.10 NC_000016.10 NC_000017.11 NC_000018.10 NC_000019.10 NC_000020.11 NC_000021.9 NC_000022.11 NC_000023.11 NC_000024.10 NC_012920.1
 
 .. note::
 
@@ -115,11 +156,19 @@ can be found in the `.env.dev` file. Copy the contents with the following comman
 
     cp .env.dev .env
 
+**Important**: You need to set the `SEQREPO_DIR` variable in the `.env` file to the path of the
+SeqRepo instance you created in the previous step. It should look similar to this:
+
+.. code-block:: bash
+
+    SEQREPO_DIR=/usr/local/share/seqrepo/auto-acmg
+
 ---------------
 Running the CLI
 ---------------
 
-You can run the CLI with the following command:
+After you have set up the SeqRepo and the `.env` file, you can run the CLI.
+You can use the following commands:
 
 .. code-block:: bash
 
