@@ -162,6 +162,7 @@ class AutoPM4BP3(AutoACMGHelper):
         Returns:
             AutoACMGCriteria: PM4 and BP3 prediction.
         """
+        logger.info("Predict PM4 and BP3")
         pred, comment = self.verify_pm4bp3(seqvar, var_data)
         if pred:
             pm4_pred = (

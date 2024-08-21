@@ -91,6 +91,7 @@ test-remote:
 test:
 	pipenv run pytest \
 		-m "not remote" \
+		--record-mode=new_episodes \
 		tests/
 
 .PHONY: test-all

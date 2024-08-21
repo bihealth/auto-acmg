@@ -895,6 +895,7 @@ class AutoPVS1(SeqVarPVS1Helper):
             Tuple[PVS1Prediction, PVS1PredictionSeqVarPath, str]: The prediction, prediction path,
                 and the comment.
         """
+        logger.info("Predict PVS1")
         pred, path, comment = self.verify_pvs1(seqvar, var_data)
         evidence_strength_mapping: Dict[PVS1Prediction, AutoACMGStrength] = {
             PVS1Prediction.PVS1: AutoACMGStrength.PathogenicVeryStrong,

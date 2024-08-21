@@ -165,6 +165,7 @@ class AutoPM1(AutoACMGHelper):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Predict PM1 criteria."""
+        logger.info("Predict PM1")
         pred, comment = self.verify_pm1(seqvar, var_data)
         if pred:
             pm1_pred = (

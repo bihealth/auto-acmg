@@ -32,6 +32,14 @@ from src.defs.seqvar import SeqVar
         ("NM_000546.5(TP53):c.396G>C", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
         ("NM_005343.4(HRAS):c.175_176delinsCT", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
         ("NM_001754.4(RUNX1):c.485G>A", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
+        ## ACADVL
+        ("NM_000018.4(ACADVL):c.848T>C", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
+        # ("NM_000018.4(ACADVL):c.1141_1143del", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
+        ("NM_000018.4(ACADVL):c.848T>C", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
+        ("NM_000018.4(ACADVL):c.1097G>A", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
+        ("NM_000018.4(ACADVL):c.128G>A", GenomeRelease.GRCh37, AutoACMGPrediction.NotMet),
+        ## AKT3
+        ("NM_005465.7(AKT3):c.49G>A", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
     ],
 )
 def test_pm1(
