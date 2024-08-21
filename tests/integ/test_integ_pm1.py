@@ -1,5 +1,7 @@
 """Integration tests for `PM1` criteria using upstream server."""
 
+from typing import List, Tuple
+
 import pytest
 
 from src.auto_acmg import VCEP_MAPPING, AutoACMG
@@ -9,6 +11,12 @@ from src.defs.annonars_variant import AnnonarsVariantResponse
 from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGPrediction, AutoACMGResult
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from tests.utils import load_test_data_pm1
+
+#: Type for PM1 test data.
+Pm1TestData = List[Tuple[str, GenomeRelease, AutoACMGPrediction]]
+#: Test data.
+PM1_TEST_DATA: Pm1TestData = load_test_data_pm1("tests/assets/integ/pm1.csv")
 
 
 @pytest.mark.default_cassette("integ_pm1.yaml")
@@ -16,25 +24,7 @@ from src.defs.seqvar import SeqVar
 @pytest.mark.remote
 @pytest.mark.parametrize(
     "variant_name, genome_release, expected_prediction",
-    [
-        # ("NM_000540.3(RYR1):c.1589G>A", GenomeRelease.GRCh37, True),
-        ("NM_004700.3(KCNQ4):c.825G>C", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        # ("NM_000257.3(MYH7):c.1157A>G", GenomeRelease.GRCh37, True),
-        ("NM_005343.3(HRAS):c.175G>A", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        # ("NM_030662.3(MAP2K2):c.400T>C", GenomeRelease.GRCh37, True),
-        ("NM_004333.4(BRAF):c.739T>G", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        ("NM_001754.4(RUNX1):c.316T>A", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        ("NM_001754.4(RUNX1):c.314A>C", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        ("NM_001754.4:c.315C>A", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        ("NM_002834.4(PTPN11):c.782T>A", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        # ("NM_004333.6(BRAF):c.793G>C", GenomeRelease.GRCh37, True),
-        # ("NM_005633.3(SOS1):c.1276C>A", GenomeRelease.GRCh37, True),
-        ("NM_000546.5(TP53):c.396G>C", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        ("NM_005343.4(HRAS):c.175_176delinsCT", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        ("NM_001754.4(RUNX1):c.485G>A", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        ## ACADVL
-        ## AKT3
-    ],
+    PM1_TEST_DATA,
 )
 def test_pm1(
     variant_name: str,
