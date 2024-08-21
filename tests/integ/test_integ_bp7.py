@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.auto_acmg import AutoACMG
+from src.auto_acmg import VCEP_MAPPING, AutoACMG
 from src.core.config import Config
 from src.criteria.auto_bp7 import AutoBP7
 from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGPrediction, AutoACMGResult
@@ -48,7 +48,12 @@ def test_bp7(
     auto_acmg_result = auto_acmg.parse_data(seqvar)
     assert isinstance(auto_acmg_result, AutoACMGResult)
     # Then, predict BP7
-    auto_bp7 = AutoBP7()
-    bp7 = auto_bp7.predict_bp7(seqvar, auto_acmg_result.data)
+    if auto_acmg_result.data.hgnc_id in VCEP_MAPPING:
+        predictor_class = VCEP_MAPPING[auto_acmg_result.data.hgnc_id]
+        predictor = predictor_class(seqvar, auto_acmg_result, config)
+        bp7 = predictor.predict_bp7(seqvar, auto_acmg_result.data)
+    else:
+        auto_bp7 = AutoBP7()
+        bp7 = auto_bp7.predict_bp7(seqvar, auto_acmg_result.data)
     assert bp7.name == "BP7"
     assert bp7.prediction == expected_prediction

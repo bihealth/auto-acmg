@@ -4,7 +4,7 @@ from typing import Tuple
 
 import pytest
 
-from src.auto_acmg import AutoACMG
+from src.auto_acmg import VCEP_MAPPING, AutoACMG
 from src.core.config import Config
 from src.criteria.auto_pp2_bp1 import AutoPP2BP1
 from src.defs.annonars_variant import AnnonarsVariantResponse
@@ -72,7 +72,12 @@ def test_pp2_bp1(
     auto_acmg_result = auto_acmg.parse_data(seqvar)
     assert isinstance(auto_acmg_result, AutoACMGResult)
     # Then, predict PP2 and BP1
-    auto_pp2_bp1 = AutoPP2BP1()
-    pp2_bp1 = auto_pp2_bp1.predict_pp2bp1(seqvar, auto_acmg_result.data)
+    if auto_acmg_result.data.hgnc_id in VCEP_MAPPING:
+        predictor_class = VCEP_MAPPING[auto_acmg_result.data.hgnc_id]
+        predictor = predictor_class(seqvar, auto_acmg_result, config)
+        pp2_bp1 = predictor.predict_pp2bp1(seqvar, auto_acmg_result.data)
+    else:
+        auto_pp2_bp1 = AutoPP2BP1()
+        pp2_bp1 = auto_pp2_bp1.predict_pp2bp1(seqvar, auto_acmg_result.data)
     assert pp2_bp1[0].name == "PP2"
     assert pp2_bp1[1].name == "BP1"

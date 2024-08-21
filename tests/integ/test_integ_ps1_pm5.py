@@ -4,7 +4,7 @@ from typing import Tuple
 
 import pytest
 
-from src.auto_acmg import AutoACMG
+from src.auto_acmg import VCEP_MAPPING, AutoACMG
 from src.core.config import Config
 from src.criteria.auto_ps1_pm5 import AutoPS1PM5
 from src.defs.annonars_variant import AnnonarsVariantResponse
@@ -197,7 +197,12 @@ def test_ps1_pm5(
     auto_acmg_result = auto_acmg.parse_data(seqvar)
     assert isinstance(auto_acmg_result, AutoACMGResult)
     # Then, predict PS1 and PM5
-    auto_ps1_pm5 = AutoPS1PM5()
-    ps1_pm5 = auto_ps1_pm5.predict_ps1pm5(seqvar, auto_acmg_result.data)
+    if auto_acmg_result.data.hgnc_id in VCEP_MAPPING:
+        predictor_class = VCEP_MAPPING[auto_acmg_result.data.hgnc_id]
+        predictor = predictor_class(seqvar, auto_acmg_result, config)
+        ps1_pm5 = predictor.predict_ps1pm5(seqvar, auto_acmg_result.data)
+    else:
+        auto_ps1_pm5 = AutoPS1PM5()
+        ps1_pm5 = auto_ps1_pm5.predict_ps1pm5(seqvar, auto_acmg_result.data)
     assert ps1_pm5[0].name == "PS1"
     assert ps1_pm5[1].name == "PM5"

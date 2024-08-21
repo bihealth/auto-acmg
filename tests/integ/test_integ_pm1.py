@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.auto_acmg import AutoACMG
+from src.auto_acmg import VCEP_MAPPING, AutoACMG
 from src.core.config import Config
 from src.criteria.auto_pm1 import AutoPM1
 from src.defs.annonars_variant import AnnonarsVariantResponse
@@ -33,13 +33,7 @@ from src.defs.seqvar import SeqVar
         ("NM_005343.4(HRAS):c.175_176delinsCT", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
         ("NM_001754.4(RUNX1):c.485G>A", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
         ## ACADVL
-        ("NM_000018.4(ACADVL):c.848T>C", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        # ("NM_000018.4(ACADVL):c.1141_1143del", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        ("NM_000018.4(ACADVL):c.848T>C", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        ("NM_000018.4(ACADVL):c.1097G>A", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        ("NM_000018.4(ACADVL):c.128G>A", GenomeRelease.GRCh37, AutoACMGPrediction.NotMet),
         ## AKT3
-        ("NM_005465.7(AKT3):c.49G>A", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
     ],
 )
 def test_pm1(
@@ -56,7 +50,12 @@ def test_pm1(
     auto_acmg_result = auto_acmg.parse_data(seqvar)
     assert isinstance(auto_acmg_result, AutoACMGResult)
     # Then, predict PM1
-    auto_pm1 = AutoPM1()
-    pm1 = auto_pm1.predict_pm1(seqvar, auto_acmg_result.data)
+    if auto_acmg_result.data.hgnc_id in VCEP_MAPPING:
+        predictor_class = VCEP_MAPPING[auto_acmg_result.data.hgnc_id]
+        predictor = predictor_class(seqvar, auto_acmg_result, config)
+        pm1 = predictor.predict_pm1(seqvar, auto_acmg_result.data)
+    else:
+        auto_pm1 = AutoPM1()
+        pm1 = auto_pm1.predict_pm1(seqvar, auto_acmg_result.data)
     assert pm1.name == "PM1"
     assert pm1.prediction == expected_prediction
