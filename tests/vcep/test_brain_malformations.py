@@ -28,7 +28,7 @@ def brain_malformations_predictor(seqvar, auto_acmg_data):
 def test_predict_pm1_in_critical_domain(brain_malformations_predictor, auto_acmg_data):
     """Test when variant falls within a critical domain for the specified gene."""
     auto_acmg_data.prot_pos = 100  # Set protein position within a critical domain
-    auto_acmg_data.transcript_id = "NM_005465.4"  # AKT3 transcript ID
+    auto_acmg_data.hgnc_id = "HGNC:393"  # AKT3 gene
     result = brain_malformations_predictor.predict_pm1(
         brain_malformations_predictor.seqvar, auto_acmg_data
     )
@@ -48,7 +48,7 @@ def test_predict_pm1_in_critical_domain(brain_malformations_predictor, auto_acmg
 def test_predict_pm1_outside_critical_domain(brain_malformations_predictor, auto_acmg_data):
     """Test when variant does not fall within any critical domain for the specified gene."""
     auto_acmg_data.prot_pos = 500  # Set protein position outside all critical domains
-    auto_acmg_data.transcript_id = "NM_005465.4"  # AKT3 transcript ID
+    auto_acmg_data.hgnc_id = "HGNC:393"  # AKT3 gene
     result = brain_malformations_predictor.predict_pm1(
         brain_malformations_predictor.seqvar, auto_acmg_data
     )
@@ -68,7 +68,7 @@ def test_predict_pm1_outside_critical_domain(brain_malformations_predictor, auto
 def test_predict_pm1_edge_case_start_boundary(brain_malformations_predictor, auto_acmg_data):
     """Test when variant falls exactly on the start boundary of a critical domain."""
     auto_acmg_data.prot_pos = 1382  # Start boundary of the MTOR kinase domain (1382-1982)
-    auto_acmg_data.transcript_id = "NM_004958.3_MTOR"  # MTOR transcript ID
+    auto_acmg_data.hgnc_id = "HGNC:3942"  # MTOR gene
     result = brain_malformations_predictor.predict_pm1(
         brain_malformations_predictor.seqvar, auto_acmg_data
     )
@@ -84,7 +84,7 @@ def test_predict_pm1_edge_case_start_boundary(brain_malformations_predictor, aut
 def test_predict_pm1_edge_case_end_boundary(brain_malformations_predictor, auto_acmg_data):
     """Test when variant falls exactly on the end boundary of a critical domain."""
     auto_acmg_data.prot_pos = 1982  # End boundary of the MTOR kinase domain (1382-1982)
-    auto_acmg_data.transcript_id = "NM_004958.3_MTOR"  # MTOR transcript ID
+    auto_acmg_data.hgnc_id = "HGNC:3942"  # MTOR gene
     result = brain_malformations_predictor.predict_pm1(
         brain_malformations_predictor.seqvar, auto_acmg_data
     )
@@ -102,7 +102,7 @@ def test_predict_pm1_fallback_to_default(
     mock_super_predict_pm1, brain_malformations_predictor, auto_acmg_data
 ):
     """Test when the transcript ID is not in the PM1_CLUSTER mapping, it should fallback to default PM1 prediction."""
-    auto_acmg_data.transcript_id = "NM_XXXXXX.4_AAA"  # A non-existent transcript ID for fallback
+    auto_acmg_data.hgnc_id = "HGNC:1111111111111"  # Not in the PM1_CLUSTER mapping
 
     # Set the mock return value for the superclass's predict_pm1 method
     mock_super_predict_pm1.return_value = AutoACMGCriteria(

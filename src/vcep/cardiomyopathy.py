@@ -28,34 +28,31 @@ from src.defs.seqvar import SeqVar
 
 PM1_CLUSTER = {
     # MYH7
-    "NM_000257.4": [(167, 931)],
-    "ENST00000355349": [(167, 931)],
+    # "NM_000257.4": [(167, 931)],
+    # "ENST00000355349": [(167, 931)],
+    "HGNC:7577": [(167, 931)],
     # MYBPC3
-    "NM_000256.3": [
-        (485, 502),
-        (1248, 1266),
-    ],
-    "ENST00000545968": [
+    # "NM_000256.3": [
+    #     (485, 502),
+    #     (1248, 1266),
+    # ],
+    # "ENST00000545968": [
+    #     (485, 502),
+    #     (1248, 1266),
+    # ],
+    "HGNC:7551": [
         (485, 502),
         (1248, 1266),
     ],
     # TNNI3
-    "NM_000363.5": [
-        (141, 209),
-    ],
-    "ENST00000344887": [
-        (141, 209),
-    ],
+    # "NM_000363.5": [(141, 209)],
+    # "ENST00000344887": [(141, 209)],
+    "HGNC:11947": [(141, 209)],
     # TNNT2
-    "ENST00000367318": [
-        (79, 179),
-    ],
-    "NM_001276345.2": [
-        (89, 189),
-    ],
-    "ENST00000656932.1": [
-        (89, 189),
-    ],
+    # "ENST00000367318": [(79, 179)],
+    # "NM_001276345.2": [(89, 189)],
+    # "ENST00000656932.1": [(89, 189)],
+    "HGNC:11949": [(89, 189)],
 }
 
 
@@ -65,14 +62,14 @@ class CardiomyopathyPredictor(DefaultPredictor):
         """Override predict_pm1 to include VCEP-specific logic for Cardiomyopathy."""
         logger.info("Predict PM1")
 
-        if var_data.transcript_id in PM1_CLUSTER:
-            domains = PM1_CLUSTER[var_data.transcript_id]
+        if var_data.hgnc_id in PM1_CLUSTER:
+            domains = PM1_CLUSTER[var_data.hgnc_id]
 
             # Check if the variant falls within any of the specified domains
             for start_aa, end_aa in domains:
                 if start_aa <= var_data.prot_pos <= end_aa:
                     comment = (
-                        f"Variant falls within a critical domain for {var_data.transcript_id} "
+                        f"Variant falls within a critical domain for {var_data.hgnc_id} "
                         f"between positions {start_aa}-{end_aa}. PM1 is met."
                     )
                     return AutoACMGCriteria(

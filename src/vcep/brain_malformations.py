@@ -11,21 +11,21 @@ from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPredictio
 from src.defs.seqvar import SeqVar
 
 PM1_CLUSTER = {
-    "NM_005465.4": [  # AKT3
+    "HGNC:393": [  # AKT3
         (5, 109),  # Pleckstrin homology domain
         (151, 388),  # Catalytic kinase domain
         (425, 475),  # C-terminal Protein Kinase
     ],
-    "NM_004958.3_MTOR": [  # MTOR
+    "HGNC:3942": [  # MTOR
         (1382, 1982),  # Kinase domain
         (2015, 2114),  # FKBP-rapamycin-binding (FRB) domain
     ],
-    "NM_006218.3_PIK3CA": [  # PIK3CA
+    "HGNC:8975": [  # PIK3CA
         (173, 292),  # Kinase Ras-binding domain
         (322, 483),  # Kinase domains
         (797, 1068),  # Kinase domains
     ],
-    "NM_005027.3": [  # PIK3R2
+    "HGNC:8980": [  # PIK3R2
         (328, 716),  # SH2, sequence homology 2 domain
         (31, 108),  # Adaptor binding domain (PI3K ABD)
     ],
@@ -38,15 +38,8 @@ class BrainMalformationsPredictor(DefaultPredictor):
         "Override predict_pm1 to include VCEP-specific logic for brain malformations VCEP."
         logger.info("Predict PM1")
 
-        # Combine to ensure unique keys for NM_004958.3 transcripts
-        transcript_key = (
-            (f"{var_data.transcript_id}_{var_data.gene_symbol}")
-            if var_data.transcript_id == "NM_004958.3"
-            else var_data.transcript_id
-        )
-
-        if transcript_key in PM1_CLUSTER:
-            domains = PM1_CLUSTER[transcript_key]
+        if var_data.hgnc_id in PM1_CLUSTER:
+            domains = PM1_CLUSTER[var_data.hgnc_id]
 
             # Check if the variant falls within any of the specified domains
             for start_aa, end_aa in domains:

@@ -27,7 +27,7 @@ def auto_acmg_data():
 def test_predict_pm1_in_critical_domain(cardiomyopathy_predictor, auto_acmg_data):
     """Test when the variant falls within a critical domain for MYH7."""
     auto_acmg_data.prot_pos = 500  # Within the critical domain (167-931) for MYH7
-    auto_acmg_data.transcript_id = "NM_000257.4"  # MYH7 transcript ID
+    auto_acmg_data.hgnc_id = "HGNC:7577"  # MYH7 gene
     result = cardiomyopathy_predictor.predict_pm1(cardiomyopathy_predictor.seqvar, auto_acmg_data)
 
     assert (
@@ -41,7 +41,7 @@ def test_predict_pm1_in_critical_domain(cardiomyopathy_predictor, auto_acmg_data
 def test_predict_pm1_outside_critical_domain(cardiomyopathy_predictor, auto_acmg_data):
     """Test when the variant does not fall within any critical domain."""
     auto_acmg_data.prot_pos = 1000  # Outside the critical domain (167-931) for MYH7
-    auto_acmg_data.transcript_id = "NM_000257.4"  # MYH7 transcript ID
+    auto_acmg_data.hgnc_id = "HGNC:7577"  # MYH7 gene
     result = cardiomyopathy_predictor.predict_pm1(cardiomyopathy_predictor.seqvar, auto_acmg_data)
 
     assert (
@@ -55,7 +55,6 @@ def test_predict_pm1_outside_critical_domain(cardiomyopathy_predictor, auto_acmg
 def test_predict_pm1_not_applicable(cardiomyopathy_predictor, auto_acmg_data):
     """Test when the PM1 criterion is not applicable."""
     auto_acmg_data.hgnc_id = "HGNC:12010"  # Example for TPM1, where PM1 is not applicable
-    auto_acmg_data.transcript_id = "NM_000000.0"  # Dummy transcript ID for non-applicable case
     result = cardiomyopathy_predictor.predict_pm1(cardiomyopathy_predictor.seqvar, auto_acmg_data)
 
     assert (
@@ -69,7 +68,7 @@ def test_predict_pm1_fallback_to_default(
     mock_predict_pm1, cardiomyopathy_predictor, auto_acmg_data
 ):
     """Test when the transcript ID is not in the PM1_CLUSTER mapping, it should fallback to default PM1 prediction."""
-    auto_acmg_data.transcript_id = "NM_XXXXXX.4"  # A non-existent transcript ID for fallback
+    auto_acmg_data.hgnc_id = "HGNC:111111111111111"  # Not in the PM1_CLUSTER mapping
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
         prediction=AutoACMGPrediction.NotMet,
@@ -90,7 +89,7 @@ def test_predict_pm1_fallback_to_default(
 def test_predict_pm1_edge_case_start_boundary(cardiomyopathy_predictor, auto_acmg_data):
     """Test when variant falls exactly on the start boundary of a critical domain."""
     auto_acmg_data.prot_pos = 167  # Start boundary of the MYH7 critical domain (167-931)
-    auto_acmg_data.transcript_id = "NM_000257.4"  # MYH7 transcript ID
+    auto_acmg_data.hgnc_id = "HGNC:7577"  # MYH7 gene
     result = cardiomyopathy_predictor.predict_pm1(cardiomyopathy_predictor.seqvar, auto_acmg_data)
 
     assert (
@@ -104,7 +103,7 @@ def test_predict_pm1_edge_case_start_boundary(cardiomyopathy_predictor, auto_acm
 def test_predict_pm1_edge_case_end_boundary(cardiomyopathy_predictor, auto_acmg_data):
     """Test when variant falls exactly on the end boundary of a critical domain."""
     auto_acmg_data.prot_pos = 931  # End boundary of the MYH7 critical domain (167-931)
-    auto_acmg_data.transcript_id = "NM_000257.4"  # MYH7 transcript ID
+    auto_acmg_data.hgnc_id = "HGNC:7577"  # MYH7 gene
     result = cardiomyopathy_predictor.predict_pm1(cardiomyopathy_predictor.seqvar, auto_acmg_data)
 
     assert (
