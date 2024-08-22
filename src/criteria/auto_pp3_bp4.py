@@ -195,6 +195,7 @@ class AutoPP3BP4(AutoACMGHelper):
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Predict PP3 and BP4 criteria."""
+        logger.info("Predict PP3 and BP4")
         pred, comment = self.verify_pp3bp4(seqvar, var_data)
         if pred:
             pp3_pred = (

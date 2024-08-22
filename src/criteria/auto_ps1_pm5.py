@@ -196,6 +196,13 @@ class AutoPS1PM5(AutoACMGHelper):
     def predict_ps1pm5(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """
+        Predicts the criteria PS1 and PM5 for the provided sequence variant.
+
+        Returns:
+            Tuple[AutoACMGCriteria, AutoACMGCriteria]: PS1 and PM5 prediction.
+        """
+        logger.info("Predict PS1 and PM5")
         pred, comment = self.verify_ps1pm5(seqvar, var_data)
         if pred:
             ps1_pred = (

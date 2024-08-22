@@ -60,34 +60,19 @@ def mock_seqvar_transcript():
     return transcript
 
 
-# Mocking dependencies and inherited methods
 @patch("src.auto_acmg.SeqVarTranscriptsHelper.get_ts_info")
 @patch("src.auto_acmg.SeqVarResolver.resolve_seqvar")
-@patch("src.auto_acmg.AutoACMG.parse_data")
 @patch("src.auto_acmg.SeqVarTranscriptsHelper.initialize")
 @patch("src.auto_acmg.AutoACMG._get_variant_info")
-@patch("src.auto_acmg.AutoACMG.predict_pvs1")
-@patch("src.auto_acmg.AutoACMG.predict_ps1pm5")
-@patch("src.auto_acmg.AutoACMG.predict_pm1")
-@patch("src.auto_acmg.AutoACMG.predict_pm2ba1bs1bs2")
-@patch("src.auto_acmg.AutoACMG.predict_pm4bp3")
-@patch("src.auto_acmg.AutoACMG.predict_pp2bp1")
-@patch("src.auto_acmg.AutoACMG.predict_pp3bp4")
-@patch("src.auto_acmg.AutoACMG.predict_bp7")
+@patch("src.auto_acmg.AutoACMG.parse_data")
+@patch("src.auto_acmg.DefaultPredictor.predict")
 def test_predict(
-    mock_predict_bp7,
-    mock_predict_pp3bp4,
-    mock_predict_pp2bp1,
-    mock_predict_pm4bp3,
-    mock_predict_pm2ba1bs1bs2,
-    mock_predict_pm1,
-    mock_predict_ps1pm5,
-    mock_predict_pvs1,
+    mock_predict,
+    mock_parse_data,
     mock_get_variant_info,
     mock_initialize,
-    mock_get_ts_info,
     mock_resolve_seqvar,
-    mock_parse_data,
+    mock_get_ts_info,
     auto_acmg,
     seqvar,
     mock_variant_result,
@@ -98,28 +83,12 @@ def test_predict(
     mock_get_variant_info.return_value = mock_variant_result
     mock_get_ts_info.return_value = (mock_seqvar_transcript, mock_seqvar_transcript, None, [], None)
     mock_parse_data.return_value = MagicMock()
-
-    # Set return values for all the prediction methods
-    mock_predict_pvs1.return_value = MagicMock()
-    mock_predict_ps1pm5.return_value = (MagicMock(), MagicMock())
-    mock_predict_pm1.return_value = MagicMock()
-    mock_predict_pm2ba1bs1bs2.return_value = (MagicMock(), MagicMock(), MagicMock(), MagicMock())
-    mock_predict_pm4bp3.return_value = (MagicMock(), MagicMock())
-    mock_predict_pp2bp1.return_value = (MagicMock(), MagicMock())
-    mock_predict_pp3bp4.return_value = (MagicMock(), MagicMock())
-    mock_predict_bp7.return_value = MagicMock()
+    mock_predict.return_value = MagicMock(spec=AutoACMGResult)
 
     result = auto_acmg.predict()
 
     assert isinstance(result, AutoACMGResult), "Result should be of type AutoACMGResult."
-
-    # Verify predictions for different criteria
-    assert result.criteria.pvs1 is not None, "PVS1 should have a prediction."
-    assert result.criteria.ps1 is not None, "PS1 should have a prediction."
-    assert result.criteria.pm1 is not None, "PM1 should have a prediction."
-    assert result.criteria.pm2 is not None, "PM2 should have a prediction."
-    assert result.criteria.bp3 is not None, "BP3 should have a prediction."
-    assert result.criteria.bp7 is not None, "BP7 should have a prediction."
+    mock_predict.assert_called_once()
 
 
 @patch(

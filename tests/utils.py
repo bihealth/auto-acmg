@@ -6,6 +6,7 @@ import os
 from typing import Any, Dict, List, Tuple
 
 from src.auto_acmg import AutoACMG
+from src.defs.auto_acmg import AutoACMGPrediction
 from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionSeqVarPath
 from src.defs.genome_builds import GenomeRelease
 
@@ -35,7 +36,7 @@ def load_test_data_pvs1(
     path: str,
 ) -> List[Tuple[str, GenomeRelease, PVS1Prediction, PVS1PredictionSeqVarPath]]:
     """
-    Load CSV test data.
+    Load CSV test data for PVS1 prediction.
 
     :param path: The path to the CSV file.
     :type path: str
@@ -54,6 +55,33 @@ def load_test_data_pvs1(
                     GenomeRelease[record["genome_release"]],
                     PVS1Prediction[record["expected_prediction"]],
                     PVS1PredictionSeqVarPath[record["expected_path"]],
+                )
+            )
+    return result
+
+
+def load_test_data_pm1(
+    path: str,
+) -> List[Tuple[str, GenomeRelease, AutoACMGPrediction]]:
+    """
+    Load CSV test data for PM1 prediction.
+
+    :param path: The path to the CSV file.
+    :type path: str
+    :return: A list of tuples containing the test data.
+    :rtype: List[Tuple[str, GenomeRelease, AutoACMGPrediction]]
+    """
+    result = []
+    with open(path, "rt") as inputf:
+        reader = csv.DictReader(inputf)
+        for record in reader:
+            if record["section"].startswith("#"):
+                continue
+            result.append(
+                (
+                    record["variant_name"],
+                    GenomeRelease[record["genome_release"]],
+                    AutoACMGPrediction[record["expected_prediction"]],
                 )
             )
     return result

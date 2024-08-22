@@ -521,6 +521,7 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
         Returns:
             The prediction result.
         """
+        logger.info("Predict PM2, BA1, BS1, BS2")
         pred, comment = self.verify_pm2ba1bs1bs2(seqvar, var_data)
         if pred:
             pm2_pred = (

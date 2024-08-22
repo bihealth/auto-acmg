@@ -4,7 +4,7 @@ from typing import Dict, List, Tuple
 
 import pytest
 
-from src.auto_acmg import AutoACMG
+from src.auto_acmg import VCEP_MAPPING, AutoACMG
 from src.core.config import Config
 from src.criteria.auto_pvs1 import AutoPVS1
 from src.defs.auto_acmg import (
@@ -63,8 +63,13 @@ def test_pvs1(
     auto_acmg_result = auto_acmg.parse_data(seqvar)
     assert isinstance(auto_acmg_result, AutoACMGResult)
     # Then, predict PVS1
-    auto_pvs1 = AutoPVS1()
-    pvs1 = auto_pvs1.predict_pvs1(seqvar, auto_acmg_result.data)
+    if auto_acmg_result.data.hgnc_id in VCEP_MAPPING:
+        predictor_class = VCEP_MAPPING[auto_acmg_result.data.hgnc_id]
+        predictor = predictor_class(seqvar, auto_acmg_result, config)
+        pvs1 = predictor.predict_pvs1(seqvar, auto_acmg_result.data)
+    else:
+        auto_pvs1 = AutoPVS1()
+        pvs1 = auto_pvs1.predict_pvs1(seqvar, auto_acmg_result.data)
     expected_pred = (
         AutoACMGPrediction.Met if expected_prediction in met_pred else AutoACMGPrediction.NotMet
     )

@@ -4,7 +4,7 @@ from typing import Tuple
 
 import pytest
 
-from src.auto_acmg import AutoACMG
+from src.auto_acmg import VCEP_MAPPING, AutoACMG
 from src.core.config import Config
 from src.criteria.auto_pm4_bp3 import AutoPM4BP3
 from src.defs.annonars_variant import AnnonarsVariantResponse
@@ -59,8 +59,13 @@ def test_pm4_bp3(
     auto_acmg_result = auto_acmg.parse_data(seqvar)
     assert isinstance(auto_acmg_result, AutoACMGResult)
     # Then, predict PM4 and BP3
-    auto_pm4_bp3 = AutoPM4BP3()
-    pm4_bp3 = auto_pm4_bp3.predict_pm4bp3(seqvar, auto_acmg_result.data)
+    if auto_acmg_result.data.hgnc_id in VCEP_MAPPING:
+        predictor_class = VCEP_MAPPING[auto_acmg_result.data.hgnc_id]
+        predictor = predictor_class(seqvar, auto_acmg_result, config)
+        pm4_bp3 = predictor.predict_pm4bp3(seqvar, auto_acmg_result.data)
+    else:
+        auto_pm4_bp3 = AutoPM4BP3()
+        pm4_bp3 = auto_pm4_bp3.predict_pm4bp3(seqvar, auto_acmg_result.data)
     assert pm4_bp3[0].name == "PM4"
     assert pm4_bp3[0].prediction == expected_prediction[0]
     assert pm4_bp3[1].name == "BP3"

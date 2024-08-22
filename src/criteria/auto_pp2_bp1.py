@@ -183,6 +183,7 @@ class AutoPP2BP1(AutoACMGHelper):
         Returns:
             AutoACMGCriteria: PP2 and BP1 prediction.
         """
+        logger.info("Predict PP2 and BP1")
         pred, comment = self.verify_pp2bp1(seqvar, var_data)
         if pred:
             pp2_pred = (

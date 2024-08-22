@@ -1,6 +1,6 @@
 """Implementations of the PVS1 algorithm."""
 
-from typing import List, Optional, Union
+from typing import Optional, Type, Union
 
 from loguru import logger
 
@@ -14,42 +14,48 @@ from src.criteria.auto_pp2_bp1 import AutoPP2BP1
 from src.criteria.auto_pp3_bp4 import AutoPP3BP4
 from src.criteria.auto_ps1_pm5 import AutoPS1PM5
 from src.criteria.auto_pvs1 import AutoPVS1
+from src.criteria.default_predictor import DefaultPredictor
 from src.defs.annonars_variant import VariantResult
 from src.defs.auto_acmg import AutoACMGResult, CdsInfo, GenomicStrand
-from src.defs.auto_pvs1 import PVS1Prediction
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, ParseError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import ProteinPos, TxPos
 from src.defs.seqvar import SeqVar, SeqVarResolver
 from src.utils import SeqVarTranscriptsHelper
+from src.vcep import (
+    ACADVLPredictor,
+    BrainMalformationsPredictor,
+    CardiomyopathyPredictor,
+    CDH1Predictor,
+    CerebralCreatineDeficiencySyndromesPredictor,
+    CoagulationFactorDeficiencyPredictor,
+)
 
-#: Pathogenic PVS1 predictions of sequence variants.
-PVS1_POSITIVE_SEQVAR_PREDICTIONS = [
-    PVS1Prediction.PVS1,
-    PVS1Prediction.PVS1_Strong,
-    PVS1Prediction.PVS1_Moderate,
-    PVS1Prediction.PVS1_Supporting,
-]
+#: Mapping of HGNC gene identifiers to predictor classes.
+VCEP_MAPPING = {
+    "HGNC:92": ACADVLPredictor,  # ACADVL
+    "HGNC:393": BrainMalformationsPredictor,  # AKT3
+    "HGNC:3942": BrainMalformationsPredictor,  # MTOR
+    "HGNC:8975": BrainMalformationsPredictor,  # PIK3CA
+    "HGNC:8980": BrainMalformationsPredictor,  # PIK3R2
+    "HGNC:7577": CardiomyopathyPredictor,  # MYH7
+    "HGNC:7551": CardiomyopathyPredictor,  # MYBPC3
+    "HGNC:11947": CardiomyopathyPredictor,  # TNNI3
+    "HGNC:11949": CardiomyopathyPredictor,  # TNNT2
+    "HGNC:12010": CardiomyopathyPredictor,  # TPM1
+    "HGNC:143": CardiomyopathyPredictor,  # ACTC1
+    "HGNC:7583": CardiomyopathyPredictor,  # MYL2
+    "HGNC:7584": CardiomyopathyPredictor,  # MYL3
+    "HGNC:1748": CDH1Predictor,  # CDH1
+    "HGNC:4175": CerebralCreatineDeficiencySyndromesPredictor,  # GATM
+    "HGNC:4136": CerebralCreatineDeficiencySyndromesPredictor,  # GAMT
+    "HGNC:11055": CerebralCreatineDeficiencySyndromesPredictor,  # SLC6A8
+    "HGNC:3546": CoagulationFactorDeficiencyPredictor,  # F8
+    "HGNC:3551": CoagulationFactorDeficiencyPredictor,  # F9
+}
 
-#: Criteria, which have no automatic prediction yet.
-NOT_IMPLEMENTED_CRITERIA: List[str] = [
-    "PS2",  # De novo (both parents not tested)
-    "PS3",  # Well-established in vitro or in vivo functional studies
-    "PS4",  # Increased prevalence in affected individuals vs. controls
-    "PM3",  # Recessive disorder (zygosity unknown)
-    "PM6",  # Assumed de novo (both parents not tested)
-    "PP1",  # Cosegregation with disease in multiple affected family members
-    "PP4",  # Patient's phenotype or family history specificity
-    "BS3",  # Well-established in vitro or in vivo functional studies
-    "BS4",  # Lack of segregation in affected family members
-    "BP2",  # Observed in healthy individuals (zygosity unknown)
-    "BP5",  # Case with an alternate molecular basis for disease
-]
 
-
-class AutoACMG(
-    AutoPVS1, AutoPS1PM5, AutoPM1, AutoPM2BA1BS1BS2, AutoPM4BP3, AutoPP2BP1, AutoPP3BP4, AutoBP7
-):
+class AutoACMG:
     """Class for predicting ACMG criteria.
 
     This class handles both sequence variants and structural variants to determine their potential
@@ -242,7 +248,21 @@ class AutoACMG(
 
         # Thresholds
         pass
+
         return self.result
+
+    def select_predictor(self, hgnc_id: str) -> Type[DefaultPredictor]:
+        """Selects the predictor for the specified gene.
+
+        Args:
+            hgnc_id: The HGNC gene identifier.
+
+        Returns:
+            Type[Predictor]: The predictor class for the specified gene.
+        """
+        if hgnc_id in VCEP_MAPPING:
+            return VCEP_MAPPING[hgnc_id]
+        return DefaultPredictor
 
     def predict(self) -> Optional[AutoACMGResult]:
         """
@@ -262,7 +282,7 @@ class AutoACMG(
         logger.info("Predicting ACMG criteria for variant: {}", self.variant_name)
         self.seqvar = self.resolve_variant()
         self.result.seqvar = self.seqvar
-        if not self.seqvar:
+        if not self.result.seqvar:
             logger.error("Unable to make a prediction for the variant: {}", self.variant_name)
             return None
 
@@ -271,53 +291,9 @@ class AutoACMG(
             self.parse_data(self.seqvar)
 
             # ====== Predict ======
-            # PP5 and BP6 criteria are depricated
-            logger.warning("Note, that PP5 and BP6 criteria are depricated and not predicted.")
-            # Not implemented criteria
-            logger.warning(
-                "Some criteria are not implemented yet: {}",
-                NOT_IMPLEMENTED_CRITERIA,
-            )
-
-            # PVS1
-            self.result.criteria.pvs1 = self.predict_pvs1(self.seqvar, self.result.data)
-
-            # PS1 and PM5
-            self.result.criteria.ps1, self.result.criteria.pm5 = self.predict_ps1pm5(
-                self.seqvar, self.result.data
-            )
-
-            # PM1
-            self.result.criteria.pm1 = self.predict_pm1(self.seqvar, self.result.data)
-
-            # PM2, BA1, BS1 and BS2
-            (
-                self.result.criteria.pm2,
-                self.result.criteria.ba1,
-                self.result.criteria.bs1,
-                self.result.criteria.bs2,
-            ) = self.predict_pm2ba1bs1bs2(self.seqvar, self.result.data)
-
-            # PM4 and BP3
-            self.result.criteria.pm4, self.result.criteria.bp3 = self.predict_pm4bp3(
-                self.seqvar, self.result.data
-            )
-
-            # PP2 and BP1
-            self.result.criteria.pp2, self.result.criteria.bp1 = self.predict_pp2bp1(
-                self.seqvar, self.result.data
-            )
-
-            # PP3 and BP4
-            self.result.criteria.pp3, self.result.criteria.bp4 = self.predict_pp3bp4(
-                self.seqvar, self.result.data
-            )
-
-            # BP7
-            self.result.criteria.bp7 = self.predict_bp7(self.seqvar, self.result.data)
-
-            logger.info("ACMG criteria prediction completed.")
-            return self.result
+            predictor_class = self.select_predictor(self.result.data.hgnc_id)
+            predictor = predictor_class(self.result.seqvar, self.result, self.config)
+            return predictor.predict()
 
         else:
             logger.info("Structural variants are not supported for ACMG criteria prediction yet.")

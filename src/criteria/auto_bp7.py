@@ -113,6 +113,7 @@ class AutoBP7(AutoACMGHelper):
 
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Predict BP7 criterion."""
+        logger.info("Predict BP7")
         pred, comment = self.verify_bp7(seqvar, var_data)
         if pred:
             pred_bp7 = (
