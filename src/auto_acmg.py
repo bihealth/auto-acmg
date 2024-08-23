@@ -19,7 +19,7 @@ from src.defs.annonars_variant import VariantResult
 from src.defs.auto_acmg import AutoACMGResult, CdsInfo, GenomicStrand
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, ParseError
 from src.defs.genome_builds import GenomeRelease
-from src.defs.mehari import ProteinPos, TxPos
+from src.defs.mehari import CdsPos, ProteinPos, TxPos
 from src.defs.seqvar import SeqVar, SeqVarResolver
 from src.utils import SeqVarTranscriptsHelper
 from src.vcep import (
@@ -36,6 +36,24 @@ from src.vcep import (
     FamilialHypercholesterolemiaPredictor,
     FBN1Predictor,
     GlaucomaPredictor,
+    HBOPCPredictor,
+    HearingLossPredictor,
+    HHTPredictor,
+    InsightColorectalCancerPredictor,
+    LeberCongenitalAmaurosisPredictor,
+    LysosomalDiseasesPredictor,
+    MalignantHyperthermiaPredictor,
+    MitochondrialDiseasesPredictor,
+    MonogenicDiabetesPredictor,
+    MyeloidMalignancyPredictor,
+    PKUPredictor,
+    PlateletDisordersPredictor,
+    PTENPredictor,
+    PulmonaryHypertensionPredictor,
+    ThrombosisPredictor,
+    TP53Predictor,
+    VHLPredictor,
+    VonWillebrandDiseasePredictor,
 )
 
 #: Mapping of HGNC gene identifiers to predictor classes.
@@ -75,6 +93,46 @@ VCEP_MAPPING = {
     "HGNC:6547": FamilialHypercholesterolemiaPredictor,  # LDLR
     "HGNC:3603": FBN1Predictor,  # FBN1
     "HGNC:7610": GlaucomaPredictor,  # MYOC
+    "HGNC:13733": HearingLossPredictor,  # CDH23
+    "HGNC:2180": HearingLossPredictor,  # COCH
+    "HGNC:4284": HearingLossPredictor,  # GJB2
+    "HGNC:6298": HearingLossPredictor,  # KCNQ4
+    "HGNC:7605": HearingLossPredictor,  # MYO6
+    "HGNC:7606": HearingLossPredictor,  # MYO7A
+    "HGNC:8818": HearingLossPredictor,  # SLC26A4
+    "HGNC:11720": HearingLossPredictor,  # TECTA
+    "HGNC:12601": HearingLossPredictor,  # USH2A
+    "HGNC:7594": HearingLossPredictor,  # MYO15A
+    "HGNC:8515": HearingLossPredictor,  # OTOF
+    "HGNC:795": HBOPCPredictor,  # ATM
+    "HGNC:26144": HBOPCPredictor,  # PALB2
+    "HGNC:175": HHTPredictor,  # ACVRL1
+    "HGNC:3349": HHTPredictor,  # ENG
+    "HGNC:583": InsightColorectalCancerPredictor,  # APC
+    "HGNC:7127": InsightColorectalCancerPredictor,  # MLH1
+    "HGNC:7325": InsightColorectalCancerPredictor,  # MSH2
+    "HGNC:7329": InsightColorectalCancerPredictor,  # MSH6
+    "HGNC:9122": InsightColorectalCancerPredictor,  # PMS2
+    "HGNC:10294": LeberCongenitalAmaurosisPredictor,  # RPE65
+    "HGNC:4065": LysosomalDiseasesPredictor,  # GAA
+    "HGNC:10483": MalignantHyperthermiaPredictor,  # GBA
+    "HGNC:23287": MitochondrialDiseasesPredictor,  # ETHE1
+    "HGNC:8806": MitochondrialDiseasesPredictor,  # PDHA1
+    "HGNC:9179": MitochondrialDiseasesPredictor,  # POLG
+    "HGNC:16266": MitochondrialDiseasesPredictor,  # SLC19A3
+    "HGNC:11621": MonogenicDiabetesPredictor,  # HNF1A
+    "HGNC:5024": MonogenicDiabetesPredictor,  # HNF4A
+    "HGNC:4195": MonogenicDiabetesPredictor,  # GCK
+    "HGNC:10471": MyeloidMalignancyPredictor,  # RUNX1
+    "HGNC:8582": PKUPredictor,  # PAH
+    "HGNC:6138": PlateletDisordersPredictor,  # ITGA2B
+    "HGNC:6156": PlateletDisordersPredictor,  # ITGB3
+    "HGNC:9588": PTENPredictor,  # PTEN
+    "HGNC:1078": PulmonaryHypertensionPredictor,  # BMPR2
+    "HGNC:12726": VonWillebrandDiseasePredictor,  # VWF
+    "HGNC:775": ThrombosisPredictor,  # SERPINC1
+    "HGNC:11998": TP53Predictor,  # TP53
+    "HGNC:12687": VHLPredictor,  # VHL
 }
 
 
@@ -205,6 +263,9 @@ class AutoACMG:
         self.result.data.transcript_tags = seqvar_transcript.feature_tag
         self.result.data.tx_pos_utr = (
             seqvar_transcript.tx_pos.ord if isinstance(seqvar_transcript.tx_pos, TxPos) else -1
+        )
+        self.result.data.cds_pos = (
+            seqvar_transcript.cds_pos.ord if isinstance(seqvar_transcript.cds_pos, CdsPos) else 0
         )
         self.result.data.prot_pos = (
             seqvar_transcript.protein_pos.ord

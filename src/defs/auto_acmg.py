@@ -397,6 +397,7 @@ class AutoACMGData(AutoAcmgBaseModel):
     transcript_id: str = ""
     transcript_tags: List[str] = []
     tx_pos_utr: int = -1
+    cds_pos: int = 0
     prot_pos: int = -1
     prot_length: int = -1
     cds_info: Dict[str, CdsInfo] = {}
