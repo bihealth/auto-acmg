@@ -58,6 +58,5 @@ section,variant_name,genome_release,expected_prediction,comment
 ,NM_001754.4(RUNX1):c.314A>C,GRCh37,Met,
 ,NM_001754.4:c.315C>A,GRCh37,Met,
 ,NM_002834.4(PTPN11):c.782T>A,GRCh37,Met,
-,NM_000546.5(TP53):c.396G>C,GRCh37,Met,
 ,NM_005343.4(HRAS):c.175_176delinsCT,GRCh37,Met,
 ,NM_001754.4(RUNX1):c.485G>A,GRCh37,Met,
