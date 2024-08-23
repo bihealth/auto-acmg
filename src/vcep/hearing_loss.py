@@ -26,7 +26,7 @@ from src.defs.seqvar import SeqVar
 
 PM1_CLUSTER = {
     "HGNC:6298": {
-        "domain": [
+        "domains": [
             (271, 292),  # Pore-forming intramembrane region
         ]
     }
@@ -63,7 +63,7 @@ class HearingLossPredictor(DefaultPredictor):
             return super().predict_pm1(seqvar, var_data)
 
         # Check strong level criteria
-        for start, end in gene_cluster["domain"]:
+        for start, end in gene_cluster["domains"]:
             if start <= var_data.prot_pos <= end:
                 comment = (
                     f"Variant falls within the critical pore-forming intramembrane region "

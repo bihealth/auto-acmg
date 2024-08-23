@@ -33,7 +33,7 @@ PM1_CLUSTER: Dict[str, Dict[str, Dict[str, List]]] = {
         },
         "moderate": {
             "residues": [(1667, 1667), (1332, 1332)],  # Residues affecting secretion
-            "regions": [(2267, 2304)],  # FXa-binding residues, excluding Ser2283
+            "domains": [(2267, 2304)],  # FXa-binding residues, excluding Ser2283
             "excluded_residues": [(2283, 2283)],  # Excluded residue in FXa-binding region
         },
     },
@@ -95,8 +95,8 @@ class CoagulationFactorDeficiencyPredictor(DefaultPredictor):
                     summary=comment,
                 )
 
-        # Check moderate level criteria for regions, excluding specific residues
-        for start, end in gene_cluster.get("moderate", {}).get("regions", []):
+        # Check moderate level criteria for domains, excluding specific residues
+        for start, end in gene_cluster.get("moderate", {}).get("domains", []):
             if start <= var_data.prot_pos <= end:
                 excluded_residues = gene_cluster.get("moderate", {}).get("excluded_residues", [])
                 if not any(start <= var_data.prot_pos <= end for start, end in excluded_residues):

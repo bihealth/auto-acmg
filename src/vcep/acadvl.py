@@ -10,7 +10,7 @@ from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
 from src.defs.seqvar import SeqVar
 
-PM1_CLUSTER_REGIONS = [
+PM1_CLUSTER = [
     (214, 223),  # Nucleotide and substrate binding
     (249, 251),  # Nucleotide and substrate binding
     (460, 466),  # Nucleotide and substrate binding
@@ -25,7 +25,7 @@ class ACADVLPredictor(DefaultPredictor):
         """Override predict_pm1 to include VCEP-specific logic for ACADVL."""
         logger.info("Predict PM1")
         # Check if variant falls within critical regions
-        for start, end in PM1_CLUSTER_REGIONS:
+        for start, end in PM1_CLUSTER:
             if start <= var_data.prot_pos <= end:
                 comment = (
                     f"Variant falls within a critical region for ACADVL between positions "

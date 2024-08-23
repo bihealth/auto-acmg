@@ -47,47 +47,47 @@ from src.defs.seqvar import SeqVar
 # fmt: off
 PM1_CLUSTER_RASOPATHY: Dict[str, Dict[str, List[Union[int, Tuple[int, int]]]]] = {
     "HGNC:7989": {  # NRAS
-        "regions": [(10, 17), (25, 40), (57, 64), (145, 156)],  # P-loop, SW1, SW2, SAK
+        "domains": [(10, 17), (25, 40), (57, 64), (145, 156)],  # P-loop, SW1, SW2, SAK
     },
     "HGNC:9829": {  # RAF1
-        "regions": [(251, 266)],  # CR2 domain in exon 7
+        "domains": [(251, 266)],  # CR2 domain in exon 7
         "exons": [14, 17],  # Critical exons
     },
     "HGNC:11187": {  # SOS1
-        "regions": [(420, 500)],  # PH domain
+        "domains": [(420, 500)],  # PH domain
     },
     "HGNC:11188": {  # SOS2
-        "regions": [(418, 498)],  # PH domain
+        "domains": [(418, 498)],  # PH domain
     },
     "HGNC:9644": {  # PTPN11
-        "regions": [(4, 4), (7, 9), (58, 63), (69, 77), (247, 247), (251, 251),
+        "domains": [(4, 4), (7, 9), (58, 63), (69, 77), (247, 247), (251, 251),
                     (255, 256), (258, 258), (261, 261), (265, 265),
                     (278, 281), (284, 284)],  # Critical N-SH2 and PTPN domain residues
     },
     "HGNC:6407": {  # KRAS
-        "regions": [(10, 17), (25, 40), (57, 64), (145, 156)],  # P-loop, SW1, SW2, SAK
+        "domains": [(10, 17), (25, 40), (57, 64), (145, 156)],  # P-loop, SW1, SW2, SAK
     },
     "HGNC:6840": {  # MAP2K1
-        "regions": [(43, 61), (124, 134)],  # Specific domains
+        "domains": [(43, 61), (124, 134)],  # Specific domains
     },
     "HGNC:5173": {  # HRAS
-        "regions": [(10, 17), (25, 40), (57, 64), (145, 156)],  # P-loop, SW1, SW2, SAK
+        "domains": [(10, 17), (25, 40), (57, 64), (145, 156)],  # P-loop, SW1, SW2, SAK
     },
     "HGNC:10023": {  # RIT1
-        "regions": [(28, 35), (43, 58), (75, 82)],  # P-loop, SW1, SW2
+        "domains": [(28, 35), (43, 58), (75, 82)],  # P-loop, SW1, SW2
     },
     "HGNC:6842": {  # MAP2K2
-        "regions": [(47, 65), (128, 138)],  # Specific domains
+        "domains": [(47, 65), (128, 138)],  # Specific domains
     },
     "HGNC:1097": {  # BRAF
-        "regions": [(459, 474), (594, 627)],  # P-loop, CR3 activation segment
+        "domains": [(459, 474), (594, 627)],  # P-loop, CR3 activation segment
         "exons": [6, 11],  # Critical exons
     },
     "HGNC:7227": {  # MRAS
-        "regions": [(20, 27), (35, 50), (67, 74)],  # P-loop, SW1, SW2
+        "domains": [(20, 27), (35, 50), (67, 74)],  # P-loop, SW1, SW2
     },
     "HGNC:17271": {  # RRAS2
-        "regions": [(21, 28), (36, 51), (68, 75)],  # P-loop, SW1, SW2
+        "domains": [(21, 28), (36, 51), (68, 75)],  # P-loop, SW1, SW2
     },
 }
 
@@ -117,7 +117,7 @@ class RASopathyPredictor(DefaultPredictor):
             return super().predict_pm1(seqvar, var_data)
 
         # Check if the variant falls within a critical region
-        for start, end in gene_info.get("regions", []):   # type: ignore
+        for start, end in gene_info.get("domains", []):   # type: ignore
             if start <= var_data.prot_pos <= end:
                 comment = (
                     f"Variant affects a critical residue in {var_data.hgnc_id} "

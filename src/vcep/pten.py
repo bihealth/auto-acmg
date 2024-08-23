@@ -12,7 +12,7 @@ from src.defs.seqvar import SeqVar
 
 PM1_CLUSTER = {
     "HGNC:9588": {  # PTEN
-        "moderate":
+        "residues":
         # catalytic motifs
         list(range(90, 95))
         + list(range(123, 131))
@@ -34,7 +34,7 @@ class PTENPredictor(DefaultPredictor):
             return super().predict_pm1(seqvar, var_data)
 
         # Check if the variant falls within the specified catalytic motifs
-        if var_data.prot_pos in gene_cluster.get("moderate", []):
+        if var_data.prot_pos in gene_cluster.get("residues", []):
             comment = (
                 f"Variant affects a critical residue within the catalytic motifs of PTEN "
                 f"at position {var_data.prot_pos}. PM1 is met at the Moderate level."

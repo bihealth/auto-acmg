@@ -27,19 +27,19 @@ from src.defs.seqvar import SeqVar
 # fmt: off
 PM1_CLUSTER: Dict[str, Dict[str, List[Tuple[int, int]]]] = {
     "HGNC:11634": {  # TCF4
-        "regions": [(564, 617)],  # Basic Helix-Loop-Helix (bHLH) domain
+        "domains": [(564, 617)],  # Basic Helix-Loop-Helix (bHLH) domain
     },
     "HGNC:11411": {  # CDKL5
-        "regions": [(19, 43), (169, 171)],  # ATP binding region, TEY phosphorylation site
+        "domains": [(19, 43), (169, 171)],  # ATP binding region, TEY phosphorylation site
     },
     "HGNC:3811": {  # FOXG1
-        "regions": [(181, 275)],  # Forkhead domain
+        "domains": [(181, 275)],  # Forkhead domain
     },
     "HGNC:6990": {  # MECP2
-        "regions": [(90, 162), (302, 306)],  # Methyl-DNA binding (MBD), Transcriptional repression domain (TRD)
+        "domains": [(90, 162), (302, 306)],  # Methyl-DNA binding (MBD), Transcriptional repression domain (TRD)
     },
     "HGNC:12496": {  # UBE3A
-        "regions": [(820, 820)],  # 3’ cysteine binding site
+        "domains": [(820, 820)],  # 3’ cysteine binding site
     },
 }
 
@@ -66,7 +66,7 @@ class RettAngelmanPredictor(DefaultPredictor):
             return super().predict_pm1(seqvar, var_data)
 
         # Check if the variant falls within a critical region
-        for start, end in gene_info.get("regions", []):
+        for start, end in gene_info.get("domains", []):
             if start <= var_data.prot_pos <= end:
                 comment = (
                     f"Variant affects a critical residue in {var_data.hgnc_id} "

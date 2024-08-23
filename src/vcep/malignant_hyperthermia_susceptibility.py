@@ -13,13 +13,13 @@ from src.defs.seqvar import SeqVar
 PM1_CLUSTER = {
     "HGNC:10483": {
         "moderate": {
-            "regions": [
+            "domains": [
                 (1, 552),  # N-terminal region
                 (2101, 2458),  # Central region
             ],
         },
         "supporting": {
-            "regions": [
+            "domains": [
                 (1, 552),  # N-terminal region (if PS1/PM5 applicable)
                 (2101, 2458),  # Central region (if PS1/PM5 applicable)
                 (4631, 4991),  # C-terminal region
@@ -41,8 +41,8 @@ class MalignantHyperthermiaPredictor(DefaultPredictor):
         if not gene_cluster:
             return super().predict_pm1(seqvar, var_data)
 
-        # Check moderate level regions
-        for start, end in gene_cluster.get("moderate", {}).get("regions", []):
+        # Check moderate level domains
+        for start, end in gene_cluster.get("moderate", {}).get("domains", []):
             if start <= var_data.prot_pos <= end:
                 comment = (
                     f"Variant falls within a critical region in RYR1 between positions {start}-{end}. "
@@ -55,8 +55,8 @@ class MalignantHyperthermiaPredictor(DefaultPredictor):
                     summary=comment,
                 )
 
-        # Check supporting level regions
-        for start, end in gene_cluster.get("supporting", {}).get("regions", []):
+        # Check supporting level domains
+        for start, end in gene_cluster.get("supporting", {}).get("domains", []):
             if start <= var_data.prot_pos <= end:
                 comment = (
                     f"Variant falls within a critical region in RYR1 between positions {start}-{end}. "

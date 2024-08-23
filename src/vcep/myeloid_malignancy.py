@@ -27,9 +27,7 @@ PM1_CLUSTER = {
             201,  # R201
             204,  # R204
         ],
-        "supporting": [  # Other residues within the RHD (89-204)
-            *range(89, 205),
-        ],
+        "supporting": list(range(89, 205)),  # Other residues within the RHD (89-204)
     }
 }
 

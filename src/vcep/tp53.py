@@ -14,7 +14,7 @@ from src.defs.seqvar import SeqVar
 PM1_CLUSTER = {
     # "NM_000546.4": {
     "HGNC:11998": {
-        "moderate": [175, 245, 248, 249, 273, 282],
+        "residues": [175, 245, 248, 249, 273, 282],
     }
 }
 
@@ -32,7 +32,7 @@ class TP53Predictor(DefaultPredictor):
             return super().predict_pm1(seqvar, var_data)
 
         # Check if variant is in the moderate cluster
-        if var_data.prot_pos in gene_cluster["moderate"]:
+        if var_data.prot_pos in gene_cluster["residues"]:
             return AutoACMGCriteria(
                 name="PM1",
                 prediction=AutoACMGPrediction.Met,
