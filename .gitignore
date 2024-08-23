@@ -11,6 +11,9 @@ src/bench/tmp/*.csv
 cache/
 cache/**
 
+# Prediction file
+prediction.json
+
 # DS_Store file
 .DS_Store
 

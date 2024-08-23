@@ -30,3 +30,8 @@ class AutoAcmgBaseModel(BaseModel):
     # class Config:
     #     use_enum_values = True
     #     arbitrary_types_allowed = True
+
+    def save_to_file(self, file_path: str = "prediction.json") -> None:
+        """Save the model to a file."""
+        with open(file_path, "w") as file:
+            file.write(self.model_dump_json(indent=4))

@@ -1,6 +1,6 @@
 """Implementations of the PVS1 algorithm."""
 
-from typing import Optional, Type, Union
+from typing import Dict, Optional, Type, Union
 
 from loguru import logger
 
@@ -29,6 +29,13 @@ from src.vcep import (
     CDH1Predictor,
     CerebralCreatineDeficiencySyndromesPredictor,
     CoagulationFactorDeficiencyPredictor,
+    CongenitalMyopathiesPredictor,
+    DICER1Predictor,
+    ENIGMAPredictor,
+    EpilepsySodiumChannelPredictor,
+    FamilialHypercholesterolemiaPredictor,
+    FBN1Predictor,
+    GlaucomaPredictor,
 )
 
 #: Mapping of HGNC gene identifiers to predictor classes.
@@ -52,6 +59,22 @@ VCEP_MAPPING = {
     "HGNC:11055": CerebralCreatineDeficiencySyndromesPredictor,  # SLC6A8
     "HGNC:3546": CoagulationFactorDeficiencyPredictor,  # F8
     "HGNC:3551": CoagulationFactorDeficiencyPredictor,  # F9
+    "HGNC:7720": CongenitalMyopathiesPredictor,  # NEB
+    "HGNC:129": CongenitalMyopathiesPredictor,  # ACTA1
+    "HGNC:2974": CongenitalMyopathiesPredictor,  # DNM2
+    "HGNC:7448": CongenitalMyopathiesPredictor,  # MTM1
+    "HGNC:10483": CongenitalMyopathiesPredictor,  # RYR1
+    "HGNC:17098": DICER1Predictor,  # DICER1
+    "HGNC:1100": ENIGMAPredictor,  # BRCA1
+    "HGNC:1101": ENIGMAPredictor,  # BRCA2
+    "HGNC:10585": EpilepsySodiumChannelPredictor,  # SCN1A
+    "HGNC:10588": EpilepsySodiumChannelPredictor,  # SCN2A
+    "HGNC:10590": EpilepsySodiumChannelPredictor,  # SCN3A
+    "HGNC:10596": EpilepsySodiumChannelPredictor,  # SCN8A
+    "HGNC:10586": EpilepsySodiumChannelPredictor,  # SCN1B
+    "HGNC:6547": FamilialHypercholesterolemiaPredictor,  # LDLR
+    "HGNC:3603": FBN1Predictor,  # FBN1
+    "HGNC:7610": GlaucomaPredictor,  # MYOC
 }
 
 
