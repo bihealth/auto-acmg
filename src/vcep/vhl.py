@@ -14,7 +14,7 @@ from src.defs.seqvar import SeqVar
 PM1_CLUSTER = {
     # "NM_000551.3": {
     "HGNC:12687": {
-        "moderate": [
+        "residues": [
             # Stebbins er al (PMID: 10205047)
             167, 162, 178, 98, 78, 86,
             # Chiorean et al (PMID: 35475554)
@@ -35,12 +35,12 @@ class VHLPredictor(DefaultPredictor):
         """
         logger.info("Predict PM1")
 
-        gene_cluster = PM1_CLUSTER.get(var_data.transcript_id, None)
+        gene_cluster = PM1_CLUSTER.get(var_data.hgnc_id, None)
         if not gene_cluster:
             return super().predict_pm1(seqvar, var_data)
 
         # Check if variant is in the moderate cluster
-        if var_data.prot_pos in gene_cluster["moderate"]:
+        if var_data.prot_pos in gene_cluster["residues"]:
             comment = (
                 f"Variant affects a germline hotspot or key functional domain in VHL "
                 f"at position {var_data.prot_pos}. PM1 is met at the Moderate level."

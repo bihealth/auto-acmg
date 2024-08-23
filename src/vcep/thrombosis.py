@@ -38,7 +38,7 @@ class ThrombosisPredictor(DefaultPredictor):
             return super().predict_pm1(seqvar, var_data)
 
         # Check if variant is in the cluster
-        if seqvar.pos in gene_cluster["residues"]:
+        if var_data.prot_pos in gene_cluster["residues"]:
             return AutoACMGCriteria(
                 name="PM1",
                 prediction=AutoACMGPrediction.Met,

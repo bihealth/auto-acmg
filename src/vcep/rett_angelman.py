@@ -57,7 +57,7 @@ class RettAngelmanPredictor(DefaultPredictor):
             return AutoACMGCriteria(
                 name="PM1",
                 prediction=AutoACMGPrediction.NotApplicable,
-                strength=AutoACMGStrength.PathogenicSupporting,
+                strength=AutoACMGStrength.PathogenicModerate,
                 summary=f"PM1 is not applicable for SLC9A6.",
             )
 

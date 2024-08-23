@@ -32,6 +32,15 @@ class CongenitalMyopathiesPredictor(DefaultPredictor):
         """Override PM1 prediction for congenital myopathies."""
         logger.info("Predict PM1")
 
+        # NEB, ACTA1, DNM2, MTM1
+        if var_data.hgnc_id in ["HGNC:7720", "HGNC:129", "HGNC:2974", "HGNC:7448"]:
+            return AutoACMGCriteria(
+                name="PM1",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicModerate,
+                summary="Not applicable for NEB, ACTA1, DNM2, MTM1.",
+            )
+
         if var_data.hgnc_id in PM1_CLUSTER:
             for start, end in PM1_CLUSTER[var_data.hgnc_id]:
                 if start <= var_data.prot_pos <= end:
@@ -45,14 +54,12 @@ class CongenitalMyopathiesPredictor(DefaultPredictor):
                         strength=AutoACMGStrength.PathogenicModerate,
                         summary=comment,
                     )
+        else:
+            return super().predict_pm1(seqvar, var_data)
 
-        # NEB, ACTA1, DNM2, MTM1
-        if var_data.hgnc_id in ["HGNC:7720", "HGNC:129", "HGNC:2974", "HGNC:7448"]:
-            return AutoACMGCriteria(
-                name="PM1",
-                prediction=AutoACMGPrediction.NotApplicable,
-                strength=AutoACMGStrength.PathogenicModerate,
-                summary="Not applicable for NEB, ACTA1, DNM2, MTM1.",
-            )
-
-        return super().predict_pm1(seqvar, var_data)
+        return AutoACMGCriteria(
+            name="PM1",
+            prediction=AutoACMGPrediction.NotMet,
+            strength=AutoACMGStrength.PathogenicModerate,
+            summary="Variant does not fall within a critical domain.",
+        )

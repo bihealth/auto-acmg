@@ -18,7 +18,7 @@ from src.defs.seqvar import SeqVar
 
 # fmt: off
 PM1_CLUSTER: Dict[str, Dict[str, List[Union[Tuple[int, int], int]]]] = {
-    "ACVRL1": {
+    "HGNC:175": {
         "domains": [
             (209, 216),  # glycine-rich loop
             (229, 229),  # phosphate anchor
@@ -29,8 +29,8 @@ PM1_CLUSTER: Dict[str, Dict[str, List[Union[Tuple[int, int], int]]]] = {
             40, 54, 56, 57, 58, 59, 66, 71, 72, 73, 75, 76, 78, 79, 80, 82, 83, 84, 85, 87,
         ]
     },
-    "ENG": {
-        "moderate": [
+    "HGNC:3349": {
+        "domains": [
             278, 282,  # BMP9 binding sites
             207, 363, 382, 412, 549,  # Pathogenic or likely pathogenic cysteine residues
             350, 394, 516, 582,  # Cysteine residues critical for ENG function
