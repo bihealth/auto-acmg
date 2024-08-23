@@ -27,6 +27,9 @@ from src.vcep.pku import PKUPredictor
 from src.vcep.platelet_disorders import PlateletDisordersPredictor
 from src.vcep.pten import PTENPredictor
 from src.vcep.pulmonary_hypertension import PulmonaryHypertensionPredictor
+from src.vcep.rasopathy import RASopathyPredictor
+from src.vcep.rett_angelman import RettAngelmanPredictor
+from src.vcep.scid import SCIDPredictor
 from src.vcep.thrombosis import ThrombosisPredictor
 from src.vcep.tp53 import TP53Predictor
 from src.vcep.vhl import VHLPredictor

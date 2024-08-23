@@ -50,6 +50,9 @@ from src.vcep import (
     PlateletDisordersPredictor,
     PTENPredictor,
     PulmonaryHypertensionPredictor,
+    RASopathyPredictor,
+    RettAngelmanPredictor,
+    SCIDPredictor,
     ThrombosisPredictor,
     TP53Predictor,
     VHLPredictor,
@@ -133,6 +136,36 @@ VCEP_MAPPING = {
     "HGNC:775": ThrombosisPredictor,  # SERPINC1
     "HGNC:11998": TP53Predictor,  # TP53
     "HGNC:12687": VHLPredictor,  # VHL
+    "HGNC:15454": RASopathyPredictor,  # SHOC2
+    "HGNC:7989": RASopathyPredictor,  # NRAS
+    "HGNC:9829": RASopathyPredictor,  # RAF1
+    "HGNC:11187": RASopathyPredictor,  # SOS1
+    "HGNC:11188": RASopathyPredictor,  # SOS2
+    "HGNC:9644": RASopathyPredictor,  # PTPN11
+    "HGNC:6407": RASopathyPredictor,  # KRAS
+    "HGNC:6840": RASopathyPredictor,  # MAP2K1
+    "HGNC:5173": RASopathyPredictor,  # HRAS
+    "HGNC:10023": RASopathyPredictor,  # RIT1
+    "HGNC:6842": RASopathyPredictor,  # MAP2K2
+    "HGNC:1097": RASopathyPredictor,  # BRAF
+    "HGNC:7227": RASopathyPredictor,  # MRAS
+    "HGNC:6742": RASopathyPredictor,  # LZTR1
+    "HGNC:17271": RASopathyPredictor,  # RRAS2
+    "HGNC:9282": RASopathyPredictor,  # PPP1CB
+    "HGNC:11634": RettAngelmanPredictor,  # TCF4
+    "HGNC:11079": RettAngelmanPredictor,  # SLC9A6
+    "HGNC:11411": RettAngelmanPredictor,  # CDKL5
+    "HGNC:3811": RettAngelmanPredictor,  # FOXG1
+    "HGNC:6990": RettAngelmanPredictor,  # MECP2
+    "HGNC:12496": RettAngelmanPredictor,  # UBE3A
+    "HGNC:12765": SCIDPredictor,  # FOXN1
+    "HGNC:186": SCIDPredictor,  # ADA
+    "HGNC:17642": SCIDPredictor,  # DCLRE1C
+    "HGNC:6024": SCIDPredictor,  # IL7R
+    "HGNC:6193": SCIDPredictor,  # JAK3
+    "HGNC:9831": SCIDPredictor,  # RAG1
+    "HGNC:9832": SCIDPredictor,  # RAG2
+    "HGNC:6010": SCIDPredictor,  # IL2RG
 }
 
 
