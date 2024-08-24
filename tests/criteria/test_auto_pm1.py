@@ -4,7 +4,13 @@ import pytest
 import tabix
 
 from src.criteria.auto_pm1 import AutoPM1
-from src.defs.auto_acmg import PM1, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    PM1,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    GenomicStrand,
+)
 from src.defs.exceptions import AlgorithmError, InvalidAPIResposeError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
@@ -56,6 +62,83 @@ def auto_pm1_mocked():
         pm1_instance = AutoPM1()
         mocked_annonars.return_value.get_variant_from_range.return_value = MagicMock()
         yield pm1_instance, mocked_annonars
+
+
+@pytest.fixture
+def auto_acmg_data_plus():
+    exons = [
+        MagicMock(altStartI=10000, altEndI=20000),
+        MagicMock(altStartI=30000, altEndI=40000),
+        MagicMock(altStartI=50000, altEndI=60000),
+    ]
+    data = AutoACMGData()
+    data.exons = exons  # type: ignore
+    data.strand = GenomicStrand.Plus
+    return data
+
+
+@pytest.fixture
+def auto_acmg_data_minus():
+    exons = [
+        MagicMock(altStartI=10000, altEndI=20000),
+        MagicMock(altStartI=30000, altEndI=40000),
+        MagicMock(altStartI=50000, altEndI=60000),
+    ]
+    data = AutoACMGData()
+    data.exons = exons  # type: ignore
+    data.strand = GenomicStrand.Minus
+    return data
+
+
+def test_get_affected_exon_plus_strand_in_exon(seqvar, auto_acmg_data_plus):
+    """Test for a variant within an exon on the plus strand."""
+    seqvar.pos = 35000  # Position within the second exon
+    result = AutoPM1._get_affected_exon(auto_acmg_data_plus, seqvar)
+    assert result == 2, "Exon number should be 2 for a position within the second exon."
+
+
+def test_get_affected_exon_plus_strand_before_exon(seqvar, auto_acmg_data_plus):
+    """Test for a variant before any exon on the plus strand."""
+    seqvar.pos = 9000  # Position before the first exon
+    result = AutoPM1._get_affected_exon(auto_acmg_data_plus, seqvar)
+    assert result == 0, "Exon number should be 0 for a position before any exon."
+
+
+def test_get_affected_exon_plus_strand_after_exon(seqvar, auto_acmg_data_plus):
+    """Test for a variant after the last exon on the plus strand."""
+    seqvar.pos = 70000  # Position after the last exon
+    result = AutoPM1._get_affected_exon(auto_acmg_data_plus, seqvar)
+    assert result == 3, "Exon number should be 3 for a position after the last exon."
+
+
+def test_get_affected_exon_minus_strand_in_exon(seqvar, auto_acmg_data_minus):
+    """Test for a variant within an exon on the minus strand."""
+    seqvar.pos = 35000  # Position within the second exon (reverse order for minus strand)
+    result = AutoPM1._get_affected_exon(auto_acmg_data_minus, seqvar)
+    assert (
+        result == 2
+    ), "Exon number should be 2 for a position within the second exon (minus strand)."
+
+
+def test_get_affected_exon_minus_strand_before_exon(seqvar, auto_acmg_data_minus):
+    """Test for a variant before any exon on the minus strand."""
+    seqvar.pos = 65000  # Position before the first exon (reverse order for minus strand)
+    result = AutoPM1._get_affected_exon(auto_acmg_data_minus, seqvar)
+    assert result == 0, "Exon number should be 0 for a position before any exon (minus strand)."
+
+
+def test_get_affected_exon_minus_strand_after_exon(seqvar, auto_acmg_data_minus):
+    """Test for a variant after the last exon on the minus strand."""
+    seqvar.pos = 5000  # Position after the last exon (reverse order for minus strand)
+    result = AutoPM1._get_affected_exon(auto_acmg_data_minus, seqvar)
+    assert result == 3, "Exon number should be 3 for a position after the last exon (minus strand)."
+
+
+def test_get_affected_exon_not_set_strand(seqvar, auto_acmg_data_plus):
+    """Test for an invalid strand scenario."""
+    auto_acmg_data_plus.strand = GenomicStrand.NotSet
+    with pytest.raises(AlgorithmError):
+        AutoPM1._get_affected_exon(auto_acmg_data_plus, seqvar)
 
 
 @pytest.mark.skip(reason="Annonars is not mocked properly")
