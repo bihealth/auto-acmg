@@ -1,0 +1,92 @@
+"""
+Predictor for Pulmonary Hypertension VCEP.
+Included gene: BMPR2 (HGNC:1078).
+Link: https://cspec.genome.network/cspec/ui/svi/doc/GN125
+"""
+
+from loguru import logger
+
+from src.criteria.default_predictor import DefaultPredictor
+from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.seqvar import SeqVar
+
+# fmt: off
+PM1_CLUSTER_BMPR2 = {
+    "HGNC:1078": {  # BMPR2
+        "strong": [
+            # Extracellular domain critical residues
+            34, 60, 66, 84, 94, 99, 116, 117, 118, 123,
+            # Kinase domain critical residues
+            210, 212, 230, 245, 333, 338, 351, 353, 386, 405, 410, 491,
+            # KD heterodimerization critical residues
+            485, 486, 487, 488, 489, 490, 491, 492,
+        ],
+        "moderate":
+            list(range(33, 132))  # Extracellular domain: 33-131
+            + list(range(203, 505)),  # Kinase domain: 203-504
+        "non_critical": [
+            42, 47, 82, 102, 107, 182, 186, 503, 899  # Non-critical residues
+        ],
+    }
+}
+
+
+class PulmonaryHypertensionPredictor(DefaultPredictor):
+
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+        """
+        Override predict_pm1 to include VCEP-specific logic for Pulmonary Hypertension.
+        """
+        logger.info("Predict PM1")
+
+        gene_cluster = PM1_CLUSTER_BMPR2.get(var_data.hgnc_id, None)
+        if not gene_cluster:
+            return super().predict_pm1(seqvar, var_data)
+
+        # Check if the variant falls within the strong level critical residues
+        if var_data.prot_pos in gene_cluster["strong"]:
+            comment = (
+                f"Variant affects a critical residue in BMPR2 at position {var_data.prot_pos}. "
+                f"PM1 is met at the Strong level."
+            )
+            return AutoACMGCriteria(
+                name="PM1",
+                prediction=AutoACMGPrediction.Met,
+                strength=AutoACMGStrength.PathogenicStrong,
+                summary=comment,
+            )
+
+        # Check if the variant falls within the moderate level critical residues
+        if (
+            var_data.prot_pos in gene_cluster["moderate"] and
+            not var_data.prot_pos in gene_cluster["non_critical"]
+        ):
+            comment = (
+                f"Variant affects a residue in BMPR2 at position {var_data.prot_pos} "
+                f"within the extracellular or kinase domain. PM1 is met at the Moderate level."
+            )
+            return AutoACMGCriteria(
+                name="PM1",
+                prediction=AutoACMGPrediction.Met,
+                strength=AutoACMGStrength.PathogenicModerate,
+                summary=comment,
+            )
+
+        # If the variant falls in a non-critical residue
+        if var_data.prot_pos in gene_cluster["non_critical"]:
+            return AutoACMGCriteria(
+                name="PM1",
+                prediction=AutoACMGPrediction.NotMet,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary=(
+                    f"Variant affects a residue at position {var_data.prot_pos} in BMPR2, "
+                    f"which is demonstrated to be non-critical for kinase activity."
+                ),
+            )
+
+        return AutoACMGCriteria(
+            name="PM1",
+            prediction=AutoACMGPrediction.NotMet,
+            strength=AutoACMGStrength.PathogenicModerate,
+            summary="Variant does not meet the PM1 criteria for BMPR2.",
+        )

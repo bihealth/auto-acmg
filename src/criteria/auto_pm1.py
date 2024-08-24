@@ -13,6 +13,7 @@ from src.defs.auto_acmg import (
     AutoACMGData,
     AutoACMGPrediction,
     AutoACMGStrength,
+    GenomicStrand,
 )
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, InvalidAPIResposeError
 from src.defs.genome_builds import GenomeRelease
@@ -29,6 +30,44 @@ class AutoPM1(AutoACMGHelper):
         self.prediction_pm1: Optional[PM1] = None
         #: comment_pm1 to store the prediction explanation.
         self.comment_pm1: str = ""
+
+    @staticmethod
+    def _get_affected_exon(var_data: AutoACMGData, seqvar: SeqVar) -> int:
+        """
+        Get the affected exon number for the variant.
+
+        Go through all exons and count them before the variant position.
+        Pay attention to the strand of the gene.
+
+        Args:
+            var_data: AutoACMGData object
+            seqvar: SeqVar object
+
+        Returns:
+            int: Affected exon number
+        """
+        exon_number = 0
+        if var_data.strand == GenomicStrand.Plus:
+            for exon in var_data.exons:
+                if exon.altStartI >= seqvar.pos:
+                    return exon_number
+                if exon.altStartI <= seqvar.pos <= exon.altEndI:
+                    exon_number += 1
+                    return exon_number
+                if exon.altEndI < seqvar.pos:
+                    exon_number += 1
+        elif var_data.strand == GenomicStrand.Minus:
+            for exon in var_data.exons[::-1]:
+                if exon.altEndI <= seqvar.pos:
+                    return exon_number
+                if exon.altStartI <= seqvar.pos <= exon.altEndI:
+                    exon_number += 1
+                    return exon_number
+                if exon.altStartI > seqvar.pos:
+                    exon_number += 1
+        else:
+            raise AlgorithmError(f"Invalid strand for {var_data.hgnc_id}: {var_data.strand}")
+        return exon_number
 
     def _count_vars(self, seqvar: SeqVar, start_pos: int, end_pos: int) -> Tuple[int, int]:
         """

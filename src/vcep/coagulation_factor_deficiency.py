@@ -13,13 +13,7 @@ from typing import Dict, List
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import (
-    AutoACMGCriteria,
-    AutoACMGData,
-    AutoACMGPrediction,
-    AutoACMGStrength,
-    GenomicStrand,
-)
+from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
 from src.defs.exceptions import AlgorithmError
 from src.defs.seqvar import SeqVar
 
@@ -39,7 +33,7 @@ PM1_CLUSTER: Dict[str, Dict[str, Dict[str, List]]] = {
         },
         "moderate": {
             "residues": [(1667, 1667), (1332, 1332)],  # Residues affecting secretion
-            "regions": [(2267, 2304)],  # FXa-binding residues, excluding Ser2283
+            "domains": [(2267, 2304)],  # FXa-binding residues, excluding Ser2283
             "excluded_residues": [(2283, 2283)],  # Excluded residue in FXa-binding region
         },
     },
@@ -59,44 +53,6 @@ PM1_CLUSTER: Dict[str, Dict[str, Dict[str, List]]] = {
 
 
 class CoagulationFactorDeficiencyPredictor(DefaultPredictor):
-
-    @staticmethod
-    def _get_affected_exon(var_data: AutoACMGData, seqvar: SeqVar) -> int:
-        """
-        Get the affected exon number for the variant.
-
-        Go through all exons and count them before the variant position.
-        Pay attention to the strand of the gene.
-
-        Args:
-            var_data: AutoACMGData object
-            seqvar: SeqVar object
-
-        Returns:
-            int: Affected exon number
-        """
-        exon_number = 0
-        if var_data.strand == GenomicStrand.Plus:
-            for exon in var_data.exons:
-                if exon.altStartI >= seqvar.pos:
-                    return exon_number
-                if exon.altStartI <= seqvar.pos <= exon.altEndI:
-                    exon_number += 1
-                    return exon_number
-                if exon.altEndI < seqvar.pos:
-                    exon_number += 1
-        elif var_data.strand == GenomicStrand.Minus:
-            for exon in var_data.exons[::-1]:
-                if exon.altEndI <= seqvar.pos:
-                    return exon_number
-                if exon.altStartI <= seqvar.pos <= exon.altEndI:
-                    exon_number += 1
-                    return exon_number
-                if exon.altStartI > seqvar.pos:
-                    exon_number += 1
-        else:
-            raise AlgorithmError(f"Invalid strand for {var_data.hgnc_id}: {var_data.strand}")
-        return exon_number
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """
@@ -139,8 +95,8 @@ class CoagulationFactorDeficiencyPredictor(DefaultPredictor):
                     summary=comment,
                 )
 
-        # Check moderate level criteria for regions, excluding specific residues
-        for start, end in gene_cluster.get("moderate", {}).get("regions", []):
+        # Check moderate level criteria for domains, excluding specific residues
+        for start, end in gene_cluster.get("moderate", {}).get("domains", []):
             if start <= var_data.prot_pos <= end:
                 excluded_residues = gene_cluster.get("moderate", {}).get("excluded_residues", [])
                 if not any(start <= var_data.prot_pos <= end for start, end in excluded_residues):

@@ -1,6 +1,6 @@
 """
 Predictor for Cardiomyopathy VCEP.
-Included gene:
+Included genes:
 MYH7 (HGNC:7577),
 MYBPC3 (HGNC:7551),
 TNNI3 (HGNC:11947),

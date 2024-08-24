@@ -1,6 +1,6 @@
 import io
 from typing import Type
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from loguru import logger
@@ -29,7 +29,7 @@ def loguru_capture():
 def mock_auto_acmg_predict_success():
     """Fixture to mock AutoACMG predict method with a success response."""
     with patch("src.auto_acmg.AutoACMG.predict") as mock_predict:
-        mock_predict.return_value = "Pathogenic"
+        mock_predict.return_value = MagicMock(save_to_file=MagicMock())
         yield mock_predict
 
 

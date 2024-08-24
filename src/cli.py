@@ -54,7 +54,8 @@ def classify(
             raise InvalidGenomeBuild("Invalid genome release")
 
         auto_acmg = AutoACMG(variant, genome_release_enum)
-        auto_acmg.predict()
+        prediction = auto_acmg.predict()
+        prediction.save_to_file() if prediction else logger.error("No prediction was made.")
     except AutoAcmgBaseException as e:
         logger.error("Error occurred: {}", e)
 

@@ -1,6 +1,6 @@
 """Implementations of the PVS1 algorithm."""
 
-from typing import Optional, Type, Union
+from typing import Dict, Optional, Type, Union
 
 from loguru import logger
 
@@ -19,7 +19,7 @@ from src.defs.annonars_variant import VariantResult
 from src.defs.auto_acmg import AutoACMGResult, CdsInfo, GenomicStrand
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, ParseError
 from src.defs.genome_builds import GenomeRelease
-from src.defs.mehari import ProteinPos, TxPos
+from src.defs.mehari import CdsPos, ProteinPos, TxPos
 from src.defs.seqvar import SeqVar, SeqVarResolver
 from src.utils import SeqVarTranscriptsHelper
 from src.vcep import (
@@ -29,6 +29,34 @@ from src.vcep import (
     CDH1Predictor,
     CerebralCreatineDeficiencySyndromesPredictor,
     CoagulationFactorDeficiencyPredictor,
+    CongenitalMyopathiesPredictor,
+    DICER1Predictor,
+    ENIGMAPredictor,
+    EpilepsySodiumChannelPredictor,
+    FamilialHypercholesterolemiaPredictor,
+    FBN1Predictor,
+    GlaucomaPredictor,
+    HBOPCPredictor,
+    HearingLossPredictor,
+    HHTPredictor,
+    InsightColorectalCancerPredictor,
+    LeberCongenitalAmaurosisPredictor,
+    LysosomalDiseasesPredictor,
+    MalignantHyperthermiaPredictor,
+    MitochondrialDiseasesPredictor,
+    MonogenicDiabetesPredictor,
+    MyeloidMalignancyPredictor,
+    PKUPredictor,
+    PlateletDisordersPredictor,
+    PTENPredictor,
+    PulmonaryHypertensionPredictor,
+    RASopathyPredictor,
+    RettAngelmanPredictor,
+    SCIDPredictor,
+    ThrombosisPredictor,
+    TP53Predictor,
+    VHLPredictor,
+    VonWillebrandDiseasePredictor,
 )
 
 #: Mapping of HGNC gene identifiers to predictor classes.
@@ -52,6 +80,92 @@ VCEP_MAPPING = {
     "HGNC:11055": CerebralCreatineDeficiencySyndromesPredictor,  # SLC6A8
     "HGNC:3546": CoagulationFactorDeficiencyPredictor,  # F8
     "HGNC:3551": CoagulationFactorDeficiencyPredictor,  # F9
+    "HGNC:7720": CongenitalMyopathiesPredictor,  # NEB
+    "HGNC:129": CongenitalMyopathiesPredictor,  # ACTA1
+    "HGNC:2974": CongenitalMyopathiesPredictor,  # DNM2
+    "HGNC:7448": CongenitalMyopathiesPredictor,  # MTM1
+    "HGNC:10483": CongenitalMyopathiesPredictor,  # RYR1
+    "HGNC:17098": DICER1Predictor,  # DICER1
+    "HGNC:1100": ENIGMAPredictor,  # BRCA1
+    "HGNC:1101": ENIGMAPredictor,  # BRCA2
+    "HGNC:10585": EpilepsySodiumChannelPredictor,  # SCN1A
+    "HGNC:10588": EpilepsySodiumChannelPredictor,  # SCN2A
+    "HGNC:10590": EpilepsySodiumChannelPredictor,  # SCN3A
+    "HGNC:10596": EpilepsySodiumChannelPredictor,  # SCN8A
+    "HGNC:10586": EpilepsySodiumChannelPredictor,  # SCN1B
+    "HGNC:6547": FamilialHypercholesterolemiaPredictor,  # LDLR
+    "HGNC:3603": FBN1Predictor,  # FBN1
+    "HGNC:7610": GlaucomaPredictor,  # MYOC
+    "HGNC:13733": HearingLossPredictor,  # CDH23
+    "HGNC:2180": HearingLossPredictor,  # COCH
+    "HGNC:4284": HearingLossPredictor,  # GJB2
+    "HGNC:6298": HearingLossPredictor,  # KCNQ4
+    "HGNC:7605": HearingLossPredictor,  # MYO6
+    "HGNC:7606": HearingLossPredictor,  # MYO7A
+    "HGNC:8818": HearingLossPredictor,  # SLC26A4
+    "HGNC:11720": HearingLossPredictor,  # TECTA
+    "HGNC:12601": HearingLossPredictor,  # USH2A
+    "HGNC:7594": HearingLossPredictor,  # MYO15A
+    "HGNC:8515": HearingLossPredictor,  # OTOF
+    "HGNC:795": HBOPCPredictor,  # ATM
+    "HGNC:26144": HBOPCPredictor,  # PALB2
+    "HGNC:175": HHTPredictor,  # ACVRL1
+    "HGNC:3349": HHTPredictor,  # ENG
+    "HGNC:583": InsightColorectalCancerPredictor,  # APC
+    "HGNC:7127": InsightColorectalCancerPredictor,  # MLH1
+    "HGNC:7325": InsightColorectalCancerPredictor,  # MSH2
+    "HGNC:7329": InsightColorectalCancerPredictor,  # MSH6
+    "HGNC:9122": InsightColorectalCancerPredictor,  # PMS2
+    "HGNC:10294": LeberCongenitalAmaurosisPredictor,  # RPE65
+    "HGNC:4065": LysosomalDiseasesPredictor,  # GAA
+    "HGNC:10483": MalignantHyperthermiaPredictor,  # GBA
+    "HGNC:23287": MitochondrialDiseasesPredictor,  # ETHE1
+    "HGNC:8806": MitochondrialDiseasesPredictor,  # PDHA1
+    "HGNC:9179": MitochondrialDiseasesPredictor,  # POLG
+    "HGNC:16266": MitochondrialDiseasesPredictor,  # SLC19A3
+    "HGNC:11621": MonogenicDiabetesPredictor,  # HNF1A
+    "HGNC:5024": MonogenicDiabetesPredictor,  # HNF4A
+    "HGNC:4195": MonogenicDiabetesPredictor,  # GCK
+    "HGNC:10471": MyeloidMalignancyPredictor,  # RUNX1
+    "HGNC:8582": PKUPredictor,  # PAH
+    "HGNC:6138": PlateletDisordersPredictor,  # ITGA2B
+    "HGNC:6156": PlateletDisordersPredictor,  # ITGB3
+    "HGNC:9588": PTENPredictor,  # PTEN
+    "HGNC:1078": PulmonaryHypertensionPredictor,  # BMPR2
+    "HGNC:12726": VonWillebrandDiseasePredictor,  # VWF
+    "HGNC:775": ThrombosisPredictor,  # SERPINC1
+    "HGNC:11998": TP53Predictor,  # TP53
+    "HGNC:12687": VHLPredictor,  # VHL
+    "HGNC:15454": RASopathyPredictor,  # SHOC2
+    "HGNC:7989": RASopathyPredictor,  # NRAS
+    "HGNC:9829": RASopathyPredictor,  # RAF1
+    "HGNC:11187": RASopathyPredictor,  # SOS1
+    "HGNC:11188": RASopathyPredictor,  # SOS2
+    "HGNC:9644": RASopathyPredictor,  # PTPN11
+    "HGNC:6407": RASopathyPredictor,  # KRAS
+    "HGNC:6840": RASopathyPredictor,  # MAP2K1
+    "HGNC:5173": RASopathyPredictor,  # HRAS
+    "HGNC:10023": RASopathyPredictor,  # RIT1
+    "HGNC:6842": RASopathyPredictor,  # MAP2K2
+    "HGNC:1097": RASopathyPredictor,  # BRAF
+    "HGNC:7227": RASopathyPredictor,  # MRAS
+    "HGNC:6742": RASopathyPredictor,  # LZTR1
+    "HGNC:17271": RASopathyPredictor,  # RRAS2
+    "HGNC:9282": RASopathyPredictor,  # PPP1CB
+    "HGNC:11634": RettAngelmanPredictor,  # TCF4
+    "HGNC:11079": RettAngelmanPredictor,  # SLC9A6
+    "HGNC:11411": RettAngelmanPredictor,  # CDKL5
+    "HGNC:3811": RettAngelmanPredictor,  # FOXG1
+    "HGNC:6990": RettAngelmanPredictor,  # MECP2
+    "HGNC:12496": RettAngelmanPredictor,  # UBE3A
+    "HGNC:12765": SCIDPredictor,  # FOXN1
+    "HGNC:186": SCIDPredictor,  # ADA
+    "HGNC:17642": SCIDPredictor,  # DCLRE1C
+    "HGNC:6024": SCIDPredictor,  # IL7R
+    "HGNC:6193": SCIDPredictor,  # JAK3
+    "HGNC:9831": SCIDPredictor,  # RAG1
+    "HGNC:9832": SCIDPredictor,  # RAG2
+    "HGNC:6010": SCIDPredictor,  # IL2RG
 }
 
 
@@ -182,6 +296,9 @@ class AutoACMG:
         self.result.data.transcript_tags = seqvar_transcript.feature_tag
         self.result.data.tx_pos_utr = (
             seqvar_transcript.tx_pos.ord if isinstance(seqvar_transcript.tx_pos, TxPos) else -1
+        )
+        self.result.data.cds_pos = (
+            seqvar_transcript.cds_pos.ord if isinstance(seqvar_transcript.cds_pos, CdsPos) else 0
         )
         self.result.data.prot_pos = (
             seqvar_transcript.protein_pos.ord
