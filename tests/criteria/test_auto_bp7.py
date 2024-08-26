@@ -153,7 +153,8 @@ def var_data_verify():
         spliceAI_donor_loss=0.1,
     )
     cadd = MagicMock(cadd=scores_cadd)
-    return MagicMock(scores=cadd, thresholds=thresholds)
+    consequence = MagicMock(mehari=["synonymous_variant"], cadd="synonymous")
+    return MagicMock(scores=cadd, thresholds=thresholds, consequence=consequence)
 
 
 def test_verify_bp7_mitochondrial(auto_bp7, seqvar_mt, var_data_verify):

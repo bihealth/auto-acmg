@@ -81,7 +81,7 @@ class PVS1PredictionStrucVarPath(AutoAcmgBaseEnum):
 SeqvarConsequenceMapping: Dict[str, SeqVarPVS1Consequence] = {
     "intergenic_variant": SeqVarPVS1Consequence.NotSet,
     "intron_variant": SeqVarPVS1Consequence.NotSet,
-    "upstream_gene_variant": SeqVarPVS1Consequence.InitiationCodon,
+    "upstream_gene_variant": SeqVarPVS1Consequence.NotSet,
     "downstream_gene_variant": SeqVarPVS1Consequence.InitiationCodon,
     "start_lost": SeqVarPVS1Consequence.InitiationCodon,
     "5_prime_utr_variant": SeqVarPVS1Consequence.NotSet,

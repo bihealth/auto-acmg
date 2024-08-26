@@ -4,10 +4,18 @@ Included genes: AKT3 (HGNC:393), MTOR (HGNC:3942), PIK3CA (HGNC:8975), PIK3R2 (H
 Link: https://cspec.genome.network/cspec/ui/svi/doc/GN018
 """
 
+from typing import Optional, Tuple
+
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    BP7,
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+)
 from src.defs.seqvar import SeqVar
 
 PM1_CLUSTER = {
@@ -65,3 +73,8 @@ class BrainMalformationsPredictor(DefaultPredictor):
             )
         else:
             return super().predict_pm1(seqvar, var_data)
+
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+        """Change the PhyloP100 score threshold for BP7."""
+        var_data.thresholds.phyloP100 = 0.1
+        return super().predict_bp7(seqvar, var_data)

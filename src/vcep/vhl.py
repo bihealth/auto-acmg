@@ -58,3 +58,8 @@ class VHLPredictor(DefaultPredictor):
             strength=AutoACMGStrength.PathogenicModerate,
             summary="Variant does not meet the PM1 criteria for VHL.",
         )
+
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+        """Change the BP7 threshold for PhyloP."""
+        var_data.thresholds.phyloP100 = 0.2
+        return super().predict_bp7(seqvar, var_data)

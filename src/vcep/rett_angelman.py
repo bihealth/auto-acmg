@@ -85,3 +85,8 @@ class RettAngelmanPredictor(DefaultPredictor):
             strength=AutoACMGStrength.PathogenicModerate,
             summary=f"Variant does not meet the PM1 criteria for {var_data.hgnc_id}.",
         )
+
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+        """Change BP7 thresholds for Rett and Angelman-like Disorders VCEP."""
+        var_data.thresholds.phyloP100 = 0.1
+        return super().predict_bp7(seqvar, var_data)

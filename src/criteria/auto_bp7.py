@@ -71,6 +71,59 @@ class AutoBP7(AutoACMGHelper):
             return True
         return False
 
+    @staticmethod
+    def _is_synonymous(var_data: AutoACMGData) -> bool:
+        """
+        Predict if the variant is synonymous.
+
+        Check if the variant's consequence is synonymous.
+
+        Args:
+            variant_info: The variant information.
+
+        Returns:
+            bool: True if the variant is synonymous, False otherwise.
+        """
+        if (
+            "synonymous_variant" in var_data.consequence.mehari
+            or var_data.consequence.cadd == "synonymous"
+        ):
+            return True
+        return False
+
+    @staticmethod
+    def _is_intronic(var_data: AutoACMGData) -> bool:
+        """
+        Predict if the variant is intronic.
+
+        Check if the variant's consequence is intronic.
+
+        Args:
+            variant_info: The variant information.
+
+        Returns:
+            bool: True if the variant is intronic, False otherwise.
+        """
+        intronic_consequences = [
+            "intron_variant",
+            "intergenic_variant",
+            "upstream_gene_variant",
+            "downstream_gene_variant",
+            "5_prime_utr_variant",
+            "5_prime_UTR_variant",
+            "3_prime_utr_variant",
+            "3_prime_UTR_variant",
+            "splice_region_variant",
+            "splice_donor_5th_base_variant",
+            "splice_donor_region_variant",
+            "splice_polypyrimidine_tract_variant",
+        ]
+        if any(
+            consequence in var_data.consequence.mehari for consequence in intronic_consequences
+        ) or var_data.consequence.cadd in ["intron", "splice_region"]:
+            return True
+        return False
+
     def verify_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[BP7], str]:
         """Predict BP7 criterion."""
         self.prediction_bp7 = BP7()
@@ -81,9 +134,13 @@ class AutoBP7(AutoACMGHelper):
                 self.prediction_bp7.BP7 = False
                 return self.prediction_bp7, self.comment_bp7
 
-            if not self._is_conserved(var_data) and not self._spliceai_impact(var_data):
+            if (
+                (self._is_synonymous(var_data) or self._is_intronic(var_data))
+                and not self._is_conserved(var_data)
+                and not self._spliceai_impact(var_data)
+            ):
                 self.comment_bp7 += (
-                    "Variant is not conserved and not predicted to affect splicing. "
+                    "Synonymous variant is not conserved and not predicted to affect splicing. "
                     f"PhyloP100 score: {var_data.scores.cadd.phyloP100}. "
                     f"SpliceAI scores: {var_data.scores.cadd.spliceAI_acceptor_gain},"
                     f"{var_data.scores.cadd.spliceAI_acceptor_loss}, "
@@ -94,7 +151,7 @@ class AutoBP7(AutoACMGHelper):
                 self.prediction_bp7.BP7 = True
             else:
                 self.comment_bp7 += (
-                    "Variant is conserved or predicted to affect splicing. "
+                    "Variant is not synonymous, or is conserved, or predicted to affect splicing. "
                     f"PhyloP100 score: {var_data.scores.cadd.phyloP100}. "
                     f"SpliceAI scores: {var_data.scores.cadd.spliceAI_acceptor_gain},"
                     f"{var_data.scores.cadd.spliceAI_acceptor_loss}, "
