@@ -318,6 +318,7 @@ class AutoACMGConsequence(AutoAcmgBaseModel):
 class AutoACMGCADD(AutoAcmgBaseModel):
 
     phyloP100: Optional[float] = None
+    gerp: Optional[float] = None
     spliceAI_acceptor_gain: Optional[float] = None
     spliceAI_acceptor_loss: Optional[float] = None
     spliceAI_donor_gain: Optional[float] = None
@@ -354,14 +355,16 @@ class AutoACMGTresholds(AutoAcmgBaseModel):
 
     #: Conservation threshold from VarSome
     phyloP100: float = 3.58
+    #: Conservarion threshold from Glaucoma VCEP
+    gerp: float = 0.0
     #: SpliceAI acceptor gain threshold
-    spliceAI_acceptor_gain: float = 0.2
+    spliceAI_acceptor_gain: float = 0.1
     #: SpliceAI acceptor loss threshold
-    spliceAI_acceptor_loss: float = 0.2
+    spliceAI_acceptor_loss: float = 0.1
     #: SpliceAI donor gain threshold
-    spliceAI_donor_gain: float = 0.2
+    spliceAI_donor_gain: float = 0.1
     #: SpliceAI donor loss threshold
-    spliceAI_donor_loss: float = 0.2
+    spliceAI_donor_loss: float = 0.1
     #: Ada threshold
     ada: float = 0.957813
     #: RF threshold
@@ -386,6 +389,10 @@ class AutoACMGTresholds(AutoAcmgBaseModel):
     bs1_benign: float = 0.00015
     #: PM2 variants count threshold
     pm2_pathogenic: float = 0.0001
+    #: BP7 donor position
+    bp7_donor: int = 1
+    #: BP7 acceptor position
+    bp7_acceptor: int = 2
 
 
 class AutoACMGData(AutoAcmgBaseModel):

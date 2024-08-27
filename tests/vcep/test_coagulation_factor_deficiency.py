@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     AutoACMGCriteria,
     AutoACMGData,
@@ -128,3 +129,87 @@ def test_predict_pm1_invalid_strand(coagulation_predictor, auto_acmg_data):
 
     with pytest.raises(AlgorithmError):
         coagulation_predictor._get_affected_exon(auto_acmg_data, coagulation_predictor.seqvar)
+
+
+def test_predict_bp7_threshold_adjustment_for_hgnc_3546(coagulation_predictor, auto_acmg_data):
+    """Test that the BP7 thresholds are correctly adjusted for HGNC:3546 (F5)."""
+    auto_acmg_data.hgnc_id = "HGNC:3546"  # F5 gene
+
+    # Call predict_bp7 method
+    result = coagulation_predictor.predict_bp7(coagulation_predictor.seqvar, auto_acmg_data)
+
+    # Check that the thresholds were adjusted
+    assert (
+        auto_acmg_data.thresholds.spliceAI_acceptor_gain == 0.05
+    ), "The spliceAI acceptor gain threshold should be adjusted to 0.05."
+    assert (
+        auto_acmg_data.thresholds.spliceAI_acceptor_loss == 0.05
+    ), "The spliceAI acceptor loss threshold should be adjusted to 0.05."
+    assert (
+        auto_acmg_data.thresholds.spliceAI_donor_gain == 0.05
+    ), "The spliceAI donor gain threshold should be adjusted to 0.05."
+    assert (
+        auto_acmg_data.thresholds.spliceAI_donor_loss == 0.05
+    ), "The spliceAI donor loss threshold should be adjusted to 0.05."
+    assert (
+        auto_acmg_data.thresholds.phyloP100 == 0.1
+    ), "The phyloP100 threshold should be adjusted to 0.1."
+
+    # Check that the superclass's predict_bp7 method was called and returned a result
+    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
+
+
+def test_predict_bp7_threshold_adjustment_for_hgnc_3551(coagulation_predictor, auto_acmg_data):
+    """Test that the BP7 thresholds are correctly adjusted for HGNC:3551 (F7)."""
+    auto_acmg_data.hgnc_id = "HGNC:3551"  # F7 gene
+
+    # Call predict_bp7 method
+    result = coagulation_predictor.predict_bp7(coagulation_predictor.seqvar, auto_acmg_data)
+
+    # Check that the thresholds were adjusted
+    assert (
+        auto_acmg_data.thresholds.spliceAI_acceptor_gain == 0.01
+    ), "The spliceAI acceptor gain threshold should be adjusted to 0.01."
+    assert (
+        auto_acmg_data.thresholds.spliceAI_acceptor_loss == 0.01
+    ), "The spliceAI acceptor loss threshold should be adjusted to 0.01."
+    assert (
+        auto_acmg_data.thresholds.spliceAI_donor_gain == 0.01
+    ), "The spliceAI donor gain threshold should be adjusted to 0.01."
+    assert (
+        auto_acmg_data.thresholds.spliceAI_donor_loss == 0.01
+    ), "The spliceAI donor loss threshold should be adjusted to 0.01."
+    assert (
+        auto_acmg_data.thresholds.phyloP100 == 0.1
+    ), "The phyloP100 threshold should be adjusted to 0.1."
+
+    # Check that the superclass's predict_bp7 method was called and returned a result
+    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
+
+
+@patch.object(DefaultPredictor, "predict_bp7")
+def test_predict_bp7_fallback_to_default(
+    mock_super_predict_bp7, coagulation_predictor, auto_acmg_data
+):
+    """Test fallback to default BP7 prediction after threshold adjustment."""
+    # Set the mock return value for the superclass's predict_bp7 method
+    mock_super_predict_bp7.return_value = AutoACMGCriteria(
+        name="BP7",
+        prediction=AutoACMGPrediction.NotMet,
+        strength=AutoACMGStrength.BenignSupporting,
+        summary="Default BP7 prediction fallback.",
+    )
+
+    # Call predict_bp7 method
+    result = coagulation_predictor.predict_bp7(coagulation_predictor.seqvar, auto_acmg_data)
+
+    # Verify the result and ensure the superclass method was called
+    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
+    assert result.prediction == AutoACMGPrediction.NotMet, "BP7 should return NotMet as mocked."
+    assert (
+        result.strength == AutoACMGStrength.BenignSupporting
+    ), "The strength should be BenignSupporting."
+    assert (
+        "Default BP7 prediction fallback." in result.summary
+    ), "The summary should indicate the fallback."
+    assert mock_super_predict_bp7.called, "super().predict_bp7 should have been called."

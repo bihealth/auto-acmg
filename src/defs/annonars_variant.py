@@ -22,6 +22,7 @@ class Cadd(BaseModel):
     Consequence: Optional[str] = None
     # PolyPhenVal: Optional[float] = None
     verPhyloP: Optional[float] = None
+    GerpS: Optional[float] = None
     SpliceAI_acc_gain: Optional[float] = Field(..., alias="SpliceAI-acc-gain")
     SpliceAI_acc_loss: Optional[float] = Field(..., alias="SpliceAI-acc-loss")
     SpliceAI_don_gain: Optional[float] = Field(..., alias="SpliceAI-don-gain")

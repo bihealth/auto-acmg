@@ -132,3 +132,18 @@ class CoagulationFactorDeficiencyPredictor(DefaultPredictor):
             strength=AutoACMGStrength.PathogenicModerate,
             summary=f"Variant does not meet the PM1 criteria for {var_data.hgnc_id}.",
         )
+
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+        """Change the spliceAI and phyloP threshold for BP7."""
+        if var_data.hgnc_id == "HGNC:3546":
+            var_data.thresholds.spliceAI_acceptor_gain = 0.05
+            var_data.thresholds.spliceAI_acceptor_loss = 0.05
+            var_data.thresholds.spliceAI_donor_gain = 0.05
+            var_data.thresholds.spliceAI_donor_loss = 0.05
+        elif var_data.hgnc_id == "HGNC:3551":
+            var_data.thresholds.spliceAI_acceptor_gain = 0.01
+            var_data.thresholds.spliceAI_acceptor_loss = 0.01
+            var_data.thresholds.spliceAI_donor_gain = 0.01
+            var_data.thresholds.spliceAI_donor_loss = 0.01
+        var_data.thresholds.phyloP100 = 0.1
+        return super().predict_bp7(seqvar, var_data)

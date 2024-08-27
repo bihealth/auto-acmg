@@ -10,6 +10,7 @@ from src.defs.auto_acmg import (
     AutoACMGData,
     AutoACMGPrediction,
     AutoACMGStrength,
+    GenomicStrand,
 )
 from src.defs.exceptions import AutoAcmgBaseException, MissingDataError
 from src.defs.seqvar import SeqVar
@@ -51,8 +52,7 @@ class AutoBP7(AutoACMGHelper):
             for score_name, threshold in score_checks.items()
         )
 
-    @staticmethod
-    def _is_conserved(var_data: AutoACMGData) -> bool:
+    def _is_conserved(self, var_data: AutoACMGData) -> bool:
         """
         Predict if the variant is conserved.
 
@@ -71,6 +71,115 @@ class AutoBP7(AutoACMGHelper):
             return True
         return False
 
+    @staticmethod
+    def _is_synonymous(var_data: AutoACMGData) -> bool:
+        """
+        Predict if the variant is synonymous.
+
+        Check if the variant's consequence is synonymous.
+
+        Args:
+            variant_info: The variant information.
+
+        Returns:
+            bool: True if the variant is synonymous, False otherwise.
+        """
+        if (
+            "synonymous_variant" in var_data.consequence.mehari
+            or var_data.consequence.cadd == "synonymous"
+        ):
+            return True
+        return False
+
+    @staticmethod
+    def _is_intronic(var_data: AutoACMGData) -> bool:
+        """
+        Predict if the variant is intronic.
+
+        Check if the variant's consequence is intronic.
+
+        Args:
+            variant_info: The variant information.
+
+        Returns:
+            bool: True if the variant is intronic, False otherwise.
+        """
+        intronic_consequences = [
+            "intron_variant",
+            "intergenic_variant",
+            "upstream_gene_variant",
+            "downstream_gene_variant",
+            "5_prime_utr_variant",
+            "5_prime_UTR_variant",
+            "3_prime_utr_variant",
+            "3_prime_UTR_variant",
+            "splice_region_variant",
+            "splice_donor_5th_base_variant",
+            "splice_donor_region_variant",
+            "splice_polypyrimidine_tract_variant",
+        ]
+        if any(
+            consequence in var_data.consequence.mehari for consequence in intronic_consequences
+        ) or any(consequence in var_data.consequence.cadd for consequence in ["intron", "splice"]):
+            return True
+        return False
+
+    def _affect_canonical_ss(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+        """
+        Predict if the variant affects canonical splice site.
+
+        Check if the variant position is within +1/-2 of the start/end of an intron.
+        Note, that for the minus strand, the donor site is at the start of the intron and the
+        acceptor site is at the end of the intron.
+
+        Args:
+            seqvar: The sequence variant.
+            var_data: The variant data.
+
+        Returns:
+            bool: True if the variant affects canonical splice site, False otherwise.
+
+        Raises:
+            MissingDataError: If the strand information is missing.
+        """
+        for exon in var_data.exons:
+            if var_data.strand == GenomicStrand.Plus:
+                # Check the acceptor site
+                if (
+                    exon.altStartI - var_data.thresholds.bp7_acceptor
+                    <= seqvar.pos
+                    <= exon.altStartI
+                ):
+                    return True
+                # Check the donor site
+                if exon.altEndI <= seqvar.pos <= exon.altEndI + var_data.thresholds.bp7_donor:
+                    return True
+            elif var_data.strand == GenomicStrand.Minus:
+                # Check the donor site
+                if exon.altStartI - var_data.thresholds.bp7_donor <= seqvar.pos <= exon.altStartI:
+                    return True
+                # Check the acceptor site
+                if exon.altEndI <= seqvar.pos <= exon.altEndI + var_data.thresholds.bp7_acceptor:
+                    return True
+            else:
+                raise MissingDataError("Missing strand information.")
+        return False
+
+    def _is_bp7_exception(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+        """
+        Help function to check if the variant is an exception.
+
+        Per default there are no exceptions for BP7.
+
+        Args:
+            seqvar: The sequence variant.
+            var_data: The variant data.
+
+        Returns:
+            bool: True if the variant is an exception, False otherwise.
+        """
+        return False
+
     def verify_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[BP7], str]:
         """Predict BP7 criterion."""
         self.prediction_bp7 = BP7()
@@ -81,9 +190,23 @@ class AutoBP7(AutoACMGHelper):
                 self.prediction_bp7.BP7 = False
                 return self.prediction_bp7, self.comment_bp7
 
-            if not self._is_conserved(var_data) and not self._spliceai_impact(var_data):
+            if (
+                (
+                    # Synonymous variant
+                    self._is_synonymous(var_data)
+                    # Intronic variant that does not affect canonical splice site (ClinGen modified)
+                    or (
+                        self._is_intronic(var_data)
+                        and not self._affect_canonical_ss(seqvar, var_data)
+                    )
+                )
+                and not self._is_conserved(var_data)
+                and not self._spliceai_impact(var_data)
+                and not self._is_bp7_exception(seqvar, var_data)
+            ):
                 self.comment_bp7 += (
-                    "Variant is not conserved and not predicted to affect splicing. "
+                    "Synonymous variant is not conserved and not predicted to affect splicing. "
+                    "Or intronic variant that does not affect canonical splice site. "
                     f"PhyloP100 score: {var_data.scores.cadd.phyloP100}. "
                     f"SpliceAI scores: {var_data.scores.cadd.spliceAI_acceptor_gain},"
                     f"{var_data.scores.cadd.spliceAI_acceptor_loss}, "
@@ -94,7 +217,8 @@ class AutoBP7(AutoACMGHelper):
                 self.prediction_bp7.BP7 = True
             else:
                 self.comment_bp7 += (
-                    "Variant is conserved or predicted to affect splicing. "
+                    "Variant is not synonymous, or is conserved, or predicted to affect splicing. "
+                    "Or intronic variant that affects canonical splice site. "
                     f"PhyloP100 score: {var_data.scores.cadd.phyloP100}. "
                     f"SpliceAI scores: {var_data.scores.cadd.spliceAI_acceptor_gain},"
                     f"{var_data.scores.cadd.spliceAI_acceptor_loss}, "

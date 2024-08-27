@@ -47,3 +47,9 @@ class TP53Predictor(DefaultPredictor):
             strength=AutoACMGStrength.PathogenicModerate,
             summary="Variant does not meet the PM1 criteria for TP53.",
         )
+
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+        """Override donor and acceptor positions for TP53 VCEP."""
+        var_data.thresholds.bp7_donor = 7
+        var_data.thresholds.bp7_acceptor = 21
+        return super().predict_bp7(seqvar, var_data)

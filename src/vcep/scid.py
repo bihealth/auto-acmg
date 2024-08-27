@@ -140,3 +140,20 @@ class SCIDPredictor(DefaultPredictor):
             strength=AutoACMGStrength.PathogenicModerate,
             summary=f"Variant does not meet the PM1 criteria for {var_data.hgnc_id}.",
         )
+
+    def _is_conserved(self, var_data: AutoACMGData) -> bool:
+        """
+        Override the default _is_conserved method to ignore this check for SCID genes.
+        """
+        if var_data.hgnc_id == "HGNC:12765":
+            return super()._is_conserved(var_data)
+        return False  # Ignore conservation check for SCID genes
+
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+        """
+        Override donor and acceptor positions for Severe Combined Immunodeficiency Disease genes
+        VCEP.
+        """
+        var_data.thresholds.bp7_donor = 7
+        var_data.thresholds.bp7_acceptor = 21
+        return super().predict_bp7(seqvar, var_data)

@@ -3,7 +3,13 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.criteria.auto_bp7 import AutoBP7
-from src.defs.auto_acmg import BP7, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    BP7,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    GenomicStrand,
+)
 from src.defs.exceptions import AutoAcmgBaseException, MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
@@ -139,6 +145,227 @@ def test_is_conserved_cadd_priority(auto_bp7, var_data_conserve):
     ), "Should return False when cadd phyloP100 is valid but below the threshold"
 
 
+# =========== _is_synonymous ===========
+
+
+@pytest.fixture
+def auto_acmg_data_synonymous_mehari():
+    data = AutoACMGData()
+    consequence = MagicMock()
+    consequence.mehari = ["synonymous_variant"]
+    consequence.cadd = "nonsynonymous"
+    data.consequence = consequence
+    return data
+
+
+@pytest.fixture
+def auto_acmg_data_synonymous_cadd():
+    data = AutoACMGData()
+    consequence = MagicMock()
+    consequence.mehari = ["missense_variant"]
+    consequence.cadd = "synonymous"
+    data.consequence = consequence
+    return data
+
+
+@pytest.fixture
+def auto_acmg_data_nonsynonymous():
+    data = AutoACMGData()
+    consequence = MagicMock()
+    consequence.mehari = ["missense_variant"]
+    consequence.cadd = "nonsynonymous"
+    data.consequence = consequence
+    return data
+
+
+def test_is_synonymous_mehari(auto_acmg_data_synonymous_mehari):
+    """Test when the variant is predicted as synonymous based on Mehari consequence."""
+    result = AutoBP7._is_synonymous(auto_acmg_data_synonymous_mehari)
+    assert (
+        result is True
+    ), "The variant should be identified as synonymous based on Mehari consequence."
+
+
+def test_is_synonymous_cadd(auto_acmg_data_synonymous_cadd):
+    """Test when the variant is predicted as synonymous based on CADD consequence."""
+    result = AutoBP7._is_synonymous(auto_acmg_data_synonymous_cadd)
+    assert (
+        result is True
+    ), "The variant should be identified as synonymous based on CADD consequence."
+
+
+def test_is_nonsynonymous(auto_acmg_data_nonsynonymous):
+    """Test when the variant is not synonymous based on both Mehari and CADD consequences."""
+    result = AutoBP7._is_synonymous(auto_acmg_data_nonsynonymous)
+    assert (
+        result is False
+    ), "The variant should not be identified as synonymous when neither Mehari nor CADD indicate it."
+
+
+# =========== _is_intronic ===========
+
+
+@pytest.fixture
+def auto_acmg_data_intronic_mehari():
+    data = AutoACMGData()
+    consequence = MagicMock()
+    consequence.mehari = ["intron_variant"]
+    consequence.cadd = "nonsynonymous"
+    data.consequence = consequence
+    return data
+
+
+@pytest.fixture
+def auto_acmg_data_intronic_cadd():
+    data = AutoACMGData()
+    consequence = MagicMock()
+    consequence.mehari = ["missense_variant"]
+    consequence.cadd = "intron"
+    data.consequence = consequence
+    return data
+
+
+@pytest.fixture
+def auto_acmg_data_intronic_splice_cadd():
+    data = AutoACMGData()
+    consequence = MagicMock()
+    consequence.mehari = ["missense_variant"]
+    consequence.cadd = "splice"
+    data.consequence = consequence
+    return data
+
+
+@pytest.fixture
+def auto_acmg_data_non_intronic():
+    data = AutoACMGData()
+    consequence = MagicMock()
+    consequence.mehari = ["missense_variant"]
+    consequence.cadd = "nonsynonymous"
+    data.consequence = consequence
+    return data
+
+
+def test_is_intronic_mehari(auto_acmg_data_intronic_mehari):
+    """Test when the variant is predicted as intronic based on Mehari consequence."""
+    result = AutoBP7._is_intronic(auto_acmg_data_intronic_mehari)
+    assert (
+        result is True
+    ), "The variant should be identified as intronic based on Mehari consequence."
+
+
+def test_is_intronic_cadd(auto_acmg_data_intronic_cadd):
+    """Test when the variant is predicted as intronic based on CADD consequence."""
+    result = AutoBP7._is_intronic(auto_acmg_data_intronic_cadd)
+    assert result is True, "The variant should be identified as intronic based on CADD consequence."
+
+
+def test_is_intronic_splice_cadd(auto_acmg_data_intronic_splice_cadd):
+    """Test when the variant is predicted as intronic based on splice-related CADD consequence."""
+    result = AutoBP7._is_intronic(auto_acmg_data_intronic_splice_cadd)
+    assert (
+        result is True
+    ), "The variant should be identified as intronic based on CADD splice consequence."
+
+
+def test_is_non_intronic(auto_acmg_data_non_intronic):
+    """Test when the variant is not intronic based on both Mehari and CADD consequences."""
+    result = AutoBP7._is_intronic(auto_acmg_data_non_intronic)
+    assert (
+        result is False
+    ), "The variant should not be identified as intronic when neither Mehari nor CADD indicate it."
+
+
+# =========== _affect_canonical_ss ===========
+
+
+@pytest.fixture
+def auto_acmg_data():
+    """Fixture for an AutoACMGData object."""
+    thresholds = MagicMock(
+        bp7_acceptor=2, bp7_donor=2
+    )  # Mock thresholds for acceptor and donor sites
+    exons = [
+        MagicMock(altStartI=98, altEndI=102),  # Example exon data
+        MagicMock(altStartI=150, altEndI=160),
+    ]
+    var_data = MagicMock()
+    var_data.strand = GenomicStrand.Plus
+    var_data.exons = exons
+    var_data.thresholds = thresholds
+    return var_data
+
+
+def test_affect_canonical_ss_acceptor_site(seqvar, auto_acmg_data):
+    """Test when the variant affects the canonical splice site (acceptor) on the plus strand."""
+    seqvar.pos = 97  # Position just within the acceptor site window
+    bp7_predictor = AutoBP7()
+
+    result = bp7_predictor._affect_canonical_ss(seqvar, auto_acmg_data)
+
+    assert (
+        result is True
+    ), "The method should return True when the variant affects the acceptor site on the plus strand."
+
+
+def test_affect_canonical_ss_donor_site(seqvar, auto_acmg_data):
+    """Test when the variant affects the canonical splice site (donor) on the plus strand."""
+    seqvar.pos = 103  # Position just within the donor site window
+    bp7_predictor = AutoBP7()
+
+    result = bp7_predictor._affect_canonical_ss(seqvar, auto_acmg_data)
+
+    assert (
+        result is True
+    ), "The method should return True when the variant affects the donor site on the plus strand."
+
+
+def test_affect_canonical_ss_minus_strand(seqvar, auto_acmg_data):
+    """Test when the variant affects the canonical splice site on the minus strand."""
+    auto_acmg_data.strand = GenomicStrand.Minus
+    seqvar.pos = 97  # Position within the donor site window on the minus strand
+    bp7_predictor = AutoBP7()
+
+    result = bp7_predictor._affect_canonical_ss(seqvar, auto_acmg_data)
+
+    assert (
+        result is True
+    ), "The method should return True when the variant affects the canonical splice site on the minus strand."
+
+
+def test_not_affect_canonical_ss(seqvar, auto_acmg_data):
+    """Test when the variant does not affect any canonical splice site."""
+    seqvar.pos = 110  # Position outside the canonical splice site window
+    bp7_predictor = AutoBP7()
+
+    result = bp7_predictor._affect_canonical_ss(seqvar, auto_acmg_data)
+
+    assert (
+        result is False
+    ), "The method should return False when the variant does not affect any canonical splice site."
+
+
+def test_missing_strand_info(seqvar, auto_acmg_data):
+    """Test when the strand information is missing."""
+    auto_acmg_data.strand = None  # Missing strand information
+    bp7_predictor = AutoBP7()
+
+    with pytest.raises(MissingDataError):
+        bp7_predictor._affect_canonical_ss(seqvar, auto_acmg_data)
+
+
+# =========== _is_bp7_exception ===========
+
+
+def test_is_bp7_exception(seqvar):
+    """Test that the method correctly identifies no exceptions by default."""
+    bp7_predictor = AutoBP7()
+    auto_acmg_data = AutoACMGData()
+    result = bp7_predictor._is_bp7_exception(seqvar, auto_acmg_data)
+    assert (
+        result is False
+    ), "The method should return False, indicating no exceptions for BP7 by default."
+
+
 # =========== verify_bp7 ===========
 
 
@@ -153,7 +380,8 @@ def var_data_verify():
         spliceAI_donor_loss=0.1,
     )
     cadd = MagicMock(cadd=scores_cadd)
-    return MagicMock(scores=cadd, thresholds=thresholds)
+    consequence = MagicMock(mehari=["synonymous_variant"], cadd="synonymous")
+    return MagicMock(scores=cadd, thresholds=thresholds, consequence=consequence)
 
 
 def test_verify_bp7_mitochondrial(auto_bp7, seqvar_mt, var_data_verify):

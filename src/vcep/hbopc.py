@@ -36,3 +36,13 @@ class HBOPCPredictor(DefaultPredictor):
             )
 
         return super().predict_pm1(seqvar, var_data)
+
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+        """Override donor and acceptor positions for ATM and PALB2."""
+        if var_data.hgnc_id == "HGNC:26144":
+            var_data.thresholds.bp7_donor = 7
+            var_data.thresholds.bp7_acceptor = 21
+        elif var_data.hgnc_id == "HGNC:795":
+            var_data.thresholds.bp7_donor = 7
+            var_data.thresholds.bp7_acceptor = 40
+        return super().predict_bp7(seqvar, var_data)

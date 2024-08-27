@@ -186,7 +186,6 @@ def test_find_aff_exon_pos(var_pos, exons, expected_result):
         (
             SeqVarPVS1Consequence.InitiationCodon,
             [
-                "upstream_gene_variant",
                 "downstream_gene_variant",
                 "start_lost",
                 "initiator_codon_variant",
