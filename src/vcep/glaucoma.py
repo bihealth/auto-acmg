@@ -8,6 +8,7 @@ from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.exceptions import MissingDataError
 from src.defs.seqvar import SeqVar
 
 
@@ -23,6 +24,25 @@ class GlaucomaPredictor(DefaultPredictor):
             strength=AutoACMGStrength.PathogenicSupporting,
             summary="PM1 is not applicable for MYOC.",
         )
+
+    def _is_conserved(self, var_data: AutoACMGData) -> bool:
+        """
+        Predict if the variant is conserved.
+
+        Check if the variant is conserved using the GERP score.
+
+        Args:
+            variant_info: The variant information.
+
+        Returns:
+            bool: True if the variant is conserved, False otherwise.
+
+        Raises:
+            MissingDataError: If the GERP score is missing
+        """
+        if not var_data.scores.cadd.gerp:
+            raise MissingDataError("GERP score is missing.")
+        return var_data.scores.cadd.gerp >= var_data.thresholds.gerp
 
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Change BP7 thresholds for Glaucoma VCEP."""

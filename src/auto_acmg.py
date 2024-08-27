@@ -338,6 +338,7 @@ class AutoACMG:
             self.result.data.consequence.cadd = cadd.ConsDetail or ""
             self.result.data.consequence.cadd_consequence = cadd.Consequence or ""
             self.result.data.scores.cadd.phyloP100 = cadd.verPhyloP
+            self.result.data.scores.cadd.gerp = cadd.GerpS
             self.result.data.scores.cadd.spliceAI_acceptor_gain = cadd.SpliceAI_acc_gain
             self.result.data.scores.cadd.spliceAI_acceptor_loss = cadd.SpliceAI_acc_loss
             self.result.data.scores.cadd.spliceAI_donor_gain = cadd.SpliceAI_don_gain

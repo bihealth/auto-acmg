@@ -61,11 +61,17 @@ class ENIGMAPredictor(DefaultPredictor):
 
     def verify_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[BP7], str]:
         """Override verify BP7 criterion for ENIGMA BRCA1 and BRCA2."""
+        # Change the donor/acceptor thresholds for BRCA1 and BRCA2
+        var_data.thresholds.bp7_donor = 7
+        var_data.thresholds.bp7_acceptor = 21
+
         self.prediction_bp7 = BP7()
         self.comment_bp7 = ""
         try:
             if (self._is_synonymous(var_data) and self._in_important_domain(var_data)) or (
-                self._is_intronic(var_data) and not self._is_conserved(var_data)
+                self._is_intronic(var_data)
+                and not self._affect_canonical_ss(seqvar, var_data)
+                and not self._is_conserved(var_data)
             ):
                 self.comment_bp7 += (
                     "Synonymous variant is in an important domain or intronic variant is not "

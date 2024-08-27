@@ -28,3 +28,10 @@ class CerebralCreatineDeficiencySyndromesPredictor(DefaultPredictor):
             strength=AutoACMGStrength.PathogenicModerate,
             summary="PM1 is not applicable for Cerebral Creatine Deficiency Syndromes.",
         )
+
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+        """Override donor and acceptor positions for Cerebral Creatine Deficiency Syndromes VCEP."""
+        if var_data.hgnc_id == "HGNC:4136":
+            var_data.thresholds.bp7_donor = 7
+            var_data.thresholds.bp7_acceptor = 21
+        return super().predict_bp7(seqvar, var_data)

@@ -7,7 +7,13 @@ Link: https://cspec.genome.network/cspec/ui/svi/doc/GN006
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    GenomicStrand,
+)
 from src.defs.seqvar import SeqVar
 
 PM1_CLUSTER_PKU = {
@@ -77,3 +83,30 @@ class PKUPredictor(DefaultPredictor):
             strength=AutoACMGStrength.PathogenicModerate,
             summary="Variant does not meet the PM1 criteria for PAH.",
         )
+
+    def _is_bp7_exception(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+        """
+        Add an exception for Phenylketonuria.
+
+        Positions excluded:
+        Synonymous substitutions at the first base of an exon
+        Synonymous substitutions in the last 3 bases of an exon
+        """
+        for exon in var_data.exons:
+            if var_data.strand == GenomicStrand.Plus:
+                if exon.altStartI <= seqvar.pos <= exon.altStartI + 1:
+                    return True
+                if exon.altEndI - 3 <= seqvar.pos <= exon.altEndI:
+                    return True
+            elif var_data.strand == GenomicStrand.Minus:
+                if exon.altStartI <= seqvar.pos <= exon.altStartI + 3:
+                    return True
+                if exon.altEndI - 1 <= seqvar.pos <= exon.altEndI:
+                    return True
+        return False
+
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+        """Override donor and acceptor positions for PAH gene."""
+        var_data.thresholds.bp7_donor = 7
+        var_data.thresholds.bp7_acceptor = 21
+        return super().predict_bp7(seqvar, var_data)
