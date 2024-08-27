@@ -2,7 +2,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    GenomicStrand,
+)
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.vcep.pulmonary_hypertension import PulmonaryHypertensionPredictor
@@ -103,3 +109,39 @@ def test_predict_pm1_fallback_to_default(
     assert (
         "Default PM1 prediction fallback." in result.summary
     ), "The summary should indicate the default fallback."
+
+
+def test_is_bp7_exception_first_base_of_exon(pulmonary_hypertension_predictor, auto_acmg_data):
+    """Test that the BP7 exception is detected for a synonymous variant at the first base of an exon."""
+    auto_acmg_data.exons = [
+        MagicMock(altStartI=100, altEndI=200)
+    ]  # Exon with start at position 100
+    auto_acmg_data.strand = GenomicStrand.Plus
+
+    assert pulmonary_hypertension_predictor._is_bp7_exception(
+        pulmonary_hypertension_predictor.seqvar, auto_acmg_data
+    ), "The variant should be detected as a BP7 exception at the first base of an exon."
+
+
+def test_is_bp7_exception_last_three_bases_of_exon(
+    pulmonary_hypertension_predictor, auto_acmg_data
+):
+    """Test that the BP7 exception is detected for a synonymous variant in the last 3 bases of an exon."""
+    auto_acmg_data.exons = [MagicMock(altStartI=100, altEndI=200)]  # Exon with end at position 200
+    auto_acmg_data.strand = GenomicStrand.Plus
+    pulmonary_hypertension_predictor.seqvar.pos = 198  # Position within the last 3 bases
+
+    assert pulmonary_hypertension_predictor._is_bp7_exception(
+        pulmonary_hypertension_predictor.seqvar, auto_acmg_data
+    ), "The variant should be detected as a BP7 exception in the last 3 bases of an exon."
+
+
+def test_is_bp7_exception_no_exception(pulmonary_hypertension_predictor, auto_acmg_data):
+    """Test that no BP7 exception is detected when the variant is outside the first base or last 3 bases of an exon."""
+    auto_acmg_data.exons = [MagicMock(altStartI=100, altEndI=200)]  # Exon with end at position 200
+    auto_acmg_data.strand = GenomicStrand.Plus
+    pulmonary_hypertension_predictor.seqvar.pos = 150  # Position not at the boundary
+
+    assert not pulmonary_hypertension_predictor._is_bp7_exception(
+        pulmonary_hypertension_predictor.seqvar, auto_acmg_data
+    ), "The variant should not be detected as a BP7 exception."

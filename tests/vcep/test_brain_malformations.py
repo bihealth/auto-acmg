@@ -121,3 +121,51 @@ def test_predict_pm1_fallback_to_default(
         result.prediction == AutoACMGPrediction.NotMet
     ), "PM1 should not be met if no specific cluster mapping is found."
     assert mock_super_predict_pm1.called, "super().predict_pm1 should have been called."
+
+
+def test_predict_bp7_threshold_adjustment(brain_malformations_predictor, auto_acmg_data):
+    """Test that the PhyloP100 threshold is correctly adjusted for BP7."""
+    auto_acmg_data.thresholds.phyloP100 = 0.5  # Initial threshold value
+
+    # Call predict_bp7 method
+    result = brain_malformations_predictor.predict_bp7(
+        brain_malformations_predictor.seqvar, auto_acmg_data
+    )
+
+    # Check that the threshold was adjusted
+    assert (
+        auto_acmg_data.thresholds.phyloP100 == 0.1
+    ), "The PhyloP100 threshold should be adjusted to 0.1 for BP7."
+
+    # Check that the superclass's predict_bp7 method was called and returned a result
+    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
+
+
+@patch.object(DefaultPredictor, "predict_bp7")
+def test_predict_bp7_fallback_to_default(
+    mock_super_predict_bp7, brain_malformations_predictor, auto_acmg_data
+):
+    """Test fallback to default BP7 prediction after threshold adjustment."""
+    # Set the mock return value for the superclass's predict_bp7 method
+    mock_super_predict_bp7.return_value = AutoACMGCriteria(
+        name="BP7",
+        prediction=AutoACMGPrediction.NotMet,
+        strength=AutoACMGStrength.BenignSupporting,
+        summary="Default BP7 prediction fallback.",
+    )
+
+    # Call predict_bp7 method
+    result = brain_malformations_predictor.predict_bp7(
+        brain_malformations_predictor.seqvar, auto_acmg_data
+    )
+
+    # Verify the result and ensure the superclass method was called
+    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
+    assert result.prediction == AutoACMGPrediction.NotMet, "BP7 should return NotMet as mocked."
+    assert (
+        result.strength == AutoACMGStrength.BenignSupporting
+    ), "The strength should be BenignSupporting."
+    assert (
+        "Default BP7 prediction fallback." in result.summary
+    ), "The summary should indicate the fallback."
+    assert mock_super_predict_bp7.called, "super().predict_bp7 should have been called."
