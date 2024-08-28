@@ -147,6 +147,48 @@ def test_verify_pm4bp3_neither_indel_nor_stop_loss(pten_predictor, seqvar, auto_
     assert "consequence is not stop" in comment
 
 
+@patch.object(PTENPredictor, "verify_pp2bp1")
+def test_predict_pp2bp1_pten(mock_verify, pten_predictor, seqvar, auto_acmg_data):
+    """Test PP2 and BP1 prediction for PTEN."""
+    # Setting up the mock to return a specific result for the PP2 prediction
+    mock_verify.return_value = (
+        MagicMock(PP2=True, PP2_strength=AutoACMGStrength.PathogenicSupporting),
+        "PP2 met for PTEN variant.",
+    )
+
+    auto_acmg_data.hgnc_id = "HGNC:9588"  # PTEN gene
+
+    pp2, bp1 = pten_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
+
+    assert pp2.prediction == AutoACMGPrediction.Met, "PP2 should be Met for PTEN."
+    assert (
+        pp2.strength == AutoACMGStrength.PathogenicSupporting
+    ), "PP2 strength should be PathogenicSupporting."
+    assert "PP2 met for PTEN variant" in pp2.summary, "PP2 summary should confirm the met criteria."
+    assert (
+        bp1.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP1 should be NotApplicable for PTEN."
+
+
+@patch.object(PTENPredictor, "verify_pp2bp1")
+def test_predict_pp2bp1_pten_failure(mock_verify, pten_predictor, seqvar, auto_acmg_data):
+    """Test when PP2 prediction fails for PTEN."""
+    # Simulating a failure scenario
+    mock_verify.return_value = (None, "PP2 prediction failed due to an error.")
+
+    auto_acmg_data.hgnc_id = "HGNC:9588"  # PTEN gene
+
+    pp2, bp1 = pten_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
+
+    assert pp2.prediction == AutoACMGPrediction.Failed, "PP2 prediction should fail."
+    assert (
+        "PP2 prediction failed due to an error" in pp2.summary
+    ), "PP2 summary should report the failure."
+    assert (
+        bp1.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP1 should still be NotApplicable for PTEN."
+
+
 def test_predict_bp7_threshold_adjustment(pten_predictor, auto_acmg_data):
     """Test that the BP7 donor and acceptor thresholds are correctly adjusted."""
     auto_acmg_data.thresholds.bp7_donor = 1  # Initial donor threshold value

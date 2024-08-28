@@ -96,6 +96,35 @@ def test_is_conserved_missing_gerp_score(glaucoma_predictor, auto_acmg_data):
         glaucoma_predictor._is_conserved(auto_acmg_data)
 
 
+def test_predict_pp2bp1(glaucoma_predictor, seqvar, auto_acmg_data):
+    """Test predict_pp2bp1 for Glaucoma predictor."""
+
+    # Call the method under test
+    pp2_result, bp1_result = glaucoma_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
+
+    # Check PP2 result
+    assert isinstance(
+        pp2_result, AutoACMGCriteria
+    ), "The PP2 result should be of type AutoACMGCriteria."
+    assert (
+        pp2_result.prediction == AutoACMGPrediction.NotApplicable
+    ), "PP2 should be NotApplicable for ACADVL."
+    assert (
+        pp2_result.summary == "PP2 is not applicable for the gene."
+    ), "The summary should indicate PP2 is not applicable."
+
+    # Check BP1 result
+    assert isinstance(
+        bp1_result, AutoACMGCriteria
+    ), "The BP1 result should be of type AutoACMGCriteria."
+    assert (
+        bp1_result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP1 should be NotApplicable for ACADVL."
+    assert (
+        bp1_result.summary == "BP1 is not applicable for the gene."
+    ), "The summary should indicate BP1 is not applicable."
+
+
 def test_predict_bp7_threshold_adjustment(glaucoma_predictor, auto_acmg_data):
     """Test that the BP7 spliceAI thresholds are correctly adjusted for Glaucoma VCEP."""
     auto_acmg_data.thresholds.spliceAI_acceptor_gain = 0.05  # Initial threshold value

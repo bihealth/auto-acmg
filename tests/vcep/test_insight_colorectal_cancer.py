@@ -25,6 +25,16 @@ def auto_acmg_data():
     return AutoACMGData()
 
 
+@pytest.fixture
+def auto_acmg_data_apc():
+    data = AutoACMGData(hgnc_id="HGNC:583")
+    data.consequence = MagicMock(mehari=["missense_variant"], cadd="missense")
+    data.cds_start = 200
+    data.cds_end = 300
+    data.thresholds.pp2bp1_benign = 0.05
+    return data
+
+
 def test_predict_pm1_not_applicable_apc(insight_colorectal_cancer_predictor, auto_acmg_data):
     """Test when PM1 is not applicable for APC."""
     auto_acmg_data.hgnc_id = "HGNC:583"  # APC gene
@@ -174,6 +184,52 @@ def test_predict_pm4bp3_not_applicable(insight_colorectal_cancer_predictor, seqv
     assert (
         "BP3 is not applicable" in bp3_result.summary
     ), "The summary should indicate BP3 is not applicable."
+
+
+@patch.object(InsightColorectalCancerPredictor, "_is_missense")
+@patch.object(InsightColorectalCancerPredictor, "_get_missense_vars")
+def test_predict_pp2bp1_apc_missense_high_benign_ratio(
+    mock_get_missense_vars,
+    mock_is_missense,
+    insight_colorectal_cancer_predictor,
+    seqvar,
+    auto_acmg_data_apc,
+):
+    """Test PP2 and BP1 prediction where the APC variant is missense with a high benign ratio."""
+    mock_is_missense.return_value = True
+    mock_get_missense_vars.return_value = (None, 100, 1000)  # 10% benign ratio
+
+    pp2, bp1 = insight_colorectal_cancer_predictor.predict_pp2bp1(seqvar, auto_acmg_data_apc)
+
+    assert pp2.prediction == AutoACMGPrediction.NotApplicable, "PP2 should be NotApplicable."
+    assert bp1.prediction == AutoACMGPrediction.Met, "BP1 should be Met due to high benign ratio."
+    assert (
+        "Benign ratio" in bp1.summary and "is met" in bp1.summary
+    ), "BP1 summary should confirm criteria met due to benign ratio."
+
+
+@patch.object(InsightColorectalCancerPredictor, "_is_missense")
+@patch.object(InsightColorectalCancerPredictor, "_get_missense_vars")
+def test_predict_pp2bp1_apc_missense_low_benign_ratio(
+    mock_get_missense_vars,
+    mock_is_missense,
+    insight_colorectal_cancer_predictor,
+    seqvar,
+    auto_acmg_data_apc,
+):
+    """Test PP2 and BP1 prediction where the APC variant is missense with a low benign ratio."""
+    mock_is_missense.return_value = True
+    mock_get_missense_vars.return_value = (None, 1, 1000)  # 0.1% benign ratio
+
+    pp2, bp1 = insight_colorectal_cancer_predictor.predict_pp2bp1(seqvar, auto_acmg_data_apc)
+
+    assert pp2.prediction == AutoACMGPrediction.NotApplicable, "PP2 should be NotApplicable."
+    assert (
+        bp1.prediction == AutoACMGPrediction.NotMet
+    ), "BP1 should not be Met due to low benign ratio."
+    assert (
+        "Benign ratio" in bp1.summary and "is not met" in bp1.summary
+    ), "BP1 summary should confirm criteria not met due to benign ratio."
 
 
 def test_predict_bp7_threshold_adjustment(insight_colorectal_cancer_predictor, auto_acmg_data):

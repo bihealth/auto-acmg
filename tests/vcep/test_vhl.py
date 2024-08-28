@@ -181,6 +181,35 @@ def test_verify_pm4bp3_neither_domain_nor_repeat(
     assert "Variant is not in an important domain or in a repeat region. BP3 is met." in comment
 
 
+def test_predict_pp2bp1(vhl_predictor, seqvar, auto_acmg_data):
+    """Test predict_pp2bp1 for VHL."""
+
+    # Call the method under test
+    pp2_result, bp1_result = vhl_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
+
+    # Check PP2 result
+    assert isinstance(
+        pp2_result, AutoACMGCriteria
+    ), "The PP2 result should be of type AutoACMGCriteria."
+    assert (
+        pp2_result.prediction == AutoACMGPrediction.NotApplicable
+    ), "PP2 should be NotApplicable for ACADVL."
+    assert (
+        pp2_result.summary == "PP2 is not applicable for the gene."
+    ), "The summary should indicate PP2 is not applicable."
+
+    # Check BP1 result
+    assert isinstance(
+        bp1_result, AutoACMGCriteria
+    ), "The BP1 result should be of type AutoACMGCriteria."
+    assert (
+        bp1_result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP1 should be NotApplicable for ACADVL."
+    assert (
+        bp1_result.summary == "BP1 is not applicable for the gene."
+    ), "The summary should indicate BP1 is not applicable."
+
+
 def test_predict_bp7_threshold_adjustment(vhl_predictor, auto_acmg_data):
     """Test that the BP7 PhyloP threshold is correctly adjusted for VHL."""
     auto_acmg_data.thresholds.phyloP100 = 1.0  # Initial PhyloP threshold value

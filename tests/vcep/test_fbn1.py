@@ -134,3 +134,54 @@ def test_bp3_not_applicable(fbn1_predictor, seqvar, auto_acmg_data):
     """Test BP3 is not applicable for ACADVL as overridden."""
     result = fbn1_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
     assert result is True, "BP3 should always be not applicable"
+
+
+@patch.object(FBN1Predictor, "verify_pp2bp1")
+def test_predict_pp2bp1_applicable(mock_verify, fbn1_predictor, seqvar, auto_acmg_data):
+    """Test predict_pp2bp1 where variant prediction is applicable."""
+    mock_verify.return_value = (
+        MagicMock(PP2=True, PP2_strength=AutoACMGStrength.PathogenicModerate),
+        "PP2 applicable.",
+    )
+    pp2, bp1 = fbn1_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
+
+    assert pp2.prediction == AutoACMGPrediction.Met, "PP2 should be Met."
+    assert (
+        pp2.strength == AutoACMGStrength.PathogenicModerate
+    ), "PP2 strength should be PathogenicModerate."
+    assert "PP2 applicable." in pp2.summary, "The summary should confirm PP2 applicability."
+    assert bp1.prediction == AutoACMGPrediction.NotApplicable, "BP1 should be NotApplicable."
+
+
+@patch.object(FBN1Predictor, "verify_pp2bp1")
+def test_predict_pp2bp1_not_applicable(mock_verify, fbn1_predictor, seqvar, auto_acmg_data):
+    """Test predict_pp2bp1 where variant prediction is not applicable."""
+    mock_verify.return_value = (
+        MagicMock(PP2=False, PP2_strength=AutoACMGStrength.PathogenicSupporting),
+        "PP2 not applicable.",
+    )
+    pp2, bp1 = fbn1_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
+
+    assert pp2.prediction == AutoACMGPrediction.NotMet, "PP2 should be NotMet."
+    assert "PP2 not applicable." in pp2.summary, "The summary should confirm PP2 non-applicability."
+    assert bp1.prediction == AutoACMGPrediction.NotApplicable, "BP1 should be NotApplicable."
+
+
+@patch.object(FBN1Predictor, "verify_pp2bp1")
+def test_predict_pp2bp1_failed(mock_verify, fbn1_predictor, seqvar, auto_acmg_data):
+    """Test predict_pp2bp1 when the prediction process fails."""
+    mock_verify.return_value = (None, "Prediction process failed.")
+    pp2, bp1 = fbn1_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
+
+    assert pp2.prediction == AutoACMGPrediction.Failed, "PP2 prediction should fail."
+    assert "Prediction process failed." in pp2.summary, "The summary should report the failure."
+    assert bp1.prediction == AutoACMGPrediction.NotApplicable, "BP1 should be NotApplicable."
+
+
+@patch.object(FBN1Predictor, "verify_pp2bp1")
+def test_predict_pp2bp1_exception_handling(mock_verify, fbn1_predictor, seqvar, auto_acmg_data):
+    """Test predict_pp2bp1 handling of unexpected exceptions."""
+    mock_verify.side_effect = Exception("Internal error")
+    with pytest.raises(Exception) as exc_info:
+        pp2, bp1 = fbn1_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
+    assert "Internal error" in str(exc_info.value), "Should raise an internal error exception."

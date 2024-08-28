@@ -24,6 +24,13 @@ def auto_acmg_data():
     return AutoACMGData()
 
 
+@pytest.fixture
+def auto_acmg_data_gck():
+    data = AutoACMGData(hgnc_id="HGNC:4195")
+    data.consequence = MagicMock(mehari=[], cadd=None)
+    return data
+
+
 def test_predict_pm1_moderate_criteria_hnf1a(monogenic_diabetes_predictor, auto_acmg_data):
     """Test when variant falls within a moderate level residue for HNF1A."""
     auto_acmg_data.hgnc_id = "HGNC:11621"  # HNF1A gene
@@ -149,6 +156,45 @@ def test_bp3_not_applicable(monogenic_diabetes_predictor, seqvar, auto_acmg_data
     """Test BP3 is not applicable for ACADVL as overridden."""
     result = monogenic_diabetes_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
     assert result is True, "BP3 should always be not applicable"
+
+
+@patch.object(MonogenicDiabetesPredictor, "_is_missense")
+def test_predict_pp2bp1_gck_missense(
+    mock_is_missense, monogenic_diabetes_predictor, seqvar, auto_acmg_data_gck
+):
+    """Test predict_pp2bp1 for GCK where the variant is missense."""
+    mock_is_missense.return_value = True
+    pp2, bp1 = monogenic_diabetes_predictor.predict_pp2bp1(seqvar, auto_acmg_data_gck)
+
+    assert (
+        pp2.prediction == AutoACMGPrediction.Met
+    ), "PP2 should be Met for a missense variant in GCK."
+    assert (
+        pp2.strength == AutoACMGStrength.PathogenicSupporting
+    ), "PP2 strength should be PathogenicSupporting."
+    assert "missense variant" in pp2.summary, "PP2 summary should confirm the missense nature."
+    assert (
+        bp1.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP1 should be NotApplicable for GCK."
+
+
+@patch.object(MonogenicDiabetesPredictor, "_is_missense")
+def test_predict_pp2bp1_gck_non_missense(
+    mock_is_missense, monogenic_diabetes_predictor, seqvar, auto_acmg_data_gck
+):
+    """Test predict_pp2bp1 for GCK where the variant is not missense."""
+    mock_is_missense.return_value = False
+    pp2, bp1 = monogenic_diabetes_predictor.predict_pp2bp1(seqvar, auto_acmg_data_gck)
+
+    assert (
+        pp2.prediction == AutoACMGPrediction.NotMet
+    ), "PP2 should be NotMet for non-missense variants in GCK."
+    assert (
+        "not a missense variant" in pp2.summary
+    ), "PP2 summary should confirm the non-missense nature."
+    assert (
+        bp1.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP1 should still be NotApplicable for GCK."
 
 
 def test_predict_bp7_threshold_adjustment(monogenic_diabetes_predictor, auto_acmg_data):

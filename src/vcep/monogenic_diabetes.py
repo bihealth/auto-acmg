@@ -146,9 +146,13 @@ class MonogenicDiabetesPredictor(DefaultPredictor):
         """Override PP2 and BP1 prediction for InSIGHT Hereditary Colorectal Cancer/Polyposis."""
         pp2 = False
         comment = "PP2 is not applicable for the gene."
-        if var_data.hgnc_id == "HGNC:4195" and self._is_missense(var_data):
-            pp2 = True
-            comment = "Variant is a missense variant. PP2 is met."
+        if var_data.hgnc_id == "HGNC:4195":
+            if self._is_missense(var_data):
+                pp2 = True
+                comment = "Variant is a missense variant. PP2 is met."
+            else:
+                pp2 = False
+                comment = "Variant is not a missense variant. PP2 is not met."
         return (
             AutoACMGCriteria(
                 name="PP2",

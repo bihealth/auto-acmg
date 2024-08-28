@@ -130,6 +130,35 @@ def test_predict_pm4bp3_fallback(mock_verify_pm4bp3, cdh1_predictor, seqvar, aut
     ), "The summary should indicate BP3 is not applicable."
 
 
+def test_predict_pp2bp1(cdh1_predictor, seqvar, auto_acmg_data):
+    """Test predict_pp2bp1 for CDH1 predictor."""
+
+    # Call the method under test
+    pp2_result, bp1_result = cdh1_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
+
+    # Check PP2 result
+    assert isinstance(
+        pp2_result, AutoACMGCriteria
+    ), "The PP2 result should be of type AutoACMGCriteria."
+    assert (
+        pp2_result.prediction == AutoACMGPrediction.NotApplicable
+    ), "PP2 should be NotApplicable for ACADVL."
+    assert (
+        pp2_result.summary == "PP2 is not applicable for the gene."
+    ), "The summary should indicate PP2 is not applicable."
+
+    # Check BP1 result
+    assert isinstance(
+        bp1_result, AutoACMGCriteria
+    ), "The BP1 result should be of type AutoACMGCriteria."
+    assert (
+        bp1_result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP1 should be NotApplicable for ACADVL."
+    assert (
+        bp1_result.summary == "BP1 is not applicable for the gene."
+    ), "The summary should indicate BP1 is not applicable."
+
+
 def test_predict_bp7_threshold_adjustment(cdh1_predictor, auto_acmg_data):
     """Test that the BP7 donor and acceptor thresholds are correctly adjusted."""
     auto_acmg_data.thresholds.bp7_donor = 1  # Initial donor threshold value
