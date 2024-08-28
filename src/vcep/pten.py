@@ -74,7 +74,6 @@ class PTENPredictor(DefaultPredictor):
             if self._is_stop_loss(var_data):
                 self.comment_pm4bp3 = "Variant consequence is stop-loss. PM4 is met."
                 self.prediction_pm4bp3.PM4 = True
-                self.prediction_pm4bp3.BP3 = False
             # In-frame deletions/insertions
             elif self.is_inframe_delins(var_data):
                 self.comment_pm4bp3 = f"Variant consequence is in-frame deletion/insertion. "
@@ -83,14 +82,13 @@ class PTENPredictor(DefaultPredictor):
                 if var_data.prot_pos in PM1_CLUSTER.get(var_data.hgnc_id, {}).get("residues", []):
                     self.comment_pm4bp3 += "Impacting catalytic motif. PM4 is met."
                     self.prediction_pm4bp3.PM4 = True
-                    self.prediction_pm4bp3.BP3 = False
                 else:
                     self.comment_pm4bp3 += "No impact on catalytic motif. PM4 is not met."
                     self.prediction_pm4bp3.PM4 = False
-                    self.prediction_pm4bp3.BP3 = True
             else:
+                self.comment_pm4bp3 = "Variant consequence is not stop-loss or in-frame deletion/insertion. "
                 self.prediction_pm4bp3.PM4 = False
-                self.prediction_pm4bp3.BP3 = True
+                self.prediction_pm4bp3.BP3 = False
         except Exception as e:
             self.prediction_pm4bp3 = None
             self.comment_pm4bp3 = f"An error occured while predicting PM4 and BP3 criteria: {e}"
