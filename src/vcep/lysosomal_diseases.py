@@ -64,3 +64,7 @@ class LysosomalDiseasesPredictor(DefaultPredictor):
             strength=AutoACMGStrength.PathogenicModerate,
             summary="Variant does not meet the PM1 criteria for Lysosomal Diseases.",
         )
+
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+        """Override BP3 for Lysosomal Diseases."""
+        return True

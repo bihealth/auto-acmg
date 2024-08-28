@@ -136,6 +136,10 @@ class MonogenicDiabetesPredictor(DefaultPredictor):
             summary=f"Variant does not meet the PM1 criteria for {var_data.hgnc_id}.",
         )
 
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+        """Override BP3 for Monogenic Diabetes."""
+        return True
+
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Change BP7 thresholds for Monogenic Diabetes VCEP."""
         var_data.thresholds.spliceAI_acceptor_gain = 0.2

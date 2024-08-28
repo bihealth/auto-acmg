@@ -52,3 +52,7 @@ class ThrombosisPredictor(DefaultPredictor):
             strength=AutoACMGStrength.PathogenicModerate,
             summary="Variant does not meet the PM1 criteria for SERPINC1.",
         )
+
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+        """Override BP3 for thrombosis VCEP."""
+        return True

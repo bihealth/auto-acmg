@@ -8,7 +8,7 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN071
 https://cspec.genome.network/cspec/ui/svi/doc/GN080
 """
 
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from loguru import logger
 
@@ -132,6 +132,10 @@ class CoagulationFactorDeficiencyPredictor(DefaultPredictor):
             strength=AutoACMGStrength.PathogenicModerate,
             summary=f"Variant does not meet the PM1 criteria for {var_data.hgnc_id}.",
         )
+
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+        """Override BP3 for Coagulation Factor Deficiency."""
+        return True
 
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Change the spliceAI and phyloP threshold for BP7."""

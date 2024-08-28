@@ -15,7 +15,7 @@ from src.vcep.fbn1 import FBN1Predictor
 from src.vcep.glaucoma import GlaucomaPredictor
 from src.vcep.hbopc import HBOPCPredictor
 from src.vcep.hearing_loss import HearingLossPredictor
-from src.vcep.hhtp import HHTPredictor
+from src.vcep.hht import HHTPredictor
 from src.vcep.insight_colorectal_cancer import InsightColorectalCancerPredictor
 from src.vcep.leber_congenital_amaurosis import LeberCongenitalAmaurosisPredictor
 from src.vcep.lysosomal_diseases import LysosomalDiseasesPredictor

@@ -52,6 +52,26 @@ class ENIGMAPredictor(DefaultPredictor):
 
         return super().predict_pm1(seqvar, var_data)
 
+    def predict_pm4bp3(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Override predict_pm4bp3 to include VCEP-specific logic for ENIGMA BRCA1 and BRCA2."""
+        logger.info("Predict PM4 and BP3")
+        return (
+            AutoACMGCriteria(
+                name="PM4",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicModerate,
+                summary="PM4 is not applicable for the ENIGMA VCEP.",
+            ),
+            AutoACMGCriteria(
+                name="BP3",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.BenignSupporting,
+                summary="BP3 is not applicable for the ENIGMA VCEP.",
+            ),
+        )
+
     def _in_important_domain(self, var_data: AutoACMGData) -> bool:
         """Check if the variant is in an important domain."""
         for start, end in BP7_IMPORTANT_DOMAINS.get(var_data.hgnc_id, []):

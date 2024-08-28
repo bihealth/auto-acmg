@@ -88,3 +88,7 @@ class FBN1Predictor(DefaultPredictor):
             strength=AutoACMGStrength.PathogenicModerate,
             summary=f"Variant does not meet the PM1 criteria for FBN1.",
         )
+
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+        """Override BP3 for FBN1."""
+        return True

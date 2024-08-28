@@ -72,7 +72,7 @@ def test_predict_pm1_not_met(hhtp_predictor, auto_acmg_data):
     ), "The summary should indicate no criteria were met."
 
 
-@patch("src.vcep.hhtp.DefaultPredictor.predict_pm1")
+@patch("src.vcep.hht.DefaultPredictor.predict_pm1")
 def test_predict_pm1_fallback_to_default(mock_predict_pm1, hhtp_predictor, auto_acmg_data):
     """Test fallback to the default PM1 prediction method if logic changes."""
     auto_acmg_data.hgnc_id = "HGNC:111111"  # Gene not in the specific logic

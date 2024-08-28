@@ -1,6 +1,8 @@
 from enum import auto
 from typing import Dict, List, Optional
 
+from pydantic import BaseModel, ConfigDict
+
 from src.defs.annonars_variant import GnomadExomes, GnomadMtDna
 from src.defs.core import AutoAcmgBaseEnum, AutoAcmgBaseModel
 from src.defs.mehari import Exon, TranscriptGene, TranscriptSeqvar
@@ -428,3 +430,17 @@ class AutoACMGResult(AutoAcmgBaseModel):
     data: AutoACMGData = AutoACMGData()
     # ; ACMG criteria prediction
     criteria: AutoACMGCriteriaResult = AutoACMGCriteriaResult()
+
+
+class VcepSpec(BaseModel):
+    #: Identifier, e.g., "GN002"
+    identifier: str
+    #: Version, e.g., "2.0.0"
+    version: str
+    #: Title of the VCEP specification, e.g., "ClinGen Cardiomyopathy Expert Panel Specifications
+    #: to the ACMG/AMP Variant Interpretation Guidelines for MYH7".
+    title: Optional[str] = None
+
+    model_config = ConfigDict(
+        frozen=True,
+    )

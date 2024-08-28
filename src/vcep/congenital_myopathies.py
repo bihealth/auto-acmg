@@ -63,3 +63,7 @@ class CongenitalMyopathiesPredictor(DefaultPredictor):
             strength=AutoACMGStrength.PathogenicModerate,
             summary="Variant does not fall within a critical domain.",
         )
+
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+        """Override BP3 for congenital myopathies."""
+        return True
