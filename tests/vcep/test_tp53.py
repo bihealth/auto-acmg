@@ -84,6 +84,34 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, tp53_predictor, auto_
     ), "The strength should be PathogenicModerate."
 
 
+def test_predict_pm4bp3_tp53(tp53_predictor, seqvar, auto_acmg_data):
+    """Test the predict_pm4bp3 method for TP53 VCEP."""
+    # Call the method under test
+    pm4_result, bp3_result = tp53_predictor.predict_pm4bp3(seqvar, auto_acmg_data)
+
+    # Check PM4 result
+    assert isinstance(
+        pm4_result, AutoACMGCriteria
+    ), "The PM4 result should be of type AutoACMGCriteria."
+    assert (
+        pm4_result.prediction == AutoACMGPrediction.NotApplicable
+    ), "PM4 should be NotApplicable for TP53."
+    assert (
+        "PM4 is not applicable for TP53 VCEP." in pm4_result.summary
+    ), "The summary should indicate PM4 is not applicable for TP53."
+
+    # Check BP3 result
+    assert isinstance(
+        bp3_result, AutoACMGCriteria
+    ), "The BP3 result should be of type AutoACMGCriteria."
+    assert (
+        bp3_result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP3 should be NotApplicable for TP53."
+    assert (
+        "BP3 is not applicable for TP53 VCEP." in bp3_result.summary
+    ), "The summary should indicate BP3 is not applicable for TP53."
+
+
 def test_predict_bp7_threshold_adjustment(tp53_predictor, auto_acmg_data):
     """Test that the BP7 donor and acceptor thresholds are correctly adjusted."""
     auto_acmg_data.thresholds.bp7_donor = 1  # Initial donor threshold value

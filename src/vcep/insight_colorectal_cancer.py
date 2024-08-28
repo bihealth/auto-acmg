@@ -14,6 +14,8 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN138
 https://cspec.genome.network/cspec/ui/svi/doc/GN139
 """
 
+from typing import Tuple
+
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
@@ -42,6 +44,30 @@ class InsightColorectalCancerPredictor(DefaultPredictor):
             )
 
         return super().predict_pm1(seqvar, var_data)
+
+    def predict_pm4bp3(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        return (
+            AutoACMGCriteria(
+                name="PM4",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicModerate,
+                summary=(
+                    "PM4 is not applicable for the InSIGHT Hereditary Colorectal Cancer/Polyposis "
+                    "VCEP."
+                ),
+            ),
+            AutoACMGCriteria(
+                name="BP3",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.BenignSupporting,
+                summary=(
+                    "BP3 is not applicable for the InSIGHT Hereditary Colorectal Cancer/Polyposis "
+                    "VCEP."
+                ),
+            ),
+        )
 
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """

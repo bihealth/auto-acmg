@@ -60,6 +60,12 @@ def test_predict_pm1_name(glaucoma_predictor, auto_acmg_data):
     assert result.name == "PM1", "The name of the criteria should be 'PM1'."
 
 
+def test_bp3_not_applicable(glaucoma_predictor, seqvar, auto_acmg_data):
+    """Test BP3 is not applicable for ACADVL as overridden."""
+    result = glaucoma_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
+    assert result is True, "BP3 should always be not applicable"
+
+
 def test_is_conserved_with_valid_gerp_score(glaucoma_predictor, auto_acmg_data):
     """Test that the variant is correctly identified as conserved when the GERP score is valid."""
     auto_acmg_data.scores.cadd.gerp = 3.5  # Example GERP score above the threshold

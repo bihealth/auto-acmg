@@ -74,6 +74,26 @@ class BrainMalformationsPredictor(DefaultPredictor):
         else:
             return super().predict_pm1(seqvar, var_data)
 
+    def predict_pm4bp3(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Override predict_pm4bp3 to include VCEP-specific logic for brain malformations VCEP."""
+        logger.info("Predict PM4 and BP3")
+        return (
+            AutoACMGCriteria(
+                name="PM4",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicModerate,
+                summary="PM4 is not applicable for the brain malformations VCEP.",
+            ),
+            AutoACMGCriteria(
+                name="BP3",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.BenignSupporting,
+                summary="BP3 is not applicable for the brain malformations VCEP.",
+            ),
+        )
+
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Change the PhyloP100 score threshold for BP7."""
         var_data.thresholds.phyloP100 = 0.1

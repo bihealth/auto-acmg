@@ -77,6 +77,10 @@ class MyeloidMalignancyPredictor(DefaultPredictor):
             summary="Variant does not meet the PM1 criteria for RUNX1.",
         )
 
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+        """Override BP3 for Myeloid Malignancy."""
+        return True
+
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Change BP7 thresholds for Myeloid Malignancy VCEP."""
         var_data.thresholds.spliceAI_acceptor_gain = 0.2

@@ -4,6 +4,8 @@ Included gene: TP53 (HGNC:11998).
 Link: https://cspec.genome.network/cspec/ui/svi/doc/GN009
 """
 
+from typing import Tuple
+
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
@@ -46,6 +48,25 @@ class TP53Predictor(DefaultPredictor):
             prediction=AutoACMGPrediction.NotMet,
             strength=AutoACMGStrength.PathogenicModerate,
             summary="Variant does not meet the PM1 criteria for TP53.",
+        )
+
+    def predict_pm4bp3(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Override PM4 and BP3 for TP53 VCEP."""
+        return (
+            AutoACMGCriteria(
+                name="PM4",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicModerate,
+                summary="PM4 is not applicable for TP53 VCEP.",
+            ),
+            AutoACMGCriteria(
+                name="BP3",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.BenignSupporting,
+                summary="BP3 is not applicable for TP53 VCEP.",
+            ),
         )
 
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:

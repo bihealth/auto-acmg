@@ -25,6 +25,10 @@ class GlaucomaPredictor(DefaultPredictor):
             summary="PM1 is not applicable for MYOC.",
         )
 
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+        """Override _bp3_not_applicable for Glaucoma VCEP."""
+        return True
+
     def _is_conserved(self, var_data: AutoACMGData) -> bool:
         """
         Predict if the variant is conserved.

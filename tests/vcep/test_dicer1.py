@@ -123,6 +123,12 @@ def test_predict_pm1_edge_case_end_boundary_supporting(dicer1_predictor, auto_ac
     ), "The summary should indicate the RNase IIIb domain."
 
 
+def test_bp3_not_applicable(dicer1_predictor, seqvar, auto_acmg_data):
+    """Test BP3 is not applicable for ACADVL as overridden."""
+    result = dicer1_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
+    assert result is True, "BP3 should always be not applicable"
+
+
 def test_predict_bp7_threshold_adjustment(dicer1_predictor, auto_acmg_data):
     """Test that the BP7 donor and acceptor thresholds are correctly adjusted."""
     auto_acmg_data.thresholds.bp7_donor = 1  # Initial donor threshold value

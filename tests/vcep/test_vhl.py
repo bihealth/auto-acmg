@@ -83,6 +83,104 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, vhl_predictor, auto_a
     ), "The summary should indicate the default fallback."
 
 
+def test_in_vhl_important_domain_true(vhl_predictor, auto_acmg_data):
+    """Test that the variant is in an important VHL domain."""
+    auto_acmg_data.prot_pos = 160  # Within the Alpha (ɑ) domain
+
+    # Call the method under test
+    result = vhl_predictor._in_vhl_important_domain(auto_acmg_data)
+
+    assert result is True, "The variant should be in an important VHL domain."
+
+
+def test_in_vhl_important_domain_false(vhl_predictor, auto_acmg_data):
+    """Test that the variant is not in an important VHL domain."""
+    auto_acmg_data.prot_pos = 50  # Outside the important domains
+
+    # Call the method under test
+    result = vhl_predictor._in_vhl_important_domain(auto_acmg_data)
+
+    assert result is False, "The variant should not be in an important VHL domain."
+
+
+def test_in_gxeex_repeat_region_true(vhl_predictor, auto_acmg_data):
+    """Test that the variant is in the GXEEX repeat region for VHL."""
+    auto_acmg_data.prot_pos = 30  # Within the GXEEX repeat region
+
+    # Call the method under test
+    result = vhl_predictor._in_gxeex_repeat_region(auto_acmg_data)
+
+    assert result is True, "The variant should be in the GXEEX repeat region."
+
+
+def test_in_gxeex_repeat_region_false(vhl_predictor, auto_acmg_data):
+    """Test that the variant is not in the GXEEX repeat region for VHL."""
+    auto_acmg_data.prot_pos = 60  # Outside the GXEEX repeat region
+
+    # Call the method under test
+    result = vhl_predictor._in_gxeex_repeat_region(auto_acmg_data)
+
+    assert result is False, "The variant should not be in the GXEEX repeat region."
+
+
+@patch.object(VHLPredictor, "_in_vhl_important_domain", return_value=True)
+@patch.object(VHLPredictor, "_in_gxeex_repeat_region", return_value=False)
+def test_verify_pm4bp3_in_important_domain(
+    mock_in_vhl_important_domain, mock_in_gxeex_repeat_region, vhl_predictor, seqvar, auto_acmg_data
+):
+    """Test verify_pm4bp3 when the variant is an in-frame deletion in an important domain."""
+    auto_acmg_data.consequence.cadd = "inframe_deletion"
+
+    # Call the method under test
+    prediction, comment = vhl_predictor.verify_pm4bp3(seqvar, auto_acmg_data)
+
+    assert prediction.PM4 is True, "PM4 should be met for in-frame deletion in an important domain."
+    assert (
+        prediction.BP3 is False
+    ), "BP3 should not be met for in-frame deletion in an important domain."
+    assert "Variant is in an important domain of VHL. PM4 is met." in comment
+
+
+@patch.object(VHLPredictor, "_in_vhl_important_domain", return_value=False)
+@patch.object(VHLPredictor, "_in_gxeex_repeat_region", return_value=True)
+def test_verify_pm4bp3_in_repeat_region(
+    mock_in_vhl_important_domain, mock_in_gxeex_repeat_region, vhl_predictor, seqvar, auto_acmg_data
+):
+    """Test verify_pm4bp3 when the variant is in the GXEEX repeat region."""
+    auto_acmg_data.consequence.cadd = "inframe_deletion"
+
+    # Call the method under test
+    prediction, comment = vhl_predictor.verify_pm4bp3(seqvar, auto_acmg_data)
+
+    assert (
+        prediction.PM4 is False
+    ), "PM4 should not be met for in-frame deletion in the GXEEX repeat region."
+    assert (
+        prediction.BP3 is True
+    ), "BP3 should be met for in-frame deletion in the GXEEX repeat region."
+    assert "Variant is in the GXEEX repeat motif in the VHL gene. BP3 is met." in comment
+
+
+@patch.object(VHLPredictor, "_in_vhl_important_domain", return_value=False)
+@patch.object(VHLPredictor, "_in_gxeex_repeat_region", return_value=False)
+def test_verify_pm4bp3_neither_domain_nor_repeat(
+    mock_in_vhl_important_domain, mock_in_gxeex_repeat_region, vhl_predictor, seqvar, auto_acmg_data
+):
+    """Test verify_pm4bp3 when the variant is neither in an important domain nor in the GXEEX repeat region."""
+    auto_acmg_data.consequence.cadd = "inframe_deletion"
+
+    # Call the method under test
+    prediction, comment = vhl_predictor.verify_pm4bp3(seqvar, auto_acmg_data)
+
+    assert (
+        prediction.PM4 is False
+    ), "PM4 should not be met if not in important domain or GXEEX repeat region."
+    assert (
+        prediction.BP3 is True
+    ), "BP3 should be met if variant is in neither an important domain nor GXEEX repeat region."
+    assert "Variant is not in an important domain or in a repeat region. BP3 is met." in comment
+
+
 def test_predict_bp7_threshold_adjustment(vhl_predictor, auto_acmg_data):
     """Test that the BP7 PhyloP threshold is correctly adjusted for VHL."""
     auto_acmg_data.thresholds.phyloP100 = 1.0  # Initial PhyloP threshold value

@@ -81,6 +81,12 @@ def test_predict_pm1_fallback_to_default(
     assert result.prediction == AutoACMGPrediction.NotApplicable, "PM1 should remain NotApplicable."
 
 
+def test_bp3_not_applicable(cerebral_creatine_predictor, seqvar, auto_acmg_data):
+    """Test BP3 is not applicable for ACADVL as overridden."""
+    result = cerebral_creatine_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
+    assert result is True, "BP3 should always be not applicable"
+
+
 def test_predict_bp7_threshold_adjustment(cerebral_creatine_predictor, auto_acmg_data):
     """Test that the BP7 donor and acceptor thresholds are correctly adjusted."""
     auto_acmg_data.thresholds.bp7_donor = 1  # Initial donor threshold value

@@ -20,6 +20,8 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN102
 https://cspec.genome.network/cspec/ui/svi/doc/GN103
 """
 
+from typing import Tuple
+
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
@@ -98,6 +100,10 @@ class CardiomyopathyPredictor(DefaultPredictor):
             )
 
         return super().predict_pm1(seqvar, var_data)
+
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+        """Override BP3 for Cardiomyopathy."""
+        return True
 
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Override donor and acceptor positions for Cardiomyopathy VCEP."""

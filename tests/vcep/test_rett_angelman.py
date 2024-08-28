@@ -93,6 +93,112 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, rett_angelman_predict
     ), "The summary should indicate the default fallback."
 
 
+def test_exclude_pm4_true(rett_angelman_predictor, auto_acmg_data, seqvar):
+    """Test that the variant is excluded from PM4 based on the exclusion regions."""
+    auto_acmg_data.hgnc_id = "HGNC:11411"  # CDKL5
+    auto_acmg_data.prot_pos = 950  # Within exclusion range for CDKL5
+
+    # Call the method under test
+    result = rett_angelman_predictor._exclude_pm4(seqvar, auto_acmg_data)
+
+    assert result is True, "The variant should be excluded from PM4."
+
+
+def test_exclude_pm4_false(rett_angelman_predictor, auto_acmg_data, seqvar):
+    """Test that the variant is not excluded from PM4."""
+    auto_acmg_data.hgnc_id = "HGNC:11411"  # CDKL5
+    auto_acmg_data.prot_pos = 500  # Outside the exclusion range for CDKL5
+
+    # Call the method under test
+    result = rett_angelman_predictor._exclude_pm4(seqvar, auto_acmg_data)
+
+    assert result is False, "The variant should not be excluded from PM4."
+
+
+def test_in_foxg1_bp3_region_true(rett_angelman_predictor, auto_acmg_data):
+    """Test that the variant is in the BP3 region for FOXG1."""
+    auto_acmg_data.hgnc_id = "HGNC:3811"  # FOXG1
+    auto_acmg_data.prot_pos = 50  # Inside the BP3 region for FOXG1
+
+    # Call the method under test
+    result = rett_angelman_predictor._in_foxg1_bp3_region(auto_acmg_data)
+
+    assert result is True, "The variant should be in the BP3 region for FOXG1."
+
+
+def test_in_foxg1_bp3_region_false(rett_angelman_predictor, auto_acmg_data):
+    """Test that the variant is not in the BP3 region for FOXG1."""
+    auto_acmg_data.hgnc_id = "HGNC:3811"  # FOXG1
+    auto_acmg_data.prot_pos = 100  # Outside the BP3 region for FOXG1
+
+    # Call the method under test
+    result = rett_angelman_predictor._in_foxg1_bp3_region(auto_acmg_data)
+
+    assert result is False, "The variant should not be in the BP3 region for FOXG1."
+
+
+@patch.object(RettAngelmanPredictor, "_in_repeat_region", return_value=False)
+def test_verify_pm4bp3_in_frame_deletion_in_important_domain(
+    mock_in_repeat_region, rett_angelman_predictor, seqvar, auto_acmg_data
+):
+    """Test verify_pm4bp3 when the variant is an in-frame deletion in an important domain."""
+    auto_acmg_data.hgnc_id = "HGNC:6990"  # MECP2
+    auto_acmg_data.prot_pos = 400  # In-frame deletion in the proline-rich region
+
+    auto_acmg_data.consequence.cadd = "inframe_deletion"
+
+    # Call the method under test
+    prediction, comment = rett_angelman_predictor.verify_pm4bp3(seqvar, auto_acmg_data)
+
+    assert (
+        prediction.PM4 is False
+    ), "PM4 should not be met for in-frame deletion in an important domain."
+    assert (
+        prediction.BP3 is False
+    ), "BP3 should not be met for in-frame deletion in an important domain."
+
+
+@patch.object(RettAngelmanPredictor, "_in_repeat_region", return_value=True)
+def test_verify_pm4bp3_in_repeat_region(
+    mock_in_repeat_region, rett_angelman_predictor, seqvar, auto_acmg_data
+):
+    """Test verify_pm4bp3 when the variant is an in-frame deletion in a repeat region."""
+    auto_acmg_data.hgnc_id = "HGNC:3811"  # FOXG1
+    auto_acmg_data.prot_pos = 50  # In-frame deletion in a repeat region
+
+    auto_acmg_data.consequence.cadd = "inframe_deletion"
+
+    # Call the method under test
+    prediction, comment = rett_angelman_predictor.verify_pm4bp3(seqvar, auto_acmg_data)
+
+    assert (
+        prediction.PM4 is False
+    ), "PM4 should not be met for in-frame deletion in a repeat region."
+    assert prediction.BP3 is True, "BP3 should be met for in-frame deletion in a repeat region."
+    assert (
+        "Variant consequence is in-frame deletion/insertion. Variant is in a repeat region or not in a conserved domain or in excluded region."
+        in comment
+    )
+
+
+@patch.object(RettAngelmanPredictor, "_in_repeat_region", return_value=False)
+def test_verify_pm4bp3_bp3_for_foxg1(
+    mock_in_repeat_region, rett_angelman_predictor, seqvar, auto_acmg_data
+):
+    """Test verify_pm4bp3 when the variant is in the BP3 region for FOXG1."""
+    auto_acmg_data.hgnc_id = "HGNC:3811"  # FOXG1
+    auto_acmg_data.prot_pos = 50  # In the BP3 region for FOXG1
+
+    auto_acmg_data.consequence.cadd = "inframe_deletion"
+
+    # Call the method under test
+    prediction, comment = rett_angelman_predictor.verify_pm4bp3(seqvar, auto_acmg_data)
+
+    assert prediction.PM4 is False, "PM4 should not be met for FOXG1 in the BP3 region."
+    assert prediction.BP3 is True, "BP3 should be met for FOXG1 in the BP3 region."
+    assert "Variant is in the BP3 region for FOXG1." in comment
+
+
 def test_predict_bp7_threshold_adjustment(rett_angelman_predictor, auto_acmg_data):
     """Test that the BP7 thresholds are correctly adjusted for Rett and Angelman-like Disorders."""
     auto_acmg_data.thresholds.phyloP100 = 1.0  # Initial phyloP100 threshold value

@@ -134,6 +134,28 @@ def test_inframe_delins_false(var_data_is_inframe_delins):
     assert AutoPM4BP3.is_inframe_delins(var_data_is_inframe_delins) == False
 
 
+# ================== _bp3_not_applicable ==================
+
+
+@pytest.fixture
+def auto_acmg_data():
+    return AutoACMGData()
+
+
+def test_bp3_not_applicable_mitochondrial(auto_pm4bp3, seqvar, auto_acmg_data):
+    """Test BP3 is not applicable when the variant is in mitochondrial DNA."""
+    seqvar.chrom = "MT"  # Mitochondrial chromosome
+    result = auto_pm4bp3._bp3_not_applicable(seqvar, auto_acmg_data)
+    assert result is True, "BP3 should not be applicable for mitochondrial DNA variants."
+
+
+def test_bp3_applicable_nuclear_dna(auto_pm4bp3, seqvar, auto_acmg_data):
+    """Test BP3 is applicable when the variant is in nuclear DNA."""
+    seqvar.chrom = "1"  # Nuclear chromosome
+    result = auto_pm4bp3._bp3_not_applicable(seqvar, auto_acmg_data)
+    assert result is False, "BP3 should be applicable for nuclear DNA variants."
+
+
 # ============== verify_pm4bp3 =================
 
 

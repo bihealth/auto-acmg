@@ -134,3 +134,9 @@ def test_predict_pm1_edge_case_end_boundary(congenital_myopathies_predictor, aut
     assert (
         "falls within a critical domain" in result.summary
     ), "The summary should indicate the critical domain."
+
+
+def test_bp3_not_applicable(congenital_myopathies_predictor, seqvar, auto_acmg_data):
+    """Test BP3 is not applicable for ACADVL as overridden."""
+    result = congenital_myopathies_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
+    assert result is True, "BP3 should always be not applicable"

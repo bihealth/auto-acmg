@@ -64,6 +64,10 @@ class LeberCongenitalAmaurosisPredictor(DefaultPredictor):
             summary=comment,
         )
 
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+        """Override BP3 for Leber Congenital Amaurosis."""
+        return True
+
     def _is_bp7_exception(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
         """
         Add an exception for RPE65.

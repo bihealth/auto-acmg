@@ -27,3 +27,7 @@ class VonWillebrandDiseasePredictor(DefaultPredictor):
             strength=AutoACMGStrength.PathogenicSupporting,
             summary=f"PM1 is not applicable for {var_data.hgnc_id}.",
         )
+
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+        """Override BP3 for von Willebrand Disease VCEP."""
+        return True

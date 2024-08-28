@@ -8,6 +8,8 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN020
 https://cspec.genome.network/cspec/ui/svi/doc/GN077
 """
 
+from typing import Tuple
+
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
@@ -36,6 +38,58 @@ class HBOPCPredictor(DefaultPredictor):
             )
 
         return super().predict_pm1(seqvar, var_data)
+
+    def predict_pm4bp3(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Override predict_pm4bp3 to include VCEP-specific logic for CDH1."""
+        logger.info("Predict PM4 and BP3")
+
+        if var_data.hgnc_id == "HGNC:795":
+            pred, comment = self.verify_pm4bp3(seqvar, var_data)
+            if pred:
+                pm4 = (
+                    AutoACMGPrediction.Met
+                    if pred.PM4
+                    else (
+                        AutoACMGPrediction.NotMet
+                        if pred.PM4 is False
+                        else AutoACMGPrediction.Failed
+                    )
+                )
+            else:
+                pm4 = AutoACMGPrediction.Failed
+                comment = "PM4 could not be verified."
+            return (
+                AutoACMGCriteria(
+                    name="PM4",
+                    prediction=pm4,
+                    strength=AutoACMGStrength.PathogenicSupporting,
+                    summary=comment,
+                ),
+                AutoACMGCriteria(
+                    name="BP3",
+                    prediction=AutoACMGPrediction.NotApplicable,
+                    strength=AutoACMGStrength.BenignSupporting,
+                    summary="BP3 is not applicable for ATM.",
+                ),
+            )
+        elif var_data.hgnc_id == "HGNC:26144":
+            return (
+                AutoACMGCriteria(
+                    name="PM4",
+                    prediction=AutoACMGPrediction.NotApplicable,
+                    strength=AutoACMGStrength.PathogenicSupporting,
+                    summary="PM4 is not applicable for PALB2.",
+                ),
+                AutoACMGCriteria(
+                    name="BP3",
+                    prediction=AutoACMGPrediction.NotApplicable,
+                    strength=AutoACMGStrength.BenignSupporting,
+                    summary="BP3 is not applicable for PALB2.",
+                ),
+            )
+        return super().predict_pm4bp3(seqvar, var_data)
 
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Override donor and acceptor positions for ATM and PALB2."""

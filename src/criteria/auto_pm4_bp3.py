@@ -99,6 +99,20 @@ class AutoPM4BP3(AutoACMGHelper):
             return True
         return False
 
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+        """
+        Check if BP3 is not applicable for the variant.
+
+        Args:
+            var_data (AutoACMGData): The variant information.
+
+        Returns:
+            bool: True if BP3 is not applicable, False otherwise.
+        """
+        if seqvar.chrom == "MT":
+            return True
+        return False
+
     def verify_pm4bp3(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PM4BP3], str]:
         """Predicts PM4 and BP3 criteria for the provided sequence variant.
 
@@ -182,6 +196,23 @@ class AutoPM4BP3(AutoACMGHelper):
             bp3_pred = AutoACMGPrediction.Failed
             pm4_strength = AutoACMGStrength.PathogenicModerate
             bp3_strength = AutoACMGStrength.BenignSupporting
+
+        # BP3 is not applicable for some VCEPs
+        if self._bp3_not_applicable(seqvar, var_data):
+            return (
+                AutoACMGCriteria(
+                    name="PM4",
+                    prediction=pm4_pred,
+                    strength=pm4_strength,
+                    summary=comment,
+                ),
+                AutoACMGCriteria(
+                    name="BP3",
+                    prediction=AutoACMGPrediction.NotApplicable,
+                    strength=bp3_strength,
+                    summary="BP3 is not applicable for the gene.",
+                ),
+            )
         return (
             AutoACMGCriteria(
                 name="PM4",

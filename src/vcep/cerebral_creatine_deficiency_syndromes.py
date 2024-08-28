@@ -10,6 +10,8 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN026
 https://cspec.genome.network/cspec/ui/svi/doc/GN027
 """
 
+from typing import Tuple
+
 from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
 from src.defs.seqvar import SeqVar
@@ -28,6 +30,10 @@ class CerebralCreatineDeficiencySyndromesPredictor(DefaultPredictor):
             strength=AutoACMGStrength.PathogenicModerate,
             summary="PM1 is not applicable for Cerebral Creatine Deficiency Syndromes.",
         )
+
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+        """Override _bp3_not_applicable for Cerebral Creatine Deficiency Syndromes."""
+        return True
 
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Override donor and acceptor positions for Cerebral Creatine Deficiency Syndromes VCEP."""

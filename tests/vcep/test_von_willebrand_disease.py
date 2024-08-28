@@ -41,3 +41,9 @@ def test_predict_pm1_not_applicable(vwf_predictor, auto_acmg_data):
     assert (
         "PM1 is not applicable for" in result.summary
     ), "The summary should indicate PM1 is not applicable."
+
+
+def test_bp3_not_applicable(vwf_predictor, seqvar, auto_acmg_data):
+    """Test BP3 is not applicable for ACADVL as overridden."""
+    result = vwf_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
+    assert result is True, "BP3 should always be not applicable"

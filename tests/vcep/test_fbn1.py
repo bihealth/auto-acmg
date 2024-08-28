@@ -128,3 +128,9 @@ def test_predict_pm1_edge_case_moderate_boundary(fbn1_predictor, auto_acmg_data)
     assert (
         "Variant affects a residue in FBN1" in result.summary
     ), "The summary should indicate the moderate critical residue."
+
+
+def test_bp3_not_applicable(fbn1_predictor, seqvar, auto_acmg_data):
+    """Test BP3 is not applicable for ACADVL as overridden."""
+    result = fbn1_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
+    assert result is True, "BP3 should always be not applicable"

@@ -131,6 +131,12 @@ def test_predict_pm1_invalid_strand(coagulation_predictor, auto_acmg_data):
         coagulation_predictor._get_affected_exon(auto_acmg_data, coagulation_predictor.seqvar)
 
 
+def test_bp3_not_applicable(coagulation_predictor, seqvar, auto_acmg_data):
+    """Test BP3 is not applicable for ACADVL as overridden."""
+    result = coagulation_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
+    assert result is True, "BP3 should always be not applicable"
+
+
 def test_predict_bp7_threshold_adjustment_for_hgnc_3546(coagulation_predictor, auto_acmg_data):
     """Test that the BP7 thresholds are correctly adjusted for HGNC:3546 (F5)."""
     auto_acmg_data.hgnc_id = "HGNC:3546"  # F5 gene

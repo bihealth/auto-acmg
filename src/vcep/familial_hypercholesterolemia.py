@@ -67,3 +67,7 @@ class FamilialHypercholesterolemiaPredictor(DefaultPredictor):
             strength=AutoACMGStrength.PathogenicModerate,
             summary=f"Variant does not meet the PM1 criteria for LDLR.",
         )
+
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+        """Override BP3 for Familial Hypercholesterolemia."""
+        return True

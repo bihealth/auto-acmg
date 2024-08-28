@@ -145,6 +145,37 @@ def test_predict_pm1_fallback_to_default(
     ), "The summary should indicate the default fallback."
 
 
+def test_predict_pm4bp3_not_applicable(insight_colorectal_cancer_predictor, seqvar, auto_acmg_data):
+    """Test that PM4 and BP3 are marked as Not Applicable for the brain malformations VCEP."""
+    pm4_result, bp3_result = insight_colorectal_cancer_predictor.predict_pm4bp3(
+        seqvar, auto_acmg_data
+    )
+
+    # Check PM4 result
+    assert isinstance(
+        pm4_result, AutoACMGCriteria
+    ), "The PM4 result should be of type AutoACMGCriteria."
+    assert pm4_result.prediction == AutoACMGPrediction.NotApplicable, "PM4 should be NotApplicable."
+    assert (
+        pm4_result.strength == AutoACMGStrength.PathogenicModerate
+    ), "PM4 strength should be PathogenicModerate."
+    assert (
+        "PM4 is not applicable" in pm4_result.summary
+    ), "The summary should indicate PM4 is not applicable."
+
+    # Check BP3 result
+    assert isinstance(
+        bp3_result, AutoACMGCriteria
+    ), "The BP3 result should be of type AutoACMGCriteria."
+    assert bp3_result.prediction == AutoACMGPrediction.NotApplicable, "BP3 should be NotApplicable."
+    assert (
+        bp3_result.strength == AutoACMGStrength.BenignSupporting
+    ), "BP3 strength should be BenignSupporting."
+    assert (
+        "BP3 is not applicable" in bp3_result.summary
+    ), "The summary should indicate BP3 is not applicable."
+
+
 def test_predict_bp7_threshold_adjustment(insight_colorectal_cancer_predictor, auto_acmg_data):
     """Test that the BP7 donor and acceptor thresholds are correctly adjusted."""
     auto_acmg_data.thresholds.bp7_donor = 1  # Initial donor threshold value

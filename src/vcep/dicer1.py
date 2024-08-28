@@ -76,6 +76,10 @@ class DICER1Predictor(DefaultPredictor):
             summary="Variant does not affect a critical domain for DICER1.",
         )
 
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+        """Override BP3 to be not applicable for DICER1."""
+        return True
+
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Override donor and acceptor positions for DICER1 VCEP."""
         var_data.thresholds.bp7_donor = 7

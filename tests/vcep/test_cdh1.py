@@ -69,6 +69,67 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, cdh1_predictor, auto_
     assert result.prediction == AutoACMGPrediction.NotApplicable, "PM1 should remain NotApplicable."
 
 
+@patch.object(DefaultPredictor, "verify_pm4bp3")
+def test_predict_pm4bp3_cdh1(mock_verify_pm4bp3, cdh1_predictor, seqvar, auto_acmg_data):
+    """Test the predict_pm4bp3 method for CDH1."""
+    # Set the mock return value for the verify_pm4bp3 method
+    mock_pred = MagicMock()
+    mock_pred.PM4 = True
+    mock_pred.BP3 = False
+    mock_pred.PM4_strength = AutoACMGStrength.PathogenicSupporting
+    mock_pred.BP3_strength = AutoACMGStrength.BenignSupporting
+    mock_verify_pm4bp3.return_value = (mock_pred, "PM4 is met")
+
+    # Call the method under test
+    pm4_result, bp3_result = cdh1_predictor.predict_pm4bp3(seqvar, auto_acmg_data)
+
+    # Check PM4 result
+    assert isinstance(
+        pm4_result, AutoACMGCriteria
+    ), "The PM4 result should be of type AutoACMGCriteria."
+    assert pm4_result.prediction == AutoACMGPrediction.Met, "PM4 should be Met."
+    assert (
+        pm4_result.strength == AutoACMGStrength.PathogenicSupporting
+    ), "PM4 strength should be PathogenicSupporting."
+    assert "PM4 is met" in pm4_result.summary, "The summary should indicate PM4 is met."
+
+    # Check BP3 result
+    assert isinstance(
+        bp3_result, AutoACMGCriteria
+    ), "The BP3 result should be of type AutoACMGCriteria."
+    assert bp3_result.prediction == AutoACMGPrediction.NotApplicable, "BP3 should be NotApplicable."
+    assert (
+        bp3_result.strength == AutoACMGStrength.BenignSupporting
+    ), "BP3 strength should be BenignSupporting."
+    assert (
+        "BP3 is not applicable for CDH1" in bp3_result.summary
+    ), "The summary should indicate BP3 is not applicable."
+
+
+@patch.object(DefaultPredictor, "verify_pm4bp3", return_value=(None, ""))
+def test_predict_pm4bp3_fallback(mock_verify_pm4bp3, cdh1_predictor, seqvar, auto_acmg_data):
+    """Test the fallback behavior for PM4 when verification fails."""
+    # Call the method under test
+    pm4_result, bp3_result = cdh1_predictor.predict_pm4bp3(seqvar, auto_acmg_data)
+
+    # Check PM4 result
+    assert (
+        pm4_result.prediction == AutoACMGPrediction.Failed
+    ), "PM4 should be Failed if verification fails."
+    assert (
+        "PM4 could not be verified." in pm4_result.summary
+    ), "The summary should indicate PM4 could not be verified."
+
+    # Check BP3 result
+    assert bp3_result.prediction == AutoACMGPrediction.NotApplicable, "BP3 should be NotApplicable."
+    assert (
+        bp3_result.strength == AutoACMGStrength.BenignSupporting
+    ), "BP3 strength should be BenignSupporting."
+    assert (
+        "BP3 is not applicable for CDH1" in bp3_result.summary
+    ), "The summary should indicate BP3 is not applicable."
+
+
 def test_predict_bp7_threshold_adjustment(cdh1_predictor, auto_acmg_data):
     """Test that the BP7 donor and acceptor thresholds are correctly adjusted."""
     auto_acmg_data.thresholds.bp7_donor = 1  # Initial donor threshold value
