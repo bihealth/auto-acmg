@@ -105,6 +105,25 @@ class CardiomyopathyPredictor(DefaultPredictor):
         """Override BP3 for Cardiomyopathy."""
         return True
 
+    def predict_pp2bp1(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Override PP2 and BP1 for Cardiomyopathy."""
+        return (
+            AutoACMGCriteria(
+                name="PP2",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="PP2 is not applicable for the gene.",
+            ),
+            AutoACMGCriteria(
+                name="BP1",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="BP1 is not applicable for the gene.",
+            ),
+        )
+
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Override donor and acceptor positions for Cardiomyopathy VCEP."""
         var_data.thresholds.bp7_donor = 7

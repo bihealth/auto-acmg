@@ -152,6 +152,62 @@ def test_predict_pm4bp3_not_applicable(brain_malformations_predictor, seqvar, au
     ), "The summary should indicate BP3 is not applicable."
 
 
+def test_predict_pp2bp1_missense(brain_malformations_predictor, seqvar, auto_acmg_data):
+    """Test predict_pp2bp1 when the variant is a missense change in a relevant gene."""
+    auto_acmg_data.hgnc_id = "HGNC:393"  # Relevant gene
+    auto_acmg_data.consequence.cadd = "missense_variant"  # Missense change
+
+    # Call the method under test
+    pp2_result, bp1_result = brain_malformations_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
+
+    # Check PP2 result
+    assert isinstance(
+        pp2_result, AutoACMGCriteria
+    ), "The PP2 result should be of type AutoACMGCriteria."
+    assert (
+        pp2_result.prediction == AutoACMGPrediction.Met
+    ), "PP2 should be Met for a missense variant in a relevant gene."
+    assert "PP2 is met for HGNC:393 as the variant is a missense change." in pp2_result.summary
+
+    # Check BP1 result
+    assert isinstance(
+        bp1_result, AutoACMGCriteria
+    ), "The BP1 result should be of type AutoACMGCriteria."
+    assert (
+        bp1_result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP1 should be NotApplicable for this gene."
+    assert "BP1 is not applicable for the gene." in bp1_result.summary
+
+
+def test_predict_pp2bp1_not_missense(brain_malformations_predictor, seqvar, auto_acmg_data):
+    """Test predict_pp2bp1 when the variant is not a missense change in a relevant gene."""
+    auto_acmg_data.hgnc_id = "HGNC:393"  # Relevant gene
+    auto_acmg_data.consequence.cadd = "synonymous_variant"  # Not a missense change
+
+    # Call the method under test
+    pp2_result, bp1_result = brain_malformations_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
+
+    # Check PP2 result
+    assert isinstance(
+        pp2_result, AutoACMGCriteria
+    ), "The PP2 result should be of type AutoACMGCriteria."
+    assert (
+        pp2_result.prediction == AutoACMGPrediction.NotMet
+    ), "PP2 should not be met for a non-missense variant in a relevant gene."
+    assert (
+        "PP2 is not met for HGNC:393 as the variant is not a missense change." in pp2_result.summary
+    )
+
+    # Check BP1 result
+    assert isinstance(
+        bp1_result, AutoACMGCriteria
+    ), "The BP1 result should be of type AutoACMGCriteria."
+    assert (
+        bp1_result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP1 should be NotApplicable for this gene."
+    assert "BP1 is not applicable for the gene." in bp1_result.summary
+
+
 def test_predict_bp7_threshold_adjustment(brain_malformations_predictor, auto_acmg_data):
     """Test that the PhyloP100 threshold is correctly adjusted for BP7."""
     auto_acmg_data.thresholds.phyloP100 = 0.5  # Initial threshold value

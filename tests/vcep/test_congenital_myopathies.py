@@ -140,3 +140,59 @@ def test_bp3_not_applicable(congenital_myopathies_predictor, seqvar, auto_acmg_d
     """Test BP3 is not applicable for ACADVL as overridden."""
     result = congenital_myopathies_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
     assert result is True, "BP3 should always be not applicable"
+
+
+def test_predict_pp2bp1_missense(congenital_myopathies_predictor, seqvar, auto_acmg_data):
+    """Test predict_pp2bp1 when the variant is a missense change in a relevant gene."""
+    auto_acmg_data.hgnc_id = "HGNC:129"  # Relevant gene
+    auto_acmg_data.consequence.cadd = "missense_variant"  # Missense change
+
+    # Call the method under test
+    pp2_result, bp1_result = congenital_myopathies_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
+
+    # Check PP2 result
+    assert isinstance(
+        pp2_result, AutoACMGCriteria
+    ), "The PP2 result should be of type AutoACMGCriteria."
+    assert (
+        pp2_result.prediction == AutoACMGPrediction.Met
+    ), "PP2 should be Met for a missense variant in a relevant gene."
+    assert "PP2 is met for HGNC:129 as the variant is a missense change." in pp2_result.summary
+
+    # Check BP1 result
+    assert isinstance(
+        bp1_result, AutoACMGCriteria
+    ), "The BP1 result should be of type AutoACMGCriteria."
+    assert (
+        bp1_result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP1 should be NotApplicable for this gene."
+    assert "BP1 is not applicable for the gene." in bp1_result.summary
+
+
+def test_predict_pp2bp1_not_missense(congenital_myopathies_predictor, seqvar, auto_acmg_data):
+    """Test predict_pp2bp1 when the variant is not a missense change in a relevant gene."""
+    auto_acmg_data.hgnc_id = "HGNC:129"  # Relevant gene
+    auto_acmg_data.consequence.cadd = "synonymous_variant"  # Not a missense change
+
+    # Call the method under test
+    pp2_result, bp1_result = congenital_myopathies_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
+
+    # Check PP2 result
+    assert isinstance(
+        pp2_result, AutoACMGCriteria
+    ), "The PP2 result should be of type AutoACMGCriteria."
+    assert (
+        pp2_result.prediction == AutoACMGPrediction.NotMet
+    ), "PP2 should not be met for a non-missense variant in a relevant gene."
+    assert (
+        "PP2 is not met for HGNC:129 as the variant is not a missense change." in pp2_result.summary
+    )
+
+    # Check BP1 result
+    assert isinstance(
+        bp1_result, AutoACMGCriteria
+    ), "The BP1 result should be of type AutoACMGCriteria."
+    assert (
+        bp1_result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP1 should be NotApplicable for this gene."
+    assert "BP1 is not applicable for the gene." in bp1_result.summary

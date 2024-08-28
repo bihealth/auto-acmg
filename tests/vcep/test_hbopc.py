@@ -25,6 +25,22 @@ def auto_acmg_data():
     return AutoACMGData()
 
 
+@pytest.fixture
+def auto_acmg_data_atm():
+    data = AutoACMGData()
+    data.hgnc_id = "HGNC:795"
+    data.consequence = MagicMock(mehari=[], cadd=None)
+    return data
+
+
+@pytest.fixture
+def auto_acmg_data_palb2():
+    data = AutoACMGData()
+    data.hgnc_id = "HGNC:26144"
+    data.consequence = MagicMock(mehari=[], cadd=None)
+    return data
+
+
 def test_predict_pm1_not_applicable(hbopc_predictor, auto_acmg_data):
     """Test when PM1 is not applicable for ATM and PALB2 in Hereditary Breast, Ovarian, and Pancreatic Cancer."""
     auto_acmg_data.hgnc_id = "HGNC:795"  # ATM gene
@@ -215,6 +231,54 @@ def test_predict_pm4bp3_fallback(
 
     # Ensure the superclass's predict_pm4bp3 method was called
     assert mock_predict_pm4bp3.called, "super().predict_pm4bp3 should have been called."
+
+
+@patch.object(HBOPCPredictor, "predict_pp2bp1")
+def test_predict_pp2bp1_palb2_missense(mock_predict, hbopc_predictor, seqvar, auto_acmg_data_palb2):
+    """Test predict_pp2bp1 for PALB2 where the variant is missense."""
+    auto_acmg_data_palb2.consequence.mehari = ["missense_variant"]
+    mock_predict.return_value = (
+        MagicMock(name="PP2", prediction=AutoACMGPrediction.NotApplicable),
+        MagicMock(
+            name="BP1",
+            prediction=AutoACMGPrediction.Met,
+            summary="Variant is missense. BP1 is met.",
+        ),
+    )
+
+    pp2, bp1 = hbopc_predictor.predict_pp2bp1(seqvar, auto_acmg_data_palb2)
+
+    assert (
+        pp2.prediction == AutoACMGPrediction.NotApplicable
+    ), "PP2 should be NotApplicable for PALB2."
+    assert (
+        bp1.prediction == AutoACMGPrediction.Met
+    ), "BP1 should be Met for missense variant in PALB2."
+    assert "missense" in bp1.summary, "Summary should confirm the missense nature."
+
+
+@patch.object(HBOPCPredictor, "predict_pp2bp1")
+def test_predict_pp2bp1_atm_non_missense(mock_predict, hbopc_predictor, seqvar, auto_acmg_data_atm):
+    """Test predict_pp2bp1 for ATM where the variant is not missense."""
+    auto_acmg_data_atm.consequence.mehari = ["nonsense_variant"]
+    mock_predict.return_value = (
+        MagicMock(name="PP2", prediction=AutoACMGPrediction.NotApplicable),
+        MagicMock(
+            name="BP1",
+            prediction=AutoACMGPrediction.NotMet,
+            summary="Variant is not missense. BP1 is not met.",
+        ),
+    )
+
+    pp2, bp1 = hbopc_predictor.predict_pp2bp1(seqvar, auto_acmg_data_atm)
+
+    assert (
+        pp2.prediction == AutoACMGPrediction.NotApplicable
+    ), "PP2 should be NotApplicable for ATM."
+    assert (
+        bp1.prediction == AutoACMGPrediction.NotMet
+    ), "BP1 should not be Met for non-missense variant in ATM."
+    assert "not missense" in bp1.summary, "Summary should confirm the non-missense nature."
 
 
 def test_predict_bp7_threshold_adjustment_for_palb2(hbopc_predictor, auto_acmg_data):

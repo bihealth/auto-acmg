@@ -35,6 +35,28 @@ class CerebralCreatineDeficiencySyndromesPredictor(DefaultPredictor):
         """Override _bp3_not_applicable for Cerebral Creatine Deficiency Syndromes."""
         return True
 
+    def predict_pp2bp1(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """
+        Override predict_pp2bp1 to include VCEP-specific logic for Cerebral Creatine Deficiency
+        Syndromes.
+        """
+        return (
+            AutoACMGCriteria(
+                name="PP2",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="PP2 is not applicable for the gene.",
+            ),
+            AutoACMGCriteria(
+                name="BP1",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="BP1 is not applicable for the gene.",
+            ),
+        )
+
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Override donor and acceptor positions for Cerebral Creatine Deficiency Syndromes VCEP."""
         if var_data.hgnc_id == "HGNC:4136":

@@ -115,3 +115,59 @@ def test_bp3_not_applicable(rasopathy_predictor, seqvar, auto_acmg_data):
     """Test BP3 is not applicable for ACADVL as overridden."""
     result = rasopathy_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
     assert result is True, "BP3 should always be not applicable"
+
+
+@patch.object(RASopathyPredictor, "_is_missense")
+def test_predict_pp2bp1_ptpn11_missense(
+    mock_is_missense, rasopathy_predictor, seqvar, auto_acmg_data
+):
+    """Test PP2 prediction for PTPN11 where the variant is missense."""
+    mock_is_missense.return_value = True
+    auto_acmg_data.hgnc_id = "HGNC:9648"  # PTPN11 gene
+    pp2, bp1 = rasopathy_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
+
+    assert (
+        pp2.prediction == AutoACMGPrediction.NotMet
+    ), "PP2 should be Met for a missense variant in PTPN11."
+    assert (
+        pp2.strength == AutoACMGStrength.PathogenicSupporting
+    ), "PP2 strength should reflect PathogenicSupporting."
+    assert (
+        bp1.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP1 should be NotApplicable for PTPN11."
+
+
+@patch.object(RASopathyPredictor, "_is_missense")
+def test_predict_map2k1_missense(mock_is_missense, rasopathy_predictor, seqvar, auto_acmg_data):
+    """Test PP2 prediction for MAP2K1 where the variant is missense."""
+    mock_is_missense.return_value = True
+    auto_acmg_data.hgnc_id = "HGNC:6840"  # MAP2K1 gene
+    pp2, bp1 = rasopathy_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
+
+    assert (
+        pp2.prediction == AutoACMGPrediction.Met
+    ), "PP2 should be Met for a missense variant in MAP2K1."
+    assert (
+        pp2.strength == AutoACMGStrength.PathogenicSupporting
+    ), "PP2 strength should reflect PathogenicSupporting."
+    assert (
+        bp1.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP1 should be NotApplicable for MAP2K1."
+
+
+@patch.object(RASopathyPredictor, "_is_missense")
+def test_predict_pp2bp1_map2k1_non_missense(
+    mock_is_missense, rasopathy_predictor, seqvar, auto_acmg_data
+):
+    """Test PP2 prediction for MAP2K1 where the variant is not missense."""
+    mock_is_missense.return_value = False
+    auto_acmg_data.hgnc_id = "HGNC:6840"  # MAP2K1 gene
+    pp2, bp1 = rasopathy_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
+
+    assert (
+        pp2.prediction == AutoACMGPrediction.NotMet
+    ), "PP2 should not be Met for non-missense variants in MAP2K1."
+    assert "not a missense" in pp2.summary, "PP2 summary should confirm the non-missense nature."
+    assert (
+        bp1.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP1 should still be NotApplicable for MAP2K1."

@@ -4,6 +4,8 @@ Included gene: MYOC (HGNC:7610).
 Link: https://cspec.genome.network/cspec/ui/svi/doc/GN019
 """
 
+from typing import Tuple
+
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
@@ -47,6 +49,25 @@ class GlaucomaPredictor(DefaultPredictor):
         if not var_data.scores.cadd.gerp:
             raise MissingDataError("GERP score is missing.")
         return var_data.scores.cadd.gerp >= var_data.thresholds.gerp
+
+    def predict_pp2bp1(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Override predict_pp2bp1 to include VCEP-specific logic for Glaucoma."""
+        return (
+            AutoACMGCriteria(
+                name="PP2",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="PP2 is not applicable for the gene.",
+            ),
+            AutoACMGCriteria(
+                name="BP1",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="BP1 is not applicable for the gene.",
+            ),
+        )
 
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Change BP7 thresholds for Glaucoma VCEP."""

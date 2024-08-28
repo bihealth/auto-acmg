@@ -4,6 +4,8 @@ Included gene: RPE65 (HGNC:10294)
 Link: https://cspec.genome.network/cspec/ui/svi/doc/GN120
 """
 
+from typing import Tuple
+
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
@@ -67,6 +69,25 @@ class LeberCongenitalAmaurosisPredictor(DefaultPredictor):
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
         """Override BP3 for Leber Congenital Amaurosis."""
         return True
+
+    def predict_pp2bp1(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Override predict_pp2bp1 to include VCEP-specific logic for RPE65."""
+        return (
+            AutoACMGCriteria(
+                name="PP2",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="PP2 is not applicable for the gene.",
+            ),
+            AutoACMGCriteria(
+                name="BP1",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="BP1 is not applicable for the gene.",
+            ),
+        )
 
     def _is_bp7_exception(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
         """

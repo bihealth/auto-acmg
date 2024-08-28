@@ -56,6 +56,25 @@ class CDH1Predictor(DefaultPredictor):
             ),
         )
 
+    def predict_pp2bp1(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Override predict_pp2bp1 to include VCEP-specific logic for CDH1."""
+        return (
+            AutoACMGCriteria(
+                name="PP2",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="PP2 is not applicable for the gene.",
+            ),
+            AutoACMGCriteria(
+                name="BP1",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="BP1 is not applicable for the gene.",
+            ),
+        )
+
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Override donor and acceptor positions for CDH1 VCEP."""
         var_data.thresholds.bp7_donor = 7

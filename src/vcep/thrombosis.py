@@ -4,6 +4,8 @@ Included gene: SERPINC1 (HGNC:775).
 Link: https://cspec.genome.network/cspec/ui/svi/doc/GN084
 """
 
+from typing import Tuple
+
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
@@ -56,3 +58,22 @@ class ThrombosisPredictor(DefaultPredictor):
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
         """Override BP3 for thrombosis VCEP."""
         return True
+
+    def predict_pp2bp1(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Override predict_pp2bp1 to include VCEP-specific logic for SERPINC1."""
+        return (
+            AutoACMGCriteria(
+                name="PP2",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="PP2 is not applicable for the gene.",
+            ),
+            AutoACMGCriteria(
+                name="BP1",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="BP1 is not applicable for the gene.",
+            ),
+        )

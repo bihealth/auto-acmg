@@ -137,6 +137,89 @@ def test_in_important_domain(enigma_predictor, auto_acmg_data):
     assert not important_domain, "The variant should not be in an important domain."
 
 
+def test_predict_pp2bp1_missense_not_in_domain_not_splice_affecting(
+    enigma_predictor, seqvar, auto_acmg_data
+):
+    """Test PP2 and BP1 where the variant is missense, not in an important domain, and does not affect splicing."""
+    auto_acmg_data.consequence = MagicMock(mehari=["missense_variant"], cadd=None)
+    auto_acmg_data.prot_pos = 2000  # Outside any important domain
+
+    pp2, bp1 = enigma_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
+
+    assert pp2.prediction == AutoACMGPrediction.NotApplicable, "PP2 should be NotApplicable."
+    assert (
+        bp1.prediction == AutoACMGPrediction.Met
+    ), "BP1 should be Met as the criteria are satisfied."
+    assert (
+        bp1.strength == AutoACMGStrength.PathogenicStrong
+    ), "BP1 strength should be PathogenicStrong."
+    assert (
+        "not in an important domain" in bp1.summary
+    ), "The summary should indicate that the variant is not in an important domain."
+
+
+def test_predict_pp2bp1_missense_in_important_domain(enigma_predictor, seqvar, auto_acmg_data):
+    """Test PP2 and BP1 where the variant is missense and in an important domain."""
+    auto_acmg_data.consequence = MagicMock(mehari=["missense_variant"], cadd=None)
+    auto_acmg_data.prot_pos = 1700  # Within an important domain
+
+    with patch.object(ENIGMAPredictor, "_in_important_domain", return_value=True):
+        pp2, bp1 = enigma_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
+
+    assert pp2.prediction == AutoACMGPrediction.NotApplicable, "PP2 should be NotApplicable."
+    assert (
+        bp1.prediction == AutoACMGPrediction.NotMet
+    ), "BP1 should not be Met as the variant is in an important domain."
+
+
+def test_predict_pp2bp1_synonymous_splice_affecting(enigma_predictor, seqvar, auto_acmg_data):
+    """Test PP2 and BP1 where the variant is synonymous and predicted to affect splicing."""
+    auto_acmg_data.consequence = MagicMock(mehari=["synonymous_variant"], cadd=None)
+    auto_acmg_data.prot_pos = 2000  # Outside any important domain
+
+    with patch.object(ENIGMAPredictor, "_spliceai_impact", return_value=True):
+        pp2, bp1 = enigma_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
+
+    assert pp2.prediction == AutoACMGPrediction.NotApplicable, "PP2 should be NotApplicable."
+    assert (
+        bp1.prediction == AutoACMGPrediction.NotMet
+    ), "BP1 should not be Met as the variant is predicted to affect splicing."
+
+
+def test_predict_pp2bp1_inframe_deletion_not_in_important_domain_not_splice_affecting(
+    enigma_predictor, seqvar, auto_acmg_data
+):
+    """Test PP2 and BP1 for an inframe deletion that is not in an important domain and does not affect splicing."""
+    auto_acmg_data.consequence = MagicMock(mehari=["inframe_deletion"], cadd=None)
+    auto_acmg_data.prot_pos = 2500  # Outside any important domain
+
+    pp2, bp1 = enigma_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
+
+    assert pp2.prediction == AutoACMGPrediction.NotApplicable, "PP2 should be NotApplicable."
+    assert (
+        bp1.prediction == AutoACMGPrediction.Met
+    ), "BP1 should be Met as the criteria are satisfied."
+    assert (
+        "not in an important domain" in bp1.summary
+    ), "The summary should reflect the non-impact on important domains."
+
+
+def test_predict_pp2bp1_non_relevant_variant_type(enigma_predictor, seqvar, auto_acmg_data):
+    """Test PP2 and BP1 for a variant type that is not missense, synonymous, or inframe (e.g., frameshift)."""
+    auto_acmg_data.consequence = MagicMock(mehari=["frameshift_variant"], cadd=None)
+    auto_acmg_data.prot_pos = 2000  # Irrelevant due to variant type
+
+    pp2, bp1 = enigma_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
+
+    assert pp2.prediction == AutoACMGPrediction.NotApplicable, "PP2 should be NotApplicable."
+    assert (
+        bp1.prediction == AutoACMGPrediction.NotMet
+    ), "BP1 should not be Met due to variant type being not relevant."
+    assert (
+        "not synonymous, missense or inframe indel" in bp1.summary
+    ), "The summary should indicate the variant type."
+
+
 @patch.object(ENIGMAPredictor, "_in_important_domain", return_value=True)
 @patch.object(ENIGMAPredictor, "_is_synonymous", return_value=True)
 @patch.object(ENIGMAPredictor, "_is_intronic", return_value=False)

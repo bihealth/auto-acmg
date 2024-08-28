@@ -149,6 +149,28 @@ class SCIDPredictor(DefaultPredictor):
             return super()._is_conserved(var_data)
         return False  # Ignore conservation check for SCID genes
 
+    def predict_pp2bp1(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """
+        Override predict_pp2bp1 to include VCEP-specific logic for Severe Combined Immunodeficiency
+        Disease.
+        """
+        return (
+            AutoACMGCriteria(
+                name="PP2",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="PP2 is not applicable for the gene.",
+            ),
+            AutoACMGCriteria(
+                name="BP1",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="BP1 is not applicable for the gene.",
+            ),
+        )
+
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """
         Override donor and acceptor positions for Severe Combined Immunodeficiency Disease genes

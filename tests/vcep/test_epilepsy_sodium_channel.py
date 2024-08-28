@@ -132,3 +132,33 @@ def test_predict_pm1_edge_case_end_boundary(epilepsy_sodium_channel_predictor, a
         result.summary
         == "Variant falls within a critical residue region for HGNC:10585 between positions 226-246. PM1 is met."
     ), "The summary should indicate the critical region."
+
+
+def test_predict_pp2bp1(epilepsy_sodium_channel_predictor, seqvar, auto_acmg_data):
+    """Test predict_pp2bp1 for Epilepsy Sodium Channel predictor."""
+    # Call the method under test
+    pp2_result, bp1_result = epilepsy_sodium_channel_predictor.predict_pp2bp1(
+        seqvar, auto_acmg_data
+    )
+
+    # Check PP2 result
+    assert isinstance(
+        pp2_result, AutoACMGCriteria
+    ), "The PP2 result should be of type AutoACMGCriteria."
+    assert (
+        pp2_result.prediction == AutoACMGPrediction.NotApplicable
+    ), "PP2 should be NotApplicable for ACADVL."
+    assert (
+        pp2_result.summary == "PP2 is not applicable for the gene."
+    ), "The summary should indicate PP2 is not applicable."
+
+    # Check BP1 result
+    assert isinstance(
+        bp1_result, AutoACMGCriteria
+    ), "The BP1 result should be of type AutoACMGCriteria."
+    assert (
+        bp1_result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP1 should be NotApplicable for ACADVL."
+    assert (
+        bp1_result.summary == "BP1 is not applicable for the gene."
+    ), "The summary should indicate BP1 is not applicable."

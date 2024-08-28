@@ -173,6 +173,25 @@ class RettAngelmanPredictor(DefaultPredictor):
             self.prediction_pm4bp3 = None
         return self.prediction_pm4bp3, self.comment_pm4bp3
 
+    def predict_pp2bp1(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Override PP2 and BP1 prediction for Rett and Angelman-like Disorders."""
+        return (
+            AutoACMGCriteria(
+                name="PP2",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="PP2 is not applicable for the gene.",
+            ),
+            AutoACMGCriteria(
+                name="BP1",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="BP1 is not applicable for the gene.",
+            ),
+        )
+
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Change BP7 thresholds for Rett and Angelman-like Disorders VCEP."""
         var_data.thresholds.phyloP100 = 0.1
