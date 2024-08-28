@@ -141,10 +141,6 @@ class SCIDPredictor(DefaultPredictor):
             summary=f"Variant does not meet the PM1 criteria for {var_data.hgnc_id}.",
         )
 
-    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
-        """Override BP3 for Severe Combined Immunodeficiency Disease VCEP."""
-        return True
-
     def _is_conserved(self, var_data: AutoACMGData) -> bool:
         """
         Override the default _is_conserved method to ignore this check for SCID genes.

@@ -52,7 +52,7 @@ class InsightColorectalCancerPredictor(DefaultPredictor):
             AutoACMGCriteria(
                 name="PM4",
                 prediction=AutoACMGPrediction.NotApplicable,
-                strength=AutoACMGStrength.PathogenicSupporting,
+                strength=AutoACMGStrength.PathogenicModerate,
                 summary=(
                     "PM4 is not applicable for the InSIGHT Hereditary Colorectal Cancer/Polyposis "
                     "VCEP."

@@ -115,6 +115,12 @@ def test_predict_pm1_edge_case_end_boundary(cardiomyopathy_predictor, auto_acmg_
     ), "The summary should indicate the critical domain."
 
 
+def test_bp3_not_applicable(cardiomyopathy_predictor, seqvar, auto_acmg_data):
+    """Test BP3 is not applicable for ACADVL as overridden."""
+    result = cardiomyopathy_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
+    assert result is True, "BP3 should always be not applicable"
+
+
 def test_predict_bp7_threshold_adjustment(cardiomyopathy_predictor, auto_acmg_data):
     """Test that the BP7 donor and acceptor thresholds are correctly adjusted for Cardiomyopathy."""
     auto_acmg_data.thresholds.bp7_donor = 2  # Initial donor threshold value

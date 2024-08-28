@@ -106,6 +106,12 @@ def test_predict_pm1_fallback_to_default(
     ), "The summary should indicate the default fallback."
 
 
+def test_bp3_not_applicable(myeloid_malignancy_predictor, seqvar, auto_acmg_data):
+    """Test BP3 is not applicable for ACADVL as overridden."""
+    result = myeloid_malignancy_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
+    assert result is True, "BP3 should always be not applicable"
+
+
 def test_predict_bp7_threshold_adjustment(myeloid_malignancy_predictor, auto_acmg_data):
     """Test that the BP7 thresholds are correctly adjusted for Myeloid Malignancy."""
     # Initial threshold values

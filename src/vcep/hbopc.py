@@ -46,7 +46,7 @@ class HBOPCPredictor(DefaultPredictor):
         logger.info("Predict PM4 and BP3")
 
         if var_data.hgnc_id == "HGNC:795":
-            pred, comment = super().verify_pm4bp3(seqvar, var_data)
+            pred, comment = self.verify_pm4bp3(seqvar, var_data)
             if pred:
                 pm4 = (
                     AutoACMGPrediction.Met

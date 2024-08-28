@@ -16,12 +16,19 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN036
 https://cspec.genome.network/cspec/ui/svi/doc/GN037
 """
 
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    PM4BP3,
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+)
+from src.defs.exceptions import AutoAcmgBaseException
 from src.defs.seqvar import SeqVar
 
 # fmt: off
@@ -42,6 +49,26 @@ PM1_CLUSTER: Dict[str, Dict[str, List[Tuple[int, int]]]] = {
         "domains": [(820, 820)],  # 3’ cysteine binding site
     },
 }
+
+#: Domains to exclude from PM4
+PM4_EXCLUDE: Dict[str, List[Tuple[int, int]]] = {
+    "HGNC:11411": [(904, int(1e6))],  # Exclude C-terminal region
+    "HGNC:3811": [
+        (35, 57),  # Histine-rich region
+        (58, 86),  # Prolinne- and Glutamate-rich region
+        (105, 112)  # Proline-rich region
+    ],
+    "HGNC:6990": [(381, 405)],   # Proline-rich region
+}
+
+#: FOXG1 BP3 region
+FOXG1_BP3_REGION: List[Tuple[int, int]] = [
+    (47, 57),  # Poly-His region
+    (70, 73),  # Poly-Glutamin region
+    (58, 61),  # Poly-Proline region
+    (65, 69),  # Poly-Proline region
+    (74, 80),  # Poly-Proline region
+]
 
 
 class RettAngelmanPredictor(DefaultPredictor):
@@ -86,9 +113,65 @@ class RettAngelmanPredictor(DefaultPredictor):
             summary=f"Variant does not meet the PM1 criteria for {var_data.hgnc_id}.",
         )
 
-    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
-        """Override BP3 for Rett and Angelman-like Disorders VCEP."""
-        return True
+    def _exclude_pm4(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+        """Check if the variant should be excluded from PM4."""
+        if var_data.hgnc_id in PM4_EXCLUDE:
+            for start, end in PM4_EXCLUDE[var_data.hgnc_id]:
+                if start <= var_data.prot_pos <= end:
+                    return True
+        return False
+
+    def _in_foxg1_bp3_region(self, var_data: AutoACMGData) -> bool:
+        """Check if the variant is in the BP3 region for FOXG1."""
+        if var_data.hgnc_id != "HGNC:3811":
+            return False
+        for start, end in FOXG1_BP3_REGION:
+            if start <= var_data.prot_pos <= end:
+                return True
+        return False
+
+    def verify_pm4bp3(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PM4BP3], str]:
+        """Override PM4 and BP3 for Rett and Angelman-like Disorders."""
+        self.prediction_pm4bp3 = PM4BP3()
+        self.comment_pm4bp3 = ""
+        try:
+            # Stop-loss variants are considered as PM4
+            if self._is_stop_loss(var_data):
+                self.comment_pm4bp3 = "Variant consequence is stop-loss. PM4 is met."
+                self.prediction_pm4bp3.PM4 = True
+                self.prediction_pm4bp3.BP3 = False
+            # In-frame deletions/insertions
+            elif self.is_inframe_delins(var_data):
+                self.comment_pm4bp3 = f"Variant consequence is in-frame deletion/insertion. "
+                if not self._in_repeat_region(seqvar) and not self._exclude_pm4(seqvar, var_data):
+                    self.comment_pm4bp3 += (
+                        "Variant is not in a repeat region or a conserved domain. PM4 is met."
+                    )
+                    self.prediction_pm4bp3.PM4 = True
+                    self.prediction_pm4bp3.BP3 = False
+                else:
+                    self.comment_pm4bp3 += (
+                        "Variant is in a repeat region or not in a conserved domain or in excluded "
+                        "region."
+                    )
+                    self.prediction_pm4bp3.PM4 = False
+                    self.prediction_pm4bp3.BP3 = False
+                # BP3 for FOXG1
+                if self._in_foxg1_bp3_region(var_data):
+                    self.comment_pm4bp3 += " Variant is in the BP3 region for FOXG1."
+                    self.prediction_pm4bp3.BP3 = True
+            else:
+                self.comment_pm4bp3 = (
+                    "Variant consequence is not indel or stop-loss. PM4 and BP3 are not met."
+                )
+                self.prediction_pm4bp3.PM4 = False
+                self.prediction_pm4bp3.BP3 = False
+
+        except AutoAcmgBaseException as e:
+            logger.error("Failed to predict PM4 and BP3 criteria. Error: {}", e)
+            self.comment_pm4bp3 = f"An error occured while predicting PM4 and BP3 criteria: {e}"
+            self.prediction_pm4bp3 = None
+        return self.prediction_pm4bp3, self.comment_pm4bp3
 
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Change BP7 thresholds for Rett and Angelman-like Disorders VCEP."""
