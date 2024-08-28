@@ -79,6 +79,52 @@ class ENIGMAPredictor(DefaultPredictor):
                 return True
         return False
 
+    def predict_pp2bp1(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Override predict_pp2bp1 to include VCEP-specific logic for ENIGMA BRCA1 and BRCA2."""
+        if (
+            any(
+                crit in var_data.consequence.mehari or var_data.consequence.cadd == crit
+                for crit in [
+                    "synonymous_variant",
+                    "missense_variant",
+                    "inframe_insertion",
+                    "inframe_deletion",
+                    "synonymous",
+                    "missense",
+                    "inframe",
+                ]
+            )
+            and not self._in_important_domain(var_data)
+            and not self._spliceai_impact(var_data)
+        ):
+            bp1 = True
+            comment = (
+                "Variant is synonymous, missense or inframe indel and not in an important domain "
+                "and not predicted to affect splicing. BP1 is met."
+            )
+        else:
+            bp1 = False
+            comment = (
+                "Variant is not synonymous, missense or inframe indel, or in an important domain, "
+                "or predicted to affect splicing. BP1 is not met."
+            )
+        return (
+            AutoACMGCriteria(
+                name="PP2",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="PP2 is not applicable for the gene.",
+            ),
+            AutoACMGCriteria(
+                name="BP1",
+                prediction=AutoACMGPrediction.Met if bp1 else AutoACMGPrediction.NotMet,
+                strength=AutoACMGStrength.PathogenicStrong,
+                summary=comment,
+            ),
+        )
+
     def verify_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[BP7], str]:
         """Override verify BP7 criterion for ENIGMA BRCA1 and BRCA2."""
         # Change the donor/acceptor thresholds for BRCA1 and BRCA2

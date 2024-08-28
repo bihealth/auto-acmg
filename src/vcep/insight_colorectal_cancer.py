@@ -69,6 +69,56 @@ class InsightColorectalCancerPredictor(DefaultPredictor):
             ),
         )
 
+    def predict_pp2bp1(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Override PP2 and BP1 prediction for InSIGHT Hereditary Colorectal Cancer/Polyposis."""
+        bp1 = False
+        comment = "BP1 is not applicable for the gene."
+        if var_data.hgnc_id == "HGNC:583":  # APC
+            if self._is_missense(var_data):
+                start_pos, end_pos = min(var_data.cds_start, var_data.cds_end), max(
+                    var_data.cds_start, var_data.cds_end
+                )
+                _, benign_count, total_count = self._get_missense_vars(seqvar, start_pos, end_pos)
+                benign_ratio = benign_count / total_count
+                if benign_ratio > var_data.thresholds.pp2bp1_benign and not (
+                    1021 <= seqvar.pos <= 1035
+                ):
+                    bp1 = True
+                    comment = (
+                        f"Benign ratio {benign_ratio} is greater than "
+                        f"{var_data.thresholds.pp2bp1_benign} and not in β-catenin binding domain. "
+                        "BP1 is met."
+                    )
+                else:
+                    bp1 = False
+                    comment = (
+                        f"Benign ratio {benign_ratio} is less than "
+                        f"{var_data.thresholds.pp2bp1_benign} or in β-catenin binding domain. "
+                        "BP1 is not met."
+                    )
+            else:
+                bp1 = False
+                comment = "Variant is not a missense variant. BP1 is not met."
+        return (
+            AutoACMGCriteria(
+                name="PP2",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary=(
+                    "PP2 is not applicable for the InSIGHT Hereditary Colorectal Cancer/Polyposis "
+                    "VCEP."
+                ),
+            ),
+            AutoACMGCriteria(
+                name="BP1",
+                prediction=AutoACMGPrediction.Met if bp1 else AutoACMGPrediction.NotMet,
+                strength=AutoACMGStrength.BenignSupporting,
+                summary=comment,
+            ),
+        )
+
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """
         Override donor and acceptor positions for InSIGHT Hereditary Colorectal Cancer/Polyposis

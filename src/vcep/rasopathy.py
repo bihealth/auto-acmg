@@ -150,6 +150,36 @@ class RASopathyPredictor(DefaultPredictor):
             summary=f"Variant does not meet the PM1 criteria for {var_data.hgnc_id}.",
         )
 
+    def predict_pp2bp1(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Override PP2 and BP1 for RASopathy."""
+        pp2 = False
+        comment = "Not applicable for the gene."
+        if var_data.hgnc_id in ["HGNC:9644", "HGNC:6840", "HGNC:1097", "HGNC:9282"]:
+            if self._is_missense(var_data):
+                pp2 = True
+                comment = f"PP2 is met for {var_data.hgnc_id} as the variant is a missense change."
+            else:
+                pp2 = False
+                comment = (
+                    f"PP2 is not met for {var_data.hgnc_id} as the variant is not a missense "
+                    "change."
+                )
+        return (
+            AutoACMGCriteria(
+                name="PP2",
+                prediction=AutoACMGPrediction.Met if pp2 else AutoACMGPrediction.NotMet,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary=comment,
+            ),
+            AutoACMGCriteria(
+                name="BP1",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.BenignSupporting,
+                summary="BP1 is not applicable for the gene.",
+            ),
+        )
+
+
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
         """Override BP3 for RASopathy."""
         return True

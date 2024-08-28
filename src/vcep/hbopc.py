@@ -91,6 +91,39 @@ class HBOPCPredictor(DefaultPredictor):
             )
         return super().predict_pm4bp3(seqvar, var_data)
 
+    def predict_pp2bp1(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Override predict_pp2bp1 to include VCEP-specific logic for ATM and PALB2."""
+        logger.info("Predict PP2 and BP1")
+        if var_data.hgnc_id == "HGNC:26144":
+            if (
+                "missense_variant" in var_data.consequence.mehari
+                or var_data.consequence.cadd == "missense"
+            ):
+                bp1 = True
+                comment = "Variant is missense. BP1 is met."
+            else:
+                bp1 = False
+                comment = "Variant is not missense. BP1 is not met."
+        else:
+            bp1 = False
+            comment = "BP1 is not applicable for the gene."
+        return (
+            AutoACMGCriteria(
+                name="PP2",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="PP2 is not applicable for the gene.",
+            ),
+            AutoACMGCriteria(
+                name="BP1",
+                prediction=AutoACMGPrediction.Met if bp1 else AutoACMGPrediction.NotMet,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary=comment,
+            ),
+        )
+
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Override donor and acceptor positions for ATM and PALB2."""
         if var_data.hgnc_id == "HGNC:26144":

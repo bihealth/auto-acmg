@@ -4,6 +4,8 @@ Included gene: FBN1 (HGNC:3603).
 Link: https://cspec.genome.network/cspec/ui/svi/doc/GN022
 """
 
+from typing import Tuple
+
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
@@ -92,3 +94,34 @@ class FBN1Predictor(DefaultPredictor):
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
         """Override BP3 for FBN1."""
         return True
+
+    def predict_pp2bp1(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Override predict_pp2bp1 to include VCEP-specific logic for FBN1."""
+        logger.info("Predict PP2 and BP1")
+        pred, comment = self.verify_pp2bp1(seqvar, var_data)
+        if pred:
+            pp2_pred = (
+                AutoACMGPrediction.Met
+                if pred.PP2
+                else (AutoACMGPrediction.NotMet if pred.PP2 is False else AutoACMGPrediction.Failed)
+            )
+            pp2_strength = pred.PP2_strength
+        else:
+            pp2_pred = AutoACMGPrediction.Failed
+            pp2_strength = AutoACMGStrength.PathogenicSupporting
+        return (
+            AutoACMGCriteria(
+                name="PP2",
+                prediction=pp2_pred,
+                strength=pp2_strength,
+                summary=comment,
+            ),
+            AutoACMGCriteria(
+                name="BP1",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="BP1 is not applicable for the gene.",
+            ),
+        )

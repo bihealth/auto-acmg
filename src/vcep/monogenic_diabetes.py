@@ -140,6 +140,30 @@ class MonogenicDiabetesPredictor(DefaultPredictor):
         """Override BP3 for Monogenic Diabetes."""
         return True
 
+    def predict_pp2bp1(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Override PP2 and BP1 prediction for InSIGHT Hereditary Colorectal Cancer/Polyposis."""
+        pp2 = False
+        comment = "PP2 is not applicable for the gene."
+        if var_data.hgnc_id == "HGNC:4195" and self._is_missense(var_data):
+            pp2 = True
+            comment = "Variant is a missense variant. PP2 is met."
+        return (
+            AutoACMGCriteria(
+                name="PP2",
+                prediction=AutoACMGPrediction.Met if pp2 else AutoACMGPrediction.NotMet,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary=comment,
+            ),
+            AutoACMGCriteria(
+                name="BP1",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.BenignSupporting,
+                summary="BP1 is not applicable for the gene.",
+            ),
+        )
+
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Change BP7 thresholds for Monogenic Diabetes VCEP."""
         var_data.thresholds.spliceAI_acceptor_gain = 0.2

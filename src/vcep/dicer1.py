@@ -4,7 +4,7 @@ Included gene: DICER1 (HGNC:17098).
 Link: https://cspec.genome.network/cspec/ui/svi/doc/GN024
 """
 
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from loguru import logger
 
@@ -79,6 +79,25 @@ class DICER1Predictor(DefaultPredictor):
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
         """Override BP3 to be not applicable for DICER1."""
         return True
+
+    def predict_pp2bp1(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Override PP2 and BP1 to be not applicable for DICER1."""
+        return (
+            AutoACMGCriteria(
+                name="PP2",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="PP2 is not applicable for the gene.",
+            ),
+            AutoACMGCriteria(
+                name="BP1",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="BP1 is not applicable for the gene.",
+            ),
+        )
 
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Override donor and acceptor positions for DICER1 VCEP."""

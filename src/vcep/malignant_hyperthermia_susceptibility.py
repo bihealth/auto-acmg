@@ -4,6 +4,8 @@ Included gene: RYR1 (HGNC:10483).
 Link: https://cspec.genome.network/cspec/ui/svi/doc/GN012
 """
 
+from typing import Tuple
+
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
@@ -75,4 +77,26 @@ class MalignantHyperthermiaPredictor(DefaultPredictor):
             prediction=AutoACMGPrediction.NotMet,
             strength=AutoACMGStrength.PathogenicModerate,
             summary="Variant does not meet the PM1 criteria for Malignant Hyperthermia Susceptibility.",
+        )
+
+    def predict_pp2bp1(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """
+        Override predict_pp2bp1 to include VCEP-specific logic for Malignant Hyperthermia
+        Susceptibility.
+        """
+        return (
+            AutoACMGCriteria(
+                name="PP2",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="PP2 is not applicable for the gene.",
+            ),
+            AutoACMGCriteria(
+                name="BP1",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="BP1 is not applicable for the gene.",
+            ),
         )

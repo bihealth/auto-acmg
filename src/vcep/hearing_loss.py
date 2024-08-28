@@ -17,6 +17,8 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN005
 https://cspec.genome.network/cspec/ui/svi/doc/GN023
 """
 
+from typing import Tuple
+
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
@@ -82,4 +84,23 @@ class HearingLossPredictor(DefaultPredictor):
             prediction=AutoACMGPrediction.NotMet,
             strength=AutoACMGStrength.PathogenicModerate,
             summary="Variant does not meet the PM1 criteria for KCNQ4.",
+        )
+
+    def predict_pp2bp1(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Override predict_pp2bp1 to include VCEP-specific logic for Hearing Loss."""
+        return (
+            AutoACMGCriteria(
+                name="PP2",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="PP2 is not applicable for the gene.",
+            ),
+            AutoACMGCriteria(
+                name="BP1",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="BP1 is not applicable for the gene.",
+            ),
         )
