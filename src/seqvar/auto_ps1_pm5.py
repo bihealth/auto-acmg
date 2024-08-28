@@ -110,6 +110,28 @@ class AutoPS1PM5(AutoACMGHelper):
             return True
         return False
 
+    @staticmethod
+    def _affect_splicing(var_data: AutoACMGData) -> bool:
+        """
+        Check if the variant affects splicing.
+
+        Args:
+            var_data (AutoACMGData): The variant information.
+
+        Returns:
+            bool: True if the variant affects splicing, False otherwise.
+        """
+        score_checks = {
+            "spliceAI_acceptor_gain": var_data.thresholds.spliceAI_acceptor_gain,
+            "spliceAI_acceptor_loss": var_data.thresholds.spliceAI_acceptor_loss,
+            "spliceAI_donor_gain": var_data.thresholds.spliceAI_donor_gain,
+            "spliceAI_donor_loss": var_data.thresholds.spliceAI_donor_loss,
+        }
+        return any(
+            (getattr(var_data.scores.cadd, score_name) or 0) > threshold
+            for score_name, threshold in score_checks.items()
+        )
+
     def verify_ps1pm5(
         self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[Optional[PS1PM5], str]:

@@ -86,8 +86,8 @@ SeqvarConsequenceMapping: Dict[str, SeqVarPVS1Consequence] = {
     "start_lost": SeqVarPVS1Consequence.InitiationCodon,
     "5_prime_utr_variant": SeqVarPVS1Consequence.NotSet,
     "5_prime_UTR_variant": SeqVarPVS1Consequence.NotSet,
-    "3_prime_utr_variant": SeqVarPVS1Consequence.NonsenseFrameshift,
-    "3_prime_UTR_variant": SeqVarPVS1Consequence.NonsenseFrameshift,
+    "3_prime_utr_variant": SeqVarPVS1Consequence.NotSet,
+    "3_prime_UTR_variant": SeqVarPVS1Consequence.NotSet,
     "splice_region_variant": SeqVarPVS1Consequence.SpliceSites,  # Can affect splicing
     "splice_donor_variant": SeqVarPVS1Consequence.SpliceSites,  # Canonical splice site
     "splice_donor_5th_base_variant": SeqVarPVS1Consequence.SpliceSites,  # Non-canonical splice site
