@@ -86,7 +86,9 @@ class PTENPredictor(DefaultPredictor):
                     self.comment_pm4bp3 += "No impact on catalytic motif. PM4 is not met."
                     self.prediction_pm4bp3.PM4 = False
             else:
-                self.comment_pm4bp3 = "Variant consequence is not stop-loss or in-frame deletion/insertion. "
+                self.comment_pm4bp3 = (
+                    "Variant consequence is not stop-loss or in-frame deletion/insertion. "
+                )
                 self.prediction_pm4bp3.PM4 = False
                 self.prediction_pm4bp3.BP3 = False
         except Exception as e:
