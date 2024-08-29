@@ -8,13 +8,31 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN020
 https://cspec.genome.network/cspec/ui/svi/doc/GN077
 """
 
-from typing import Tuple
+from typing import List, Tuple
 
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.seqvar import SeqVar
+
+#: VCEP specifications for Heriditary Breast, Ovarian and Pancreatic Cancer.
+SPECs: List[VcepSpec] = [
+    VcepSpec(
+        identifier="GN020",
+        version="1.3.0",
+    ),
+    VcepSpec(
+        identifier="GN077",
+        version="1.1.0",
+    ),
+]
 
 
 class HBOPCPredictor(DefaultPredictor):
@@ -22,7 +40,7 @@ class HBOPCPredictor(DefaultPredictor):
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """
         Override predict_pm1 to include VCEP-specific logic for Heriditary Breast, Ovarian and
-        Pancreatic Cancer.
+        Pancreatic Cancer. ATM and PALB2 are not applicable for PM1.
         """
         logger.info("Predict PM1")
 
@@ -42,7 +60,10 @@ class HBOPCPredictor(DefaultPredictor):
     def predict_pm4bp3(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pm4bp3 to include VCEP-specific logic for CDH1."""
+        """
+        Override predict_pm4bp3 to include VCEP-specific logic for CDH1. PM4 is not changed, but
+        BP3 is not applicable.
+        """
         logger.info("Predict PM4 and BP3")
 
         if var_data.hgnc_id == "HGNC:795":
@@ -94,7 +115,11 @@ class HBOPCPredictor(DefaultPredictor):
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pp2bp1 to include VCEP-specific logic for ATM and PALB2."""
+        """
+        Override predict_pp2bp1 to include VCEP-specific logic for ATM and PALB2. Check if the
+        variant is synonymous, missense or inframe indel and not in an important domain and not
+        predicted to affect splicing. PP2 is not applicable.
+        """
         logger.info("Predict PP2 and BP1")
         if var_data.hgnc_id == "HGNC:26144":
             if (

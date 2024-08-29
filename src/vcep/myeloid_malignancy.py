@@ -9,8 +9,20 @@ from typing import Tuple
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.seqvar import SeqVar
+
+#: VCEP specification for Myeloid Malignancy.
+SPEC: VcepSpec = VcepSpec(
+    identifier="GN008",
+    version="2.0.0",
+)
 
 PM1_CLUSTER = {
     "HGNC:10471": {  # RUNX1
@@ -37,9 +49,7 @@ PM1_CLUSTER = {
 class MyeloidMalignancyPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """
-        Override predict_pm1 to include VCEP-specific logic for Myeloid Malignancy.
-        """
+        """Override PM1 to specify critical residues for Myeloid Malignancy VCEP."""
         logger.info("Predict PM1")
 
         gene_cluster = PM1_CLUSTER.get(var_data.hgnc_id, None)
@@ -80,13 +90,13 @@ class MyeloidMalignancyPredictor(DefaultPredictor):
         )
 
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
-        """Override BP3 for Myeloid Malignancy."""
+        """BP3 is not applicable for Myeloid Malignancy VCEP."""
         return True
 
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pp2bp1 to include VCEP-specific logic for RUNX1."""
+        """Override predict_pp2bp1 to return not applicable status for RUNX1."""
         return (
             AutoACMGCriteria(
                 name="PP2",

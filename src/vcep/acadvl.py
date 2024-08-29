@@ -36,7 +36,7 @@ PM1_CLUSTER = [
 class ACADVLPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """Override predict_pm1 to include VCEP-specific logic for ACADVL."""
+        """Override predict_pm1 to return a not applicable status for PM1."""
         logger.info("Predict PM1")
         # Check if variant falls within critical regions
         for start, end in PM1_CLUSTER:
@@ -60,13 +60,13 @@ class ACADVLPredictor(DefaultPredictor):
         )
 
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
-        """Override BP3 to be not applicable for ACADVL."""
+        """BP3 is not applicable for ACADVL."""
         return True
 
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pp2bp1 to include VCEP-specific logic for ACADVL."""
+        """Override predict_pp2bp1 to return a not applicable status for PP2 and BP1."""
         return (
             AutoACMGCriteria(
                 name="PP2",

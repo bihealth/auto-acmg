@@ -5,23 +5,45 @@ ETHE1 (HGNC:23287),
 PDHA1 (HGNC:8806),
 POLG (HGNC:9179),
 SLC19A3 (HGNC:16266),
+other Mitochondrial Disease genes.  (Mostly not implemented in this snippet)
 Links:
 https://cspec.genome.network/cspec/ui/svi/doc/GN014
+https://cspec.genome.network/cspec/ui/svi/doc/GN015
 """
 
-from typing import Tuple
+from typing import List, Tuple
 
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.seqvar import SeqVar
+
+#: VCEP specifications for Mitochondrial Diseases.
+SPECs: List[VcepSpec] = [
+    VcepSpec(
+        identifier="GN014",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN015",
+        version="1.0.0",
+    ),
+]
 
 
 class MitochondrialDiseasesPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """Override predict_pm1 to include VCEP-specific logic for Mitochondrial Diseases."""
+        """
+        Override predict_pm1 to return not applicable status for ETHE1, PDHA1, POLG, and SLC19A3.
+        """
         logger.info("Predict PM1")
 
         if var_data.hgnc_id in [
@@ -42,7 +64,7 @@ class MitochondrialDiseasesPredictor(DefaultPredictor):
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pp2bp1 to include VCEP-specific logic for Mitochondrial Diseases."""
+        """Override predict_pp2bp1 to return not applicable status for PP2 and BP1."""
         return (
             AutoACMGCriteria(
                 name="PP2",

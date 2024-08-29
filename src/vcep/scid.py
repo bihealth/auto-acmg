@@ -25,8 +25,50 @@ from typing import Dict, List, Tuple, Union
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.seqvar import SeqVar
+
+#: VCEP specifications for Severe Combined Immunodeficiency Disease.
+SPECs: List[VcepSpec] = [
+    VcepSpec(
+        identifier="GN113",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN114",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN116",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN119",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN121",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN123",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN124",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN129",
+        version="1.0.0",
+    ),
+]
 
 # fmt: off
 PM1_CLUSTER_SCID: Dict[str, Dict[str, List[Union[int, Tuple[int, int]]]]] = {
@@ -59,7 +101,8 @@ class SCIDPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """
-        Override predict_pm1 to include VCEP-specific logic for Severe Combined Immunodeficiency Disease.
+        Override predict_pm1 to specify critical domains for Severe Combined Immunodeficiency
+        Disease.
         """
         logger.info("Predict PM1")
 
@@ -153,8 +196,8 @@ class SCIDPredictor(DefaultPredictor):
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """
-        Override predict_pp2bp1 to include VCEP-specific logic for Severe Combined Immunodeficiency
-        Disease.
+        Override PP2 and BP1 for Severe Combined Immunodeficiency Disease to return not applicable
+        status.
         """
         return (
             AutoACMGCriteria(

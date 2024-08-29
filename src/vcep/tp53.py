@@ -9,8 +9,20 @@ from typing import Tuple
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.seqvar import SeqVar
+
+#: VCEP specification for TP53.
+SPEC: VcepSpec = VcepSpec(
+    identifier="GN009",
+    version="2.0.0",
+)
 
 # Define the critical regions for PM1 consideration in TP53
 PM1_CLUSTER = {
@@ -24,9 +36,7 @@ PM1_CLUSTER = {
 class TP53Predictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """
-        Override predict_pm1 to include VCEP-specific logic for TP53.
-        """
+        """Override PM1 prediction to specify critical residues for TP53."""
         logger.info("Predict PM1")
 
         gene_cluster = PM1_CLUSTER.get(var_data.hgnc_id, None)
@@ -53,7 +63,7 @@ class TP53Predictor(DefaultPredictor):
     def predict_pm4bp3(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override PM4 and BP3 for TP53 VCEP."""
+        """Override PM4 and BP3 to return not applicable for TP53 VCEP."""
         return (
             AutoACMGCriteria(
                 name="PM4",
@@ -72,7 +82,7 @@ class TP53Predictor(DefaultPredictor):
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pp2bp1 to include VCEP-specific logic for TP53."""
+        """Override predict_pp2bp1 to return not applicable status for TP53."""
         return (
             AutoACMGCriteria(
                 name="PP2",

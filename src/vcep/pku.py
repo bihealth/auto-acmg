@@ -15,8 +15,15 @@ from src.defs.auto_acmg import (
     AutoACMGPrediction,
     AutoACMGStrength,
     GenomicStrand,
+    VcepSpec,
 )
 from src.defs.seqvar import SeqVar
+
+#: VCEP specification for Phenylketonuria.
+SPEC: VcepSpec = VcepSpec(
+    identifier="GN006",
+    version="2.0.0",
+)
 
 PM1_CLUSTER_PKU = {
     "HGNC:8582": {  # PAH
@@ -57,9 +64,7 @@ PM1_CLUSTER_PKU = {
 class PKUPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """
-        Override predict_pm1 to include VCEP-specific logic for Phenylketonuria (PKU).
-        """
+        """Override predict_pm1 to include domain information for PAH."""
         logger.info("Predict PM1")
 
         gene_cluster = PM1_CLUSTER_PKU.get(var_data.hgnc_id, None)
@@ -87,13 +92,13 @@ class PKUPredictor(DefaultPredictor):
         )
 
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
-        """Override BP3 for Phenylketonuria."""
+        """BP3 is not applicable for PKU."""
         return True
 
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pp2bp1 to include VCEP-specific logic for PAH."""
+        """Override predict_pp2bp1 to return not applicable status for PAH."""
         return (
             AutoACMGCriteria(
                 name="PP2",

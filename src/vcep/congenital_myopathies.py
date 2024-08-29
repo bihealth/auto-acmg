@@ -14,13 +14,44 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN149
 https://cspec.genome.network/cspec/ui/svi/doc/GN150
 """
 
-from typing import Tuple
+from typing import List, Tuple
 
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.seqvar import SeqVar
+
+#: VCEP specifications for Congenital Myopathies.
+SPECs: List[VcepSpec] = [
+    VcepSpec(
+        identifier="GN146",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN147",
+        version="2.0.0",
+    ),
+    VcepSpec(
+        identifier="GN148",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN149",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN150",
+        version="1.0.0",
+    ),
+]
+
 
 PM1_CLUSTER = {
     # RYR1
@@ -31,7 +62,7 @@ PM1_CLUSTER = {
 class CongenitalMyopathiesPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """Override PM1 prediction for congenital myopathies."""
+        """Override PM1 to specify critical domains for congenital myopathies."""
         logger.info("Predict PM1")
 
         # NEB, ACTA1, DNM2, MTM1
@@ -67,13 +98,13 @@ class CongenitalMyopathiesPredictor(DefaultPredictor):
         )
 
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
-        """Override BP3 for congenital myopathies."""
+        """BP3 is not applicable for Congenital Myopathies."""
         return True
 
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override PP2 and BP1 for RASopathy."""
+        """Override PP2, BP1 for Congenital Myopathies to return not applicable status."""
         pp2 = False
         comment = "Not applicable for the gene."
         if var_data.hgnc_id in ["HGNC:129", "HGNC:2974"]:

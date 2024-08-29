@@ -15,8 +15,15 @@ from src.defs.auto_acmg import (
     AutoACMGData,
     AutoACMGPrediction,
     AutoACMGStrength,
+    VcepSpec,
 )
 from src.defs.seqvar import SeqVar
+
+#: VCEP specification for PTEN.
+SPEC: VcepSpec = VcepSpec(
+    identifier="GN003",
+    version="3.1.0",
+)
 
 PM1_CLUSTER = {
     "HGNC:9588": {  # PTEN
@@ -32,9 +39,7 @@ PM1_CLUSTER = {
 class PTENPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """
-        Override predict_pm1 to include VCEP-specific logic for PTEN.
-        """
+        """Override predict_pm1 to specify critical residues for PTEN."""
         logger.info("Predict PM1")
 
         gene_cluster = PM1_CLUSTER.get(var_data.hgnc_id, None)
@@ -62,11 +67,15 @@ class PTENPredictor(DefaultPredictor):
         )
 
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
-        """Override BP3 for PTEN."""
+        """BP3 is not applicable for PTEN."""
         return True
 
     def verify_pm4bp3(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PM4BP3], str]:
-        """Override predict_pm4bp3 to include VCEP-specific logic for PTEN."""
+        """
+        Override predict_pm4bp3 to include VCEP-specific logic for PTEN. Include in-frame deletions
+        and insertions that affect the catalytic motifs as PM4. Stop-loss variants are also
+        considered as PM4.
+        """
         self.prediction_pm4bp3 = PM4BP3()
         self.comment_pm4bp3 = ""
         try:
@@ -100,11 +109,7 @@ class PTENPredictor(DefaultPredictor):
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Predict PP2 and BP1 criteria for the provided sequence variant.
-
-        Returns:
-            AutoACMGCriteria: PP2 and BP1 prediction.
-        """
+        """Override predict_pp2bp1 to return not applicable status for PTEN. PP2 is not changed."""
         logger.info("Predict PP2 and BP1")
         pred, comment = self.verify_pp2bp1(seqvar, var_data)
         if pred:

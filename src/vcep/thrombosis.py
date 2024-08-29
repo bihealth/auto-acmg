@@ -9,8 +9,20 @@ from typing import Tuple
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.seqvar import SeqVar
+
+#: VCEP specification for Thrombosis.
+SPEC: VcepSpec = VcepSpec(
+    identifier="GN084",
+    version="1.0.0",
+)
 
 # fmt: off
 PM1_CLUSTER = {
@@ -30,9 +42,7 @@ PM1_CLUSTER = {
 class ThrombosisPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """
-        Override predict_pm1 to include VCEP-specific logic for Thrombosis.
-        """
+        """Override PM1 to specify critical domains for SERPINC1."""
         logger.info("Predict PM1")
 
         gene_cluster = PM1_CLUSTER.get(var_data.hgnc_id, None)
@@ -56,7 +66,7 @@ class ThrombosisPredictor(DefaultPredictor):
         )
 
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
-        """Override BP3 for thrombosis VCEP."""
+        """BP3 is not applicable for SERPINC1."""
         return True
 
     def predict_pp2bp1(

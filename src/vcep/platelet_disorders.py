@@ -11,14 +11,29 @@ from typing import Tuple
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.seqvar import SeqVar
+
+#: VCEP specification for Platelet Disorders.
+SPEC: VcepSpec = VcepSpec(
+    identifier="GN011",
+    version="2.1.0",
+)
 
 
 class PlateletDisordersPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """Override PM1 prediction for Platelet Disorders."""
+        """
+        Override PM1 prediction for Platelet Disorders to return a not met status for ITGA2B and
+        ITGB3.
+        """
         logger.info("Predict PM1")
 
         if var_data.hgnc_id in ["HGNC:6138", "HGNC:6156"]:
@@ -34,7 +49,7 @@ class PlateletDisordersPredictor(DefaultPredictor):
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pp2bp1 to include VCEP-specific logic for Platelet Disorders."""
+        """Override predict_pp2bp1 to return a not applicable status for PP2 and BP1."""
         return (
             AutoACMGCriteria(
                 name="PP2",
