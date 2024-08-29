@@ -169,9 +169,7 @@ PM1_CLUSTER_RASOPATHY: Dict[str, Dict[str, List[Union[int, Tuple[int, int]]]]] =
 class RASopathyPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """
-        Override predict_pm1 to include VCEP-specific logic for RASopathy.
-        """
+        """Override predict_pm1 to specify critical domains for RASopathy."""
         logger.info("Predict PM1")
 
         if var_data.hgnc_id in [
@@ -225,7 +223,9 @@ class RASopathyPredictor(DefaultPredictor):
         )
 
     def predict_pp2bp1(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override PP2 and BP1 for RASopathy."""
+        """
+        Override PP2 and BP1 for RASopathy. PP2 is met for missense changes. BP1 is not applicable.
+        """
         pp2 = False
         comment = "Not applicable for the gene."
         if var_data.hgnc_id in ["HGNC:9644", "HGNC:6840", "HGNC:1097", "HGNC:9282"]:
@@ -255,5 +255,5 @@ class RASopathyPredictor(DefaultPredictor):
 
 
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
-        """Override BP3 for RASopathy."""
+        """BP3 is not applicable for RASopathy."""
         return True

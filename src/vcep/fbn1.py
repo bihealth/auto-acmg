@@ -62,7 +62,7 @@ PM1_CLUSTER = {
 class FBN1Predictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """Override predict_pm1 to include VCEP-specific logic for FBN1."""
+        """Override predict_pm1 to specify critical residues for FBN1."""
         logger.info("Predict PM1")
 
         gene_cluster = PM1_CLUSTER.get(var_data.hgnc_id, None)
@@ -104,13 +104,16 @@ class FBN1Predictor(DefaultPredictor):
         )
 
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
-        """Override BP3 for FBN1."""
+        """BP3 is not applicable for FBN1."""
         return True
 
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pp2bp1 to include VCEP-specific logic for FBN1."""
+        """
+        Override predict_pp2bp1 to include VCEP-specific logic for FBN1. PP2 is not changed, but
+        BP1 is not applicable.
+        """
         logger.info("Predict PP2 and BP1")
         pred, comment = self.verify_pp2bp1(seqvar, var_data)
         if pred:

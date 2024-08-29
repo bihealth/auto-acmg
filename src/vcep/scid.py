@@ -101,7 +101,8 @@ class SCIDPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """
-        Override predict_pm1 to include VCEP-specific logic for Severe Combined Immunodeficiency Disease.
+        Override predict_pm1 to specify critical domains for Severe Combined Immunodeficiency
+        Disease.
         """
         logger.info("Predict PM1")
 
@@ -195,8 +196,8 @@ class SCIDPredictor(DefaultPredictor):
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """
-        Override predict_pp2bp1 to include VCEP-specific logic for Severe Combined Immunodeficiency
-        Disease.
+        Override PP2 and BP1 for Severe Combined Immunodeficiency Disease to return not applicable
+        status.
         """
         return (
             AutoACMGCriteria(

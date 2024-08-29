@@ -73,9 +73,7 @@ PM1_CLUSTER: Dict[str, Dict[str, Dict[str, List]]] = {
 class CoagulationFactorDeficiencyPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """
-        Override predict_pm1 to include VCEP-specific logic for Coagulation Factor Deficiency.
-        """
+        """Specify PM1 domains and residues for Coagulation Factor Deficiency."""
         logger.info("Predict PM1")
 
         gene_cluster = PM1_CLUSTER.get(var_data.hgnc_id, None)
@@ -152,13 +150,13 @@ class CoagulationFactorDeficiencyPredictor(DefaultPredictor):
         )
 
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
-        """Override BP3 for Coagulation Factor Deficiency."""
+        """BP3 is not applicable for Coagulation Factor Deficiency."""
         return True
 
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override PP2 and BP1 for Coagulation Factor Deficiency."""
+        """Override PP2, BP1 for Coagulation Factor Deficiency to return not applicable status."""
         return (
             AutoACMGCriteria(
                 name="PP2",

@@ -139,7 +139,7 @@ PM1_CLUSTER = {
 class EpilepsySodiumChannelPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """Override predict_pm1 to include VCEP-specific logic for Epilepsy Sodium Channel genes."""
+        """Override predict_pm1 to iclude domains for Epilepsy Sodium Channel genes."""
         logger.info("Predict PM1")
 
         # Check if SCN1B, where PM1 is not applicable
@@ -180,9 +180,7 @@ class EpilepsySodiumChannelPredictor(DefaultPredictor):
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """
-        Override predict_pp2bp1 to include VCEP-specific logic for Epilepsy Sodium Channel genes.
-        """
+        """Override PP2 and BP1 for Epilepsy Sodium Channel to return not applicable status."""
         return (
             AutoACMGCriteria(
                 name="PP2",

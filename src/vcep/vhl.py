@@ -58,9 +58,7 @@ BP3_REPEAT_REGIONS = [
 class VHLPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """
-        Override predict_pm1 to include VCEP-specific logic for VHL.
-        """
+        """Override PM1 prediction to specify critical residues for VHL."""
         logger.info("Predict PM1")
 
         gene_cluster = PM1_CLUSTER.get(var_data.hgnc_id, None)
@@ -104,7 +102,10 @@ class VHLPredictor(DefaultPredictor):
         return False
 
     def verify_pm4bp3(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PM4BP3], str]:
-        """Override PM4 and BP3 verification for VHL."""
+        """
+        Override PM4 and BP3 verification for VHL. PM4 is met if the variant is in an important
+        domain. BP3 is met if the variant is in the GXEEX repeat region.
+        """
         self.prediction_pm4bp3 = PM4BP3()
         self.comment_pm4bp3 = ""
         try:
@@ -150,7 +151,7 @@ class VHLPredictor(DefaultPredictor):
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pp2bp1 to include VCEP-specific logic for VHL."""
+        """Override predict_pp2bp1 to return not applicable status for VHL."""
         return (
             AutoACMGCriteria(
                 name="PP2",

@@ -46,9 +46,7 @@ PM1_CLUSTER = {
 class MalignantHyperthermiaPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """
-        Override predict_pm1 to include VCEP-specific logic for Malignant Hyperthermia Susceptibility.
-        """
+        """Override PM1 to specify critical domains for Malignant Hyperthermia Susceptibility."""
         logger.info("Predict PM1")
 
         gene_cluster = PM1_CLUSTER.get(var_data.hgnc_id, None)
@@ -95,8 +93,8 @@ class MalignantHyperthermiaPredictor(DefaultPredictor):
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """
-        Override predict_pp2bp1 to include VCEP-specific logic for Malignant Hyperthermia
-        Susceptibility.
+        Override PP2 and BP1 for Malignant Hyperthermia Susceptibility to return not applicable
+        status.
         """
         return (
             AutoACMGCriteria(

@@ -51,9 +51,7 @@ PM1_CLUSTER = {
 class LysosomalDiseasesPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """
-        Override predict_pm1 to include VCEP-specific logic for Lysosomal Diseases.
-        """
+        """Override predict_pm1 to specify critical domains for Lysosomal Diseases."""
         logger.info("Predict PM1")
 
         gene_cluster = PM1_CLUSTER.get(var_data.hgnc_id, None)
@@ -80,13 +78,13 @@ class LysosomalDiseasesPredictor(DefaultPredictor):
         )
 
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
-        """Override BP3 for Lysosomal Diseases."""
+        """BP3 is not applicable for GAA."""
         return True
 
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pp2bp1 to include VCEP-specific logic for GAA."""
+        """Override predict_pp2bp1 to return not applicable status for GAA."""
         return (
             AutoACMGCriteria(
                 name="PP2",

@@ -103,9 +103,7 @@ FOXG1_BP3_REGION: List[Tuple[int, int]] = [
 class RettAngelmanPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """
-        Override predict_pm1 to include VCEP-specific logic for Rett and Angelman-like Disorders.
-        """
+        """Override predict_pm1 to specify critical domains for Rett and Angelman-like Disorders."""
         logger.info("Predict PM1")
 
         # PM1 is not applicable for SLC9A6
@@ -160,7 +158,11 @@ class RettAngelmanPredictor(DefaultPredictor):
         return False
 
     def verify_pm4bp3(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PM4BP3], str]:
-        """Override PM4 and BP3 for Rett and Angelman-like Disorders."""
+        """
+        Override PM4 and BP3 for Rett and Angelman-like Disorders. PM4 is met for stop-loss variants
+        and in-frame deletions/insertions that are not in repeat regions or conserved domains.
+        BP3 is met for in-frame deletions/insertions in the BP3 region for FOXG1.
+        """
         self.prediction_pm4bp3 = PM4BP3()
         self.comment_pm4bp3 = ""
         try:
@@ -205,7 +207,9 @@ class RettAngelmanPredictor(DefaultPredictor):
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override PP2 and BP1 prediction for Rett and Angelman-like Disorders."""
+        """
+        Override PP2 and BP1 to return not applicable status for Rett and Angelman-like Disorders.
+        """
         return (
             AutoACMGCriteria(
                 name="PP2",

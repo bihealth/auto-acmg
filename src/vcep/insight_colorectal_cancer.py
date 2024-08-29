@@ -56,7 +56,11 @@ SPECs: List[VcepSpec] = [
 class InsightColorectalCancerPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """Override PM1 prediction for InSIGHT Hereditary Colorectal Cancer/Polyposis."""
+        """
+        Override predict_pm1 to include VCEP-specific logic for InSIGHT Hereditary Colorectal
+        Cancer/Polyposis. Use default logic for all genes except APC, MLH1, MSH2, MSH6, and PMS2.
+        For them return not applicable status for PM1.
+        """
         logger.info("Predict PM1")
 
         if var_data.hgnc_id in [
@@ -78,6 +82,7 @@ class InsightColorectalCancerPredictor(DefaultPredictor):
     def predict_pm4bp3(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """PM4 and BP3 are not applicable for InSIGHT Hereditary Colorectal Cancer/Polyposis."""
         return (
             AutoACMGCriteria(
                 name="PM4",
@@ -102,7 +107,11 @@ class InsightColorectalCancerPredictor(DefaultPredictor):
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override PP2 and BP1 prediction for InSIGHT Hereditary Colorectal Cancer/Polyposis."""
+        """
+        Override PP2 and BP1 for InSIGHT Hereditary Colorectal Cancer/Polyposis VCEP. Check benign
+        ratio for APC missense variants and exclude β-catenin binding domain. PP2 is not applicable
+        for the gene.
+        """
         bp1 = False
         comment = "BP1 is not applicable for the gene."
         if var_data.hgnc_id == "HGNC:583":  # APC

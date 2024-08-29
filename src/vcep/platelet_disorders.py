@@ -30,7 +30,10 @@ SPEC: VcepSpec = VcepSpec(
 class PlateletDisordersPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """Override PM1 prediction for Platelet Disorders."""
+        """
+        Override PM1 prediction for Platelet Disorders to return a not met status for ITGA2B and
+        ITGB3.
+        """
         logger.info("Predict PM1")
 
         if var_data.hgnc_id in ["HGNC:6138", "HGNC:6156"]:
@@ -46,7 +49,7 @@ class PlateletDisordersPredictor(DefaultPredictor):
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pp2bp1 to include VCEP-specific logic for Platelet Disorders."""
+        """Override predict_pp2bp1 to return a not applicable status for PP2 and BP1."""
         return (
             AutoACMGCriteria(
                 name="PP2",

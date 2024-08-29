@@ -42,10 +42,7 @@ SPECs: List[VcepSpec] = [
 class CerebralCreatineDeficiencySyndromesPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """
-        Override predict_pm1 to include VCEP-specific logic for Cerebral Creatine Deficiency
-        Syndromes.
-        """
+        """Override predict_pm1 to return a not applicable status for PM1."""
         return AutoACMGCriteria(
             name="PM1",
             prediction=AutoACMGPrediction.NotApplicable,
@@ -54,16 +51,13 @@ class CerebralCreatineDeficiencySyndromesPredictor(DefaultPredictor):
         )
 
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
-        """Override _bp3_not_applicable for Cerebral Creatine Deficiency Syndromes."""
+        """BP3 is not applicable for Cerebral Creatine Deficiency Syndromes."""
         return True
 
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """
-        Override predict_pp2bp1 to include VCEP-specific logic for Cerebral Creatine Deficiency
-        Syndromes.
-        """
+        """Override predict_pp2bp1 to return a not applicable status for PP2 and BP1."""
         return (
             AutoACMGCriteria(
                 name="PP2",

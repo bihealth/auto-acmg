@@ -31,7 +31,7 @@ class VonWillebrandDiseasePredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """
-        Override predict_pm1 to include VCEP-specific logic for von Willebrand Disease.
+        Override predict_pm1 to return a not applicable status for PM1.
         """
         logger.info("Predict PM1")
 
@@ -43,13 +43,13 @@ class VonWillebrandDiseasePredictor(DefaultPredictor):
         )
 
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
-        """Override BP3 for von Willebrand Disease VCEP."""
+        """BP3 it not applicable."""
         return True
 
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pp2bp1 to include VCEP-specific logic for von Willebrand Disease."""
+        """Override predict_pp2bp1 to return a not applicable status for PP2 and BP1."""
         return (
             AutoACMGCriteria(
                 name="PP2",

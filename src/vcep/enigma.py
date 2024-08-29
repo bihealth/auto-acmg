@@ -52,7 +52,7 @@ BP7_IMPORTANT_DOMAINS = {
 class ENIGMAPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """Override PM1 prediction for ENIGMA BRCA1 and BRCA2."""
+        """Override PM1 to return a not applicable status."""
         logger.info("Predict PM1")
 
         if var_data.hgnc_id in ["HGNC:1100", "HGNC:1101"]:
@@ -68,7 +68,7 @@ class ENIGMAPredictor(DefaultPredictor):
     def predict_pm4bp3(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pm4bp3 to include VCEP-specific logic for ENIGMA BRCA1 and BRCA2."""
+        """Override predict_pm4bp3 to return not applicable status for PM4 and BP3."""
         logger.info("Predict PM4 and BP3")
         return (
             AutoACMGCriteria(
@@ -95,7 +95,11 @@ class ENIGMAPredictor(DefaultPredictor):
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pp2bp1 to include VCEP-specific logic for ENIGMA BRCA1 and BRCA2."""
+        """
+        Override predict_pp2bp1 to include VCEP-specific logic for ENIGMA BRCA1 and BRCA2. Check if
+        the variant is synonymous, missense or inframe indel and not in an important domain and not
+        predicted to affect splicing.
+        """
         if (
             any(
                 crit in var_data.consequence.mehari or var_data.consequence.cadd == crit
@@ -139,7 +143,10 @@ class ENIGMAPredictor(DefaultPredictor):
         )
 
     def verify_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[BP7], str]:
-        """Override verify BP7 criterion for ENIGMA BRCA1 and BRCA2."""
+        """
+        Override verify BP7 criterion for ENIGMA BRCA1 and BRCA2. Check if the variant is synonymous
+        and in an important domain or intronic and not conserved.
+        """
         # Change the donor/acceptor thresholds for BRCA1 and BRCA2
         var_data.thresholds.bp7_donor = 7
         var_data.thresholds.bp7_acceptor = 21

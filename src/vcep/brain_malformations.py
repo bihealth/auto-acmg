@@ -55,7 +55,7 @@ PM1_CLUSTER = {
 class BrainMalformationsPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        "Override predict_pm1 to include VCEP-specific logic for brain malformations VCEP."
+        """Override predict_pm1 to return a not applicable status for PM1."""
         logger.info("Predict PM1")
 
         if var_data.hgnc_id in PM1_CLUSTER:
@@ -89,7 +89,7 @@ class BrainMalformationsPredictor(DefaultPredictor):
     def predict_pm4bp3(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pm4bp3 to include VCEP-specific logic for brain malformations VCEP."""
+        """Override predict_pm4bp3 to return not applicable status for PM4 and BP3."""
         logger.info("Predict PM4 and BP3")
         return (
             AutoACMGCriteria(
@@ -109,7 +109,7 @@ class BrainMalformationsPredictor(DefaultPredictor):
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override PP2 and BP1 for RASopathy."""
+        """Override PP2 and BP1 for RASopathy. PPP2 is not changed, but BP1 is not applicable."""
         pp2 = False
         comment = "Not applicable for the gene."
         if var_data.hgnc_id in ["HGNC:393", "HGNC:3942", "HGNC:8975"]:

@@ -98,9 +98,7 @@ PM1_CLUSTER: Dict[str, Dict[str, Dict[str, List[Union[int, Tuple[int, int]]]]]] 
 class MonogenicDiabetesPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """
-        Override predict_pm1 to include VCEP-specific logic for Monogenic Diabetes.
-        """
+        """Specify PM1 domains and residues for Monogenic Diabetes."""
         logger.info("Predict PM1")
 
         gene_cluster = PM1_CLUSTER.get(var_data.hgnc_id, None)
@@ -159,13 +157,16 @@ class MonogenicDiabetesPredictor(DefaultPredictor):
         )
 
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
-        """Override BP3 for Monogenic Diabetes."""
+        """BP3 is not applicable for Monogenic Diabetes."""
         return True
 
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override PP2 and BP1 prediction for InSIGHT Hereditary Colorectal Cancer/Polyposis."""
+        """
+        Override PP2 and BP1 prediction for InSIGHT Hereditary Colorectal Cancer/Polyposis. PP2 is
+        met if the variant is a missense variant for GCK. BP1 is not applicable for GCK.
+        """
         pp2 = False
         comment = "PP2 is not applicable for the gene."
         if var_data.hgnc_id == "HGNC:4195":

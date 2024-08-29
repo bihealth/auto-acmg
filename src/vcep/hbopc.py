@@ -40,7 +40,7 @@ class HBOPCPredictor(DefaultPredictor):
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """
         Override predict_pm1 to include VCEP-specific logic for Heriditary Breast, Ovarian and
-        Pancreatic Cancer.
+        Pancreatic Cancer. ATM and PALB2 are not applicable for PM1.
         """
         logger.info("Predict PM1")
 
@@ -60,7 +60,10 @@ class HBOPCPredictor(DefaultPredictor):
     def predict_pm4bp3(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pm4bp3 to include VCEP-specific logic for CDH1."""
+        """
+        Override predict_pm4bp3 to include VCEP-specific logic for CDH1. PM4 is not changed, but
+        BP3 is not applicable.
+        """
         logger.info("Predict PM4 and BP3")
 
         if var_data.hgnc_id == "HGNC:795":
@@ -112,7 +115,11 @@ class HBOPCPredictor(DefaultPredictor):
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pp2bp1 to include VCEP-specific logic for ATM and PALB2."""
+        """
+        Override predict_pp2bp1 to include VCEP-specific logic for ATM and PALB2. Check if the
+        variant is synonymous, missense or inframe indel and not in an important domain and not
+        predicted to affect splicing. PP2 is not applicable.
+        """
         logger.info("Predict PP2 and BP1")
         if var_data.hgnc_id == "HGNC:26144":
             if (

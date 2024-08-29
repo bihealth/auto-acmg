@@ -49,9 +49,7 @@ PM1_CLUSTER_BMPR2 = {
 class PulmonaryHypertensionPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """
-        Override predict_pm1 to include VCEP-specific logic for Pulmonary Hypertension.
-        """
+        """Override predict_pm1 to specify critical residues for BMPR2."""
         logger.info("Predict PM1")
 
         gene_cluster = PM1_CLUSTER_BMPR2.get(var_data.hgnc_id, None)
@@ -109,7 +107,7 @@ class PulmonaryHypertensionPredictor(DefaultPredictor):
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pp2bp1 to include VCEP-specific logic for BMPR2."""
+        """Override predict_pp2bp1 to return not applicable status for BMPR2."""
         return (
             AutoACMGCriteria(
                 name="PP2",

@@ -62,7 +62,7 @@ PM1_CLUSTER = {
 class CongenitalMyopathiesPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """Override PM1 prediction for congenital myopathies."""
+        """Override PM1 to specify critical domains for congenital myopathies."""
         logger.info("Predict PM1")
 
         # NEB, ACTA1, DNM2, MTM1
@@ -98,13 +98,13 @@ class CongenitalMyopathiesPredictor(DefaultPredictor):
         )
 
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
-        """Override BP3 for congenital myopathies."""
+        """BP3 is not applicable for Congenital Myopathies."""
         return True
 
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override PP2 and BP1 for RASopathy."""
+        """Override PP2, BP1 for Congenital Myopathies to return not applicable status."""
         pp2 = False
         comment = "Not applicable for the gene."
         if var_data.hgnc_id in ["HGNC:129", "HGNC:2974"]:

@@ -29,7 +29,7 @@ SPEC = VcepSpec(
 class GlaucomaPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """Override predict_pm1 to include VCEP-specific logic for Glaucoma."""
+        """Override predict_pm1 to return a not applicable status for PM1."""
         logger.info("Predict PM1")
 
         return AutoACMGCriteria(
@@ -40,7 +40,7 @@ class GlaucomaPredictor(DefaultPredictor):
         )
 
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
-        """Override _bp3_not_applicable for Glaucoma VCEP."""
+        """BP3 is not applicable for Glaucoma VCEP."""
         return True
 
     def _is_conserved(self, var_data: AutoACMGData) -> bool:
@@ -65,7 +65,7 @@ class GlaucomaPredictor(DefaultPredictor):
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pp2bp1 to include VCEP-specific logic for Glaucoma."""
+        """Override predict_pp2bp1 to return a not applicable status for PP2 and BP1."""
         return (
             AutoACMGCriteria(
                 name="PP2",

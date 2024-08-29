@@ -41,7 +41,9 @@ SPECs: List[VcepSpec] = [
 class MitochondrialDiseasesPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """Override predict_pm1 to include VCEP-specific logic for Mitochondrial Diseases."""
+        """
+        Override predict_pm1 to return not applicable status for ETHE1, PDHA1, POLG, and SLC19A3.
+        """
         logger.info("Predict PM1")
 
         if var_data.hgnc_id in [
@@ -62,7 +64,7 @@ class MitochondrialDiseasesPredictor(DefaultPredictor):
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pp2bp1 to include VCEP-specific logic for Mitochondrial Diseases."""
+        """Override predict_pp2bp1 to return not applicable status for PP2 and BP1."""
         return (
             AutoACMGCriteria(
                 name="PP2",

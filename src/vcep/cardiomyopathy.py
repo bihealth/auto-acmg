@@ -103,7 +103,7 @@ PM1_CLUSTER = {
 class CardiomyopathyPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """Override predict_pm1 to include VCEP-specific logic for Cardiomyopathy."""
+        """Specify PM1 domains for Cardiomyopathy."""
         logger.info("Predict PM1")
 
         if var_data.hgnc_id in PM1_CLUSTER:
@@ -144,13 +144,13 @@ class CardiomyopathyPredictor(DefaultPredictor):
         return super().predict_pm1(seqvar, var_data)
 
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
-        """Override BP3 for Cardiomyopathy."""
+        """BP3 is not applicable for Cardiomyopathy."""
         return True
 
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override PP2 and BP1 for Cardiomyopathy."""
+        """Override PP2 and BP1 for Cardiomyopathy to return not applicable status."""
         return (
             AutoACMGCriteria(
                 name="PP2",

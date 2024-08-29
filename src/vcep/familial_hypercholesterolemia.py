@@ -43,7 +43,7 @@ PM1_CLUSTER_LDLR = {
 class FamilialHypercholesterolemiaPredictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """Override predict_pm1 to include VCEP-specific logic for LDLR."""
+        """Override predict_pm1 to include domains for LDLR."""
         logger.info("Predict PM1")
 
         gene_cluster = PM1_CLUSTER_LDLR.get(var_data.hgnc_id, None)
@@ -83,14 +83,14 @@ class FamilialHypercholesterolemiaPredictor(DefaultPredictor):
         )
 
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
-        """Override BP3 for Familial Hypercholesterolemia."""
+        """BP3 is not applicable for Familial Hypercholesterolemia."""
         return True
 
 
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pp2bp1 to include VCEP-specific logic for LDLR."""
+        """Override predict_pp2bp1 to return not applicable status for LDLR."""
         return (
             AutoACMGCriteria(
                 name="PP2",

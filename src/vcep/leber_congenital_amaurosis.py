@@ -33,15 +33,9 @@ PM1_CLUSTER = {
 
 
 class LeberCongenitalAmaurosisPredictor(DefaultPredictor):
-    """
-    Predictor for Leber Congenital Amaurosis/early onset Retinal Dystrophy VCEP.
-    """
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """
-        Override predict_pm1 to include VCEP-specific logic for Leber Congenital Amaurosis/early
-        onset Retinal Dystrophy.
-        """
+        """Override predict_pm1 to include domain information for RPE65."""
         logger.info("Predict PM1")
 
         gene_cluster = PM1_CLUSTER.get(var_data.hgnc_id, None)
@@ -74,13 +68,13 @@ class LeberCongenitalAmaurosisPredictor(DefaultPredictor):
         )
 
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
-        """Override BP3 for Leber Congenital Amaurosis."""
+        """BP3 is not applicable for RPE65."""
         return True
 
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pp2bp1 to include VCEP-specific logic for RPE65."""
+        """Override predict_pp2bp1 to return not applicable status for RPE65."""
         return (
             AutoACMGCriteria(
                 name="PP2",

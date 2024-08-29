@@ -28,7 +28,7 @@ SPEC: VcepSpec = VcepSpec(
 class CDH1Predictor(DefaultPredictor):
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
-        """Override predict_pm1 to include VCEP-specific logic for CDH1."""
+        """Override predict_pm1 to return a not applicable status for PM1."""
         logger.info("Predict PM1")
 
         return AutoACMGCriteria(
@@ -41,7 +41,7 @@ class CDH1Predictor(DefaultPredictor):
     def predict_pm4bp3(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pm4bp3 to include VCEP-specific logic for CDH1."""
+        """Override predict_pm4bp3 for CDH1 VCEP. PM4 is not changed, but BP3 is not applicable."""
         logger.info("Predict PM4 and BP3")
         pred, comment = super().verify_pm4bp3(seqvar, var_data)
         if pred:
@@ -71,7 +71,7 @@ class CDH1Predictor(DefaultPredictor):
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Override predict_pp2bp1 to include VCEP-specific logic for CDH1."""
+        """Override predict_pp2bp1 to return a not applicable status for PP2 and BP1."""
         return (
             AutoACMGCriteria(
                 name="PP2",
