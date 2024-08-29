@@ -14,13 +14,43 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN070
 https://cspec.genome.network/cspec/ui/svi/doc/GN076
 """
 
-from typing import Tuple
+from typing import List, Tuple
 
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.seqvar import SeqVar
+
+#: VCEP specifications for Epilepsy Sodium Channel.
+SPECs: List[VcepSpec] = [
+    VcepSpec(
+        identifier="GN067",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN068",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN069",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN070",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN076",
+        version="1.0.0",
+    ),
+]
 
 PM1_CLUSTER = {
     "HGNC:10585": {  # SCN1A

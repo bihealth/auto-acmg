@@ -9,8 +9,20 @@ from typing import Tuple
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.seqvar import SeqVar
+
+#: VCEP specification for FBN1.
+SPEC: VcepSpec = VcepSpec(
+    identifier="GN022",
+    version="1.0.0",
+)
 
 # Define the critical residues for PM1 strong consideration
 # fmt: off

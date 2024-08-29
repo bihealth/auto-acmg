@@ -17,14 +17,32 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN005
 https://cspec.genome.network/cspec/ui/svi/doc/GN023
 """
 
-from typing import Tuple
+from typing import List, Tuple
 
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.exceptions import AlgorithmError
 from src.defs.seqvar import SeqVar
+
+#: VCEP specifications for Hearing Loss.
+SPECs: List[VcepSpec] = [
+    VcepSpec(
+        identifier="GN005",
+        version="2.0.0",
+    ),
+    VcepSpec(
+        identifier="GN023",
+        version="1.0.0",
+    ),
+]
 
 PM1_CLUSTER = {
     "HGNC:6298": {

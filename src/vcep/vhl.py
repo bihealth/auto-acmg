@@ -15,9 +15,16 @@ from src.defs.auto_acmg import (
     AutoACMGData,
     AutoACMGPrediction,
     AutoACMGStrength,
+    VcepSpec,
 )
 from src.defs.exceptions import AutoAcmgBaseException
 from src.defs.seqvar import SeqVar
+
+#: VCEP specification for VHL.
+SPEC: VcepSpec = VcepSpec(
+    identifier="GN078",
+    version="1.0.0",
+)
 
 # fmt: off
 PM1_CLUSTER = {

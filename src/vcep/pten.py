@@ -15,8 +15,15 @@ from src.defs.auto_acmg import (
     AutoACMGData,
     AutoACMGPrediction,
     AutoACMGStrength,
+    VcepSpec,
 )
 from src.defs.seqvar import SeqVar
+
+#: VCEP specification for PTEN.
+SPEC: VcepSpec = VcepSpec(
+    identifier="GN003",
+    version="3.1.0",
+)
 
 PM1_CLUSTER = {
     "HGNC:9588": {  # PTEN

@@ -5,17 +5,37 @@ ETHE1 (HGNC:23287),
 PDHA1 (HGNC:8806),
 POLG (HGNC:9179),
 SLC19A3 (HGNC:16266),
+other Mitochondrial Disease genes.  (Mostly not implemented in this snippet)
 Links:
 https://cspec.genome.network/cspec/ui/svi/doc/GN014
+https://cspec.genome.network/cspec/ui/svi/doc/GN015
 """
 
-from typing import Tuple
+from typing import List, Tuple
 
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.seqvar import SeqVar
+
+#: VCEP specifications for Mitochondrial Diseases.
+SPECs: List[VcepSpec] = [
+    VcepSpec(
+        identifier="GN014",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN015",
+        version="1.0.0",
+    ),
+]
 
 
 class MitochondrialDiseasesPredictor(DefaultPredictor):

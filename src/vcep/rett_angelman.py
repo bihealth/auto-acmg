@@ -27,9 +27,38 @@ from src.defs.auto_acmg import (
     AutoACMGData,
     AutoACMGPrediction,
     AutoACMGStrength,
+    VcepSpec,
 )
 from src.defs.exceptions import AutoAcmgBaseException
 from src.defs.seqvar import SeqVar
+
+#: VCEP specifications for Rett and Angelman-like Disorders.
+SPECs: List[VcepSpec] = [
+    VcepSpec(
+        identifier="GN032",
+        version="3.0.0",
+    ),
+    VcepSpec(
+        identifier="GN033",
+        version="3.0.0",
+    ),
+    VcepSpec(
+        identifier="GN034",
+        version="3.0.0",
+    ),
+    VcepSpec(
+        identifier="GN035",
+        version="3.0.0",
+    ),
+    VcepSpec(
+        identifier="GN036",
+        version="3.0.0",
+    ),
+    VcepSpec(
+        identifier="GN037",
+        version="4.0.0",
+    ),
+]
 
 # fmt: off
 PM1_CLUSTER: Dict[str, Dict[str, List[Tuple[int, int]]]] = {

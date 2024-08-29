@@ -8,7 +8,7 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN092
 https://cspec.genome.network/cspec/ui/svi/doc/GN097
 """
 
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 from loguru import logger
 
@@ -19,9 +19,22 @@ from src.defs.auto_acmg import (
     AutoACMGData,
     AutoACMGPrediction,
     AutoACMGStrength,
+    VcepSpec,
 )
 from src.defs.exceptions import AutoAcmgBaseException
 from src.defs.seqvar import SeqVar
+
+#: VCEP specifications for ENIGMA BRCA1 and BRCA2.
+SPECs: List[VcepSpec] = [
+    VcepSpec(
+        identifier="GN092",
+        version="1.1.0",
+    ),
+    VcepSpec(
+        identifier="GN097",
+        version="1.1.0",
+    ),
+]
 
 BP7_IMPORTANT_DOMAINS = {
     "HGNC:1100": [

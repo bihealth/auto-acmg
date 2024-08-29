@@ -14,13 +14,43 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN138
 https://cspec.genome.network/cspec/ui/svi/doc/GN139
 """
 
-from typing import Tuple
+from typing import List, Tuple
 
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.seqvar import SeqVar
+
+#: VCEP specifications for InSIGHT Hereditary Colorectal Cancer/Polyposis.
+SPECs: List[VcepSpec] = [
+    VcepSpec(
+        identifier="GN089",
+        version="2.1.0",
+    ),
+    VcepSpec(
+        identifier="GN115",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN137",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN138",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN139",
+        version="1.0.0",
+    ),
+]
 
 
 class InsightColorectalCancerPredictor(DefaultPredictor):

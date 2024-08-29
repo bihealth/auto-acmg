@@ -9,8 +9,21 @@ from typing import Dict, List, Tuple
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.seqvar import SeqVar
+
+#: VCEP specification for DICER1.
+SPEC: VcepSpec = VcepSpec(
+    identifier="GN024",
+    version="1.3.0",
+)
+
 
 PM1_CLUSTER: Dict[str, Dict[str, Dict[str, List]]] = {
     # DICER1

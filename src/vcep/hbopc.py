@@ -8,13 +8,31 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN020
 https://cspec.genome.network/cspec/ui/svi/doc/GN077
 """
 
-from typing import Tuple
+from typing import List, Tuple
 
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.seqvar import SeqVar
+
+#: VCEP specifications for Heriditary Breast, Ovarian and Pancreatic Cancer.
+SPECs: List[VcepSpec] = [
+    VcepSpec(
+        identifier="GN020",
+        version="1.3.0",
+    ),
+    VcepSpec(
+        identifier="GN077",
+        version="1.1.0",
+    ),
+]
 
 
 class HBOPCPredictor(DefaultPredictor):

@@ -41,8 +41,82 @@ from typing import Dict, List, Tuple, Union
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.seqvar import SeqVar
+
+#: VCEP specifications for RASopathy.
+SPECs: List[VcepSpec] = [
+    VcepSpec(
+        identifier="GN038",
+        version="2.0.0",
+    ),
+    VcepSpec(
+        identifier="GN039",
+        version="2.0.0",
+    ),
+    VcepSpec(
+        identifier="GN040",
+        version="2.0.0",
+    ),
+    VcepSpec(
+        identifier="GN041",
+        version="2.0.0",
+    ),
+    VcepSpec(
+        identifier="GN042",
+        version="2.0.0",
+    ),
+    VcepSpec(
+        identifier="GN043",
+        version="2.0.0",
+    ),
+    VcepSpec(
+        identifier="GN044",
+        version="2.0.0",
+    ),
+    VcepSpec(
+        identifier="GN045",
+        version="2.0.0",
+    ),
+    VcepSpec(
+        identifier="GN046",
+        version="2.0.0",
+    ),
+    VcepSpec(
+        identifier="GN047",
+        version="2.0.0",
+    ),
+    VcepSpec(
+        identifier="GN048",
+        version="2.0.0",
+    ),
+    VcepSpec(
+        identifier="GN049",
+        version="2.0.0",
+    ),
+    VcepSpec(
+        identifier="GN087",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN094",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN127",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN128",
+        version="1.0.0",
+    ),
+]
 
 # fmt: off
 PM1_CLUSTER_RASOPATHY: Dict[str, Dict[str, List[Union[int, Tuple[int, int]]]]] = {

@@ -14,13 +14,44 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN149
 https://cspec.genome.network/cspec/ui/svi/doc/GN150
 """
 
-from typing import Tuple
+from typing import List, Tuple
 
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.seqvar import SeqVar
+
+#: VCEP specifications for Congenital Myopathies.
+SPECs: List[VcepSpec] = [
+    VcepSpec(
+        identifier="GN146",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN147",
+        version="2.0.0",
+    ),
+    VcepSpec(
+        identifier="GN148",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN149",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN150",
+        version="1.0.0",
+    ),
+]
+
 
 PM1_CLUSTER = {
     # RYR1

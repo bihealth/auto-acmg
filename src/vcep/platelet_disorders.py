@@ -11,8 +11,20 @@ from typing import Tuple
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.seqvar import SeqVar
+
+#: VCEP specification for Platelet Disorders.
+SPEC: VcepSpec = VcepSpec(
+    identifier="GN011",
+    version="2.1.0",
+)
 
 
 class PlateletDisordersPredictor(DefaultPredictor):

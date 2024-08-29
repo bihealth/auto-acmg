@@ -15,8 +15,30 @@ from typing import Dict, List, Tuple, Union
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.seqvar import SeqVar
+
+#: VCEP specifications for Monogenic Diabetes.
+SPECs: List[VcepSpec] = [
+    VcepSpec(
+        identifier="GN017",
+        version="2.1.0",
+    ),
+    VcepSpec(
+        identifier="GN085",
+        version="2.0.0",
+    ),
+    VcepSpec(
+        identifier="GN086",
+        version="1.3.0",
+    ),
+]
 
 # fmt: off
 PM1_CLUSTER: Dict[str, Dict[str, Dict[str, List[Union[int, Tuple[int, int]]]]]] = {

@@ -15,8 +15,15 @@ from src.defs.auto_acmg import (
     AutoACMGPrediction,
     AutoACMGStrength,
     GenomicStrand,
+    VcepSpec,
 )
 from src.defs.seqvar import SeqVar
+
+#: VCEP specification for Phenylketonuria.
+SPEC: VcepSpec = VcepSpec(
+    identifier="GN006",
+    version="2.0.0",
+)
 
 PM1_CLUSTER_PKU = {
     "HGNC:8582": {  # PAH

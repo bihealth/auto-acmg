@@ -13,8 +13,26 @@ from typing import Dict, List, Tuple, Union
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.seqvar import SeqVar
+
+#: VCEP specifications for Hereditary Hemorrhagic Telangiectasia.
+SPECs: List[VcepSpec] = [
+    VcepSpec(
+        identifier="GN135",
+        version="1.1.0",
+    ),
+    VcepSpec(
+        identifier="GN136",
+        version="1.1.0",
+    ),
+]
 
 # fmt: off
 PM1_CLUSTER: Dict[str, Dict[str, List[Union[Tuple[int, int], int]]]] = {

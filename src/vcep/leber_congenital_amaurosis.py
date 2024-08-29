@@ -15,8 +15,15 @@ from src.defs.auto_acmg import (
     AutoACMGPrediction,
     AutoACMGStrength,
     GenomicStrand,
+    VcepSpec,
 )
 from src.defs.seqvar import SeqVar
+
+#: VCEP specifications for Leber Congenital Amaurosis/early onset Retinal Dystrophy.
+SPEC: VcepSpec = VcepSpec(
+    identifier="GN120",
+    version="1.0.0",
+)
 
 PM1_CLUSTER = {
     "HGNC:10294": {

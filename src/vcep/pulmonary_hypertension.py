@@ -15,8 +15,15 @@ from src.defs.auto_acmg import (
     AutoACMGPrediction,
     AutoACMGStrength,
     GenomicStrand,
+    VcepSpec,
 )
 from src.defs.seqvar import SeqVar
+
+#: VCEP specification for Pulmonary Hypertension.
+SPEC: VcepSpec = VcepSpec(
+    identifier="GN125",
+    version="1.1.0",
+)
 
 # fmt: off
 PM1_CLUSTER_BMPR2 = {

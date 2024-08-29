@@ -10,11 +10,33 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN026
 https://cspec.genome.network/cspec/ui/svi/doc/GN027
 """
 
-from typing import Tuple
+from typing import List, Tuple
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.seqvar import SeqVar
+
+#: VCEP specifications for Cerebral Creatine Deficiency Syndromes.
+SPECs: List[VcepSpec] = [
+    VcepSpec(
+        identifier="GN025",
+        version="1.1.0",
+    ),
+    VcepSpec(
+        identifier="GN026",
+        version="2.0.0",
+    ),
+    VcepSpec(
+        identifier="GN027",
+        version="1.1.0",
+    ),
+]
 
 
 class CerebralCreatineDeficiencySyndromesPredictor(DefaultPredictor):

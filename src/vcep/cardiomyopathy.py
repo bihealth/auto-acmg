@@ -20,13 +20,55 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN102
 https://cspec.genome.network/cspec/ui/svi/doc/GN103
 """
 
-from typing import Tuple
+from typing import List, Tuple
 
 from loguru import logger
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    VcepSpec,
+)
 from src.defs.seqvar import SeqVar
+
+#: VCEP spcifications for Cardiomyopathy.
+SPECs: List[VcepSpec] = [
+    VcepSpec(
+        identifier="GN002",
+        version="2.0.0",
+    ),
+    VcepSpec(
+        identifier="GN095",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN098",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN099",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN100",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN101",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN102",
+        version="1.0.0",
+    ),
+    VcepSpec(
+        identifier="GN103",
+        version="1.0.0",
+    ),
+]
 
 PM1_CLUSTER = {
     # MYH7

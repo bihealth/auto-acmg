@@ -20,8 +20,15 @@ from src.defs.auto_acmg import (
     AutoACMGData,
     AutoACMGPrediction,
     AutoACMGStrength,
+    VcepSpec,
 )
 from src.defs.seqvar import SeqVar
+
+#: VCEP specification for brain malformations.
+SPEC = VcepSpec(
+    identifier="GN018",
+    version="1.1.0",
+)
 
 PM1_CLUSTER = {
     "HGNC:393": [  # AKT3
