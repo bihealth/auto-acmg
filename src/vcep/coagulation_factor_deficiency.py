@@ -172,6 +172,19 @@ class CoagulationFactorDeficiencyPredictor(DefaultPredictor):
             ),
         )
 
+    def predict_pp3bp4(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Use REVEL for PP3 and BP4 for Coagulation Factor Deficiency."""
+        var_data.thresholds.pp3bp4_strategy = "revel"
+        var_data.thresholds.revel_pathogenic = 0.6
+        var_data.thresholds.revel_benign = 0.3
+        var_data.thresholds.spliceAI_acceptor_gain = 0.5
+        var_data.thresholds.spliceAI_acceptor_loss = 0.5
+        var_data.thresholds.spliceAI_donor_gain = 0.5
+        var_data.thresholds.spliceAI_donor_loss = 0.5
+        return super().predict_pp3bp4(seqvar, var_data)
+
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Change the spliceAI and phyloP threshold for BP7."""
         if var_data.hgnc_id == "HGNC:3546":

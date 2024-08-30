@@ -105,3 +105,10 @@ class FamilialHypercholesterolemiaPredictor(DefaultPredictor):
                 summary="BP1 is not applicable for the gene.",
             ),
         )
+
+    def predict_pp3bp4(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Use REVEL scores for PP3 and BP4."""
+        var_data.thresholds.pp3bp4_strategy = "revel"
+        var_data.thresholds.revel_pathogenic = 0.75
+        var_data.thresholds.revel_benign = 0.5
+        return super().predict_pp3bp4(seqvar, var_data)

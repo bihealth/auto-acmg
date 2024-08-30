@@ -358,6 +358,20 @@ class AutoACMG:
             self.result.data.scores.dbnsfp.phyloP100 = self._convert_score_val(
                 dbsnfp.phyloP100way_vertebrate
             )
+            self.result.data.scores.dbnsfp.sift = self._convert_score_val(dbsnfp.SIFT_score)
+            self.result.data.scores.dbnsfp.polyphen2 = self._convert_score_val(
+                dbsnfp.Polyphen2_HVAR_score
+            )
+            self.result.data.scores.dbnsfp.mutationTaster = self._convert_score_val(
+                dbsnfp.MutationTaster_score
+            )
+            self.result.data.scores.dbnsfp.fathmm = self._convert_score_val(dbsnfp.FATHMM_score)
+            self.result.data.scores.dbnsfp.provean = self._convert_score_val(dbsnfp.PROVEAN_score)
+            self.result.data.scores.dbnsfp.vest4 = self._convert_score_val(dbsnfp.VEST4_score)
+            self.result.data.scores.dbnsfp.mutpred = self._convert_score_val(dbsnfp.MutPred_score)
+            self.result.data.scores.dbnsfp.primateAI = self._convert_score_val(
+                dbsnfp.PrimateAI_score
+            )
         if dbscsnv := variant_info.dbscsnv:
             self.result.data.scores.dbscsnv.ada = dbscsnv.ada_score
             self.result.data.scores.dbscsnv.rf = dbscsnv.rf_score

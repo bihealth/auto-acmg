@@ -40,14 +40,14 @@ def var_data_no_splice():
 def test_splice_variant_positive(auto_pp3bp4: AutoPP3BP4, var_data_splice: MagicMock):
     """Test that _splice_variant correctly identifies a splice variant."""
     assert (
-        auto_pp3bp4._splice_variant(var_data_splice) is True
+        auto_pp3bp4._is_splice_variant(var_data_splice) is True
     ), "Should return True when splice indicators are present in the data."
 
 
 def test_splice_variant_negative(auto_pp3bp4: AutoPP3BP4, var_data_no_splice: MagicMock):
     """Test that _splice_variant correctly identifies non-splice variants."""
     assert (
-        auto_pp3bp4._splice_variant(var_data_no_splice) is False
+        auto_pp3bp4._is_splice_variant(var_data_no_splice) is False
     ), "Should return False when no splice indicators are present in the data."
 
 
@@ -56,7 +56,7 @@ def test_splice_variant_with_other_effects(auto_pp3bp4: AutoPP3BP4, var_data_spl
     # Adjust the mock to include other non-splice related effects
     var_data_splice.consequence.mehari.append("non_splice_effect")
     assert (
-        auto_pp3bp4._splice_variant(var_data_splice) is True
+        auto_pp3bp4._is_splice_variant(var_data_splice) is True
     ), "Should still return True as long as one splice indicator is present."
 
 

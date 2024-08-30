@@ -137,6 +137,59 @@ class BrainMalformationsPredictor(DefaultPredictor):
             ),
         )
 
+    def predict_pp3bp4(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Predict PP3 and BP4 criteria for brain malformations based on VCEP specific rules."""
+        logger.info("Predict PP3 and BP4 for brain malformations.")
+
+        # PP3 is not applicable
+        pp3_result = AutoACMGCriteria(
+            name="PP3",
+            prediction=AutoACMGPrediction.NotApplicable,
+            strength=AutoACMGStrength.PathogenicSupporting,
+            summary="PP3 is not applicable.",
+        )
+
+        # Check for BP4 criteria
+        bp4_met = False
+        comments = ["BP4 evaluation based on splicing predictions:"]
+
+        # Criteria for BP4
+        if (
+            self._is_synonymous_variant(var_data)
+            or self._is_intron_variant(var_data)
+            or self._is_utr_variant(var_data)
+        ):
+            if not self._affect_spliceAI(var_data):
+                bp4_met = True
+                comments.append(
+                    "Variant is nto predicted to affect splicing based on SpliceAI scores. "
+                    f"SpliceAI scores: {var_data.scores.cadd.spliceAI_acceptor_gain}, "
+                    f"{var_data.scores.cadd.spliceAI_acceptor_loss}, "
+                    f"{var_data.scores.cadd.spliceAI_donor_gain}, "
+                    f"{var_data.scores.cadd.spliceAI_donor_loss}."
+                )
+            else:
+                comments.append(
+                    "Variant is predicted to affect splicing based on SpliceAI scores. "
+                    f"SpliceAI scores: {var_data.scores.cadd.spliceAI_acceptor_gain}, "
+                    f"{var_data.scores.cadd.spliceAI_acceptor_loss}, "
+                    f"{var_data.scores.cadd.spliceAI_donor_gain}, "
+                    f"{var_data.scores.cadd.spliceAI_donor_loss}."
+                )
+        else:
+            comments.append("Variant type does not qualify for BP4 evaluation.")
+
+        bp4_result = AutoACMGCriteria(
+            name="BP4",
+            prediction=AutoACMGPrediction.Met if bp4_met else AutoACMGPrediction.NotMet,
+            strength=AutoACMGStrength.BenignSupporting,
+            summary=" | ".join(comments),
+        )
+
+        return (pp3_result, bp4_result)
+
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Change the PhyloP100 score threshold for BP7."""
         var_data.thresholds.phyloP100 = 0.1

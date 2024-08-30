@@ -166,6 +166,15 @@ class CardiomyopathyPredictor(DefaultPredictor):
             ),
         )
 
+    def predict_pp3bp4(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Override PP3 and BP4 for Cardiomyopathy to use REVEL thresholds."""
+        var_data.thresholds.pp3bp4_strategy = "revel"
+        var_data.thresholds.revel_pathogenic = 0.7
+        var_data.thresholds.revel_benign = 0.4
+        return super().predict_pp3bp4(seqvar, var_data)
+
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Override donor and acceptor positions for Cardiomyopathy VCEP."""
         var_data.thresholds.bp7_donor = 7
