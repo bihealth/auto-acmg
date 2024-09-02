@@ -3,7 +3,13 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.criteria.auto_pm2_ba1_bs1_bs2 import AutoPM2BA1BS1BS2
-from src.defs.auto_acmg import AlleleCondition, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AlleleCondition,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    AutoACMGTresholds,
+)
 from src.defs.exceptions import MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
@@ -21,8 +27,10 @@ def auto_pm2ba1bs1bs2():
 def gnomad_exomes_data():
     return MagicMock(
         alleleCounts=[
-            MagicMock(cohort="controls", afGrpmax=0.01),  # Control population
-            MagicMock(cohort="non_controls", afGrpmax=0.05),  # Non-control population
+            MagicMock(cohort="controls", afGrpmax=0.01, anGrpmax=3000),  # Control population
+            MagicMock(
+                cohort="non_controls", afGrpmax=0.05, anGrpmax=3000
+            ),  # Non-control population
         ]
     )
 
@@ -30,7 +38,9 @@ def gnomad_exomes_data():
 @pytest.fixture
 def gnomad_exomes_no_controls():
     return MagicMock(
-        alleleCounts=[MagicMock(cohort="non_controls", afGrpmax=0.05)]  # Only non-control data
+        alleleCounts=[
+            MagicMock(cohort="non_controls", afGrpmax=0.05, anGrpmax=3000)
+        ]  # Only non-control data
     )
 
 
@@ -39,23 +49,32 @@ def gnomad_exomes_empty():
     return MagicMock(alleleCounts=[])  # No data
 
 
-def test_get_control_af_success(auto_pm2ba1bs1bs2, gnomad_exomes_data):
+@pytest.fixture
+def var_data():
+    thresholds = AutoACMGTresholds(ba1_benign=0.05, bs1_benign=0.01, pm2_pathogenic=0.005)
+    return AutoACMGData(thresholds=thresholds)
+
+
+def test_get_control_af_success(auto_pm2ba1bs1bs2, gnomad_exomes_data, var_data):
     """Test successful retrieval of control allele frequency."""
-    result = auto_pm2ba1bs1bs2._get_control_af(gnomad_exomes_data)
+    var_data.gnomad_exomes = gnomad_exomes_data
+    result = auto_pm2ba1bs1bs2._get_control_af(var_data)
     assert result is not None
     assert result.afGrpmax == 0.01
     assert result.cohort == "controls"
 
 
-def test_get_control_af_no_controls(auto_pm2ba1bs1bs2, gnomad_exomes_no_controls):
+def test_get_control_af_no_controls(auto_pm2ba1bs1bs2, gnomad_exomes_no_controls, var_data):
     """Test the case where no control data is available."""
-    result = auto_pm2ba1bs1bs2._get_control_af(gnomad_exomes_no_controls)
+    var_data.gnomad_exomes = gnomad_exomes_no_controls
+    result = auto_pm2ba1bs1bs2._get_control_af(var_data)
     assert result is None
 
 
-def test_get_control_af_empty_data(auto_pm2ba1bs1bs2, gnomad_exomes_empty):
+def test_get_control_af_empty_data(auto_pm2ba1bs1bs2, gnomad_exomes_empty, var_data):
     """Test the case where allele counts are empty."""
-    result = auto_pm2ba1bs1bs2._get_control_af(gnomad_exomes_empty)
+    var_data.gnomad_exomes = gnomad_exomes_empty
+    result = auto_pm2ba1bs1bs2._get_control_af(var_data)
     assert result is None
 
 
@@ -66,9 +85,9 @@ def test_get_control_af_empty_data(auto_pm2ba1bs1bs2, gnomad_exomes_empty):
 def gnomad_exomes_mixed_data():
     return MagicMock(
         alleleCounts=[
-            MagicMock(cohort="non_controls", afGrpmax=0.02),
-            MagicMock(cohort="controls", afGrpmax=0.03),
-            MagicMock(cohort="non_controls", afGrpmax=0.04),
+            MagicMock(cohort="non_controls", afGrpmax=0.02, anGrpmax=3000),
+            MagicMock(cohort="controls", afGrpmax=0.03, anGrpmax=3000),
+            MagicMock(cohort="non_controls", afGrpmax=0.04, anGrpmax=3000),
         ]
     )
 
@@ -77,40 +96,40 @@ def gnomad_exomes_mixed_data():
 def gnomad_exomes_no_controls_higher_af():
     return MagicMock(
         alleleCounts=[
-            MagicMock(cohort="non_controls", afGrpmax=0.05),
-            MagicMock(cohort="non_controls", afGrpmax=0.07),
+            MagicMock(cohort="non_controls", afGrpmax=0.05, anGrpmax=3000),
+            MagicMock(cohort="non_controls", afGrpmax=0.07, anGrpmax=3000),
         ]
     )
 
 
-def test_get_any_af_control_preference(auto_pm2ba1bs1bs2, gnomad_exomes_mixed_data):
+def test_get_any_af_control_preference(auto_pm2ba1bs1bs2, gnomad_exomes_mixed_data, var_data):
     """Test retrieval of control data when mixed data is available."""
-    result = auto_pm2ba1bs1bs2._get_any_af(gnomad_exomes_mixed_data)
+    var_data.gnomad_exomes = gnomad_exomes_mixed_data
+    result = auto_pm2ba1bs1bs2._get_any_af(var_data)
     assert result is not None
     assert result.afGrpmax == 0.03
     assert result.cohort == "controls"
 
 
-def test_get_any_af_highest_non_control(auto_pm2ba1bs1bs2, gnomad_exomes_no_controls_higher_af):
+def test_get_any_af_highest_non_control(
+    auto_pm2ba1bs1bs2, gnomad_exomes_no_controls_higher_af, var_data
+):
     """Test retrieval of the highest allele frequency from non-control data."""
-    result = auto_pm2ba1bs1bs2._get_any_af(gnomad_exomes_no_controls_higher_af)
+    var_data.gnomad_exomes = gnomad_exomes_no_controls_higher_af
+    result = auto_pm2ba1bs1bs2._get_any_af(var_data)
     assert result is not None
     assert result.afGrpmax == 0.07
     assert result.cohort == "non_controls"
 
 
-def test_get_any_af_no_data(auto_pm2ba1bs1bs2, gnomad_exomes_empty):
+def test_get_any_af_no_data(auto_pm2ba1bs1bs2, gnomad_exomes_empty, var_data):
     """Test behavior when no allele count data is available."""
-    result = auto_pm2ba1bs1bs2._get_any_af(gnomad_exomes_empty)
+    var_data.gnomad_exomes = gnomad_exomes_empty
+    result = auto_pm2ba1bs1bs2._get_any_af(var_data)
     assert result is None
 
 
 # =========== _get_af ==================
-
-
-@pytest.fixture
-def seqvar_mitochondrial():
-    return MagicMock(chrom="MT", position=12345)
 
 
 @pytest.fixture
@@ -127,8 +146,8 @@ def gnomad_mtdna_data():
 def gnomad_exomes_data_af():
     return MagicMock(
         alleleCounts=[
-            MagicMock(cohort="controls", afGrpmax=0.02),
-            MagicMock(cohort="non_controls", afGrpmax=0.03),
+            MagicMock(cohort="controls", afGrpmax=0.02, anGrpmax=3000),
+            MagicMock(cohort="non_controls", afGrpmax=0.03, anGrpmax=3000),
         ]
     )
 
@@ -138,42 +157,59 @@ def gnomad_exomes_empty_af():
     return MagicMock(alleleCounts=[])
 
 
-def test_get_af_mitochondrial_variant(
-    auto_pm2ba1bs1bs2, seqvar_mitochondrial, gnomad_mtdna_data, gnomad_exomes_data_af
-):
-    """Test retrieval of allele frequency for mitochondrial variant."""
-    result = auto_pm2ba1bs1bs2._get_af(
-        seqvar_mitochondrial, gnomad_mtdna_data, gnomad_exomes_data_af
-    )
-    assert result == 0.015
-
-
 def test_get_af_non_mitochondrial_with_controls(
-    auto_pm2ba1bs1bs2, seqvar_non_mitochondrial, gnomad_exomes_data_af
+    auto_pm2ba1bs1bs2, seqvar_non_mitochondrial, gnomad_exomes_data_af, var_data
 ):
     """Test retrieval of allele frequency for non-mitochondrial variant with controls data."""
-    result = auto_pm2ba1bs1bs2._get_af(seqvar_non_mitochondrial, None, gnomad_exomes_data_af)
+    var_data.gnomad_exomes = gnomad_exomes_data_af
+    result = auto_pm2ba1bs1bs2._get_af(seqvar_non_mitochondrial, var_data)
     assert result == 0.02
 
 
 def test_get_af_non_mitochondrial_without_controls(
-    auto_pm2ba1bs1bs2, seqvar_non_mitochondrial, gnomad_exomes_data_af
+    auto_pm2ba1bs1bs2, seqvar_non_mitochondrial, gnomad_exomes_data_af, var_data
 ):
     """Test retrieval of allele frequency for non-mitochondrial variant without controls data."""
-    result = auto_pm2ba1bs1bs2._get_af(seqvar_non_mitochondrial, None, gnomad_exomes_data_af)
+    var_data.gnomad_exomes = gnomad_exomes_data_af
+    result = auto_pm2ba1bs1bs2._get_af(seqvar_non_mitochondrial, var_data)
     assert result == 0.02
 
 
-def test_get_af_missing_mtdna_data(auto_pm2ba1bs1bs2, seqvar_mitochondrial, gnomad_exomes_data_af):
-    """Test handling of missing mitochondrial gnomad data."""
-    with pytest.raises(MissingDataError):
-        auto_pm2ba1bs1bs2._get_af(seqvar_mitochondrial, None, gnomad_exomes_data_af)
-
-
-def test_get_af_missing_exomes_data(auto_pm2ba1bs1bs2, seqvar_non_mitochondrial, gnomad_mtdna_data):
+def test_get_af_missing_exomes_data(
+    auto_pm2ba1bs1bs2, seqvar_non_mitochondrial, gnomad_mtdna_data, var_data
+):
     """Test handling of missing gnomad exomes data."""
+    var_data.gnomad_mtdna = gnomad_mtdna_data
+    var_data.gnomad_exomes = None
     with pytest.raises(MissingDataError):
-        auto_pm2ba1bs1bs2._get_af(seqvar_non_mitochondrial, gnomad_mtdna_data, None)
+        auto_pm2ba1bs1bs2._get_af(seqvar_non_mitochondrial, var_data)
+
+
+# =========== _get_m_af ==================
+
+
+@pytest.fixture
+def seqvar_mitochondrial():
+    return MagicMock(chrom="MT", position=12345)
+
+
+def test_get_m_af_mitochondrial(
+    auto_pm2ba1bs1bs2, seqvar_mitochondrial, gnomad_mtdna_data, var_data
+):
+    """Test retrieval of allele frequency for mitochondrial variant."""
+    var_data.gnomad_mtdna = gnomad_mtdna_data
+    result = auto_pm2ba1bs1bs2._get_m_af(var_data)
+    assert result == 0.015
+
+
+def test_get_m_af_missing_mtdna_data(
+    auto_pm2ba1bs1bs2, seqvar_mitochondrial, gnomad_exomes_data_af, var_data
+):
+    """Test handling of missing gnomad mtdna data."""
+    var_data.gnomad_mtdna = None
+    var_data.gnomad_exomes = gnomad_exomes_data_af
+    with pytest.raises(MissingDataError):
+        auto_pm2ba1bs1bs2._get_m_af(var_data)
 
 
 # =========== _get_allele_cond ===========
@@ -491,11 +527,6 @@ def test_ba1_criteria(mock_get_af, af, expected, auto_pm2ba1bs1bs2, seqvar_verif
 @pytest.fixture
 def seqvar():
     return SeqVar(genome_release=GenomeRelease.GRCh37, chrom="1", pos=100, delete="A", insert="T")
-
-
-@pytest.fixture
-def var_data():
-    return MagicMock(thresholds={"ba1_benign": 0.05, "bs1_benign": 0.01, "pm2_pathogenic": 0.005})
 
 
 def create_pred_object(pm2=False, ba1=False, bs1=False, bs2=False):
