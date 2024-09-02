@@ -93,6 +93,31 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, rett_angelman_predict
     ), "The summary should indicate the default fallback."
 
 
+@patch.object(RettAngelmanPredictor, "_get_af", return_value=0.1)
+@patch.object(RettAngelmanPredictor, "_ba1_exception", return_value=False)
+def test_verify_pm2ba1bs1bs2(
+    mock_get_af, mock_ba1_exception, rett_angelman_predictor, auto_acmg_data, seqvar
+):
+    # Setup: Adjusting the thresholds to test under different conditions
+    auto_acmg_data.thresholds.ba1_benign = 0.05
+    auto_acmg_data.thresholds.bs1_benign = 0.02
+    auto_acmg_data.thresholds.pm2_pathogenic = 0.001
+
+    # Call the method under test
+    result, comment = rett_angelman_predictor.verify_pm2ba1bs1bs2(seqvar, auto_acmg_data)
+
+    # Assertions to validate the expected behavior
+    assert result.BA1 is True, "Expected PM2 to be True based on the mocked allele frequency"
+
+    # Assert changed thresholds
+    assert (
+        auto_acmg_data.thresholds.ba1_benign == 0.0003
+    ), "BA1 threshold should be adjusted to 0.0003"
+    assert (
+        auto_acmg_data.thresholds.bs1_benign == 0.00008
+    ), "BS1 threshold should be adjusted to 0.00008"
+
+
 def test_exclude_pm4_true(rett_angelman_predictor, auto_acmg_data, seqvar):
     """Test that the variant is excluded from PM4 based on the exclusion regions."""
     auto_acmg_data.hgnc_id = "HGNC:11411"  # CDKL5

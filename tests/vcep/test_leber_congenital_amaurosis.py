@@ -115,6 +115,33 @@ def test_predict_pm1_fallback_to_default(
     ), "The summary should indicate the default fallback."
 
 
+@patch.object(LeberCongenitalAmaurosisPredictor, "_get_af", return_value=0.1)
+@patch.object(LeberCongenitalAmaurosisPredictor, "_ba1_exception", return_value=False)
+def test_verify_pm2ba1bs1bs2(
+    mock_get_af, mock_ba1_exception, leber_congenital_amaurosis_predictor, auto_acmg_data, seqvar
+):
+    # Setup: Adjusting the thresholds to test under different conditions
+    auto_acmg_data.thresholds.ba1_benign = 0.05
+    auto_acmg_data.thresholds.bs1_benign = 0.02
+    auto_acmg_data.thresholds.pm2_pathogenic = 0.001
+
+    # Call the method under test
+    result, comment = leber_congenital_amaurosis_predictor.verify_pm2ba1bs1bs2(
+        seqvar, auto_acmg_data
+    )
+
+    # Assertions to validate the expected behavior
+    assert result.BA1 is True, "Expected PM2 to be True based on the mocked allele frequency"
+
+    # Assert changed thresholds
+    assert (
+        auto_acmg_data.thresholds.ba1_benign == 0.008
+    ), "BA1 threshold should be adjusted to 0.008"
+    assert (
+        auto_acmg_data.thresholds.bs1_benign == 0.0008
+    ), "BS1 threshold should be adjusted to 0.0008"
+
+
 def test_bp3_not_applicable(leber_congenital_amaurosis_predictor, seqvar, auto_acmg_data):
     """Test BP3 is not applicable for ACADVL as overridden."""
     result = leber_congenital_amaurosis_predictor._bp3_not_applicable(seqvar, auto_acmg_data)

@@ -123,6 +123,31 @@ def test_predict_pm1_fallback_to_default(
     assert mock_super_predict_pm1.called, "super().predict_pm1 should have been called."
 
 
+@patch.object(BrainMalformationsPredictor, "_get_af", return_value=0.1)
+@patch.object(BrainMalformationsPredictor, "_ba1_exception", return_value=False)
+def test_verify_pm2ba1bs1bs2(
+    mock_get_af, mock_ba1_exception, brain_malformations_predictor, auto_acmg_data, seqvar
+):
+    # Setup: Adjusting the thresholds to test under different conditions
+    auto_acmg_data.thresholds.ba1_benign = 0.05
+    auto_acmg_data.thresholds.bs1_benign = 0.02
+    auto_acmg_data.thresholds.pm2_pathogenic = 0.001
+
+    # Call the method under test
+    result, comment = brain_malformations_predictor.verify_pm2ba1bs1bs2(seqvar, auto_acmg_data)
+
+    # Assertions to validate the expected behavior
+    assert result.BA1 is True, "Expected PM2 to be True based on the mocked allele frequency"
+
+    # Assert changed thresholds
+    assert (
+        auto_acmg_data.thresholds.ba1_benign == 0.000926
+    ), "BA1 threshold should be adjusted to 0.000926"
+    assert (
+        auto_acmg_data.thresholds.bs1_benign == 0.000185
+    ), "BS1 threshold should be adjusted to 0.000185"
+
+
 def test_predict_pm4bp3_not_applicable(brain_malformations_predictor, seqvar, auto_acmg_data):
     """Test that PM4 and BP3 are marked as Not Applicable for the brain malformations VCEP."""
     pm4_result, bp3_result = brain_malformations_predictor.predict_pm4bp3(seqvar, auto_acmg_data)

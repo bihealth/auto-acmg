@@ -106,6 +106,31 @@ def test_predict_pm1_fallback_to_default(
     ), "The summary should indicate the default fallback."
 
 
+@patch.object(MyeloidMalignancyPredictor, "_get_af", return_value=0.1)
+@patch.object(MyeloidMalignancyPredictor, "_ba1_exception", return_value=False)
+def test_verify_pm2ba1bs1bs2(
+    mock_get_af, mock_ba1_exception, myeloid_malignancy_predictor, auto_acmg_data, seqvar
+):
+    # Setup: Adjusting the thresholds to test under different conditions
+    auto_acmg_data.thresholds.ba1_benign = 0.05
+    auto_acmg_data.thresholds.bs1_benign = 0.02
+    auto_acmg_data.thresholds.pm2_pathogenic = 0.001
+
+    # Call the method under test
+    result, comment = myeloid_malignancy_predictor.verify_pm2ba1bs1bs2(seqvar, auto_acmg_data)
+
+    # Assertions to validate the expected behavior
+    assert result.BA1 is True, "Expected PM2 to be True based on the mocked allele frequency"
+
+    # Assert changed thresholds
+    assert (
+        auto_acmg_data.thresholds.ba1_benign == 0.0015
+    ), "BA1 threshold should be adjusted to 0.0015"
+    assert (
+        auto_acmg_data.thresholds.bs1_benign == 0.00015
+    ), "BS1 threshold should be adjusted to 0.00015"
+
+
 def test_bp3_not_applicable(myeloid_malignancy_predictor, seqvar, auto_acmg_data):
     """Test BP3 is not applicable for ACADVL as overridden."""
     result = myeloid_malignancy_predictor._bp3_not_applicable(seqvar, auto_acmg_data)

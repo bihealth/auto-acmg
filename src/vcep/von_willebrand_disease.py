@@ -48,7 +48,7 @@ class VonWillebrandDiseasePredictor(DefaultPredictor):
         """Change the thresholds for PM2, BA1 and BS1."""
         var_data.thresholds.pm2_pathogenic = 0.0001
         var_data.thresholds.ba1_benign = 0.1
-        var_data.thresholds.bs1_benign = 0.0
+        var_data.thresholds.bs1_benign = 0.01
         return super().predict_pm2ba1bs1bs2(seqvar, var_data)
 
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:

@@ -113,9 +113,6 @@ class MalignantHyperthermiaPredictor(DefaultPredictor):
             BA1BS1BS2PM2: The prediction result.
         """
         self.prediction_pm2ba1bs1bs2 = PM2BA1BS1BS2()
-        self.comment_pm2ba1bs1bs2 = (
-            "PM2 is not applicable for Malignant Hyperthermia Susceptibility. "
-        )
         var_data.thresholds.ba1_benign = 0.0038
         var_data.thresholds.bs1_benign = 0.0008
         try:
@@ -132,6 +129,10 @@ class MalignantHyperthermiaPredictor(DefaultPredictor):
             elif af >= var_data.thresholds.bs1_benign:
                 self.comment_pm2ba1bs1bs2 = "Allele frequency > 1%: BS1 is met. "
                 self.prediction_pm2ba1bs1bs2.BS1 = True
+
+            self.comment_pm2ba1bs1bs2 += (
+                "PM2 is not applicable for Malignant Hyperthermia Susceptibility. "
+            )
 
             if not self.prediction_pm2ba1bs1bs2.BA1 and af and self._check_zyg(seqvar, var_data):
                 self.comment_pm2ba1bs1bs2 += (
