@@ -79,6 +79,24 @@ class InsightColorectalCancerPredictor(DefaultPredictor):
 
         return super().predict_pm1(seqvar, var_data)
 
+    def predict_pm2ba1bs1bs2(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
+        """Change the thresholds for PM2, BA1 and BS1."""
+        var_data.thresholds.pm2_pathogenic = 0.00002  # 1/50,000
+        if var_data.hgnc_id == "HGNC:583":  # APC
+            var_data.thresholds.pm2_pathogenic = 0.000003
+        if var_data.hgnc_id == "HGNC:7329":  # MSH6
+            var_data.thresholds.ba1_benign = 0.0022
+            var_data.thresholds.bs1_benign = 0.00022
+        elif var_data.hgnc_id == "HGNC:9122":  # PMS2
+            var_data.thresholds.ba1_benign = 0.0028
+            var_data.thresholds.bs1_benign = 0.0001
+        else:
+            var_data.thresholds.ba1_benign = 0.001
+            var_data.thresholds.bs1_benign = 0.0001
+        return super().predict_pm2ba1bs1bs2(seqvar, var_data)
+
     def predict_pm4bp3(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:

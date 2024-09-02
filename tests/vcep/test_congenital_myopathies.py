@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
@@ -134,6 +135,54 @@ def test_predict_pm1_edge_case_end_boundary(congenital_myopathies_predictor, aut
     assert (
         "falls within a critical domain" in result.summary
     ), "The summary should indicate the critical domain."
+
+
+@patch.object(
+    DefaultPredictor,
+    "predict_pm2ba1bs1bs2",
+    return_value=(
+        AutoACMGCriteria(name="PM2"),
+        AutoACMGCriteria(name="BA1"),
+        AutoACMGCriteria(name="BS1"),
+        AutoACMGCriteria(name="BS2"),
+    ),
+)
+@pytest.mark.parametrize(
+    "hgnc_id,expected_pm2,expected_ba1,expected_bs1",
+    [
+        ("HGNC:7720", 0.0000001, 0.00559, 0.000237),
+        ("HGNC:129", 0.0000001, 0.0000781, 0.00000781),
+        ("HGNC:2974", 0.0000001, 0.0000015, 0.00000015),
+        ("HGNC:7448", 0.0000001, 0.000016, 0.0000016),
+        ("HGNC:10483", 0.0000001, 0.0000486, 0.00000486),
+    ],
+)
+def test_predict_pm2ba1bs1bs2_with_varied_thresholds(
+    mock_super_method,
+    congenital_myopathies_predictor,
+    auto_acmg_data,
+    seqvar,
+    hgnc_id,
+    expected_pm2,
+    expected_ba1,
+    expected_bs1,
+):
+    # Setup
+    auto_acmg_data.hgnc_id = hgnc_id
+
+    # Method call
+    congenital_myopathies_predictor.predict_pm2ba1bs1bs2(seqvar, auto_acmg_data)
+
+    # Validate thresholds are set correctly
+    assert auto_acmg_data.thresholds.pm2_pathogenic == expected_pm2
+    assert auto_acmg_data.thresholds.ba1_benign == expected_ba1
+    assert auto_acmg_data.thresholds.bs1_benign == expected_bs1
+
+    # Check that the superclass method was called with the modified var_data
+    mock_super_method.assert_called_once_with(seqvar, auto_acmg_data)
+
+    # Reset mock for the next iteration
+    mock_super_method.reset_mock()
 
 
 def test_bp3_not_applicable(congenital_myopathies_predictor, seqvar, auto_acmg_data):

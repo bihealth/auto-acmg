@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
 from src.defs.exceptions import MissingDataError
 from src.defs.genome_builds import GenomeRelease
@@ -58,6 +59,44 @@ def test_predict_pm1_name(glaucoma_predictor, auto_acmg_data):
     result = glaucoma_predictor.predict_pm1(glaucoma_predictor.seqvar, auto_acmg_data)
 
     assert result.name == "PM1", "The name of the criteria should be 'PM1'."
+
+
+def test_bs2_not_applicable(glaucoma_predictor, auto_acmg_data):
+    """Test when BS2 is not applicable for Glaucoma VCEP."""
+    result = glaucoma_predictor._bs2_not_applicable(auto_acmg_data)
+    assert result is True, "BS2 should always be not applicable for Glaucoma VCEP."
+
+
+@patch.object(
+    DefaultPredictor,
+    "predict_pm2ba1bs1bs2",
+    return_value=(
+        AutoACMGCriteria(name="PM2"),
+        AutoACMGCriteria(name="BA1"),
+        AutoACMGCriteria(name="BS1"),
+        AutoACMGCriteria(name="BS2"),
+    ),
+)
+def test_predict_pm2ba1bs1bs2(mock_super_method, glaucoma_predictor, auto_acmg_data, seqvar):
+    # Default thresholds
+    auto_acmg_data.thresholds.pm2_pathogenic = 0.00001
+    auto_acmg_data.thresholds.ba1_benign = 0.05
+    auto_acmg_data.thresholds.bs1_benign = 0.01
+
+    result = glaucoma_predictor.predict_pm2ba1bs1bs2(seqvar, auto_acmg_data)
+
+    # Assert that the thresholds were updated correctly
+    assert auto_acmg_data.thresholds.pm2_pathogenic == 0.0001
+    assert auto_acmg_data.thresholds.ba1_benign == 0.01
+    assert auto_acmg_data.thresholds.bs1_benign == 0.001
+
+    # Assert that the superclass method was called once with the modified var_data
+    mock_super_method.assert_called_once_with(seqvar, auto_acmg_data)
+
+    # Assert the response (optional, as we know it's mocked)
+    assert all(
+        c.name in ["PM2", "BA1", "BS1", "BS2"] for c in result
+    ), "Unexpected criteria names returned"
 
 
 def test_bp3_not_applicable(glaucoma_predictor, seqvar, auto_acmg_data):

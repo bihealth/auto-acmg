@@ -4,12 +4,14 @@ import pytest
 
 from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
+    AlleleCondition,
     AutoACMGCriteria,
     AutoACMGData,
     AutoACMGPrediction,
     AutoACMGStrength,
     GenomicStrand,
 )
+from src.defs.exceptions import MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.vcep.pku import PKUPredictor
@@ -82,6 +84,107 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, pku_predictor, auto_a
     assert (
         "Default PM1 prediction fallback." in result.summary
     ), "The summary should indicate the default fallback."
+
+
+@patch.object(
+    PKUPredictor,
+    "_get_allele_cond",
+    return_value=AlleleCondition.Recessive,
+)
+@patch.object(
+    PKUPredictor,
+    "_get_control_af",
+    return_value=MagicMock(bySex=MagicMock(overall=MagicMock(ac=10, nhomalt=6))),
+)
+@patch.object(PKUPredictor, "_get_any_af", return_value=None)
+def test_check_zyg_homozygous_positive(
+    mock_get_any_af,
+    mock_get_control_af,
+    mock_get_allele_cond,
+    pku_predictor,
+    seqvar,
+    auto_acmg_data,
+):
+    pku_predictor.comment_pm2ba1bs1bs2 = ""
+    assert pku_predictor._check_zyg(seqvar, auto_acmg_data) == True
+    assert (
+        "The variant is in a recessive (homozygous) disorder." in pku_predictor.comment_pm2ba1bs1bs2
+    )
+
+
+@patch.object(
+    PKUPredictor,
+    "_get_allele_cond",
+    return_value=AlleleCondition.Recessive,
+)
+@patch.object(
+    PKUPredictor,
+    "_get_control_af",
+    return_value=MagicMock(bySex=MagicMock(overall=MagicMock(ac=10, nhomalt=4))),
+)
+@patch.object(PKUPredictor, "_get_any_af", return_value=None)
+def test_check_zyg_homozygous_negative(
+    mock_get_any_af,
+    mock_get_control_af,
+    mock_get_allele_cond,
+    pku_predictor,
+    seqvar,
+    auto_acmg_data,
+):
+    pku_predictor.comment_pm2ba1bs1bs2 = ""
+    assert pku_predictor._check_zyg(seqvar, auto_acmg_data) == False
+
+
+@patch.object(
+    PKUPredictor,
+    "_get_allele_cond",
+    return_value=AlleleCondition.Recessive,
+)
+@patch.object(PKUPredictor, "_get_control_af", return_value=None)
+@patch.object(PKUPredictor, "_get_any_af", return_value=None)
+def test_check_zyg_missing_data_raises_error(
+    mock_get_any_af,
+    mock_get_control_af,
+    mock_get_allele_cond,
+    pku_predictor,
+    seqvar,
+    auto_acmg_data,
+):
+    pku_predictor.comment_pm2ba1bs1bs2 = ""
+    with pytest.raises(MissingDataError):
+        pku_predictor._check_zyg(seqvar, auto_acmg_data)
+
+
+@patch.object(
+    DefaultPredictor,
+    "predict_pm2ba1bs1bs2",
+    return_value=(
+        AutoACMGCriteria(name="PM2"),
+        AutoACMGCriteria(name="BA1"),
+        AutoACMGCriteria(name="BS1"),
+        AutoACMGCriteria(name="BS2"),
+    ),
+)
+def test_predict_pm2ba1bs1bs2(mock_super_method, pku_predictor, auto_acmg_data, seqvar):
+    # Default thresholds
+    auto_acmg_data.thresholds.pm2_pathogenic = 0.00001
+    auto_acmg_data.thresholds.ba1_benign = 0.05
+    auto_acmg_data.thresholds.bs1_benign = 0.01
+
+    result = pku_predictor.predict_pm2ba1bs1bs2(seqvar, auto_acmg_data)
+
+    # Assert that the thresholds were updated correctly
+    assert auto_acmg_data.thresholds.pm2_pathogenic == 0.000002
+    assert auto_acmg_data.thresholds.ba1_benign == 0.015
+    assert auto_acmg_data.thresholds.bs1_benign == 0.002
+
+    # Assert that the superclass method was called once with the modified var_data
+    mock_super_method.assert_called_once_with(seqvar, auto_acmg_data)
+
+    # Assert the response (optional, as we know it's mocked)
+    assert all(
+        c.name in ["PM2", "BA1", "BS1", "BS2"] for c in result
+    ), "Unexpected criteria names returned"
 
 
 def test_predict_pp2bp1(pku_predictor, seqvar, auto_acmg_data):

@@ -2,7 +2,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.criteria.default_predictor import DefaultPredictor
+from src.defs.auto_acmg import (
+    AlleleCondition,
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+)
+from src.defs.exceptions import MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.vcep.scid import SCIDPredictor
@@ -109,6 +117,127 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, scid_predictor, auto_
     assert (
         "Default fallback for PM1." in result.summary
     ), "The summary should indicate the default fallback."
+
+
+@patch.object(
+    SCIDPredictor,
+    "_get_allele_cond",
+    return_value=AlleleCondition.Recessive,
+)
+@patch.object(
+    SCIDPredictor,
+    "_get_control_af",
+    return_value=MagicMock(bySex=MagicMock(overall=MagicMock(ac=10, nhomalt=6))),
+)
+@patch.object(SCIDPredictor, "_get_any_af", return_value=None)
+def test_check_zyg_homozygous_positive(
+    mock_get_any_af,
+    mock_get_control_af,
+    mock_get_allele_cond,
+    scid_predictor,
+    seqvar,
+    auto_acmg_data,
+):
+    scid_predictor.comment_pm2ba1bs1bs2 = ""
+    assert scid_predictor._check_zyg(seqvar, auto_acmg_data) == True
+    assert (
+        "The variant is in a recessive (homozygous) disorder."
+        in scid_predictor.comment_pm2ba1bs1bs2
+    )
+
+
+@patch.object(
+    SCIDPredictor,
+    "_get_allele_cond",
+    return_value=AlleleCondition.Recessive,
+)
+@patch.object(
+    SCIDPredictor,
+    "_get_control_af",
+    return_value=MagicMock(bySex=MagicMock(overall=MagicMock(ac=10, nhomalt=4))),
+)
+@patch.object(SCIDPredictor, "_get_any_af", return_value=None)
+def test_check_zyg_homozygous_negative(
+    mock_get_any_af,
+    mock_get_control_af,
+    mock_get_allele_cond,
+    scid_predictor,
+    seqvar,
+    auto_acmg_data,
+):
+    scid_predictor.comment_pm2ba1bs1bs2 = ""
+    assert scid_predictor._check_zyg(seqvar, auto_acmg_data) == False
+
+
+@patch.object(
+    SCIDPredictor,
+    "_get_allele_cond",
+    return_value=AlleleCondition.Recessive,
+)
+@patch.object(SCIDPredictor, "_get_control_af", return_value=None)
+@patch.object(SCIDPredictor, "_get_any_af", return_value=None)
+def test_check_zyg_missing_data_raises_error(
+    mock_get_any_af,
+    mock_get_control_af,
+    mock_get_allele_cond,
+    scid_predictor,
+    seqvar,
+    auto_acmg_data,
+):
+    scid_predictor.comment_pm2ba1bs1bs2 = ""
+    with pytest.raises(MissingDataError):
+        scid_predictor._check_zyg(seqvar, auto_acmg_data)
+
+
+@patch.object(
+    DefaultPredictor,
+    "predict_pm2ba1bs1bs2",
+    return_value=(
+        AutoACMGCriteria(name="PM2"),
+        AutoACMGCriteria(name="BA1"),
+        AutoACMGCriteria(name="BS1"),
+        AutoACMGCriteria(name="BS2"),
+    ),
+)
+@pytest.mark.parametrize(
+    "hgnc_id,expected_pm2,expected_ba1,expected_bs1",
+    [
+        ("HGNC:12765", 0.00002412, 0.00447, 0.00141),
+        ("HGNC:186", 0.0001742, 0.00721, 0.00161),
+        ("HGNC:17642", 0.00003266, 0.00346, 0.00078),
+        ("HGNC:6024", 0.00004129, 0.00566, 0.00126),
+        ("HGNC:6193", 0.000115, 0.00447, 0.001),
+        ("HGNC:9831", 0.000102, 0.00872, 0.00195),
+        ("HGNC:9832", 0.0000588, 0.00872, 0.00195),
+        ("HGNC:6010", 0.000124, 0.01110, 0.00249),
+    ],
+)
+def test_predict_pm2ba1bs1bs2_gene_specific(
+    mock_super_method,
+    scid_predictor,
+    auto_acmg_data,
+    seqvar,
+    hgnc_id,
+    expected_pm2,
+    expected_ba1,
+    expected_bs1,
+):
+    # Set gene ID
+    auto_acmg_data.hgnc_id = hgnc_id
+
+    # Call the method under test
+    scid_predictor.predict_pm2ba1bs1bs2(seqvar, auto_acmg_data)
+
+    # Assert that the thresholds are set correctly
+    assert auto_acmg_data.thresholds.pm2_pathogenic == expected_pm2
+    assert auto_acmg_data.thresholds.ba1_benign == expected_ba1
+    assert auto_acmg_data.thresholds.bs1_benign == expected_bs1
+
+    # Validate that the superclass method was called correctly with modified var_data
+    mock_super_method.assert_called_once_with(seqvar, auto_acmg_data)
+
+    # Reset mock for the next iteration
+    mock_super_method.reset_mock()
 
 
 def test_is_conserved_scid_gene(scid_predictor, auto_acmg_data):

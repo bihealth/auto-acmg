@@ -155,6 +155,52 @@ def test_predict_pm1_fallback_to_default(
     ), "The summary should indicate the default fallback."
 
 
+@patch.object(
+    DefaultPredictor,
+    "predict_pm2ba1bs1bs2",
+    return_value=(
+        AutoACMGCriteria(name="PM2"),
+        AutoACMGCriteria(name="BA1"),
+        AutoACMGCriteria(name="BS1"),
+        AutoACMGCriteria(name="BS2"),
+    ),
+)
+@pytest.mark.parametrize(
+    "hgnc_id,expected_pm2,expected_ba1,expected_bs1",
+    [
+        ("HGNC:583", 0.000003, 0.001, 0.0001),
+        ("HGNC:7329", 0.00002, 0.0022, 0.00022),
+        ("HGNC:9122", 0.00002, 0.0028, 0.0001),
+    ],
+)
+def test_predict_pm2ba1bs1bs2_specific_genes(
+    mock_super_method,
+    insight_colorectal_cancer_predictor,
+    auto_acmg_data,
+    seqvar,
+    hgnc_id,
+    expected_pm2,
+    expected_ba1,
+    expected_bs1,
+):
+    # Setup
+    auto_acmg_data.hgnc_id = hgnc_id
+
+    # Method call
+    insight_colorectal_cancer_predictor.predict_pm2ba1bs1bs2(seqvar, auto_acmg_data)
+
+    # Validate thresholds are set correctly
+    assert auto_acmg_data.thresholds.pm2_pathogenic == expected_pm2
+    assert auto_acmg_data.thresholds.ba1_benign == expected_ba1
+    assert auto_acmg_data.thresholds.bs1_benign == expected_bs1
+
+    # Check that the superclass method was called with the modified var_data
+    mock_super_method.assert_called_once_with(seqvar, auto_acmg_data)
+
+    # Reset mock for the next iteration
+    mock_super_method.reset_mock()
+
+
 def test_predict_pm4bp3_not_applicable(insight_colorectal_cancer_predictor, seqvar, auto_acmg_data):
     """Test that PM4 and BP3 are marked as Not Applicable for the brain malformations VCEP."""
     pm4_result, bp3_result = insight_colorectal_cancer_predictor.predict_pm4bp3(

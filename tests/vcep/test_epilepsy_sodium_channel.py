@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
@@ -132,6 +133,55 @@ def test_predict_pm1_edge_case_end_boundary(epilepsy_sodium_channel_predictor, a
         result.summary
         == "Variant falls within a critical residue region for HGNC:10585 between positions 226-246. PM1 is met."
     ), "The summary should indicate the critical region."
+
+
+@patch.object(
+    DefaultPredictor,
+    "predict_pm2ba1bs1bs2",
+    return_value=(
+        AutoACMGCriteria(name="PM2"),
+        AutoACMGCriteria(name="BA1"),
+        AutoACMGCriteria(name="BS1"),
+        AutoACMGCriteria(name="BS2"),
+    ),
+)
+@pytest.mark.parametrize(
+    "hgnc_id,expected_ba1,expected_bs1",
+    [
+        ("HGNC:10585", 0.0002, 0.000004),
+        ("HGNC:10588", 0.0001, 0.000002),
+        ("HGNC:10590", 0.0001, 0.000002),
+        ("HGNC:10596", 0.0001, 0.000002),
+        ("HGNC:10586", 0.003, 0.0001),
+    ],
+)
+def test_predict_pm2ba1bs1bs2_with_varied_thresholds(
+    mock_super_method,
+    epilepsy_sodium_channel_predictor,
+    auto_acmg_data,
+    seqvar,
+    hgnc_id,
+    expected_ba1,
+    expected_bs1,
+):
+    # Setup
+    auto_acmg_data.hgnc_id = hgnc_id
+
+    # Method call
+    epilepsy_sodium_channel_predictor.predict_pm2ba1bs1bs2(seqvar, auto_acmg_data)
+
+    # Validate thresholds are set correctly
+    assert (
+        auto_acmg_data.thresholds.pm2_pathogenic == 0.000001
+    )  # Ensure PM2 threshold is set to a very rare occurrence
+    assert auto_acmg_data.thresholds.ba1_benign == expected_ba1
+    assert auto_acmg_data.thresholds.bs1_benign == expected_bs1
+
+    # Check that the superclass method was called with the modified var_data
+    mock_super_method.assert_called_once_with(seqvar, auto_acmg_data)
+
+    # Reset mock for the next iteration
+    mock_super_method.reset_mock()
 
 
 def test_predict_pp2bp1(epilepsy_sodium_channel_predictor, seqvar, auto_acmg_data):

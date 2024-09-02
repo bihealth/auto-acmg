@@ -82,6 +82,38 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, pten_predictor, auto_
     ), "The summary should indicate the default fallback."
 
 
+@patch.object(
+    DefaultPredictor,
+    "predict_pm2ba1bs1bs2",
+    return_value=(
+        AutoACMGCriteria(name="PM2"),
+        AutoACMGCriteria(name="BA1"),
+        AutoACMGCriteria(name="BS1"),
+        AutoACMGCriteria(name="BS2"),
+    ),
+)
+def test_predict_pm2ba1bs1bs2(mock_super_method, pten_predictor, auto_acmg_data, seqvar):
+    # Default thresholds
+    auto_acmg_data.thresholds.pm2_pathogenic = 0.00001
+    auto_acmg_data.thresholds.ba1_benign = 0.05
+    auto_acmg_data.thresholds.bs1_benign = 0.01
+
+    result = pten_predictor.predict_pm2ba1bs1bs2(seqvar, auto_acmg_data)
+
+    # Assert that the thresholds were updated correctly
+    assert auto_acmg_data.thresholds.pm2_pathogenic == 0.00001
+    assert auto_acmg_data.thresholds.ba1_benign == 0.00056
+    assert auto_acmg_data.thresholds.bs1_benign == 0.000043
+
+    # Assert that the superclass method was called once with the modified var_data
+    mock_super_method.assert_called_once_with(seqvar, auto_acmg_data)
+
+    # Assert the response (optional, as we know it's mocked)
+    assert all(
+        c.name in ["PM2", "BA1", "BS1", "BS2"] for c in result
+    ), "Unexpected criteria names returned"
+
+
 def test_bp3_not_applicable(pten_predictor, seqvar, auto_acmg_data):
     """Test BP3 is not applicable for ACADVL as overridden."""
     result = pten_predictor._bp3_not_applicable(seqvar, auto_acmg_data)

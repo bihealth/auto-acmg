@@ -95,6 +95,19 @@ class HHTPredictor(DefaultPredictor):
             summary=f"Variant does not meet the PM1 criteria for {var_data.hgnc_id}.",
         )
 
+    def _bs2_not_applicable(self, var_data: AutoACMGData) -> bool:
+        """BS2 is not applicable for ACVRL1 and ENG."""
+        return True
+
+    def predict_pm2ba1bs1bs2(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
+        """Change the thresholds for PM2, BA1 and BS1."""
+        var_data.thresholds.pm2_pathogenic = 0.00004
+        var_data.thresholds.ba1_benign = 0.01
+        var_data.thresholds.bs1_benign = 0.0008
+        return super().predict_pm2ba1bs1bs2(seqvar, var_data)
+
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
         """BP3 is not applicable for Hereditary Hemorrhagic Telangiectasia."""
         return True

@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 from src.defs.annonars_variant import GnomadExomes, GnomadMtDna
 from src.defs.core import AutoAcmgBaseEnum, AutoAcmgBaseModel
+from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import Exon, TranscriptGene, TranscriptSeqvar
 from src.defs.seqvar import SeqVar
 
@@ -86,6 +87,218 @@ class AminoAcid(AutoAcmgBaseEnum):
     Tyr = "Y"
     Stop = "*"
 
+
+#: Exception list for BA1 criteria.
+BA1_ESCEPTION_LIST = [
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr3",
+        pos=128598490,
+        delete="C",
+        insert="CTAAG",
+        user_repr="NM_014049.4:c.-44_-41dupTAAG",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr3",
+        pos=128879647,
+        delete="C",
+        insert="CTAAG",
+        user_repr="NM_014049.4:c.-44_-41dupTAAG",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr13",
+        pos=20763612,
+        delete="C",
+        insert="T",
+        user_repr="NM_004004.5:c.109G>A",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr13",
+        pos=20189473,
+        delete="C",
+        insert="T",
+        user_repr="NM_004004.5:c.109G>A",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr6",
+        pos=26091179,
+        delete="C",
+        insert="G",
+        user_repr="NM_000410.3:c.187C>G",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr6",
+        pos=26090951,
+        delete="C",
+        insert="G",
+        user_repr="NM_000410.3:c.187C>G",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr6",
+        pos=26093141,
+        delete="G",
+        insert="A",
+        user_repr="NM_000410.3:c.845G>A",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr6",
+        pos=26092913,
+        delete="G",
+        insert="A",
+        user_repr="NM_000410.3:c.845G>A",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr16",
+        pos=3299586,
+        delete="G",
+        insert="A",
+        user_repr="NM_000243.2:c.1105C>T",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr16",
+        pos=3249586,
+        delete="G",
+        insert="A",
+        user_repr="NM_000243.2:c.1105C>T",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr16",
+        pos=3299468,
+        delete="C",
+        insert="T",
+        user_repr="NM_000243.2:c.1223G>A",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr16",
+        pos=3249468,
+        delete="C",
+        insert="T",
+        user_repr="NM_000243.2:c.1223G>A",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr13",
+        pos=73409497,
+        delete="G",
+        insert="A",
+        user_repr="NM_006346.2:c.1214G>A",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr13",
+        pos=72835359,
+        delete="G",
+        insert="A",
+        user_repr="NM_006346.2:c.1214G>A",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr12",
+        pos=121175678,
+        delete="C",
+        insert="T",
+        user_repr="NM_000017.3:c.511C>T",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr12",
+        pos=120737875,
+        delete="C",
+        insert="T",
+        user_repr="NM_000017.3:c.511C>T",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr3",
+        pos=15686693,
+        delete="G",
+        insert="C",
+        user_repr="NM_000060.4:c.1330G>C",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr3",
+        pos=15645186,
+        delete="G",
+        insert="C",
+        user_repr="NM_000060.4:c.1330G>C",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr19",
+        pos=39071022,
+        delete="G",
+        insert="A",
+        user_repr="NM_000540.3:c.14524G>A",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr19",
+        pos=38580382,
+        delete="G",
+        insert="A",
+        user_repr="NM_000540.3:c.14524G>A",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr19",
+        pos=38934252,
+        delete="C",
+        insert="T",
+        user_repr="NM_000540.3:c.325C>T",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr19",
+        pos=38443612,
+        delete="C",
+        insert="T",
+        user_repr="NM_000540.3:c.325C>T",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr2",
+        pos=152417726,
+        delete="C",
+        insert="A",
+        user_repr="NM_001271208.2:c.19097G>T",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr2",
+        pos=151561212,
+        delete="C",
+        insert="A",
+        user_repr="NM_001271208.2:c.19097G>T",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="chr2",
+        pos=152382489,
+        delete="T",
+        insert="G",
+        user_repr="NM_001271208.2:c.22249A>C",
+    ),
+    SeqVar(
+        genome_release=GenomeRelease.GRCh38,
+        chrom="chr2",
+        pos=151525975,
+        delete="T",
+        insert="G",
+        user_repr="NM_001271208.2:c.22249A>C",
+    ),
+]
 
 # ============ Definitions for algorithms ============
 
@@ -391,6 +604,8 @@ class AutoACMGTresholds(AutoAcmgBaseModel):
     bs1_benign: float = 0.00015
     #: PM2 variants count threshold
     pm2_pathogenic: float = 0.0001
+    #: Minimum number of alleles
+    an_min: int = 2000
     #: BP7 donor position
     bp7_donor: int = 1
     #: BP7 acceptor position

@@ -3,7 +3,14 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AlleleCondition,
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+)
+from src.defs.exceptions import MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.vcep import CerebralCreatineDeficiencySyndromesPredictor
@@ -79,6 +86,181 @@ def test_predict_pm1_fallback_to_default(
     # In this specific case, the fallback should never happen since PM1 is always not applicable,
     # but this test ensures that if something changes, the fallback works correctly.
     assert result.prediction == AutoACMGPrediction.NotApplicable, "PM1 should remain NotApplicable."
+
+
+@patch.object(
+    CerebralCreatineDeficiencySyndromesPredictor,
+    "_get_allele_cond",
+    return_value=AlleleCondition.Recessive,
+)
+@patch.object(
+    CerebralCreatineDeficiencySyndromesPredictor,
+    "_get_control_af",
+    return_value=MagicMock(bySex=MagicMock(overall=MagicMock(ac=10, nhomalt=6))),
+)
+@patch.object(CerebralCreatineDeficiencySyndromesPredictor, "_get_any_af", return_value=None)
+def test_check_zyg_homozygous_positive(
+    mock_get_any_af,
+    mock_get_control_af,
+    mock_get_allele_cond,
+    cerebral_creatine_predictor,
+    seqvar,
+    auto_acmg_data,
+):
+    cerebral_creatine_predictor.comment_pm2ba1bs1bs2 = ""
+    assert cerebral_creatine_predictor._check_zyg(seqvar, auto_acmg_data) == True
+    assert (
+        "The variant is in a recessive (homozygous) disorder."
+        in cerebral_creatine_predictor.comment_pm2ba1bs1bs2
+    )
+
+
+@patch.object(
+    CerebralCreatineDeficiencySyndromesPredictor,
+    "_get_allele_cond",
+    return_value=AlleleCondition.Recessive,
+)
+@patch.object(
+    CerebralCreatineDeficiencySyndromesPredictor,
+    "_get_control_af",
+    return_value=MagicMock(bySex=MagicMock(overall=MagicMock(ac=10, nhomalt=4))),
+)
+@patch.object(CerebralCreatineDeficiencySyndromesPredictor, "_get_any_af", return_value=None)
+def test_check_zyg_homozygous_negative(
+    mock_get_any_af,
+    mock_get_control_af,
+    mock_get_allele_cond,
+    cerebral_creatine_predictor,
+    seqvar,
+    auto_acmg_data,
+):
+    cerebral_creatine_predictor.comment_pm2ba1bs1bs2 = ""
+    assert cerebral_creatine_predictor._check_zyg(seqvar, auto_acmg_data) == False
+
+
+@patch.object(
+    CerebralCreatineDeficiencySyndromesPredictor,
+    "_get_allele_cond",
+    return_value=AlleleCondition.Recessive,
+)
+@patch.object(CerebralCreatineDeficiencySyndromesPredictor, "_get_control_af", return_value=None)
+@patch.object(CerebralCreatineDeficiencySyndromesPredictor, "_get_any_af", return_value=None)
+def test_check_zyg_missing_data_raises_error(
+    mock_get_any_af,
+    mock_get_control_af,
+    mock_get_allele_cond,
+    cerebral_creatine_predictor,
+    seqvar,
+    auto_acmg_data,
+):
+    cerebral_creatine_predictor.comment_pm2ba1bs1bs2 = ""
+    with pytest.raises(MissingDataError):
+        cerebral_creatine_predictor._check_zyg(seqvar, auto_acmg_data)
+
+
+@patch.object(
+    DefaultPredictor,
+    "predict_pm2ba1bs1bs2",
+    return_value=(
+        AutoACMGCriteria(name="PM2"),
+        AutoACMGCriteria(name="BA1"),
+        AutoACMGCriteria(name="BS1"),
+        AutoACMGCriteria(name="BS2"),
+    ),
+)
+def test_predict_pm2ba1bs1bs2_gatm(
+    mock_super_method, cerebral_creatine_predictor, auto_acmg_data, seqvar
+):
+    # Default thresholds
+    auto_acmg_data.hgnc_id = "HGNC:4175"
+    auto_acmg_data.thresholds.pm2_pathogenic = 0.00001
+    auto_acmg_data.thresholds.ba1_benign = 0.05
+    auto_acmg_data.thresholds.bs1_benign = 0.01
+
+    result = cerebral_creatine_predictor.predict_pm2ba1bs1bs2(seqvar, auto_acmg_data)
+
+    # Assert that the thresholds were updated correctly
+    assert auto_acmg_data.thresholds.pm2_pathogenic == 0.000055
+    assert auto_acmg_data.thresholds.ba1_benign == 0.0005
+    assert auto_acmg_data.thresholds.bs1_benign == 0.0001
+
+    # Assert that the superclass method was called once with the modified var_data
+    mock_super_method.assert_called_once_with(seqvar, auto_acmg_data)
+
+    # Assert the response (optional, as we know it's mocked)
+    assert all(
+        c.name in ["PM2", "BA1", "BS1", "BS2"] for c in result
+    ), "Unexpected criteria names returned"
+
+
+@patch.object(
+    DefaultPredictor,
+    "predict_pm2ba1bs1bs2",
+    return_value=(
+        AutoACMGCriteria(name="PM2"),
+        AutoACMGCriteria(name="BA1"),
+        AutoACMGCriteria(name="BS1"),
+        AutoACMGCriteria(name="BS2"),
+    ),
+)
+def test_predict_pm2ba1bs1bs2_gamt(
+    mock_super_method, cerebral_creatine_predictor, auto_acmg_data, seqvar
+):
+    # Default thresholds
+    auto_acmg_data.hgnc_id = "HGNC:4136"  # GAMT
+    auto_acmg_data.thresholds.pm2_pathogenic = 0.00001
+    auto_acmg_data.thresholds.ba1_benign = 0.05
+    auto_acmg_data.thresholds.bs1_benign = 0.01
+
+    result = cerebral_creatine_predictor.predict_pm2ba1bs1bs2(seqvar, auto_acmg_data)
+
+    # Assert that the thresholds were updated correctly
+    assert auto_acmg_data.thresholds.pm2_pathogenic == 0.0004
+    assert auto_acmg_data.thresholds.ba1_benign == 0.003
+    assert auto_acmg_data.thresholds.bs1_benign == 0.001
+
+    # Assert that the superclass method was called once with the modified var_data
+    mock_super_method.assert_called_once_with(seqvar, auto_acmg_data)
+
+    # Assert the response (optional, as we know it's mocked)
+    assert all(
+        c.name in ["PM2", "BA1", "BS1", "BS2"] for c in result
+    ), "Unexpected criteria names returned"
+
+
+@patch.object(
+    DefaultPredictor,
+    "predict_pm2ba1bs1bs2",
+    return_value=(
+        AutoACMGCriteria(name="PM2"),
+        AutoACMGCriteria(name="BA1"),
+        AutoACMGCriteria(name="BS1"),
+        AutoACMGCriteria(name="BS2"),
+    ),
+)
+def test_predict_pm2ba1bs1bs2_slc6a8(
+    mock_super_method, cerebral_creatine_predictor, auto_acmg_data, seqvar
+):
+    # Default thresholds
+    auto_acmg_data.hgnc_id = "HGNC:11055"  # SLC6A8
+    auto_acmg_data.thresholds.pm2_pathogenic = 0.00001
+    auto_acmg_data.thresholds.ba1_benign = 0.05
+    auto_acmg_data.thresholds.bs1_benign = 0.01
+
+    result = cerebral_creatine_predictor.predict_pm2ba1bs1bs2(seqvar, auto_acmg_data)
+
+    # Assert that the thresholds were updated correctly
+    assert auto_acmg_data.thresholds.pm2_pathogenic == 0.00002
+    assert auto_acmg_data.thresholds.ba1_benign == 0.002
+    assert auto_acmg_data.thresholds.bs1_benign == 0.0002
+
+    # Assert that the superclass method was called once with the modified var_data
+    mock_super_method.assert_called_once_with(seqvar, auto_acmg_data)
+
+    # Assert the response (optional, as we know it's mocked)
+    assert all(
+        c.name in ["PM2", "BA1", "BS1", "BS2"] for c in result
+    ), "Unexpected criteria names returned"
 
 
 def test_bp3_not_applicable(cerebral_creatine_predictor, seqvar, auto_acmg_data):

@@ -6,6 +6,7 @@ from loguru import logger
 
 from src.defs.annonars_variant import AlleleCount, GnomadExomes, GnomadMtDna
 from src.defs.auto_acmg import (
+    BA1_ESCEPTION_LIST,
     PM2BA1BS1BS2,
     AlleleCondition,
     AutoACMGCriteria,
@@ -19,154 +20,6 @@ from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.utils import AutoACMGHelper, SeqVarTranscriptsHelper
 
-#: Exception list for BA1 criteria.
-BA1_ESCEPTION_LIST = [
-    SeqVar(
-        genome_release=GenomeRelease.GRCh37,
-        chrom="chr3",
-        pos=128598490,
-        delete="C",
-        insert="CTAAG",
-        user_repr="NM_014049.4:c.-44_-41dupTAAG",
-    ),
-    SeqVar(
-        genome_release=GenomeRelease.GRCh38,
-        chrom="chr3",
-        pos=128879647,
-        delete="C",
-        insert="CTAAG",
-        user_repr="NM_014049.4:c.-44_-41dupTAAG",
-    ),
-    SeqVar(
-        genome_release=GenomeRelease.GRCh37,
-        chrom="chr13",
-        pos=20763612,
-        delete="C",
-        insert="T",
-        user_repr="NM_004004.5:c.109G>A",
-    ),
-    SeqVar(
-        genome_release=GenomeRelease.GRCh38,
-        chrom="chr13",
-        pos=20189473,
-        delete="C",
-        insert="T",
-        user_repr="NM_004004.5:c.109G>A",
-    ),
-    SeqVar(
-        genome_release=GenomeRelease.GRCh37,
-        chrom="chr6",
-        pos=26091179,
-        delete="C",
-        insert="G",
-        user_repr="NM_000410.3:c.187C>G",
-    ),
-    SeqVar(
-        genome_release=GenomeRelease.GRCh38,
-        chrom="chr6",
-        pos=26090951,
-        delete="C",
-        insert="G",
-        user_repr="NM_000410.3:c.187C>G",
-    ),
-    SeqVar(
-        genome_release=GenomeRelease.GRCh37,
-        chrom="chr6",
-        pos=26093141,
-        delete="G",
-        insert="A",
-        user_repr="NM_000410.3:c.845G>A",
-    ),
-    SeqVar(
-        genome_release=GenomeRelease.GRCh38,
-        chrom="chr6",
-        pos=26092913,
-        delete="G",
-        insert="A",
-        user_repr="NM_000410.3:c.845G>A",
-    ),
-    SeqVar(
-        genome_release=GenomeRelease.GRCh37,
-        chrom="chr16",
-        pos=3299586,
-        delete="G",
-        insert="A",
-        user_repr="NM_000243.2:c.1105C>T",
-    ),
-    SeqVar(
-        genome_release=GenomeRelease.GRCh38,
-        chrom="chr16",
-        pos=3249586,
-        delete="G",
-        insert="A",
-        user_repr="NM_000243.2:c.1105C>T",
-    ),
-    SeqVar(
-        genome_release=GenomeRelease.GRCh37,
-        chrom="chr16",
-        pos=3299468,
-        delete="C",
-        insert="T",
-        user_repr="NM_000243.2:c.1223G>A",
-    ),
-    SeqVar(
-        genome_release=GenomeRelease.GRCh38,
-        chrom="chr16",
-        pos=3249468,
-        delete="C",
-        insert="T",
-        user_repr="NM_000243.2:c.1223G>A",
-    ),
-    SeqVar(
-        genome_release=GenomeRelease.GRCh37,
-        chrom="chr13",
-        pos=73409497,
-        delete="G",
-        insert="A",
-        user_repr="NM_006346.2:c.1214G>A",
-    ),
-    SeqVar(
-        genome_release=GenomeRelease.GRCh38,
-        chrom="chr13",
-        pos=72835359,
-        delete="G",
-        insert="A",
-        user_repr="NM_006346.2:c.1214G>A",
-    ),
-    SeqVar(
-        genome_release=GenomeRelease.GRCh37,
-        chrom="chr12",
-        pos=121175678,
-        delete="C",
-        insert="T",
-        user_repr="NM_000017.3:c.511C>T",
-    ),
-    SeqVar(
-        genome_release=GenomeRelease.GRCh38,
-        chrom="chr12",
-        pos=120737875,
-        delete="C",
-        insert="T",
-        user_repr="NM_000017.3:c.511C>T",
-    ),
-    SeqVar(
-        genome_release=GenomeRelease.GRCh37,
-        chrom="chr3",
-        pos=15686693,
-        delete="G",
-        insert="C",
-        user_repr="NM_000060.4:c.1330G>C",
-    ),
-    SeqVar(
-        genome_release=GenomeRelease.GRCh38,
-        chrom="chr3",
-        pos=15645186,
-        delete="G",
-        insert="C",
-        user_repr="NM_000060.4:c.1330G>C",
-    ),
-]
-
 
 class AutoPM2BA1BS1BS2(AutoACMGHelper):
     """Predicts PM2, BA1, BS1, BS2 criteria for sequence variants."""
@@ -178,8 +31,7 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
         #: comment_pm2ba1bs1bs2 to store the prediction explanation.
         self.comment_pm2ba1bs1bs2: str = ""
 
-    @staticmethod
-    def _get_control_af(gnomad_exomes: Optional[GnomadExomes]) -> Optional[AlleleCount]:
+    def _get_control_af(self, var_data: AutoACMGData) -> Optional[AlleleCount]:
         """
         Get the allele frequency information for the control population.
 
@@ -189,15 +41,14 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
         Returns:
             The allele frequency for the control population. None if no data found.
         """
-        if not gnomad_exomes or not gnomad_exomes.alleleCounts:
+        if not var_data.gnomad_exomes or not var_data.gnomad_exomes.alleleCounts:
             return None
-        for af in gnomad_exomes.alleleCounts:
+        for af in var_data.gnomad_exomes.alleleCounts:
             if af.cohort == "controls":
                 return af
         return None
 
-    @staticmethod
-    def _get_any_af(gnomad_exomes: Optional[GnomadExomes]) -> Optional[AlleleCount]:
+    def _get_any_af(self, var_data: AutoACMGData) -> Optional[AlleleCount]:
         """
         Get the highest allele frequency information for any population.
 
@@ -207,24 +58,30 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
         Returns:
             The highest allele frequency for any population. None if no data found.
         """
-        if not gnomad_exomes or not gnomad_exomes.alleleCounts:
+        if not var_data.gnomad_exomes or not var_data.gnomad_exomes.alleleCounts:
             return None
-        best_af = None
-        for af in gnomad_exomes.alleleCounts:
-            if not best_af:
-                best_af = af
+        max_af = None
+        for af in var_data.gnomad_exomes.alleleCounts:
+            if not max_af and af.anGrpmax and af.anGrpmax > var_data.thresholds.an_min:
+                max_af = af
             elif af.cohort == "controls":
                 return af
             else:
-                if best_af.afGrpmax < af.afGrpmax:
-                    best_af = af
-        return best_af
+                if (
+                    max_af
+                    and max_af.afGrpmax
+                    and af.afGrpmax
+                    and af.anGrpmax
+                    and max_af.afGrpmax < af.afGrpmax
+                    and af.anGrpmax > var_data.thresholds.an_min
+                ):
+                    max_af = af
+        return max_af
 
     def _get_af(
         self,
         seqvar: SeqVar,
-        gnomad_mtdna: Optional[GnomadMtDna],
-        gnomad_exomes: Optional[GnomadExomes],
+        var_data: AutoACMGData,
     ) -> Optional[float]:
         """
         Get the allele frequency for the sequence variant.
@@ -236,18 +93,30 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
         Returns:
             The allele frequency. None if no controls data
         """
-        if seqvar.chrom.startswith("M"):
-            if not gnomad_mtdna or not gnomad_mtdna.afHet:
-                raise MissingDataError("No allele frequency found in mitochondrial gnomad data.")
-            else:
-                return gnomad_mtdna.afHet
+        controls_af = self._get_control_af(var_data)
+        any_af = self._get_any_af(var_data)
+        af = controls_af or any_af
+        if not af or not af.afGrpmax:
+            raise MissingDataError("No allele frequency found in gnomad data.")
+        return af.afGrpmax
+
+    def _get_m_af(
+        self,
+        var_data: AutoACMGData,
+    ) -> Optional[float]:
+        """
+        Get the allele frequency for the mitochondrial sequence variant.
+
+        Args:
+            variant_data: The variant data.
+
+        Returns:
+            The allele frequency. None if no controls data
+        """
+        if not var_data.gnomad_mtdna or not var_data.gnomad_mtdna.afHet:
+            raise MissingDataError("No allele frequency found in mitochondrial gnomad data.")
         else:
-            controls_af = self._get_control_af(gnomad_exomes=gnomad_exomes)
-            any_af = self._get_any_af(gnomad_exomes=gnomad_exomes)
-            af = controls_af or any_af
-            if not af or not af.afGrpmax:
-                raise MissingDataError("No allele frequency found in gnomad data.")
-            return af.afGrpmax
+            return var_data.gnomad_mtdna.afHet
 
     def _get_allele_cond(self, seqvar: SeqVar) -> AlleleCondition:
         """
@@ -316,7 +185,7 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
                     clingen_dosage = AlleleCondition.Recessive
         return clingen_dosage
 
-    def _check_zyg(self, seqvar: SeqVar, gnomad_exomes: Optional[GnomadExomes]) -> bool:
+    def _check_zyg(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
         """
         Check the zygosity of the sequence variant.
 
@@ -349,8 +218,8 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
 
         allele_condition = self._get_allele_cond(seqvar)
         self.comment_pm2ba1bs1bs2 += f"Allele condition: {allele_condition.name}.\n"
-        controls_af = self._get_control_af(gnomad_exomes)
-        any_af = self._get_any_af(gnomad_exomes)
+        controls_af = self._get_control_af(var_data)
+        any_af = self._get_any_af(var_data)
         af = controls_af or any_af
         if not af or not af.bySex:
             self.comment_pm2ba1bs1bs2 += "No controls allele data found in control data.\n"
@@ -446,6 +315,20 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
             return True
         return False
 
+    def _bs2_not_applicable(self, var_data: AutoACMGData) -> bool:
+        """
+        Check if the BS2 criteria is not applicable.
+
+        Per default, the BS2 criteria is applicable.
+
+        Args:
+            seqvar: The sequence variant.
+
+        Returns:
+            True if the BS2 criteria is not applicable.
+        """
+        return False
+
     def verify_pm2ba1bs1bs2(
         self,
         seqvar: SeqVar,
@@ -472,7 +355,22 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
         self.prediction_pm2ba1bs1bs2 = PM2BA1BS1BS2()
         self.comment_pm2ba1bs1bs2 = ""
         try:
-            af = self._get_af(seqvar, var_data.gnomad_mtdna, var_data.gnomad_exomes)
+            if seqvar.chrom == "MT":
+                af = self._get_m_af(var_data)
+                if not af:
+                    self.comment_pm2ba1bs1bs2 = "No allele frequency data found. "
+                elif af <= 0.00002:
+                    self.comment_pm2ba1bs1bs2 = f"Allele frequency <= 0.002%: PM2 is met. "
+                    self.prediction_pm2ba1bs1bs2.PM2 = True
+                elif af > 0.01:
+                    self.comment_pm2ba1bs1bs2 = f"Allele frequency > 1%: BA1 is met. "
+                    self.prediction_pm2ba1bs1bs2.BA1 = True
+                elif af > 0.005:
+                    self.comment_pm2ba1bs1bs2 = f"Allele frequency > 0.5%: BS1 is met. "
+                    self.prediction_pm2ba1bs1bs2.BS1 = True
+                return self.prediction_pm2ba1bs1bs2, self.comment_pm2ba1bs1bs2
+
+            af = self._get_af(seqvar, var_data)
             if not af:
                 self.comment_pm2ba1bs1bs2 = "No allele frequency data found. "
             elif self._ba1_exception(seqvar):
@@ -480,20 +378,22 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
                 self.prediction_pm2ba1bs1bs2.BA1 = False
                 self.prediction_pm2ba1bs1bs2.BS1 = False
             elif af >= var_data.thresholds.ba1_benign:
-                self.comment_pm2ba1bs1bs2 = "Allele frequency > 5%: BA1 is met. "
+                self.comment_pm2ba1bs1bs2 = (
+                    f"Allele frequency > {var_data.thresholds.ba1_benign}: BA1 is met. "
+                )
                 self.prediction_pm2ba1bs1bs2.BA1 = True
             elif af >= var_data.thresholds.bs1_benign:
-                self.comment_pm2ba1bs1bs2 = "Allele frequency > 1%: BS1 is met. "
+                self.comment_pm2ba1bs1bs2 = (
+                    f"Allele frequency > {var_data.thresholds.bs1_benign}: BS1 is met. "
+                )
                 self.prediction_pm2ba1bs1bs2.BS1 = True
             elif af <= var_data.thresholds.pm2_pathogenic:
-                self.comment_pm2ba1bs1bs2 = "Allele frequency <= 1%: PM2 is met. "
+                self.comment_pm2ba1bs1bs2 = (
+                    f"Allele frequency <= {var_data.thresholds.pm2_pathogenic}: PM2 is met. "
+                )
                 self.prediction_pm2ba1bs1bs2.PM2 = True
 
-            if (
-                not self.prediction_pm2ba1bs1bs2.BA1
-                and af
-                and self._check_zyg(seqvar, var_data.gnomad_exomes)
-            ):
+            if not self._bs2_not_applicable(var_data) and self._check_zyg(seqvar, var_data):
                 self.comment_pm2ba1bs1bs2 += (
                     "The variant is in a recessive, dominant, or X-linked disorder: BS2 is met."
                 )

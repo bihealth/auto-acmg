@@ -177,6 +177,22 @@ class EpilepsySodiumChannelPredictor(DefaultPredictor):
             summary=f"Variant does not meet the PM1 criteria for {var_data.hgnc_id}.",
         )
 
+    def predict_pm2ba1bs1bs2(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
+        """Change the thresholds for PM2, BA1 and BS1."""
+        var_data.thresholds.pm2_pathogenic = 0.000001  # Very rare
+        if var_data.hgnc_id == "HGNC:10585":  # SCN1A
+            var_data.thresholds.ba1_benign = 0.0002
+            var_data.thresholds.bs1_benign = 0.000004
+        elif var_data.hgnc_id in ["HGNC:10588", "HGNC:10590", "HGNC:10596"]:  # SCN2A, SCN3A, SCN8A
+            var_data.thresholds.ba1_benign = 0.0001
+            var_data.thresholds.bs1_benign = 0.000002
+        elif var_data.hgnc_id == "HGNC:10586":  # SCN1B
+            var_data.thresholds.ba1_benign = 0.003
+            var_data.thresholds.bs1_benign = 0.0001
+        return super().predict_pm2ba1bs1bs2(seqvar, var_data)
+
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
