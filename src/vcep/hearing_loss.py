@@ -104,6 +104,15 @@ class HearingLossPredictor(DefaultPredictor):
             summary="Variant does not meet the PM1 criteria for KCNQ4.",
         )
 
+    def predict_pm2ba1bs1bs2(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
+        """Change the thresholds for PM2, BA1 and BS1."""
+        var_data.thresholds.pm2_pathogenic = 0.00007
+        var_data.thresholds.ba1_benign = 0.001
+        var_data.thresholds.bs1_benign = 0.0007
+        return super().predict_pm2ba1bs1bs2(seqvar, var_data)
+
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:

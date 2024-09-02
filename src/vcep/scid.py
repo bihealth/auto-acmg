@@ -184,6 +184,44 @@ class SCIDPredictor(DefaultPredictor):
             summary=f"Variant does not meet the PM1 criteria for {var_data.hgnc_id}.",
         )
 
+    def predict_pm2ba1bs1bs2(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
+        """Change the thresholds for PM2, BA1 and BS1."""
+        if var_data.hgnc_id == "HGNC:12765":
+            var_data.thresholds.pm2_pathogenic = 0.00002412
+            var_data.thresholds.ba1_benign = 0.00447
+            var_data.thresholds.bs1_benign = 0.00141
+        elif var_data.hgnc_id == "HGNC:186":
+            var_data.thresholds.pm2_pathogenic = 0.0001742
+            var_data.thresholds.ba1_benign = 0.00721
+            var_data.thresholds.bs1_benign = 0.00161
+        elif var_data.hgnc_id == "HGNC:17642":
+            var_data.thresholds.pm2_pathogenic = 0.00003266
+            var_data.thresholds.ba1_benign = 0.00346
+            var_data.thresholds.bs1_benign = 0.00078
+        elif var_data.hgnc_id == "HGNC:6024":
+            var_data.thresholds.pm2_pathogenic = 0.00004129
+            var_data.thresholds.ba1_benign = 0.00566
+            var_data.thresholds.bs1_benign = 0.00126
+        elif var_data.hgnc_id == "HGNC:6193":
+            var_data.thresholds.pm2_pathogenic = 0.000115
+            var_data.thresholds.ba1_benign = 0.00447
+            var_data.thresholds.bs1_benign = 0.001
+        elif var_data.hgnc_id == "HGNC:9831":
+            var_data.thresholds.pm2_pathogenic = 0.000102
+            var_data.thresholds.ba1_benign = 0.00872
+            var_data.thresholds.bs1_benign = 0.00195
+        elif var_data.hgnc_id == "HGNC:9832":
+            var_data.thresholds.pm2_pathogenic = 0.0000588
+            var_data.thresholds.ba1_benign = 0.00872
+            var_data.thresholds.bs1_benign = 0.00195
+        elif var_data.hgnc_id == "HGNC:6010":
+            var_data.thresholds.pm2_pathogenic = 0.000124
+            var_data.thresholds.ba1_benign = 0.01110
+            var_data.thresholds.bs1_benign = 0.00249
+        return super().predict_pm2ba1bs1bs2(seqvar, var_data)
+
     def _is_conserved(self, var_data: AutoACMGData) -> bool:
         """
         Override the default _is_conserved method to ignore this check for SCID genes.

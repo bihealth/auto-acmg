@@ -97,6 +97,28 @@ class CongenitalMyopathiesPredictor(DefaultPredictor):
             summary="Variant does not fall within a critical domain.",
         )
 
+    def predict_pm2ba1bs1bs2(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
+        """Change the thresholds for PM2, BA1 and BS1."""
+        var_data.thresholds.pm2_pathogenic = 0.0000001  # Practically should be absent
+        if var_data.hgnc_id == "HGNC:7720":
+            var_data.thresholds.ba1_benign = 0.00559
+            var_data.thresholds.bs1_benign = 0.000237
+        elif var_data.hgnc_id == "HGNC:129":
+            var_data.thresholds.ba1_benign = 0.0000781
+            var_data.thresholds.bs1_benign = 0.00000781
+        elif var_data.hgnc_id == "HGNC:2974":
+            var_data.thresholds.ba1_benign = 0.0000015
+            var_data.thresholds.bs1_benign = 0.00000015
+        elif var_data.hgnc_id == "HGNC:7448":
+            var_data.thresholds.ba1_benign = 0.000016
+            var_data.thresholds.bs1_benign = 0.0000016
+        elif var_data.hgnc_id == "HGNC:10483":
+            var_data.thresholds.ba1_benign = 0.0000486
+            var_data.thresholds.bs1_benign = 0.00000486
+        return super().predict_pm2ba1bs1bs2(seqvar, var_data)
+
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
         """BP3 is not applicable for Congenital Myopathies."""
         return True

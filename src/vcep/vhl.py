@@ -85,6 +85,15 @@ class VHLPredictor(DefaultPredictor):
             summary="Variant does not meet the PM1 criteria for VHL.",
         )
 
+    def predict_pm2ba1bs1bs2(
+        self, seqvar: SeqVar, var_data: AutoACMGData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
+        """Change the thresholds for PM2, BA1 and BS1."""
+        var_data.thresholds.pm2_pathogenic = 0.00000156
+        var_data.thresholds.ba1_benign = 0.000156
+        var_data.thresholds.bs1_benign = 0.0000156
+        return super().predict_pm2ba1bs1bs2(seqvar, var_data)
+
     @staticmethod
     def _in_vhl_important_domain(var_data: AutoACMGData) -> bool:
         """Check if the variant is in an important VHL domain."""
