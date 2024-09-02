@@ -143,6 +143,10 @@ class CardiomyopathyPredictor(DefaultPredictor):
 
         return super().predict_pm1(seqvar, var_data)
 
+    def _bs2_not_applicable(self, var_data: AutoACMGData) -> bool:
+        """BS2 is not applicable for Cardiomyopathy."""
+        return True
+
     def predict_pm2ba1bs1bs2(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:

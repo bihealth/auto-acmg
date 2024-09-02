@@ -14,12 +14,14 @@ from typing import List, Tuple
 
 from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
+    AlleleCondition,
     AutoACMGCriteria,
     AutoACMGData,
     AutoACMGPrediction,
     AutoACMGStrength,
     VcepSpec,
 )
+from src.defs.exceptions import MissingDataError
 from src.defs.seqvar import SeqVar
 
 #: VCEP specifications for Cerebral Creatine Deficiency Syndromes.
@@ -49,6 +51,43 @@ class CerebralCreatineDeficiencySyndromesPredictor(DefaultPredictor):
             strength=AutoACMGStrength.PathogenicModerate,
             summary="PM1 is not applicable for Cerebral Creatine Deficiency Syndromes.",
         )
+
+    def _check_zyg(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+        """
+        Check the zygosity of the sequence variant.
+
+        BS2 only to be used when variant is observed in the homozygous state in a healthy adult.
+
+        Args:
+            variant_data: The variant data.
+
+        Returns:
+            True if the variant is recessive (homozygous), dominant (heterozygous), or X-linked
+            (hemizygous) disorder.
+        """
+        allele_condition = self._get_allele_cond(seqvar)
+        self.comment_pm2ba1bs1bs2 += f"Allele condition: {allele_condition.name}.\n"
+        controls_af = self._get_control_af(var_data)
+        any_af = self._get_any_af(var_data)
+        af = controls_af or any_af
+        if not af or not af.bySex:
+            self.comment_pm2ba1bs1bs2 += "No controls allele data found in control data.\n"
+            raise MissingDataError("No raw data found in control data.")
+
+        if not af.bySex.overall:
+            self.comment_pm2ba1bs1bs2 += "No allele data found for overall in control data.\n"
+            raise MissingDataError("No allele data found for overall in control data.")
+        ac = af.bySex.overall.ac if af.bySex.overall.ac else 0
+        nhomalt = af.bySex.overall.nhomalt if af.bySex.overall.nhomalt else 0
+        self.comment_pm2ba1bs1bs2 += f"Allele count: {ac}, Nhomalt: {nhomalt}.\n"
+        if allele_condition == AlleleCondition.Recessive:
+            if nhomalt > 5:
+                self.comment_pm2ba1bs1bs2 += (
+                    f"Nhomalt {nhomalt} > 5.\n"
+                    "The variant is in a recessive (homozygous) disorder."
+                )
+                return True
+        return False
 
     def predict_pm2ba1bs1bs2(
         self, seqvar: SeqVar, var_data: AutoACMGData

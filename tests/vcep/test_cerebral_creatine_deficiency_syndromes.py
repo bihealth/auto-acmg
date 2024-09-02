@@ -3,7 +3,14 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AlleleCondition,
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+)
+from src.defs.exceptions import MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.vcep import CerebralCreatineDeficiencySyndromesPredictor
@@ -79,6 +86,76 @@ def test_predict_pm1_fallback_to_default(
     # In this specific case, the fallback should never happen since PM1 is always not applicable,
     # but this test ensures that if something changes, the fallback works correctly.
     assert result.prediction == AutoACMGPrediction.NotApplicable, "PM1 should remain NotApplicable."
+
+
+@patch.object(
+    CerebralCreatineDeficiencySyndromesPredictor,
+    "_get_allele_cond",
+    return_value=AlleleCondition.Recessive,
+)
+@patch.object(
+    CerebralCreatineDeficiencySyndromesPredictor,
+    "_get_control_af",
+    return_value=MagicMock(bySex=MagicMock(overall=MagicMock(ac=10, nhomalt=6))),
+)
+@patch.object(CerebralCreatineDeficiencySyndromesPredictor, "_get_any_af", return_value=None)
+def test_check_zyg_homozygous_positive(
+    mock_get_any_af,
+    mock_get_control_af,
+    mock_get_allele_cond,
+    cerebral_creatine_predictor,
+    seqvar,
+    auto_acmg_data,
+):
+    cerebral_creatine_predictor.comment_pm2ba1bs1bs2 = ""
+    assert cerebral_creatine_predictor._check_zyg(seqvar, auto_acmg_data) == True
+    assert (
+        "The variant is in a recessive (homozygous) disorder."
+        in cerebral_creatine_predictor.comment_pm2ba1bs1bs2
+    )
+
+
+@patch.object(
+    CerebralCreatineDeficiencySyndromesPredictor,
+    "_get_allele_cond",
+    return_value=AlleleCondition.Recessive,
+)
+@patch.object(
+    CerebralCreatineDeficiencySyndromesPredictor,
+    "_get_control_af",
+    return_value=MagicMock(bySex=MagicMock(overall=MagicMock(ac=10, nhomalt=4))),
+)
+@patch.object(CerebralCreatineDeficiencySyndromesPredictor, "_get_any_af", return_value=None)
+def test_check_zyg_homozygous_negative(
+    mock_get_any_af,
+    mock_get_control_af,
+    mock_get_allele_cond,
+    cerebral_creatine_predictor,
+    seqvar,
+    auto_acmg_data,
+):
+    cerebral_creatine_predictor.comment_pm2ba1bs1bs2 = ""
+    assert cerebral_creatine_predictor._check_zyg(seqvar, auto_acmg_data) == False
+
+
+@patch.object(
+    CerebralCreatineDeficiencySyndromesPredictor,
+    "_get_allele_cond",
+    return_value=AlleleCondition.Recessive,
+)
+@patch.object(CerebralCreatineDeficiencySyndromesPredictor, "_get_control_af", return_value=None)
+@patch.object(CerebralCreatineDeficiencySyndromesPredictor, "_get_any_af", return_value=None)
+def test_check_zyg_missing_data_raises_error(
+    mock_get_any_af,
+    mock_get_control_af,
+    mock_get_allele_cond,
+    cerebral_creatine_predictor,
+    seqvar,
+    auto_acmg_data,
+):
+    cerebral_creatine_predictor.comment_pm2ba1bs1bs2 = ""
+    with pytest.raises(MissingDataError):
+        cerebral_creatine_predictor._check_zyg(seqvar, auto_acmg_data)
 
 
 @patch.object(

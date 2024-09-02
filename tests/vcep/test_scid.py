@@ -3,7 +3,14 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AlleleCondition,
+    AutoACMGCriteria,
+    AutoACMGData,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+)
+from src.defs.exceptions import MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.vcep.scid import SCIDPredictor
@@ -110,6 +117,76 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, scid_predictor, auto_
     assert (
         "Default fallback for PM1." in result.summary
     ), "The summary should indicate the default fallback."
+
+
+@patch.object(
+    SCIDPredictor,
+    "_get_allele_cond",
+    return_value=AlleleCondition.Recessive,
+)
+@patch.object(
+    SCIDPredictor,
+    "_get_control_af",
+    return_value=MagicMock(bySex=MagicMock(overall=MagicMock(ac=10, nhomalt=6))),
+)
+@patch.object(SCIDPredictor, "_get_any_af", return_value=None)
+def test_check_zyg_homozygous_positive(
+    mock_get_any_af,
+    mock_get_control_af,
+    mock_get_allele_cond,
+    scid_predictor,
+    seqvar,
+    auto_acmg_data,
+):
+    scid_predictor.comment_pm2ba1bs1bs2 = ""
+    assert scid_predictor._check_zyg(seqvar, auto_acmg_data) == True
+    assert (
+        "The variant is in a recessive (homozygous) disorder."
+        in scid_predictor.comment_pm2ba1bs1bs2
+    )
+
+
+@patch.object(
+    SCIDPredictor,
+    "_get_allele_cond",
+    return_value=AlleleCondition.Recessive,
+)
+@patch.object(
+    SCIDPredictor,
+    "_get_control_af",
+    return_value=MagicMock(bySex=MagicMock(overall=MagicMock(ac=10, nhomalt=4))),
+)
+@patch.object(SCIDPredictor, "_get_any_af", return_value=None)
+def test_check_zyg_homozygous_negative(
+    mock_get_any_af,
+    mock_get_control_af,
+    mock_get_allele_cond,
+    scid_predictor,
+    seqvar,
+    auto_acmg_data,
+):
+    scid_predictor.comment_pm2ba1bs1bs2 = ""
+    assert scid_predictor._check_zyg(seqvar, auto_acmg_data) == False
+
+
+@patch.object(
+    SCIDPredictor,
+    "_get_allele_cond",
+    return_value=AlleleCondition.Recessive,
+)
+@patch.object(SCIDPredictor, "_get_control_af", return_value=None)
+@patch.object(SCIDPredictor, "_get_any_af", return_value=None)
+def test_check_zyg_missing_data_raises_error(
+    mock_get_any_af,
+    mock_get_control_af,
+    mock_get_allele_cond,
+    scid_predictor,
+    seqvar,
+    auto_acmg_data,
+):
+    scid_predictor.comment_pm2ba1bs1bs2 = ""
+    with pytest.raises(MissingDataError):
+        scid_predictor._check_zyg(seqvar, auto_acmg_data)
 
 
 @patch.object(

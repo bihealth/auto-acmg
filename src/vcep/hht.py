@@ -95,6 +95,10 @@ class HHTPredictor(DefaultPredictor):
             summary=f"Variant does not meet the PM1 criteria for {var_data.hgnc_id}.",
         )
 
+    def _bs2_not_applicable(self, var_data: AutoACMGData) -> bool:
+        """BS2 is not applicable for ACVRL1 and ENG."""
+        return True
+
     def predict_pm2ba1bs1bs2(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:

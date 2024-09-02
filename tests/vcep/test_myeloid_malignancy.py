@@ -106,6 +106,12 @@ def test_predict_pm1_fallback_to_default(
     ), "The summary should indicate the default fallback."
 
 
+def test_bs2_not_applicable(myeloid_malignancy_predictor, auto_acmg_data):
+    """Test BS2 is not applicable for Myeloid Malignancy."""
+    result = myeloid_malignancy_predictor._bs2_not_applicable(auto_acmg_data)
+    assert result is True, "BS2 should always be not applicable"
+
+
 @patch.object(MyeloidMalignancyPredictor, "_get_af", return_value=0.1)
 @patch.object(MyeloidMalignancyPredictor, "_ba1_exception", return_value=False)
 def test_verify_pm2ba1bs1bs2(

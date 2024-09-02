@@ -471,6 +471,14 @@ def test_ba1_exception_false(seqvar_not_in_exception):
     assert AutoPM2BA1BS1BS2._ba1_exception(seqvar_not_in_exception) is False
 
 
+# =========== _bs2_not_applicable ==============
+
+
+def test_bs2_not_applicable(auto_pm2ba1bs1bs2, var_data):
+    """Test that BS2 is applicable per default."""
+    assert auto_pm2ba1bs1bs2._bs2_not_applicable(var_data) is False
+
+
 # =========== verify_pm2ba1bs1bs2 ==============
 
 

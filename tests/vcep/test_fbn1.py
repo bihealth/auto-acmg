@@ -131,6 +131,12 @@ def test_predict_pm1_edge_case_moderate_boundary(fbn1_predictor, auto_acmg_data)
     ), "The summary should indicate the moderate critical residue."
 
 
+def test_bs2_not_applicable(fbn1_predictor, auto_acmg_data):
+    """Test BS2 is not applicable for FBN1 as overridden."""
+    result = fbn1_predictor._bs2_not_applicable(auto_acmg_data)
+    assert result is True, "BS2 should always be not applicable for FBN1."
+
+
 @patch.object(
     DefaultPredictor,
     "predict_pm2ba1bs1bs2",

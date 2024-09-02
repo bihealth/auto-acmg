@@ -103,6 +103,10 @@ class FBN1Predictor(DefaultPredictor):
             summary=f"Variant does not meet the PM1 criteria for FBN1.",
         )
 
+    def _bs2_not_applicable(self, var_data: AutoACMGData) -> bool:
+        """BS2 is not applicable for FBN1."""
+        return True
+
     def predict_pm2ba1bs1bs2(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:

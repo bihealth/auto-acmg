@@ -57,6 +57,12 @@ class HBOPCPredictor(DefaultPredictor):
 
         return super().predict_pm1(seqvar, var_data)
 
+    def _bs2_not_applicable(self, var_data: AutoACMGData) -> bool:
+        """BS2 is not applicable for ATM gene."""
+        if var_data.hgnc_id == "HGNC:795":
+            return True
+        return False
+
     def predict_pm2ba1bs1bs2(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:

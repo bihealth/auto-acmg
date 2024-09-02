@@ -114,6 +114,13 @@ def test_predict_pm1_name(hbopc_predictor, auto_acmg_data):
     assert result.name == "PM1", "The name of the criteria should be 'PM1'."
 
 
+def test_bs2_not_applicable(hbopc_predictor, auto_acmg_data):
+    """Test when BS2 is not applicable for Hereditary Breast, Ovarian, and Pancreatic Cancer."""
+    auto_acmg_data.hgnc_id = "HGNC:795"  # ATM gene
+    result = hbopc_predictor._bs2_not_applicable(auto_acmg_data)
+    assert result is True, "BS2 should always be not applicable for HBOPC."
+
+
 @patch.object(
     DefaultPredictor,
     "predict_pm2ba1bs1bs2",

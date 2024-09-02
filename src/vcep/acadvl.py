@@ -60,6 +60,10 @@ class ACADVLPredictor(DefaultPredictor):
             summary="Variant does not fall within any critical region for ACADVL. PM1 is not met.",
         )
 
+    def _bs2_not_applicable(self, var_data: AutoACMGData) -> bool:
+        """BS2 is not applicable for ACADVL."""
+        return True
+
     def predict_pm2ba1bs1bs2(
         self, seqvar: SeqVar, var_data: AutoACMGData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:

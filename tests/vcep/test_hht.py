@@ -118,6 +118,12 @@ def test_predict_pm1_edge_case_end_boundary_eng(hht_predictor, auto_acmg_data):
     ), "The summary should indicate the critical region."
 
 
+def test_bs2_not_applicable(hht_predictor, auto_acmg_data):
+    """Test when BS2 is not applicable for ACVRL1 and ENG."""
+    result = hht_predictor._bs2_not_applicable(auto_acmg_data)
+    assert result is True, "BS2 should always be not applicable for ACVRL1 and ENG."
+
+
 @patch.object(
     DefaultPredictor,
     "predict_pm2ba1bs1bs2",

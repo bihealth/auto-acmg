@@ -91,6 +91,10 @@ class MyeloidMalignancyPredictor(DefaultPredictor):
             summary="Variant does not meet the PM1 criteria for RUNX1.",
         )
 
+    def _bs2_not_applicable(self, var_data: AutoACMGData) -> bool:
+        """BS2 is not applicable for Myeloid Malignancy VCEP."""
+        return True
+
     def verify_pm2ba1bs1bs2(
         self,
         seqvar: SeqVar,

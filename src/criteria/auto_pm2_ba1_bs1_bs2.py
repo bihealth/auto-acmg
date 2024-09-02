@@ -315,6 +315,20 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
             return True
         return False
 
+    def _bs2_not_applicable(self, var_data: AutoACMGData) -> bool:
+        """
+        Check if the BS2 criteria is not applicable.
+
+        Per default, the BS2 criteria is applicable.
+
+        Args:
+            seqvar: The sequence variant.
+
+        Returns:
+            True if the BS2 criteria is not applicable.
+        """
+        return False
+
     def verify_pm2ba1bs1bs2(
         self,
         seqvar: SeqVar,
@@ -379,7 +393,7 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
                 )
                 self.prediction_pm2ba1bs1bs2.PM2 = True
 
-            if not self.prediction_pm2ba1bs1bs2.BA1 and af and self._check_zyg(seqvar, var_data):
+            if not self._bs2_not_applicable(var_data) and self._check_zyg(seqvar, var_data):
                 self.comment_pm2ba1bs1bs2 += (
                     "The variant is in a recessive, dominant, or X-linked disorder: BS2 is met."
                 )
