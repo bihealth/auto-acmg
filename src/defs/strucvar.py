@@ -41,7 +41,7 @@ class StrucVar(BaseModel):
     chrom: str
     start: int
     stop: int
-    user_repr: Optional[str] = None
+    _user_repr: Optional[str] = None
 
     def __init__(
         self,
@@ -52,25 +52,23 @@ class StrucVar(BaseModel):
         stop: int,
         user_repr: Optional[str] = None,
     ):
-        self.sv_type = sv_type
-        self.genome_release = genome_release
-        self.chrom = (
-            chrom.lower().replace("chr", "").replace("m", "mt").replace("mtt", "mt").upper()
-        )
-        self.start = start
-        self.stop = stop
-        self.user_repr = (
+        sv_type = sv_type
+        genome_release = genome_release
+        chrom = chrom.lower().replace("chr", "").replace("m", "mt").replace("mtt", "mt").upper()
+        start = start
+        stop = stop
+        _user_repr = (
             user_repr
             if user_repr
-            else f"{sv_type.name}-{genome_release.name}-{self.chrom}-{start}-{stop}"
+            else f"{sv_type.name}-{genome_release.name}-{chrom}-{start}-{stop}"
         )
         super().__init__(
-            sv_type=self.sv_type,
-            genome_release=self.genome_release,
-            chrom=self.chrom,
-            start=self.start,
-            stop=self.stop,
-            user_repr=self.user_repr,
+            sv_type=sv_type,
+            genome_release=genome_release,
+            chrom=chrom,
+            start=start,
+            stop=stop,
+            _user_repr=_user_repr,
         )
 
     @field_validator("chrom")
@@ -79,7 +77,7 @@ class StrucVar(BaseModel):
         return v.lower().replace("chr", "").replace("m", "mt").upper()
 
     def __str__(self):
-        return self.user_repr
+        return self._user_repr
 
     # def __repr__(self):
     #     """Return a string representation of the structural variant."""

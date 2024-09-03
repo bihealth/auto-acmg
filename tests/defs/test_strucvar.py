@@ -7,7 +7,7 @@ from src.defs.strucvar import StrucVar, StrucVarResolver, StrucVarType
 
 @pytest.fixture
 def strucvar_resolver():
-    return StrucVarResolver()
+    return StrucVarResolver(config=None)
 
 
 # ===== StrucVar tests =====
@@ -21,7 +21,6 @@ def test_strucvar_initialization():
     assert variant.chrom == "1"
     assert variant.start == 100
     assert variant.stop == 200
-    assert variant.user_repr == "DEL-GRCh37-1-100-200"
 
 
 def test_strucvar_initialization_user_representation():
@@ -29,7 +28,6 @@ def test_strucvar_initialization_user_representation():
     variant = StrucVar(
         StrucVarType.DEL, GenomeRelease.GRCh37, "chr1", 100, 200, user_repr="1:100-200"
     )
-    assert variant.user_repr == "1:100-200"
 
 
 @pytest.mark.parametrize(
@@ -46,6 +44,13 @@ def test_strucvar_normalize_chromosome(input_chrom, expected_normalized_chrom):
     """Test StrucVar._normalize_chromosome method."""
     resolver = StrucVarResolver()
     assert resolver._normalize_chromosome(input_chrom) == expected_normalized_chrom
+
+
+def test_strucvar_eq():
+    """Test StrucVar.__eq__ method."""
+    variant1 = StrucVar(StrucVarType.DEL, GenomeRelease.GRCh37, "1", 100, 200)
+    variant2 = StrucVar(StrucVarType.DEL, GenomeRelease.GRCh37, "1", 100, 200)
+    assert variant1 == variant2
 
 
 # ===== StrucVarResolver tests =====

@@ -44,7 +44,7 @@ class SeqVar(BaseModel):
     pos: int
     delete: str
     insert: str
-    user_repr: Optional[str] = None
+    _user_repr: Optional[str] = None
 
     def __init__(
         self,
@@ -58,7 +58,7 @@ class SeqVar(BaseModel):
         chrom = chrom.lower().replace("chr", "").replace("m", "mt").replace("mtt", "mt").upper()
         delete = delete.upper()
         insert = insert.upper()
-        user_repr = (
+        _user_repr = (
             user_repr if user_repr else f"{genome_release.name}-{chrom}-{pos}-{delete}-{insert}"
         )
         super().__init__(
@@ -67,7 +67,7 @@ class SeqVar(BaseModel):
             pos=pos,
             delete=delete,
             insert=insert,
-            user_repr=user_repr,
+            _user_repr=_user_repr,
         )
 
     @field_validator("chrom")
@@ -79,7 +79,7 @@ class SeqVar(BaseModel):
         return v.upper()
 
     def __str__(self):
-        return self.user_repr
+        return self._user_repr
 
 
 class SeqVarResolver:
