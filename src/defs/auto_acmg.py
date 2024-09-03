@@ -651,6 +651,12 @@ class AutoACMGStrucVarData(AutoAcmgBaseModel):
 
     gene_symbol: str = ""
     hgnc_id: str = ""
+    transcript_id: str = ""
+    transcript_tags: List[str] = []
+    prot_pos: int = -1
+    prot_length: int = -1
+    strand: GenomicStrand = GenomicStrand.NotSet
+    exons: List[Exon] = []
 
 
 class AutoACMGStrucVarPred(AutoAcmgBaseModel):

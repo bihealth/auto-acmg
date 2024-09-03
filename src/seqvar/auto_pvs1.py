@@ -810,7 +810,7 @@ class AutoPVS1(SeqVarPVS1Helper):
         """
         cons = self._convert_consequence(var_data)
         if cons == SeqVarPVS1Consequence.NonsenseFrameshift:
-            self.comment_pvs1 = "Analysing as nonsense or frameshift variant. =>\n"
+            self.comment_pvs1 = "Analysing as nonsense or frameshift variant. => "
             if var_data.hgnc_id == "HGNC:9588":  # Follow guidelines for PTEN
                 if var_data.prot_pos < 374:
                     self.comment_pvs1 = (
@@ -825,7 +825,7 @@ class AutoPVS1(SeqVarPVS1Helper):
             if self.undergo_nmd(
                 var_data.tx_pos_utr, var_data.hgnc_id, var_data.strand, var_data.exons
             ):
-                self.comment_pvs1 += " =>\n"
+                self.comment_pvs1 += " =>"
                 if self.in_bio_relevant_tx(var_data.transcript_tags):
                     self.prediction = PVS1Prediction.PVS1
                     self.prediction_path = PVS1PredictionSeqVarPath.NF1
@@ -833,19 +833,19 @@ class AutoPVS1(SeqVarPVS1Helper):
                     self.prediction = PVS1Prediction.NotPVS1
                     self.prediction_path = PVS1PredictionSeqVarPath.NF2
             else:
-                self.comment_pvs1 += " =>\n"
+                self.comment_pvs1 += " =>"
                 if self.crit4prot_func(seqvar, var_data.exons, var_data.strand):
                     self.prediction = PVS1Prediction.PVS1_Strong
                     self.prediction_path = PVS1PredictionSeqVarPath.NF3
                 else:
-                    self.comment_pvs1 += " =>\n"
+                    self.comment_pvs1 += " =>"
                     if self.lof_freq_in_pop(
                         seqvar, var_data.exons, var_data.strand
                     ) or not self.in_bio_relevant_tx(var_data.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionSeqVarPath.NF4
                     else:
-                        self.comment_pvs1 += " =>\n"
+                        self.comment_pvs1 += " =>"
                         if self.lof_rm_gt_10pct_of_prot(var_data.prot_pos, var_data.prot_length):
                             self.prediction = PVS1Prediction.PVS1_Strong
                             self.prediction_path = PVS1PredictionSeqVarPath.NF5
@@ -854,13 +854,13 @@ class AutoPVS1(SeqVarPVS1Helper):
                             self.prediction_path = PVS1PredictionSeqVarPath.NF6
 
         elif cons == SeqVarPVS1Consequence.SpliceSites:
-            self.comment_pvs1 = "Analysing as splice site variant. =>\n"
+            self.comment_pvs1 = "Analysing as splice site variant. =>"
             if self.exon_skip_or_cryptic_ss_disrupt(
                 seqvar, var_data.exons, var_data.consequence.mehari, var_data.strand
             ) and self.undergo_nmd(
                 var_data.tx_pos_utr, var_data.hgnc_id, var_data.strand, var_data.exons
             ):
-                self.comment_pvs1 += " =>\n"
+                self.comment_pvs1 += " =>"
                 if self.in_bio_relevant_tx(var_data.transcript_tags):
                     self.prediction = PVS1Prediction.PVS1
                     self.prediction_path = PVS1PredictionSeqVarPath.SS1
@@ -872,19 +872,19 @@ class AutoPVS1(SeqVarPVS1Helper):
             ) and not self.undergo_nmd(
                 var_data.tx_pos_utr, var_data.hgnc_id, var_data.strand, var_data.exons
             ):
-                self.comment_pvs1 += " =>\n"
+                self.comment_pvs1 += " =>"
                 if self.crit4prot_func(seqvar, var_data.exons, var_data.strand):
                     self.prediction = PVS1Prediction.PVS1_Strong
                     self.prediction_path = PVS1PredictionSeqVarPath.SS3
                 else:
-                    self.comment_pvs1 += " =>\n"
+                    self.comment_pvs1 += " =>"
                     if self.lof_freq_in_pop(
                         seqvar, var_data.exons, var_data.strand
                     ) or not self.in_bio_relevant_tx(var_data.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionSeqVarPath.SS4
                     else:
-                        self.comment_pvs1 += " =>\n"
+                        self.comment_pvs1 += " =>"
                         if self.lof_rm_gt_10pct_of_prot(var_data.prot_pos, var_data.prot_length):
                             self.prediction = PVS1Prediction.PVS1_Strong
                             self.prediction_path = PVS1PredictionSeqVarPath.SS5
@@ -892,19 +892,19 @@ class AutoPVS1(SeqVarPVS1Helper):
                             self.prediction = PVS1Prediction.PVS1_Moderate
                             self.prediction_path = PVS1PredictionSeqVarPath.SS6
             else:
-                self.comment_pvs1 += " =>\n"
+                self.comment_pvs1 += " =>"
                 if self.crit4prot_func(seqvar, var_data.exons, var_data.strand):
                     self.prediction = PVS1Prediction.PVS1_Strong
                     self.prediction_path = PVS1PredictionSeqVarPath.SS10
                 else:
-                    self.comment_pvs1 += " =>\n"
+                    self.comment_pvs1 += " =>"
                     if self.lof_freq_in_pop(
                         seqvar, var_data.exons, var_data.strand
                     ) or not self.in_bio_relevant_tx(var_data.transcript_tags):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionSeqVarPath.SS7
                     else:
-                        self.comment_pvs1 += " =>\n"
+                        self.comment_pvs1 += " =>"
                         if self.lof_rm_gt_10pct_of_prot(var_data.prot_pos, var_data.prot_length):
                             self.prediction = PVS1Prediction.PVS1_Strong
                             self.prediction_path = PVS1PredictionSeqVarPath.SS8
@@ -913,12 +913,12 @@ class AutoPVS1(SeqVarPVS1Helper):
                             self.prediction_path = PVS1PredictionSeqVarPath.SS9
 
         elif cons == SeqVarPVS1Consequence.InitiationCodon:
-            self.comment_pvs1 = "Analysing as initiation codon variant. =>\n"
+            self.comment_pvs1 = "Analysing as initiation codon variant. =>"
             if self.alt_start_cdn(var_data.cds_info, var_data.transcript_id):
                 self.prediction = PVS1Prediction.NotPVS1
                 self.prediction_path = PVS1PredictionSeqVarPath.IC3
             else:
-                self.comment_pvs1 += " =>\n"
+                self.comment_pvs1 += " =>"
                 if self.up_pathogenic_vars(
                     seqvar,
                     var_data.exons,
@@ -938,7 +938,7 @@ class AutoPVS1(SeqVarPVS1Helper):
                 cons.name,
             )
             self.comment_pvs1 = (
-                f"Variant consequence is {cons.name}. " "PVS1 criteria cannot be applied."
+                f"Variant consequence is {cons.name}. PVS1 criteria cannot be applied."
             )
 
         return self.prediction, self.prediction_path, self.comment_pvs1

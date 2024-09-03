@@ -28,7 +28,7 @@ class DefaultStrucVarPredictor(AutoPVS1):
         logger.warning("Currently only PVS1 prediction is implemented.")
 
         # PVS1
-        self.result.criteria.pvs1 = self.predict_pvs1()
+        self.result.criteria.pvs1 = self.predict_pvs1(self.strucvar, self.result.data)
 
         logger.info("StrucVar prediction finished.")
         return self.result

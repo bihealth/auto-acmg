@@ -1,9 +1,19 @@
 """PVS1 criteria for Structural Variants (StrucVar)."""
 
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGPrediction, AutoACMGStrength
+from loguru import logger
+
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGPrediction,
+    AutoACMGStrength,
+    AutoACMGStrucVarData,
+)
 from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionPathMapping, PVS1PredictionStrucVarPath
+from src.defs.exceptions import MissingDataError
+from src.defs.mehari import Exon
+from src.defs.strucvar import StrucVar, StrucVarType
 from src.utils import AutoACMGHelper
 
 
@@ -15,10 +25,31 @@ class StrucVarHelper(AutoACMGHelper):
         #: Comment to store the prediction explanation.
         self.comment_pvs1: str = ""
 
-    @staticmethod
-    def full_gene_del() -> bool:
-        """Check if the variant is a full gene deletion."""
-        return False
+    def full_gene_del(self, strucvar: StrucVar, exons: List[Exon]) -> bool:
+        """
+        Check if the variant is a full gene deletion.
+
+        Args:
+            strucvar: The structural variant.
+            exons: The exons of the gene.
+
+        Returns:
+            True if the variant is a full gene deletion, False otherwise.
+
+        Raises:
+            MissingDataError: If exons are not available.
+        """
+        if not exons:
+            raise MissingDataError(
+                "Exons are not available. Cannot determine if the variant is a full gene deletion."
+            )
+
+        gene_start = min(
+            exons[0].altStartI, exons[0].altEndI, exons[-1].altStartI, exons[-1].altEndI
+        )
+        gene_end = max(exons[0].altStartI, exons[0].altEndI, exons[-1].altStartI, exons[-1].altEndI)
+        self.comment_pvs1 += f"Gene start: {gene_start}, gene end: {gene_end}."
+        return strucvar.start <= gene_start and strucvar.stop >= gene_end
 
     @staticmethod
     def del_disrupt_rf() -> bool:
@@ -73,16 +104,97 @@ class AutoPVS1(StrucVarHelper):
         self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
         self.prediction_path: PVS1PredictionStrucVarPath = PVS1PredictionStrucVarPath.NotSet
 
-    def verify_pvs1(self) -> Tuple[PVS1Prediction, PVS1PredictionStrucVarPath, str]:
+    def verify_pvs1(
+        self, strucvar: StrucVar, var_data: AutoACMGStrucVarData
+    ) -> Tuple[PVS1Prediction, PVS1PredictionStrucVarPath, str]:
         """Make the PVS1 prediction.
 
         The prediction is based on the PVS1 criteria for structural variants.
         """
+        if strucvar.sv_type == StrucVarType.DEL:
+            self.comment_pvs1 = "Analysing the deletion variant. => "
+            if self.full_gene_del(strucvar, var_data.exons):
+                self.prediction = PVS1Prediction.PVS1
+                self.prediction_path = PVS1PredictionStrucVarPath.DEL1
+            elif self.del_disrupt_rf() and self.undergo_nmd():
+                self.comment_pvs1 += " =>"
+                if self.in_bio_relevant_tsx():
+                    self.prediction = PVS1Prediction.PVS1
+                    self.prediction_path = PVS1PredictionStrucVarPath.DEL2
+                else:
+                    self.prediction = PVS1Prediction.NotPVS1
+                    self.prediction_path = PVS1PredictionStrucVarPath.DEL3
+            elif self.del_disrupt_rf() and not self.undergo_nmd():
+                self.comment_pvs1 += " =>"
+                if self.crit4prot_func():
+                    self.prediction = PVS1Prediction.PVS1_Strong
+                    self.prediction_path = PVS1PredictionStrucVarPath.DEL4
+                else:
+                    self.comment_pvs1 += " =>"
+                    if self.lof_freq_in_pop() or not self.in_bio_relevant_tsx():
+                        self.prediction = PVS1Prediction.NotPVS1
+                        self.prediction_path = PVS1PredictionStrucVarPath.DEL5_1
+                    else:
+                        self.comment_pvs1 += " =>"
+                        if self.lof_rm_gt_10pct_of_prot():
+                            self.prediction = PVS1Prediction.PVS1_Strong
+                            self.prediction_path = PVS1PredictionStrucVarPath.DEL6_1
+                        else:
+                            self.prediction = PVS1Prediction.PVS1_Moderate
+                            self.prediction_path = PVS1PredictionStrucVarPath.DEL7_1
+            else:
+                self.comment_pvs1 += " =>"
+                if self.crit4prot_func():
+                    self.prediction = PVS1Prediction.PVS1_Strong
+                    self.prediction_path = PVS1PredictionStrucVarPath.DEL8
+                else:
+                    self.comment_pvs1 += " =>"
+                    if self.lof_freq_in_pop() or not self.in_bio_relevant_tsx():
+                        self.prediction = PVS1Prediction.NotPVS1
+                        self.prediction_path = PVS1PredictionStrucVarPath.DEL5_2
+                    else:
+                        self.comment_pvs1 += " =>"
+                        if self.lof_rm_gt_10pct_of_prot():
+                            self.prediction = PVS1Prediction.PVS1_Strong
+                            self.prediction_path = PVS1PredictionStrucVarPath.DEL6_2
+                        else:
+                            self.prediction = PVS1Prediction.PVS1_Moderate
+                            self.prediction_path = PVS1PredictionStrucVarPath.DEL7_2
+
+        elif strucvar.sv_type == StrucVarType.DUP:
+            self.comment_pvs1 = "Analysing the duplication variant. => "
+            if self.proven_in_tandem():
+                self.comment_pvs1 += " =>"
+                if self.dup_disrupt_rf() and self.undergo_nmd():
+                    self.prediction = PVS1Prediction.PVS1
+                    self.prediction_path = PVS1PredictionStrucVarPath.DUP1
+                else:
+                    self.prediction = PVS1Prediction.NotPVS1
+                    self.prediction_path = PVS1PredictionStrucVarPath.DUP2_1
+            elif self.presumed_in_tandem():
+                self.comment_pvs1 += " =>"
+                if self.dup_disrupt_rf() and self.undergo_nmd():
+                    self.prediction = PVS1Prediction.PVS1_Strong
+                    self.prediction_path = PVS1PredictionStrucVarPath.DUP3
+                else:
+                    self.prediction = PVS1Prediction.NotPVS1
+                    self.prediction_path = PVS1PredictionStrucVarPath.DUP2_2
+
+            else:
+                self.prediction = PVS1Prediction.NotPVS1
+                self.prediction_path = PVS1PredictionStrucVarPath.DUP4
+
+        else:
+            self.prediction = PVS1Prediction.NotSet
+            self.prediction_path = PVS1PredictionStrucVarPath.NotSet
+            logger.error("Unsupported structural variant type: {}", strucvar.sv_type)
+            self.comment_pvs1 = "Unsupported structural variant type."
+
         return self.prediction, self.prediction_path, self.comment_pvs1
 
-    def predict_pvs1(self) -> AutoACMGCriteria:
+    def predict_pvs1(self, strucvar: StrucVar, var_data: AutoACMGStrucVarData) -> AutoACMGCriteria:
         """Predict the PVS1 criteria for structural variants."""
-        pred, path, comment = self.verify_pvs1()
+        pred, path, comment = self.verify_pvs1(strucvar, var_data)
         evidence_strength_mapping: Dict[PVS1Prediction, AutoACMGStrength] = {
             PVS1Prediction.PVS1: AutoACMGStrength.PathogenicVeryStrong,
             PVS1Prediction.PVS1_Strong: AutoACMGStrength.PathogenicStrong,
