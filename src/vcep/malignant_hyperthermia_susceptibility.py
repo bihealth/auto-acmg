@@ -8,17 +8,17 @@ from typing import Optional, Tuple
 
 from loguru import logger
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     PM2BA1BS1BS2,
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     VcepSpec,
 )
 from src.defs.exceptions import AutoAcmgBaseException
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specification for Malignant Hyperthermia Susceptibility.
 SPEC: VcepSpec = VcepSpec(
@@ -45,9 +45,9 @@ PM1_CLUSTER = {
 }
 
 
-class MalignantHyperthermiaPredictor(DefaultPredictor):
+class MalignantHyperthermiaPredictor(DefaultSeqVarPredictor):
 
-    def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """PVS1 is not applicable."""
         logger.info("Predict PVS1")
         return AutoACMGCriteria(
@@ -57,7 +57,7 @@ class MalignantHyperthermiaPredictor(DefaultPredictor):
             summary="PVS1 is not applicable for the gene.",
         )
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override PM1 to specify critical domains for Malignant Hyperthermia Susceptibility."""
         logger.info("Predict PM1")
 
@@ -104,7 +104,7 @@ class MalignantHyperthermiaPredictor(DefaultPredictor):
     def verify_pm2ba1bs1bs2(
         self,
         seqvar: SeqVar,
-        var_data: AutoACMGData,
+        var_data: AutoACMGSeqVarData,
     ) -> Tuple[Optional[PM2BA1BS1BS2], str]:
         """
         Predicts the PM2, BA1, BS1, BS2 criteria for the sequence variant.
@@ -160,7 +160,7 @@ class MalignantHyperthermiaPredictor(DefaultPredictor):
         return self.prediction_pm2ba1bs1bs2, self.comment_pm2ba1bs1bs2
 
     def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """
         Override PP2 and BP1 for Malignant Hyperthermia Susceptibility to return not applicable

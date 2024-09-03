@@ -2,17 +2,17 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.criteria.auto_bp7 import AutoBP7
 from src.defs.auto_acmg import (
     BP7,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     GenomicStrand,
 )
 from src.defs.exceptions import AutoAcmgBaseException, MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.auto_bp7 import AutoBP7
 
 
 @pytest.fixture
@@ -150,7 +150,7 @@ def test_is_conserved_cadd_priority(auto_bp7, var_data_conserve):
 
 @pytest.fixture
 def auto_acmg_data_synonymous_mehari():
-    data = AutoACMGData()
+    data = AutoACMGSeqVarData()
     consequence = MagicMock()
     consequence.mehari = ["synonymous_variant"]
     consequence.cadd = "nonsynonymous"
@@ -160,7 +160,7 @@ def auto_acmg_data_synonymous_mehari():
 
 @pytest.fixture
 def auto_acmg_data_synonymous_cadd():
-    data = AutoACMGData()
+    data = AutoACMGSeqVarData()
     consequence = MagicMock()
     consequence.mehari = ["missense_variant"]
     consequence.cadd = "synonymous"
@@ -170,7 +170,7 @@ def auto_acmg_data_synonymous_cadd():
 
 @pytest.fixture
 def auto_acmg_data_nonsynonymous():
-    data = AutoACMGData()
+    data = AutoACMGSeqVarData()
     consequence = MagicMock()
     consequence.mehari = ["missense_variant"]
     consequence.cadd = "nonsynonymous"
@@ -207,7 +207,7 @@ def test_is_nonsynonymous(auto_acmg_data_nonsynonymous):
 
 @pytest.fixture
 def auto_acmg_data_intronic_mehari():
-    data = AutoACMGData()
+    data = AutoACMGSeqVarData()
     consequence = MagicMock()
     consequence.mehari = ["intron_variant"]
     consequence.cadd = "nonsynonymous"
@@ -217,7 +217,7 @@ def auto_acmg_data_intronic_mehari():
 
 @pytest.fixture
 def auto_acmg_data_intronic_cadd():
-    data = AutoACMGData()
+    data = AutoACMGSeqVarData()
     consequence = MagicMock()
     consequence.mehari = ["missense_variant"]
     consequence.cadd = "intron"
@@ -227,7 +227,7 @@ def auto_acmg_data_intronic_cadd():
 
 @pytest.fixture
 def auto_acmg_data_intronic_splice_cadd():
-    data = AutoACMGData()
+    data = AutoACMGSeqVarData()
     consequence = MagicMock()
     consequence.mehari = ["missense_variant"]
     consequence.cadd = "splice"
@@ -237,7 +237,7 @@ def auto_acmg_data_intronic_splice_cadd():
 
 @pytest.fixture
 def auto_acmg_data_non_intronic():
-    data = AutoACMGData()
+    data = AutoACMGSeqVarData()
     consequence = MagicMock()
     consequence.mehari = ["missense_variant"]
     consequence.cadd = "nonsynonymous"
@@ -359,7 +359,7 @@ def test_missing_strand_info(seqvar, auto_acmg_data):
 def test_is_bp7_exception(seqvar):
     """Test that the method correctly identifies no exceptions by default."""
     bp7_predictor = AutoBP7()
-    auto_acmg_data = AutoACMGData()
+    auto_acmg_data = AutoACMGSeqVarData()
     result = bp7_predictor._is_bp7_exception(seqvar, auto_acmg_data)
     assert (
         result is False
@@ -441,7 +441,7 @@ def bp7_result_failed():
     return None, "Failed to evaluate."
 
 
-@patch("src.criteria.auto_bp7.AutoBP7.verify_bp7")
+@patch("src.seqvar.auto_bp7.AutoBP7.verify_bp7")
 def test_predict_bp7_met(mock_verify, auto_bp7, seqvar, bp7_result_met):
     """Test predict_bp7 where BP7 criterion is met."""
     mock_verify.return_value = bp7_result_met
@@ -451,7 +451,7 @@ def test_predict_bp7_met(mock_verify, auto_bp7, seqvar, bp7_result_met):
     assert "Criterion met." in result.summary
 
 
-@patch("src.criteria.auto_bp7.AutoBP7.verify_bp7")
+@patch("src.seqvar.auto_bp7.AutoBP7.verify_bp7")
 def test_predict_bp7_not_met(mock_verify, auto_bp7, seqvar, bp7_result_not_met):
     """Test predict_bp7 where BP7 criterion is not met."""
     mock_verify.return_value = bp7_result_not_met
@@ -461,7 +461,7 @@ def test_predict_bp7_not_met(mock_verify, auto_bp7, seqvar, bp7_result_not_met):
     assert "Criterion not met." in result.summary
 
 
-@patch("src.criteria.auto_bp7.AutoBP7.verify_bp7")
+@patch("src.seqvar.auto_bp7.AutoBP7.verify_bp7")
 def test_predict_bp7_failed(mock_verify, auto_bp7, seqvar, bp7_result_failed):
     """Test predict_bp7 when there's a failure to evaluate the criterion."""
     mock_verify.return_value = bp7_result_failed

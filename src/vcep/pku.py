@@ -8,18 +8,18 @@ from typing import Tuple
 
 from loguru import logger
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     AlleleCondition,
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     GenomicStrand,
     VcepSpec,
 )
 from src.defs.exceptions import MissingDataError
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specification for Phenylketonuria.
 SPEC: VcepSpec = VcepSpec(
@@ -63,9 +63,9 @@ PM1_CLUSTER_PKU = {
 }
 
 
-class PKUPredictor(DefaultPredictor):
+class PKUPredictor(DefaultSeqVarPredictor):
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override predict_pm1 to include domain information for PAH."""
         logger.info("Predict PM1")
 
@@ -93,7 +93,7 @@ class PKUPredictor(DefaultPredictor):
             summary="Variant does not meet the PM1 criteria for PAH.",
         )
 
-    def _check_zyg(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _check_zyg(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """
         Check the zygosity of the sequence variant.
 
@@ -131,7 +131,7 @@ class PKUPredictor(DefaultPredictor):
         return False
 
     def predict_pm2ba1bs1bs2(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
         """Change the thresholds for PM2, BA1 and BS1."""
         var_data.thresholds.pm2_pathogenic = 0.000002
@@ -139,12 +139,12 @@ class PKUPredictor(DefaultPredictor):
         var_data.thresholds.bs1_benign = 0.002
         return super().predict_pm2ba1bs1bs2(seqvar, var_data)
 
-    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """BP3 is not applicable for PKU."""
         return True
 
     def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Override predict_pp2bp1 to return not applicable status for PAH."""
         return (
@@ -162,7 +162,7 @@ class PKUPredictor(DefaultPredictor):
             ),
         )
 
-    def _is_bp7_exception(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _is_bp7_exception(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """
         Add an exception for Phenylketonuria.
 
@@ -183,7 +183,7 @@ class PKUPredictor(DefaultPredictor):
                     return True
         return False
 
-    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override donor and acceptor positions for PAH gene."""
         var_data.thresholds.bp7_donor = 7
         var_data.thresholds.bp7_acceptor = 21

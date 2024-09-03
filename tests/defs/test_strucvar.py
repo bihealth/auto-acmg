@@ -7,7 +7,7 @@ from src.defs.strucvar import StrucVar, StrucVarResolver, StrucVarType
 
 @pytest.fixture
 def strucvar_resolver():
-    return StrucVarResolver()
+    return StrucVarResolver(config=None)
 
 
 # ===== StrucVar tests =====
@@ -46,6 +46,13 @@ def test_strucvar_normalize_chromosome(input_chrom, expected_normalized_chrom):
     """Test StrucVar._normalize_chromosome method."""
     resolver = StrucVarResolver()
     assert resolver._normalize_chromosome(input_chrom) == expected_normalized_chrom
+
+
+def test_strucvar_eq():
+    """Test StrucVar.__eq__ method."""
+    variant1 = StrucVar(StrucVarType.DEL, GenomeRelease.GRCh37, "1", 100, 200)
+    variant2 = StrucVar(StrucVarType.DEL, GenomeRelease.GRCh37, "1", 100, 200)
+    assert variant1 == variant2
 
 
 # ===== StrucVarResolver tests =====

@@ -2,10 +2,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGPrediction,
+    AutoACMGSeqVarData,
+    AutoACMGStrength,
+)
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 from src.vcep.mitochondrial_diseases import MitochondrialDiseasesPredictor
 
 
@@ -22,7 +27,7 @@ def mitochondrial_diseases_predictor(seqvar):
 
 @pytest.fixture
 def auto_acmg_data():
-    return AutoACMGData()
+    return AutoACMGSeqVarData()
 
 
 def test_predict_pm1_not_applicable_ethe1(mitochondrial_diseases_predictor, auto_acmg_data):
@@ -89,7 +94,7 @@ def test_predict_pm1_not_applicable_slc19a3(mitochondrial_diseases_predictor, au
     ), "The summary should indicate non-applicability."
 
 
-@patch("src.vcep.mitochondrial_diseases.DefaultPredictor.predict_pm1")
+@patch("src.vcep.mitochondrial_diseases.DefaultSeqVarPredictor.predict_pm1")
 def test_predict_pm1_fallback_to_default(
     mock_predict_pm1, mitochondrial_diseases_predictor, auto_acmg_data
 ):
@@ -115,7 +120,7 @@ def test_predict_pm1_fallback_to_default(
 
 
 @patch.object(
-    DefaultPredictor,
+    DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
     return_value=(
         AutoACMGCriteria(name="PM2"),

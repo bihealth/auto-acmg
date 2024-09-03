@@ -7,8 +7,8 @@ from loguru import logger
 from src.defs.auto_acmg import (
     PP2BP1,
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
 )
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, InvalidAPIResposeError
@@ -95,7 +95,7 @@ class AutoPP2BP1(AutoACMGHelper):
             raise InvalidAPIResposeError("Failed to get variant from range. No ClinVar data.")
 
     @staticmethod
-    def _is_missense(var_data: AutoACMGData) -> bool:
+    def _is_missense(var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the variant is a missense variant.
 
@@ -111,7 +111,9 @@ class AutoPP2BP1(AutoACMGHelper):
             return True
         return False
 
-    def verify_pp2bp1(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PP2BP1], str]:
+    def verify_pp2bp1(
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
+    ) -> Tuple[Optional[PP2BP1], str]:
         """Predict PP2 and BP1 criteria."""
         self.prediction_pp2bp1 = PP2BP1()
         self.comment_pp2bp1 = ""
@@ -176,7 +178,7 @@ class AutoPP2BP1(AutoACMGHelper):
         return self.prediction_pp2bp1, self.comment_pp2bp1
 
     def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Predict PP2 and BP1 criteria for the provided sequence variant.
 

@@ -4,8 +4,8 @@ import pytest
 
 from src.defs.auto_acmg import (
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     GenomicStrand,
 )
@@ -27,7 +27,7 @@ def leber_congenital_amaurosis_predictor(seqvar):
 
 @pytest.fixture
 def auto_acmg_data():
-    return AutoACMGData()
+    return AutoACMGSeqVarData()
 
 
 def test_predict_pm1_met_for_critical_residue(leber_congenital_amaurosis_predictor, auto_acmg_data):
@@ -90,7 +90,7 @@ def test_predict_pm1_not_met(leber_congenital_amaurosis_predictor, auto_acmg_dat
     ), "The summary should indicate the lack of criteria met."
 
 
-@patch("src.vcep.leber_congenital_amaurosis.DefaultPredictor.predict_pm1")
+@patch("src.vcep.leber_congenital_amaurosis.DefaultSeqVarPredictor.predict_pm1")
 def test_predict_pm1_fallback_to_default(
     mock_predict_pm1, leber_congenital_amaurosis_predictor, auto_acmg_data
 ):

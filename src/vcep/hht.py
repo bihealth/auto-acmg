@@ -12,15 +12,15 @@ from typing import Dict, List, Tuple, Union
 
 from loguru import logger
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     VcepSpec,
 )
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specifications for Hereditary Hemorrhagic Telangiectasia.
 SPECs: List[VcepSpec] = [
@@ -57,9 +57,9 @@ PM1_CLUSTER: Dict[str, Dict[str, List[Union[Tuple[int, int], int]]]] = {
 }
 
 
-class HHTPredictor(DefaultPredictor):
+class HHTPredictor(DefaultSeqVarPredictor):
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """
         Override predict_pm1 to include VCEP-specific logic for Hereditary Hemorrhagic
         Telangiectasia. Include critical domains for ACVRL1 and ENG.
@@ -95,12 +95,12 @@ class HHTPredictor(DefaultPredictor):
             summary=f"Variant does not meet the PM1 criteria for {var_data.hgnc_id}.",
         )
 
-    def _bs2_not_applicable(self, var_data: AutoACMGData) -> bool:
+    def _bs2_not_applicable(self, var_data: AutoACMGSeqVarData) -> bool:
         """BS2 is not applicable for ACVRL1 and ENG."""
         return True
 
     def predict_pm2ba1bs1bs2(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
         """Change the thresholds for PM2, BA1 and BS1."""
         var_data.thresholds.pm2_pathogenic = 0.00004
@@ -108,12 +108,12 @@ class HHTPredictor(DefaultPredictor):
         var_data.thresholds.bs1_benign = 0.0008
         return super().predict_pm2ba1bs1bs2(seqvar, var_data)
 
-    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """BP3 is not applicable for Hereditary Hemorrhagic Telangiectasia."""
         return True
 
     def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Override predict_pp2bp1 to return not applicable status for ACVRL1 and ENG."""
         return (

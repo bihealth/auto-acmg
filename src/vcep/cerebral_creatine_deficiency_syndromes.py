@@ -12,17 +12,17 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN027
 
 from typing import List, Tuple
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     AlleleCondition,
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     VcepSpec,
 )
 from src.defs.exceptions import MissingDataError
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specifications for Cerebral Creatine Deficiency Syndromes.
 SPECs: List[VcepSpec] = [
@@ -41,9 +41,9 @@ SPECs: List[VcepSpec] = [
 ]
 
 
-class CerebralCreatineDeficiencySyndromesPredictor(DefaultPredictor):
+class CerebralCreatineDeficiencySyndromesPredictor(DefaultSeqVarPredictor):
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override predict_pm1 to return a not applicable status for PM1."""
         return AutoACMGCriteria(
             name="PM1",
@@ -52,7 +52,7 @@ class CerebralCreatineDeficiencySyndromesPredictor(DefaultPredictor):
             summary="PM1 is not applicable for Cerebral Creatine Deficiency Syndromes.",
         )
 
-    def _check_zyg(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _check_zyg(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """
         Check the zygosity of the sequence variant.
 
@@ -90,7 +90,7 @@ class CerebralCreatineDeficiencySyndromesPredictor(DefaultPredictor):
         return False
 
     def predict_pm2ba1bs1bs2(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
         """Change the thresholds for PM2, BA1 and BS1."""
         if var_data.hgnc_id == "HGNC:4175":
@@ -107,12 +107,12 @@ class CerebralCreatineDeficiencySyndromesPredictor(DefaultPredictor):
             var_data.thresholds.bs1_benign = 0.0002
         return super().predict_pm2ba1bs1bs2(seqvar, var_data)
 
-    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """BP3 is not applicable for Cerebral Creatine Deficiency Syndromes."""
         return True
 
     def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Override predict_pp2bp1 to return a not applicable status for PP2 and BP1."""
         return (
@@ -130,7 +130,7 @@ class CerebralCreatineDeficiencySyndromesPredictor(DefaultPredictor):
             ),
         )
 
-    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override donor and acceptor positions for Cerebral Creatine Deficiency Syndromes VCEP."""
         if var_data.hgnc_id == "HGNC:4136":
             var_data.thresholds.bp7_donor = 7

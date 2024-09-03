@@ -4,7 +4,6 @@ import pytest
 
 from src.api.annonars import AnnonarsClient
 from src.api.mehari import MehariClient
-from src.criteria.auto_pvs1 import AutoPVS1, SeqVarPVS1Helper
 from src.defs.annonars_range import AnnonarsRangeResponse
 from src.defs.auto_acmg import AutoACMGPrediction, AutoACMGStrength, GenomicStrand
 from src.defs.auto_pvs1 import (
@@ -17,6 +16,7 @@ from src.defs.exceptions import AlgorithmError, MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import Exon, GeneTranscripts, TranscriptsSeqVar
 from src.defs.seqvar import SeqVar
+from src.seqvar.auto_pvs1 import AutoPVS1, SeqVarPVS1Helper
 from src.utils import SeqVarTranscriptsHelper, SplicingPrediction
 from tests.utils import get_json_object
 
@@ -540,10 +540,10 @@ def helper():
 
 
 @pytest.mark.skip(reason="Patching is not working properly")
-@patch("src.criteria.auto_pvs1.SeqVarPVS1Helper._skipping_exon_pos", return_value=(90, 111))
-@patch("src.criteria.auto_pvs1.SplicingPrediction.get_sequence", return_value="ATGC" * 10)
-@patch("src.criteria.auto_pvs1.SplicingPrediction.determine_splice_type", return_value="donor")
-@patch("src.criteria.auto_pvs1.SplicingPrediction.get_cryptic_ss", return_value=[(95, "GT", 5)])
+@patch("src.seqvar.auto_pvs1.SeqVarPVS1Helper._skipping_exon_pos", return_value=(90, 111))
+@patch("src.seqvar.auto_pvs1.SplicingPrediction.get_sequence", return_value="ATGC" * 10)
+@patch("src.seqvar.auto_pvs1.SplicingPrediction.determine_splice_type", return_value="donor")
+@patch("src.seqvar.auto_pvs1.SplicingPrediction.get_cryptic_ss", return_value=[(95, "GT", 5)])
 def test_exon_skip_or_cryptic_ss_disrupt_exon_skipping(
     mock_skipping_exon_pos, helper, seqvar_ss, exons, consequences
 ):
@@ -559,10 +559,10 @@ def test_exon_skip_or_cryptic_ss_disrupt_exon_skipping(
 
 
 @pytest.mark.skip(reason="Patching is not working properly")
-@patch("src.criteria.auto_pvs1.SeqVarPVS1Helper._skipping_exon_pos", return_value=(90, 110))
-@patch("src.criteria.auto_pvs1.SplicingPrediction.get_sequence", return_value="ATGC" * 10)
-@patch("src.criteria.auto_pvs1.SplicingPrediction.determine_splice_type", return_value="donor")
-@patch("src.criteria.auto_pvs1.SplicingPrediction.get_cryptic_ss", return_value=[(95, "GT", 5)])
+@patch("src.seqvar.auto_pvs1.SeqVarPVS1Helper._skipping_exon_pos", return_value=(90, 110))
+@patch("src.seqvar.auto_pvs1.SplicingPrediction.get_sequence", return_value="ATGC" * 10)
+@patch("src.seqvar.auto_pvs1.SplicingPrediction.determine_splice_type", return_value="donor")
+@patch("src.seqvar.auto_pvs1.SplicingPrediction.get_cryptic_ss", return_value=[(95, "GT", 5)])
 def test_exon_skip_or_cryptic_ss_disrupt_cryptic_splice_site_disruption(
     mock_get_sequence,
     mock_determine_splice_type,
@@ -582,10 +582,10 @@ def test_exon_skip_or_cryptic_ss_disrupt_cryptic_splice_site_disruption(
 
 
 @pytest.mark.skip(reason="Patching is not working properly")
-@patch("src.criteria.auto_pvs1.SeqVarPVS1Helper._skipping_exon_pos", return_value=(90, 110))
-@patch("src.criteria.auto_pvs1.SplicingPrediction.get_sequence", return_value="ATGC" * 10)
-@patch("src.criteria.auto_pvs1.SplicingPrediction.determine_splice_type", return_value="donor")
-@patch("src.criteria.auto_pvs1.SplicingPrediction.get_cryptic_ss", return_value=[])
+@patch("src.seqvar.auto_pvs1.SeqVarPVS1Helper._skipping_exon_pos", return_value=(90, 110))
+@patch("src.seqvar.auto_pvs1.SplicingPrediction.get_sequence", return_value="ATGC" * 10)
+@patch("src.seqvar.auto_pvs1.SplicingPrediction.determine_splice_type", return_value="donor")
+@patch("src.seqvar.auto_pvs1.SplicingPrediction.get_cryptic_ss", return_value=[])
 def test_exon_skip_or_cryptic_ss_disrupt_preserve_reading_frame(
     mock_get_sequence,
     mock_determine_splice_type,

@@ -2,17 +2,17 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     GenomicStrand,
 )
 from src.defs.exceptions import AlgorithmError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 from src.vcep import CoagulationFactorDeficiencyPredictor
 
 
@@ -31,7 +31,7 @@ def coagulation_predictor(seqvar):
 
 @pytest.fixture
 def auto_acmg_data():
-    data = AutoACMGData()
+    data = AutoACMGSeqVarData()
     data.hgnc_id = "HGNC:3546"  # F8
     data.prot_pos = 391  # Test position
     data.exons = [MagicMock(altStartI=1, altEndI=1000000)]
@@ -294,7 +294,7 @@ def test_predict_bp7_threshold_adjustment_for_hgnc_3551(coagulation_predictor, a
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
 
 
-@patch.object(DefaultPredictor, "predict_bp7")
+@patch.object(DefaultSeqVarPredictor, "predict_bp7")
 def test_predict_bp7_fallback_to_default(
     mock_super_predict_bp7, coagulation_predictor, auto_acmg_data
 ):

@@ -7,8 +7,8 @@ from loguru import logger
 from src.defs.auto_acmg import (
     BP7,
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     GenomicStrand,
 )
@@ -28,7 +28,7 @@ class AutoBP7(AutoACMGHelper):
         self.comment_bp7: str = ""
 
     @staticmethod
-    def _spliceai_impact(var_data: AutoACMGData) -> bool:
+    def _spliceai_impact(var_data: AutoACMGSeqVarData) -> bool:
         """
         Predict splice site alterations using SpliceAI.
 
@@ -52,7 +52,7 @@ class AutoBP7(AutoACMGHelper):
             for score_name, threshold in score_checks.items()
         )
 
-    def _is_conserved(self, var_data: AutoACMGData) -> bool:
+    def _is_conserved(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Predict if the variant is conserved.
 
@@ -72,7 +72,7 @@ class AutoBP7(AutoACMGHelper):
         return False
 
     @staticmethod
-    def _is_synonymous(var_data: AutoACMGData) -> bool:
+    def _is_synonymous(var_data: AutoACMGSeqVarData) -> bool:
         """
         Predict if the variant is synonymous.
 
@@ -92,7 +92,7 @@ class AutoBP7(AutoACMGHelper):
         return False
 
     @staticmethod
-    def _is_intronic(var_data: AutoACMGData) -> bool:
+    def _is_intronic(var_data: AutoACMGSeqVarData) -> bool:
         """
         Predict if the variant is intronic.
 
@@ -124,7 +124,7 @@ class AutoBP7(AutoACMGHelper):
             return True
         return False
 
-    def _affect_canonical_ss(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _affect_canonical_ss(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """
         Predict if the variant affects canonical splice site.
 
@@ -165,7 +165,7 @@ class AutoBP7(AutoACMGHelper):
                 raise MissingDataError("Missing strand information.")
         return False
 
-    def _is_bp7_exception(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _is_bp7_exception(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """
         Help function to check if the variant is an exception.
 
@@ -180,7 +180,7 @@ class AutoBP7(AutoACMGHelper):
         """
         return False
 
-    def verify_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[BP7], str]:
+    def verify_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> Tuple[Optional[BP7], str]:
         """Predict BP7 criterion."""
         self.prediction_bp7 = BP7()
         self.comment_bp7 = ""
@@ -235,7 +235,7 @@ class AutoBP7(AutoACMGHelper):
 
         return self.prediction_bp7, self.comment_bp7
 
-    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Predict BP7 criterion."""
         logger.info("Predict BP7")
         pred, comment = self.verify_bp7(seqvar, var_data)

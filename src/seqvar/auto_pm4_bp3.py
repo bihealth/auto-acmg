@@ -10,8 +10,8 @@ from src.core.config import settings
 from src.defs.auto_acmg import (
     PM4BP3,
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
 )
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException
@@ -62,7 +62,7 @@ class AutoPM4BP3(AutoACMGHelper):
             raise AlgorithmError("Failed to check if the variant is in a repeat region.") from e
 
     @staticmethod
-    def _is_stop_loss(var_data: AutoACMGData) -> bool:
+    def _is_stop_loss(var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the variant's consequence is a stop-loss.
 
@@ -79,7 +79,7 @@ class AutoPM4BP3(AutoACMGHelper):
         return False
 
     @staticmethod
-    def is_inframe_delins(var_data: AutoACMGData) -> bool:
+    def is_inframe_delins(var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the variant's consequence is an in-frame deletion/insertion.
 
@@ -99,7 +99,7 @@ class AutoPM4BP3(AutoACMGHelper):
             return True
         return False
 
-    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if BP3 is not applicable for the variant.
 
@@ -113,7 +113,9 @@ class AutoPM4BP3(AutoACMGHelper):
             return True
         return False
 
-    def verify_pm4bp3(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PM4BP3], str]:
+    def verify_pm4bp3(
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
+    ) -> Tuple[Optional[PM4BP3], str]:
         """Predicts PM4 and BP3 criteria for the provided sequence variant.
 
         Implementation of the rule:
@@ -169,7 +171,7 @@ class AutoPM4BP3(AutoACMGHelper):
         return self.prediction_pm4bp3, self.comment_pm4bp3
 
     def predict_pm4bp3(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Predict PM4 and BP3 criteria for the provided sequence variant.
 

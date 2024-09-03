@@ -3,12 +3,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.api.annonars import AnnonarsClient
-from src.criteria.auto_ps1_pm5 import AutoPS1PM5
 from src.defs.annonars_variant import AnnonarsVariantResponse
 from src.defs.auto_acmg import PS1PM5, AminoAcid, AutoACMGPrediction, AutoACMGStrength
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.auto_ps1_pm5 import AutoPS1PM5
 from tests.utils import get_json_object
 
 
@@ -232,10 +232,10 @@ def alt_var_info_non_pathogenic():
     return MagicMock(result=result)
 
 
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5._is_missense", return_value=True)
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5._parse_HGVSp", return_value=AminoAcid.Thr)
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5._get_var_info")
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5._is_pathogenic", return_value=True)
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._is_missense", return_value=True)
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._parse_HGVSp", return_value=AminoAcid.Thr)
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._get_var_info")
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._is_pathogenic", return_value=True)
 def test_verify_ps1_met(
     mock_is_pathogenic,
     mock_get_var_info,
@@ -259,10 +259,10 @@ def test_verify_ps1_met(
         "than the primary variant. However, we patch the method once."
     )
 )
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5._is_missense", return_value=True)
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5._parse_HGVSp", return_value=AminoAcid.Thr)
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5._get_var_info")
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5._is_pathogenic", return_value=True)
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._is_missense", return_value=True)
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._parse_HGVSp", return_value=AminoAcid.Thr)
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._get_var_info")
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._is_pathogenic", return_value=True)
 def test_verify_pm5_met(
     mock_is_pathogenic,
     mock_get_var_info,
@@ -282,7 +282,7 @@ def test_verify_pm5_met(
 
 
 @pytest.mark.skip(reason="Don't know what's wrong with this test...")
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5._is_missense", return_value=False)
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._is_missense", return_value=False)
 def test_verify_ps1pm5_not_missense(
     mock_is_missense, auto_ps1pm5, seqvar, var_data_not_missense_verify
 ):
@@ -293,8 +293,8 @@ def test_verify_ps1pm5_not_missense(
 
 
 @pytest.mark.skip(reason="Don't know what's wrong with this test...")
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5._is_missense", return_value=True)
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5._parse_HGVSp", return_value=None)
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._is_missense", return_value=True)
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._parse_HGVSp", return_value=None)
 def test_verify_ps1pm5_no_valid_aa_change(
     mock_parse_HGVSp, mock_is_missense, auto_ps1pm5, seqvar, var_data_missense
 ):
@@ -304,9 +304,9 @@ def test_verify_ps1pm5_no_valid_aa_change(
         auto_ps1pm5.verify_ps1pm5(seqvar, var_data_missense)
 
 
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5._is_missense", return_value=True)
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5._parse_HGVSp", return_value=AminoAcid.Ala)
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5._get_var_info", return_value=None)
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._is_missense", return_value=True)
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._parse_HGVSp", return_value=AminoAcid.Ala)
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._get_var_info", return_value=None)
 def test_verify_ps1pm5_missing_var_info(
     mock_get_var_info, mock_parse_HGVSp, mock_is_missense, auto_ps1pm5, seqvar, var_data_missense
 ):
@@ -316,10 +316,10 @@ def test_verify_ps1pm5_missing_var_info(
     assert "Failed to get variant information" in comment
 
 
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5._is_missense", return_value=True)
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5._parse_HGVSp", return_value=AminoAcid.Ala)
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5._get_var_info")
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5._is_pathogenic", return_value=False)
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._is_missense", return_value=True)
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._parse_HGVSp", return_value=AminoAcid.Ala)
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._get_var_info")
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._is_pathogenic", return_value=False)
 def test_verify_ps1pm5_non_pathogenic(
     mock_is_pathogenic,
     mock_get_var_info,
@@ -337,11 +337,11 @@ def test_verify_ps1pm5_non_pathogenic(
     assert "Alternative variant is pathogenic" not in comment
 
 
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5._is_missense", return_value=True)
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5._parse_HGVSp", return_value=AminoAcid.Ala)
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5._get_var_info")
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._is_missense", return_value=True)
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._parse_HGVSp", return_value=AminoAcid.Ala)
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._get_var_info")
 @patch(
-    "src.criteria.auto_ps1_pm5.AutoPS1PM5._is_pathogenic",
+    "src.seqvar.auto_ps1_pm5.AutoPS1PM5._is_pathogenic",
     side_effect=AutoAcmgBaseException("Error"),
 )
 def test_verify_ps1pm5_exception(
@@ -399,7 +399,7 @@ def ps1pm5_result_failed():
     return None, "Error during prediction"
 
 
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5.verify_ps1pm5")
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5.verify_ps1pm5")
 def test_predict_ps1pm5_met(mock_verify, auto_ps1pm5, seqvar, var_data, ps1pm5_result_met):
     """Test predict_ps1pm5 where PS1 criterion is met."""
     mock_verify.return_value = ps1pm5_result_met
@@ -411,7 +411,7 @@ def test_predict_ps1pm5_met(mock_verify, auto_ps1pm5, seqvar, var_data, ps1pm5_r
     assert result[1].strength == AutoACMGStrength.PathogenicModerate
 
 
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5.verify_ps1pm5")
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5.verify_ps1pm5")
 def test_predict_ps1pm5_pm5_met(mock_verify, auto_ps1pm5, seqvar, var_data, ps1pm5_result_pm5_met):
     """Test predict_ps1pm5 where PM5 criterion is met."""
     mock_verify.return_value = ps1pm5_result_pm5_met
@@ -423,7 +423,7 @@ def test_predict_ps1pm5_pm5_met(mock_verify, auto_ps1pm5, seqvar, var_data, ps1p
     assert "PM5 criteria met" in result[1].summary
 
 
-@patch("src.criteria.auto_ps1_pm5.AutoPS1PM5.verify_ps1pm5")
+@patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5.verify_ps1pm5")
 def test_predict_ps1pm5_failed(mock_verify, auto_ps1pm5, seqvar, var_data, ps1pm5_result_failed):
     """Test predict_ps1pm5 when there's a failure to evaluate the criteria."""
     mock_verify.return_value = ps1pm5_result_failed

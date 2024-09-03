@@ -8,16 +8,16 @@ from typing import Tuple
 
 from loguru import logger
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     VcepSpec,
 )
 from src.defs.exceptions import MissingDataError
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specification for MYOC.
 SPEC = VcepSpec(
@@ -26,9 +26,9 @@ SPEC = VcepSpec(
 )
 
 
-class GlaucomaPredictor(DefaultPredictor):
+class GlaucomaPredictor(DefaultSeqVarPredictor):
 
-    def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """PVS1 is not applicable."""
         logger.info("Predict PVS1")
         return AutoACMGCriteria(
@@ -38,7 +38,7 @@ class GlaucomaPredictor(DefaultPredictor):
             summary="PVS1 is not applicable for the gene.",
         )
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override predict_pm1 to return a not applicable status for PM1."""
         logger.info("Predict PM1")
 
@@ -49,12 +49,12 @@ class GlaucomaPredictor(DefaultPredictor):
             summary="PM1 is not applicable for MYOC.",
         )
 
-    def _bs2_not_applicable(self, var_data: AutoACMGData) -> bool:
+    def _bs2_not_applicable(self, var_data: AutoACMGSeqVarData) -> bool:
         """BS2 is not applicable for Glaucoma VCEP."""
         return True
 
     def predict_pm2ba1bs1bs2(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
         """Change the thresholds for PM2, BA1 and BS1."""
         var_data.thresholds.pm2_pathogenic = 0.0001
@@ -62,11 +62,11 @@ class GlaucomaPredictor(DefaultPredictor):
         var_data.thresholds.bs1_benign = 0.001
         return super().predict_pm2ba1bs1bs2(seqvar, var_data)
 
-    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """BP3 is not applicable for Glaucoma VCEP."""
         return True
 
-    def _is_conserved(self, var_data: AutoACMGData) -> bool:
+    def _is_conserved(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Predict if the variant is conserved.
 
@@ -86,7 +86,7 @@ class GlaucomaPredictor(DefaultPredictor):
         return var_data.scores.cadd.gerp >= var_data.thresholds.gerp
 
     def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Override predict_pp2bp1 to return a not applicable status for PP2 and BP1."""
         return (
@@ -104,7 +104,7 @@ class GlaucomaPredictor(DefaultPredictor):
             ),
         )
 
-    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Change BP7 thresholds for Glaucoma VCEP."""
         var_data.thresholds.spliceAI_acceptor_gain = 0.2
         var_data.thresholds.spliceAI_acceptor_loss = 0.2

@@ -8,15 +8,15 @@ from typing import Tuple
 
 from loguru import logger
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     VcepSpec,
 )
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specification for CDH1.
 SPEC: VcepSpec = VcepSpec(
@@ -25,9 +25,9 @@ SPEC: VcepSpec = VcepSpec(
 )
 
 
-class CDH1Predictor(DefaultPredictor):
+class CDH1Predictor(DefaultSeqVarPredictor):
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override predict_pm1 to return a not applicable status for PM1."""
         logger.info("Predict PM1")
 
@@ -39,7 +39,7 @@ class CDH1Predictor(DefaultPredictor):
         )
 
     def predict_pm2ba1bs1bs2(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
         """Change the thresholds for PM2, BA1 and BS1."""
         var_data.thresholds.pm2_pathogenic = 0.00001
@@ -48,7 +48,7 @@ class CDH1Predictor(DefaultPredictor):
         return super().predict_pm2ba1bs1bs2(seqvar, var_data)
 
     def predict_pm4bp3(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Override predict_pm4bp3 for CDH1 VCEP. PM4 is not changed, but BP3 is not applicable."""
         logger.info("Predict PM4 and BP3")
@@ -78,7 +78,7 @@ class CDH1Predictor(DefaultPredictor):
         )
 
     def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Override predict_pp2bp1 to return a not applicable status for PP2 and BP1."""
         return (
@@ -96,7 +96,7 @@ class CDH1Predictor(DefaultPredictor):
             ),
         )
 
-    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override donor and acceptor positions for CDH1 VCEP."""
         var_data.thresholds.bp7_donor = 7
         var_data.thresholds.bp7_acceptor = 21

@@ -10,8 +10,8 @@ from src.core.config import settings
 from src.defs.auto_acmg import (
     PM1,
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     GenomicStrand,
 )
@@ -32,7 +32,7 @@ class AutoPM1(AutoACMGHelper):
         self.comment_pm1: str = ""
 
     @staticmethod
-    def _get_affected_exon(var_data: AutoACMGData, seqvar: SeqVar) -> int:
+    def _get_affected_exon(var_data: AutoACMGSeqVarData, seqvar: SeqVar) -> int:
         """
         Get the affected exon number for the variant.
 
@@ -150,7 +150,7 @@ class AutoPM1(AutoACMGHelper):
             return int(record[1]), int(record[2])
         return None
 
-    def verify_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PM1], str]:
+    def verify_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> Tuple[Optional[PM1], str]:
         """Predict PM1 criteria."""
         self.prediction_pm1 = PM1()
         self.comment_pm1 = ""
@@ -202,7 +202,7 @@ class AutoPM1(AutoACMGHelper):
                 self.prediction_pm1 = None
         return self.prediction_pm1, self.comment_pm1
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Predict PM1 criteria."""
         logger.info("Predict PM1")
         pred, comment = self.verify_pm1(seqvar, var_data)

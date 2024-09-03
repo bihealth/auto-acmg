@@ -15,15 +15,15 @@ from typing import List, Tuple
 
 from loguru import logger
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     VcepSpec,
 )
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specifications for Mitochondrial Diseases.
 SPECs: List[VcepSpec] = [
@@ -38,9 +38,9 @@ SPECs: List[VcepSpec] = [
 ]
 
 
-class MitochondrialDiseasesPredictor(DefaultPredictor):
+class MitochondrialDiseasesPredictor(DefaultSeqVarPredictor):
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """
         Override predict_pm1 to return not applicable status for ETHE1, PDHA1, POLG, and SLC19A3.
         """
@@ -62,7 +62,7 @@ class MitochondrialDiseasesPredictor(DefaultPredictor):
         return super().predict_pm1(seqvar, var_data)
 
     def predict_pm2ba1bs1bs2(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
         """Change the thresholds for PM2, BA1 and BS1."""
         var_data.thresholds.pm2_pathogenic = 0.00005
@@ -71,7 +71,7 @@ class MitochondrialDiseasesPredictor(DefaultPredictor):
         return super().predict_pm2ba1bs1bs2(seqvar, var_data)
 
     def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Override predict_pp2bp1 to return not applicable status for PP2 and BP1."""
         return (

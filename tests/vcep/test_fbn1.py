@@ -2,10 +2,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGPrediction,
+    AutoACMGSeqVarData,
+    AutoACMGStrength,
+)
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 from src.vcep import FBN1Predictor
 
 
@@ -22,7 +27,7 @@ def fbn1_predictor(seqvar):
 
 @pytest.fixture
 def auto_acmg_data():
-    return AutoACMGData()
+    return AutoACMGSeqVarData()
 
 
 def test_predict_pm1_strong_residue(fbn1_predictor, auto_acmg_data):
@@ -76,7 +81,7 @@ def test_predict_pm1_outside_critical_residues(fbn1_predictor, auto_acmg_data):
     ), "The summary should indicate no criteria were met."
 
 
-@patch("src.vcep.fbn1.DefaultPredictor.predict_pm1")
+@patch("src.vcep.fbn1.DefaultSeqVarPredictor.predict_pm1")
 def test_predict_pm1_fallback_to_default(mock_predict_pm1, fbn1_predictor, auto_acmg_data):
     """Test fallback to the default PM1 prediction method for genes not in PM1_CLUSTER."""
     auto_acmg_data.hgnc_id = "HGNC:99999"  # Gene not in PM1_CLUSTER
@@ -138,7 +143,7 @@ def test_bs2_not_applicable(fbn1_predictor, auto_acmg_data):
 
 
 @patch.object(
-    DefaultPredictor,
+    DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
     return_value=(
         AutoACMGCriteria(name="PM2"),

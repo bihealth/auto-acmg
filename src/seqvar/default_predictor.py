@@ -4,17 +4,17 @@ from loguru import logger
 
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config
-from src.criteria.auto_bp7 import AutoBP7
-from src.criteria.auto_pm1 import AutoPM1
-from src.criteria.auto_pm2_ba1_bs1_bs2 import AutoPM2BA1BS1BS2
-from src.criteria.auto_pm4_bp3 import AutoPM4BP3
-from src.criteria.auto_pp2_bp1 import AutoPP2BP1
-from src.criteria.auto_pp3_bp4 import AutoPP3BP4
-from src.criteria.auto_ps1_pm5 import AutoPS1PM5
-from src.criteria.auto_pvs1 import AutoPVS1
-from src.defs.auto_acmg import AutoACMGData, AutoACMGResult
+from src.defs.auto_acmg import AutoACMGSeqVarData, AutoACMGSeqVarResult
 from src.defs.auto_pvs1 import PVS1Prediction
 from src.defs.seqvar import SeqVar
+from src.seqvar.auto_bp7 import AutoBP7
+from src.seqvar.auto_pm1 import AutoPM1
+from src.seqvar.auto_pm2_ba1_bs1_bs2 import AutoPM2BA1BS1BS2
+from src.seqvar.auto_pm4_bp3 import AutoPM4BP3
+from src.seqvar.auto_pp2_bp1 import AutoPP2BP1
+from src.seqvar.auto_pp3_bp4 import AutoPP3BP4
+from src.seqvar.auto_ps1_pm5 import AutoPS1PM5
+from src.seqvar.auto_pvs1 import AutoPVS1
 
 #: Pathogenic PVS1 predictions of sequence variants.
 PVS1_POSITIVE_SEQVAR_PREDICTIONS = [
@@ -40,7 +40,7 @@ NOT_IMPLEMENTED_CRITERIA: List[str] = [
 ]
 
 
-class DefaultPredictor(
+class DefaultSeqVarPredictor(
     AutoPVS1,
     AutoPS1PM5,
     AutoPM1,
@@ -50,7 +50,7 @@ class DefaultPredictor(
     AutoPP3BP4,
     AutoBP7,
 ):
-    def __init__(self, seqvar: SeqVar, result: AutoACMGResult, config: Config):
+    def __init__(self, seqvar: SeqVar, result: AutoACMGSeqVarResult, config: Config):
         #: Configuration to use.
         self.config = config or Config()
         #: Sequence variant to predict.
@@ -62,7 +62,7 @@ class DefaultPredictor(
         #: Prediction result.
         self.result = result
 
-    def predict(self) -> Optional[AutoACMGResult]:
+    def predict(self) -> Optional[AutoACMGSeqVarResult]:
         # PP5 and BP6 criteria are depricated
         logger.warning("Note, that PP5 and BP6 criteria are depricated and not predicted.")
         # Not implemented criteria

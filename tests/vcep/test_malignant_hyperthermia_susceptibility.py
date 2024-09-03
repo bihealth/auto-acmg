@@ -2,7 +2,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGPrediction,
+    AutoACMGSeqVarData,
+    AutoACMGStrength,
+)
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.vcep.malignant_hyperthermia_susceptibility import MalignantHyperthermiaPredictor
@@ -21,7 +26,7 @@ def malignant_hyperthermia_predictor(seqvar):
 
 @pytest.fixture
 def auto_acmg_data():
-    return AutoACMGData()
+    return AutoACMGSeqVarData()
 
 
 def test_predict_pvs1_not_applicable(malignant_hyperthermia_predictor, seqvar, auto_acmg_data):
@@ -96,7 +101,7 @@ def test_predict_pm1_not_met(malignant_hyperthermia_predictor, auto_acmg_data):
     ), "The summary should indicate the lack of criteria met."
 
 
-@patch("src.vcep.malignant_hyperthermia_susceptibility.DefaultPredictor.predict_pm1")
+@patch("src.vcep.malignant_hyperthermia_susceptibility.DefaultSeqVarPredictor.predict_pm1")
 def test_predict_pm1_fallback_to_default(
     mock_predict_pm1, malignant_hyperthermia_predictor, auto_acmg_data
 ):

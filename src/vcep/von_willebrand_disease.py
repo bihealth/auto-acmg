@@ -10,15 +10,15 @@ from typing import Tuple
 
 from loguru import logger
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     VcepSpec,
 )
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specification for von Willebrand Disease.
 SPEC: VcepSpec = VcepSpec(
@@ -27,9 +27,9 @@ SPEC: VcepSpec = VcepSpec(
 )
 
 
-class VonWillebrandDiseasePredictor(DefaultPredictor):
+class VonWillebrandDiseasePredictor(DefaultSeqVarPredictor):
 
-    def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """PVS1 is not applicable."""
         logger.info("Predict PVS1")
         return AutoACMGCriteria(
@@ -39,7 +39,7 @@ class VonWillebrandDiseasePredictor(DefaultPredictor):
             summary="PVS1 is not applicable for the gene.",
         )
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """
         Override predict_pm1 to return a not applicable status for PM1.
         """
@@ -52,12 +52,12 @@ class VonWillebrandDiseasePredictor(DefaultPredictor):
             summary=f"PM1 is not applicable for {var_data.hgnc_id}.",
         )
 
-    def _bs2_not_applicable(self, var_data: AutoACMGData) -> bool:
+    def _bs2_not_applicable(self, var_data: AutoACMGSeqVarData) -> bool:
         """BS2 is not applicable for von Willebrand Disease VCEP."""
         return True
 
     def predict_pm2ba1bs1bs2(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
         """Change the thresholds for PM2, BA1 and BS1."""
         var_data.thresholds.pm2_pathogenic = 0.0001
@@ -65,12 +65,12 @@ class VonWillebrandDiseasePredictor(DefaultPredictor):
         var_data.thresholds.bs1_benign = 0.01
         return super().predict_pm2ba1bs1bs2(seqvar, var_data)
 
-    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """BP3 it not applicable."""
         return True
 
     def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Override predict_pp2bp1 to return a not applicable status for PP2 and BP1."""
         return (

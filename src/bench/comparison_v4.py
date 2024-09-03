@@ -9,7 +9,7 @@ import pandas as pd
 
 from src.auto_acmg import AutoACMG
 from src.core.config import settings
-from src.defs.auto_acmg import AutoACMGPrediction, AutoACMGResult
+from src.defs.auto_acmg import AutoACMGPrediction, AutoACMGSeqVarResult
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 
@@ -141,7 +141,7 @@ def genebe_response(variant: str):
     return backend_resp.json()
 
 
-def eval_autoacmg(pred: Optional[AutoACMGResult], expected: List[str]):
+def eval_autoacmg(pred: Optional[AutoACMGSeqVarResult], expected: List[str]):
     """
     Evaluate the AutoACMG prediction.
 
@@ -281,6 +281,8 @@ for i, var in enumerate(variants):
         pred = auto_acmg.predict()
         end_time = time.time()
         assert pred
+        # Ensure the prediction is for Sequence Variant
+        assert isinstance(pred, AutoACMGSeqVarResult)
         # Evaluate the model
         crit_met, tp, fn, fp = eval_autoacmg(pred, var[1])
         record["AutoACMG Criteria"] = ";".join(crit_met)

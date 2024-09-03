@@ -2,11 +2,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.criteria.auto_pp3_bp4 import AutoPP3BP4
 from src.defs.auto_acmg import PP3BP4, AutoACMGPrediction, AutoACMGStrength
 from src.defs.exceptions import AutoAcmgBaseException, MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.auto_pp3_bp4 import AutoPP3BP4
 
 
 @pytest.fixture
@@ -556,7 +556,7 @@ def pp3bp4_result_failed():
     return None, "Failed to evaluate."
 
 
-@patch("src.criteria.auto_pp3_bp4.AutoPP3BP4.verify_pp3bp4")
+@patch("src.seqvar.auto_pp3_bp4.AutoPP3BP4.verify_pp3bp4")
 def test_predict_pp3bp4_met(mock_verify, auto_pp3bp4, seqvar, var_data, pp3bp4_result_met):
     """Test predict_pp3bp4 where PP3 criterion is met."""
     mock_verify.return_value = pp3bp4_result_met
@@ -569,7 +569,7 @@ def test_predict_pp3bp4_met(mock_verify, auto_pp3bp4, seqvar, var_data, pp3bp4_r
     assert "PP3 criteria met" in bp4.summary
 
 
-@patch("src.criteria.auto_pp3_bp4.AutoPP3BP4.verify_pp3bp4")
+@patch("src.seqvar.auto_pp3_bp4.AutoPP3BP4.verify_pp3bp4")
 def test_predict_pp3bp4_not_met(mock_verify, auto_pp3bp4, seqvar, var_data, pp3bp4_result_not_met):
     """Test predict_pp3bp4 where BP4 criterion is met."""
     mock_verify.return_value = pp3bp4_result_not_met
@@ -582,7 +582,7 @@ def test_predict_pp3bp4_not_met(mock_verify, auto_pp3bp4, seqvar, var_data, pp3b
     assert "BP4 criteria met" in bp4.summary
 
 
-@patch("src.criteria.auto_pp3_bp4.AutoPP3BP4.verify_pp3bp4")
+@patch("src.seqvar.auto_pp3_bp4.AutoPP3BP4.verify_pp3bp4")
 def test_predict_pp3bp4_failed(mock_verify, auto_pp3bp4, seqvar, var_data, pp3bp4_result_failed):
     """Test predict_pp3bp4 when there's a failure to evaluate the criteria."""
     mock_verify.return_value = pp3bp4_result_failed

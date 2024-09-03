@@ -24,15 +24,15 @@ from typing import List, Tuple
 
 from loguru import logger
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     VcepSpec,
 )
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP spcifications for Cardiomyopathy.
 SPECs: List[VcepSpec] = [
@@ -100,9 +100,9 @@ PM1_CLUSTER = {
 }
 
 
-class CardiomyopathyPredictor(DefaultPredictor):
+class CardiomyopathyPredictor(DefaultSeqVarPredictor):
 
-    def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """PVS1 is not applicable."""
         if var_data.hgnc_id in [
             "HGNC:7577",
@@ -122,7 +122,7 @@ class CardiomyopathyPredictor(DefaultPredictor):
             )
         return super().predict_pvs1(seqvar, var_data)
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Specify PM1 domains for Cardiomyopathy."""
         logger.info("Predict PM1")
 
@@ -163,12 +163,12 @@ class CardiomyopathyPredictor(DefaultPredictor):
 
         return super().predict_pm1(seqvar, var_data)
 
-    def _bs2_not_applicable(self, var_data: AutoACMGData) -> bool:
+    def _bs2_not_applicable(self, var_data: AutoACMGSeqVarData) -> bool:
         """BS2 is not applicable for Cardiomyopathy."""
         return True
 
     def predict_pm2ba1bs1bs2(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
         """Change the thresholds for PM2, BA1 and BS1."""
         var_data.thresholds.pm2_pathogenic = 0.00004
@@ -179,12 +179,12 @@ class CardiomyopathyPredictor(DefaultPredictor):
             var_data.thresholds.bs1_benign = 0.0001
         return super().predict_pm2ba1bs1bs2(seqvar, var_data)
 
-    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """BP3 is not applicable for Cardiomyopathy."""
         return True
 
     def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Override PP2 and BP1 for Cardiomyopathy to return not applicable status."""
         return (
@@ -202,7 +202,7 @@ class CardiomyopathyPredictor(DefaultPredictor):
             ),
         )
 
-    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override donor and acceptor positions for Cardiomyopathy VCEP."""
         var_data.thresholds.bp7_donor = 7
         var_data.thresholds.bp7_acceptor = 4

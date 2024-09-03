@@ -63,6 +63,13 @@ def test_seqvar_normalize_chromosome(input_chrom, expected_normalized_chrom, seq
     assert seqvar_resolver._normalize_chrom(input_chrom) == expected_normalized_chrom
 
 
+def test_seqvar_eq():
+    """Test SeqVar.__eq__ method."""
+    variant1 = SeqVar(GenomeRelease.GRCh37, "1", 100, "A", "T", user_repr="1:100:A:T")
+    variant2 = SeqVar(GenomeRelease.GRCh37, "1", 100, "A", "T", user_repr="1-100-A-T")
+    assert variant1 == variant2
+
+
 # ===== SeqVarResolver tests =====
 
 

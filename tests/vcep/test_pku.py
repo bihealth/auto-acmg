@@ -2,18 +2,18 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     AlleleCondition,
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     GenomicStrand,
 )
 from src.defs.exceptions import MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 from src.vcep.pku import PKUPredictor
 
 
@@ -30,7 +30,7 @@ def pku_predictor(seqvar):
 
 @pytest.fixture
 def auto_acmg_data():
-    return AutoACMGData()
+    return AutoACMGSeqVarData()
 
 
 def test_predict_pm1_residue_critical_for_pku(pku_predictor, auto_acmg_data):
@@ -65,7 +65,7 @@ def test_predict_pm1_residue_not_critical_for_pku(pku_predictor, auto_acmg_data)
     ), "The summary should indicate that criteria were not met."
 
 
-@patch("src.vcep.pku.DefaultPredictor.predict_pm1")
+@patch("src.vcep.pku.DefaultSeqVarPredictor.predict_pm1")
 def test_predict_pm1_fallback_to_default(mock_predict_pm1, pku_predictor, auto_acmg_data):
     """Test fallback to the default PM1 prediction method for unhandled cases."""
     auto_acmg_data.hgnc_id = "HGNC:9999"  # Gene not in the PM1_CLUSTER_PKU
@@ -156,7 +156,7 @@ def test_check_zyg_missing_data_raises_error(
 
 
 @patch.object(
-    DefaultPredictor,
+    DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
     return_value=(
         AutoACMGCriteria(name="PM2"),
@@ -270,7 +270,7 @@ def test_predict_bp7_threshold_adjustment(pku_predictor, auto_acmg_data):
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
 
 
-@patch.object(DefaultPredictor, "predict_bp7")
+@patch.object(DefaultSeqVarPredictor, "predict_bp7")
 def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, pku_predictor, auto_acmg_data):
     """Test fallback to default BP7 prediction after threshold adjustment."""
     # Set the mock return value for the superclass's predict_bp7 method

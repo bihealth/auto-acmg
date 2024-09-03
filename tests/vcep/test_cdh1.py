@@ -2,10 +2,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGPrediction,
+    AutoACMGSeqVarData,
+    AutoACMGStrength,
+)
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 from src.vcep import CDH1Predictor
 
 
@@ -22,7 +27,7 @@ def cdh1_predictor(seqvar):
 
 @pytest.fixture
 def auto_acmg_data():
-    return AutoACMGData()
+    return AutoACMGSeqVarData()
 
 
 def test_predict_pm1_not_applicable(cdh1_predictor, auto_acmg_data):
@@ -53,7 +58,7 @@ def test_predict_pm1_name(cdh1_predictor, auto_acmg_data):
     assert result.name == "PM1", "The name of the criteria should be 'PM1'."
 
 
-@patch("src.vcep.cdh1.DefaultPredictor.predict_pm1")
+@patch("src.vcep.cdh1.DefaultSeqVarPredictor.predict_pm1")
 def test_predict_pm1_fallback_to_default(mock_predict_pm1, cdh1_predictor, auto_acmg_data):
     """Test fallback to the default PM1 prediction method (if implemented)."""
     mock_predict_pm1.return_value = AutoACMGCriteria(
@@ -70,7 +75,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, cdh1_predictor, auto_
 
 
 @patch.object(
-    DefaultPredictor,
+    DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
     return_value=(
         AutoACMGCriteria(name="PM2"),
@@ -101,7 +106,7 @@ def test_predict_pm2ba1bs1bs2(mock_super_method, cdh1_predictor, auto_acmg_data,
     ), "Unexpected criteria names returned"
 
 
-@patch.object(DefaultPredictor, "verify_pm4bp3")
+@patch.object(DefaultSeqVarPredictor, "verify_pm4bp3")
 def test_predict_pm4bp3_cdh1(mock_verify_pm4bp3, cdh1_predictor, seqvar, auto_acmg_data):
     """Test the predict_pm4bp3 method for CDH1."""
     # Set the mock return value for the verify_pm4bp3 method
@@ -138,7 +143,7 @@ def test_predict_pm4bp3_cdh1(mock_verify_pm4bp3, cdh1_predictor, seqvar, auto_ac
     ), "The summary should indicate BP3 is not applicable."
 
 
-@patch.object(DefaultPredictor, "verify_pm4bp3", return_value=(None, ""))
+@patch.object(DefaultSeqVarPredictor, "verify_pm4bp3", return_value=(None, ""))
 def test_predict_pm4bp3_fallback(mock_verify_pm4bp3, cdh1_predictor, seqvar, auto_acmg_data):
     """Test the fallback behavior for PM4 when verification fails."""
     # Call the method under test
@@ -211,7 +216,7 @@ def test_predict_bp7_threshold_adjustment(cdh1_predictor, auto_acmg_data):
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
 
 
-@patch.object(DefaultPredictor, "predict_bp7")
+@patch.object(DefaultSeqVarPredictor, "predict_bp7")
 def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, cdh1_predictor, auto_acmg_data):
     """Test fallback to default BP7 prediction after threshold adjustment."""
     # Set the mock return value for the superclass's predict_bp7 method

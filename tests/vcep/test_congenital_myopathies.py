@@ -2,10 +2,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGPrediction,
+    AutoACMGSeqVarData,
+    AutoACMGStrength,
+)
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 from src.vcep import CongenitalMyopathiesPredictor
 
 
@@ -22,11 +27,11 @@ def congenital_myopathies_predictor(seqvar):
 
 @pytest.fixture
 def auto_acmg_data():
-    return AutoACMGData()
+    return AutoACMGSeqVarData()
 
 
 @patch.object(
-    DefaultPredictor,
+    DefaultSeqVarPredictor,
     "predict_pvs1",
     return_value=AutoACMGCriteria(
         name="PVS1",
@@ -51,7 +56,7 @@ def test_predict_pvs1_not_applicable_for_specific_gene(
 
 
 @patch.object(
-    DefaultPredictor,
+    DefaultSeqVarPredictor,
     "predict_pvs1",
     return_value=AutoACMGCriteria(
         name="PVS1",
@@ -131,7 +136,7 @@ def test_predict_pm1_not_applicable(congenital_myopathies_predictor, auto_acmg_d
     ), "The summary should indicate that PM1 is not applicable for NEB."
 
 
-@patch("src.vcep.congenital_myopathies.DefaultPredictor.predict_pm1")
+@patch("src.vcep.congenital_myopathies.DefaultSeqVarPredictor.predict_pm1")
 def test_predict_pm1_fallback_to_default(
     mock_predict_pm1, congenital_myopathies_predictor, auto_acmg_data
 ):
@@ -189,7 +194,7 @@ def test_predict_pm1_edge_case_end_boundary(congenital_myopathies_predictor, aut
 
 
 @patch.object(
-    DefaultPredictor,
+    DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
     return_value=(
         AutoACMGCriteria(name="PM2"),

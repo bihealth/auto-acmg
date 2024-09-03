@@ -8,16 +8,16 @@ from typing import Tuple
 
 from loguru import logger
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     GenomicStrand,
     VcepSpec,
 )
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specification for Pulmonary Hypertension.
 SPEC: VcepSpec = VcepSpec(
@@ -46,9 +46,9 @@ PM1_CLUSTER_BMPR2 = {
 }
 
 
-class PulmonaryHypertensionPredictor(DefaultPredictor):
+class PulmonaryHypertensionPredictor(DefaultSeqVarPredictor):
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override predict_pm1 to specify critical residues for BMPR2."""
         logger.info("Predict PM1")
 
@@ -105,7 +105,7 @@ class PulmonaryHypertensionPredictor(DefaultPredictor):
         )
 
     def predict_pm2ba1bs1bs2(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
         """Change the thresholds for PM2, BA1 and BS1."""
         var_data.thresholds.pm2_pathogenic = 0.0001
@@ -114,7 +114,7 @@ class PulmonaryHypertensionPredictor(DefaultPredictor):
         return super().predict_pm2ba1bs1bs2(seqvar, var_data)
 
     def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Override predict_pp2bp1 to return not applicable status for BMPR2."""
         return (
@@ -132,7 +132,7 @@ class PulmonaryHypertensionPredictor(DefaultPredictor):
             ),
         )
 
-    def _is_bp7_exception(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _is_bp7_exception(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """
         Add an exception for Pulmonary Hypertension.
 

@@ -8,15 +8,15 @@ from typing import Tuple
 
 from loguru import logger
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     VcepSpec,
 )
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specification for TP53.
 SPEC: VcepSpec = VcepSpec(
@@ -33,9 +33,9 @@ PM1_CLUSTER = {
 }
 
 
-class TP53Predictor(DefaultPredictor):
+class TP53Predictor(DefaultSeqVarPredictor):
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override PM1 prediction to specify critical residues for TP53."""
         logger.info("Predict PM1")
 
@@ -61,7 +61,7 @@ class TP53Predictor(DefaultPredictor):
         )
 
     def predict_pm2ba1bs1bs2(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
         """Change the thresholds for PM2, BA1 and BS1."""
         var_data.thresholds.pm2_pathogenic = 0.00003
@@ -70,7 +70,7 @@ class TP53Predictor(DefaultPredictor):
         return super().predict_pm2ba1bs1bs2(seqvar, var_data)
 
     def predict_pm4bp3(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Override PM4 and BP3 to return not applicable for TP53 VCEP."""
         return (
@@ -89,7 +89,7 @@ class TP53Predictor(DefaultPredictor):
         )
 
     def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Override predict_pp2bp1 to return not applicable status for TP53."""
         return (
@@ -107,7 +107,7 @@ class TP53Predictor(DefaultPredictor):
             ),
         )
 
-    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override donor and acceptor positions for TP53 VCEP."""
         var_data.thresholds.bp7_donor = 7
         var_data.thresholds.bp7_acceptor = 21

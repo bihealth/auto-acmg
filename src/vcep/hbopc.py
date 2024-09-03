@@ -12,15 +12,15 @@ from typing import List, Tuple
 
 from loguru import logger
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     VcepSpec,
 )
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specifications for Heriditary Breast, Ovarian and Pancreatic Cancer.
 SPECs: List[VcepSpec] = [
@@ -35,9 +35,9 @@ SPECs: List[VcepSpec] = [
 ]
 
 
-class HBOPCPredictor(DefaultPredictor):
+class HBOPCPredictor(DefaultSeqVarPredictor):
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """
         Override predict_pm1 to include VCEP-specific logic for Heriditary Breast, Ovarian and
         Pancreatic Cancer. ATM and PALB2 are not applicable for PM1.
@@ -57,14 +57,14 @@ class HBOPCPredictor(DefaultPredictor):
 
         return super().predict_pm1(seqvar, var_data)
 
-    def _bs2_not_applicable(self, var_data: AutoACMGData) -> bool:
+    def _bs2_not_applicable(self, var_data: AutoACMGSeqVarData) -> bool:
         """BS2 is not applicable for ATM gene."""
         if var_data.hgnc_id == "HGNC:795":
             return True
         return False
 
     def predict_pm2ba1bs1bs2(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
         """Change the thresholds for PM2, BA1 and BS1."""
         if var_data.hgnc_id == "HGNC:795":
@@ -78,7 +78,7 @@ class HBOPCPredictor(DefaultPredictor):
         return super().predict_pm2ba1bs1bs2(seqvar, var_data)
 
     def predict_pm4bp3(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """
         Override predict_pm4bp3 to include VCEP-specific logic for CDH1. PM4 is not changed, but
@@ -133,7 +133,7 @@ class HBOPCPredictor(DefaultPredictor):
         return super().predict_pm4bp3(seqvar, var_data)
 
     def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """
         Override predict_pp2bp1 to include VCEP-specific logic for ATM and PALB2. Check if the
@@ -169,7 +169,7 @@ class HBOPCPredictor(DefaultPredictor):
             ),
         )
 
-    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override donor and acceptor positions for ATM and PALB2."""
         if var_data.hgnc_id == "HGNC:26144":
             var_data.thresholds.bp7_donor = 7

@@ -2,11 +2,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.criteria.auto_pp2_bp1 import AutoPP2BP1
-from src.defs.auto_acmg import PP2BP1, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import PP2BP1, AutoACMGPrediction, AutoACMGSeqVarData, AutoACMGStrength
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, InvalidAPIResposeError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.auto_pp2_bp1 import AutoPP2BP1
 
 
 @pytest.fixture
@@ -227,7 +227,7 @@ def pp2bp1_result_failed():
     return None, "Error during prediction."
 
 
-@patch("src.criteria.auto_pp2_bp1.AutoPP2BP1.verify_pp2bp1")
+@patch("src.seqvar.auto_pp2_bp1.AutoPP2BP1.verify_pp2bp1")
 def test_predict_pp2bp1_met(mock_verify, auto_pp2bp1, seqvar, var_data_pp2bp1, pp2bp1_result_met):
     """Test predict_pp2bp1 where both criteria are correctly met."""
     mock_verify.return_value = pp2bp1_result_met
@@ -240,7 +240,7 @@ def test_predict_pp2bp1_met(mock_verify, auto_pp2bp1, seqvar, var_data_pp2bp1, p
     assert "PP2 criteria met" in result[1].summary
 
 
-@patch("src.criteria.auto_pp2_bp1.AutoPP2BP1.verify_pp2bp1")
+@patch("src.seqvar.auto_pp2_bp1.AutoPP2BP1.verify_pp2bp1")
 def test_predict_pp2bp1_not_met(
     mock_verify, auto_pp2bp1, seqvar, var_data_pp2bp1, pp2bp1_result_not_met
 ):
@@ -255,7 +255,7 @@ def test_predict_pp2bp1_not_met(
     assert "BP1 criteria not met" in result[1].summary
 
 
-@patch("src.criteria.auto_pp2_bp1.AutoPP2BP1.verify_pp2bp1")
+@patch("src.seqvar.auto_pp2_bp1.AutoPP2BP1.verify_pp2bp1")
 def test_predict_pp2bp1_failed(
     mock_verify, auto_pp2bp1, seqvar, var_data_pp2bp1, pp2bp1_result_failed
 ):

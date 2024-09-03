@@ -3,17 +3,17 @@ from unittest.mock import MagicMock, patch
 import pytest
 import tabix
 
-from src.criteria.auto_pm1 import AutoPM1
 from src.defs.auto_acmg import (
     PM1,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     GenomicStrand,
 )
 from src.defs.exceptions import AlgorithmError, InvalidAPIResposeError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.auto_pm1 import AutoPM1
 
 
 @pytest.fixture
@@ -71,7 +71,7 @@ def auto_acmg_data_plus():
         MagicMock(altStartI=30000, altEndI=40000),
         MagicMock(altStartI=50000, altEndI=60000),
     ]
-    data = AutoACMGData()
+    data = AutoACMGSeqVarData()
     data.exons = exons  # type: ignore
     data.strand = GenomicStrand.Plus
     return data
@@ -84,7 +84,7 @@ def auto_acmg_data_minus():
         MagicMock(altStartI=30000, altEndI=40000),
         MagicMock(altStartI=50000, altEndI=60000),
     ]
-    data = AutoACMGData()
+    data = AutoACMGSeqVarData()
     data.exons = exons  # type: ignore
     data.strand = GenomicStrand.Minus
     return data
@@ -181,7 +181,7 @@ def test_count_vars_no_clinvar_data(auto_pm1_mocked, seqvar):
 # ============== _get_uniprot_domain ==============
 
 
-@patch("src.criteria.auto_pm1.tabix")
+@patch("src.seqvar.auto_pm1.tabix")
 def test_get_uniprot_domain_found(mock_tabix, auto_pm1, seqvar):
     """Test retrieving UniProt domain successfully."""
     # Setting up the mock
@@ -194,7 +194,7 @@ def test_get_uniprot_domain_found(mock_tabix, auto_pm1, seqvar):
     assert domain == (50, 150), "Should return the correct start and end positions"
 
 
-@patch("src.criteria.auto_pm1.tabix")
+@patch("src.seqvar.auto_pm1.tabix")
 def test_get_uniprot_domain_none_found(mock_tabix, auto_pm1, seqvar):
     """Test no UniProt domain found for the variant."""
     # Setting up the mock to return an empty iterator
@@ -207,7 +207,7 @@ def test_get_uniprot_domain_none_found(mock_tabix, auto_pm1, seqvar):
     assert domain is None, "Should return None when no domain is found"
 
 
-@patch("src.criteria.auto_pm1.tabix")
+@patch("src.seqvar.auto_pm1.tabix")
 def test_get_uniprot_domain_exception(mock_tabix, auto_pm1, seqvar):
     """Test handling exceptions when querying UniProt domains."""
     # Setting up the mock to raise an exception

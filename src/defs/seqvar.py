@@ -81,6 +81,17 @@ class SeqVar(BaseModel):
     def __str__(self):
         return self.user_repr
 
+    def __eq__(self, other):
+        if not isinstance(other, SeqVar):
+            return NotImplemented
+        return (
+            self.genome_release == other.genome_release
+            and self.chrom == other.chrom
+            and self.pos == other.pos
+            and self.delete == other.delete
+            and self.insert == other.insert
+        )
+
 
 class SeqVarResolver:
     """The class to resolve sequence variants."""
