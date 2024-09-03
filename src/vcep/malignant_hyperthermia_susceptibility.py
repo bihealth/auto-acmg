@@ -47,6 +47,16 @@ PM1_CLUSTER = {
 
 class MalignantHyperthermiaPredictor(DefaultPredictor):
 
+    def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+        """PVS1 is not applicable."""
+        logger.info("Predict PVS1")
+        return AutoACMGCriteria(
+            name="PVS1",
+            prediction=AutoACMGPrediction.NotApplicable,
+            strength=AutoACMGStrength.PathogenicVeryStrong,
+            summary="PVS1 is not applicable for the gene.",
+        )
+
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Override PM1 to specify critical domains for Malignant Hyperthermia Susceptibility."""
         logger.info("Predict PM1")

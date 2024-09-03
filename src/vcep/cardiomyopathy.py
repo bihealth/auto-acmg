@@ -102,6 +102,26 @@ PM1_CLUSTER = {
 
 class CardiomyopathyPredictor(DefaultPredictor):
 
+    def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+        """PVS1 is not applicable."""
+        if var_data.hgnc_id in [
+            "HGNC:7577",
+            "HGNC:11947",
+            "HGNC:11949",
+            "HGNC:12010",
+            "HGNC:143",
+            "HGNC:7583",
+            "HGNC:7584",
+        ]:
+            logger.info("Predict PVS1")
+            return AutoACMGCriteria(
+                name="PVS1",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicVeryStrong,
+                summary="PVS1 is not applicable for the gene.",
+            )
+        return super().predict_pvs1(seqvar, var_data)
+
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Specify PM1 domains for Cardiomyopathy."""
         logger.info("Predict PM1")

@@ -24,6 +24,16 @@ def auto_acmg_data():
     return AutoACMGData()
 
 
+def test_predict_pvs1_not_applicable(malignant_hyperthermia_predictor, seqvar, auto_acmg_data):
+    result = malignant_hyperthermia_predictor.predict_pvs1(seqvar, auto_acmg_data)
+
+    # Verify the outcome is as expected, always not applicable
+    assert result.name == "PVS1"
+    assert result.prediction == AutoACMGPrediction.NotApplicable
+    assert result.strength == AutoACMGStrength.PathogenicVeryStrong
+    assert result.summary == "PVS1 is not applicable for the gene."
+
+
 def test_predict_pm1_met_for_moderate_region(malignant_hyperthermia_predictor, auto_acmg_data):
     """Test when the variant falls within a moderate region for RYR1."""
     auto_acmg_data.prot_pos = 300  # Within the moderate region (1-552) for RYR1

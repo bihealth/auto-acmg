@@ -29,6 +29,16 @@ SPEC: VcepSpec = VcepSpec(
 
 class VonWillebrandDiseasePredictor(DefaultPredictor):
 
+    def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+        """PVS1 is not applicable."""
+        logger.info("Predict PVS1")
+        return AutoACMGCriteria(
+            name="PVS1",
+            prediction=AutoACMGPrediction.NotApplicable,
+            strength=AutoACMGStrength.PathogenicVeryStrong,
+            summary="PVS1 is not applicable for the gene.",
+        )
+
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """
         Override predict_pm1 to return a not applicable status for PM1.
