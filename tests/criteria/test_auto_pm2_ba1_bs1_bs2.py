@@ -2,17 +2,17 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.criteria.auto_pm2_ba1_bs1_bs2 import AutoPM2BA1BS1BS2
 from src.defs.auto_acmg import (
     AlleleCondition,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
+    AutoACMGSeqVarTresholds,
     AutoACMGStrength,
-    AutoACMGTresholds,
 )
 from src.defs.exceptions import MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.auto_pm2_ba1_bs1_bs2 import AutoPM2BA1BS1BS2
 
 
 @pytest.fixture
@@ -51,8 +51,8 @@ def gnomad_exomes_empty():
 
 @pytest.fixture
 def var_data():
-    thresholds = AutoACMGTresholds(ba1_benign=0.05, bs1_benign=0.01, pm2_pathogenic=0.005)
-    return AutoACMGData(thresholds=thresholds)
+    thresholds = AutoACMGSeqVarTresholds(ba1_benign=0.05, bs1_benign=0.01, pm2_pathogenic=0.005)
+    return AutoACMGSeqVarData(thresholds=thresholds)
 
 
 def test_get_control_af_success(auto_pm2ba1bs1bs2, gnomad_exomes_data, var_data):
@@ -361,11 +361,11 @@ def gnomad_exomes_zyg():
 
 
 @patch(
-    "src.criteria.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_allele_cond",
+    "src.seqvar.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_allele_cond",
     return_value=AlleleCondition.Dominant,
 )
-@patch("src.criteria.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_control_af")
-@patch("src.criteria.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_any_af")
+@patch("src.seqvar.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_control_af")
+@patch("src.seqvar.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_any_af")
 def test_check_zyg_mitochondrial(
     mock_get_any_af,
     mock_get_control_af,
@@ -384,11 +384,11 @@ def test_check_zyg_mitochondrial(
 
 @pytest.mark.skip(reason="Patch is not working properly")
 @patch(
-    "src.criteria.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_allele_cond",
+    "src.seqvar.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_allele_cond",
     return_value=AlleleCondition.Dominant,
 )
-@patch("src.criteria.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_control_af")
-@patch("src.criteria.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_any_af")
+@patch("src.seqvar.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_control_af")
+@patch("src.seqvar.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_any_af")
 def test_check_zyg_x_dominant(
     mock_get_any_af,
     mock_get_control_af,
@@ -409,11 +409,11 @@ def test_check_zyg_x_dominant(
 
 @pytest.mark.skip(reason="Patch is not working properly")
 @patch(
-    "src.criteria.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_allele_cond",
+    "src.seqvar.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_allele_cond",
     return_value=AlleleCondition.Recessive,
 )
-@patch("src.criteria.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_control_af")
-@patch("src.criteria.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_any_af")
+@patch("src.seqvar.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_control_af")
+@patch("src.seqvar.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_any_af")
 def test_check_zyg_autosomal_recessive(
     mock_get_any_af,
     mock_get_control_af,
@@ -498,7 +498,7 @@ def mock_thresholds():
 
 
 @pytest.mark.skip(reason="Patch is not working properly")
-@patch("src.criteria.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_af", return_value=None)
+@patch("src.seqvar.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_af", return_value=None)
 def test_no_allele_frequency_data_found(
     mock_get_af, auto_pm2ba1bs1bs2, seqvar_verify, var_data_verify
 ):
@@ -508,8 +508,8 @@ def test_no_allele_frequency_data_found(
 
 
 @pytest.mark.skip(reason="Patch is not working properly")
-@patch("src.criteria.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._ba1_exception", return_value=True)
-@patch("src.criteria.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_af", return_value=0.06)
+@patch("src.seqvar.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._ba1_exception", return_value=True)
+@patch("src.seqvar.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_af", return_value=0.06)
 def test_variant_in_ba1_exception_list(
     mock_get_af, mock_ba1_exception, auto_pm2ba1bs1bs2, seqvar_verify, var_data_verify
 ):
@@ -522,7 +522,7 @@ def test_variant_in_ba1_exception_list(
 @pytest.mark.parametrize(
     "af,expected", [(0.06, True), (0.02, False), (0.01, False), (0.004, False)]
 )
-@patch("src.criteria.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_af")
+@patch("src.seqvar.auto_pm2_ba1_bs1_bs2.AutoPM2BA1BS1BS2._get_af")
 def test_ba1_criteria(mock_get_af, af, expected, auto_pm2ba1bs1bs2, seqvar_verify, var_data_verify):
     mock_get_af.return_value = af
     prediction, comment = auto_pm2ba1bs1bs2.verify_pm2ba1bs1bs2(seqvar_verify, var_data_verify)

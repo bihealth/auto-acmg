@@ -6,13 +6,13 @@ import pytest
 
 from src.auto_acmg import AutoACMG
 from src.core.config import Config
-from src.defs.auto_acmg import AutoACMGResult
+from src.defs.auto_acmg import AutoACMGSeqVarResult
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from tests.utils import load_test_data
 
 #: Type for ACMG criteria test data.
-AcmgTestData = List[Tuple[str, GenomeRelease, AutoACMGResult, str]]
+AcmgTestData = List[Tuple[str, GenomeRelease, AutoACMGSeqVarResult, str]]
 #: Test data.
 ACMG_TEST_DATA: AcmgTestData = load_test_data("tests/assets/e2e/variants.csv")
 
@@ -37,7 +37,7 @@ def acmg_criteria_test_helper(
     assert isinstance(seqvar, SeqVar)
     # Then, predict ACMG criteria
     prediction = auto_acmg.predict()
-    assert isinstance(prediction, AutoACMGResult)
+    assert isinstance(prediction, AutoACMGSeqVarResult)
 
 
 @pytest.mark.default_cassette("e2e.yaml")

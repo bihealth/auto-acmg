@@ -2,17 +2,17 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     AlleleCondition,
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
 )
 from src.defs.exceptions import MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 from src.vcep import CerebralCreatineDeficiencySyndromesPredictor
 
 
@@ -31,7 +31,7 @@ def cerebral_creatine_predictor(seqvar):
 
 @pytest.fixture
 def auto_acmg_data():
-    return AutoACMGData()
+    return AutoACMGSeqVarData()
 
 
 def test_predict_pm1_not_applicable(cerebral_creatine_predictor, auto_acmg_data):
@@ -68,7 +68,7 @@ def test_predict_pm1_name(cerebral_creatine_predictor, auto_acmg_data):
     assert result.name == "PM1", "The name of the criteria should be 'PM1'."
 
 
-@patch("src.vcep.cerebral_creatine_deficiency_syndromes.DefaultPredictor.predict_pm1")
+@patch("src.vcep.cerebral_creatine_deficiency_syndromes.DefaultSeqVarPredictor.predict_pm1")
 def test_predict_pm1_fallback_to_default(
     mock_predict_pm1, cerebral_creatine_predictor, auto_acmg_data
 ):
@@ -159,7 +159,7 @@ def test_check_zyg_missing_data_raises_error(
 
 
 @patch.object(
-    DefaultPredictor,
+    DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
     return_value=(
         AutoACMGCriteria(name="PM2"),
@@ -194,7 +194,7 @@ def test_predict_pm2ba1bs1bs2_gatm(
 
 
 @patch.object(
-    DefaultPredictor,
+    DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
     return_value=(
         AutoACMGCriteria(name="PM2"),
@@ -229,7 +229,7 @@ def test_predict_pm2ba1bs1bs2_gamt(
 
 
 @patch.object(
-    DefaultPredictor,
+    DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
     return_value=(
         AutoACMGCriteria(name="PM2"),
@@ -322,7 +322,7 @@ def test_predict_bp7_threshold_adjustment(cerebral_creatine_predictor, auto_acmg
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
 
 
-@patch.object(DefaultPredictor, "predict_bp7")
+@patch.object(DefaultSeqVarPredictor, "predict_bp7")
 def test_predict_bp7_fallback_to_default(
     mock_super_predict_bp7, cerebral_creatine_predictor, auto_acmg_data
 ):

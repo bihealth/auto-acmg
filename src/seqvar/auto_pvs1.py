@@ -6,8 +6,8 @@ from loguru import logger
 
 from src.defs.auto_acmg import (
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     CdsInfo,
     GenomicStrand,
@@ -779,7 +779,7 @@ class AutoPVS1(SeqVarPVS1Helper):
         self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
         self.prediction_path: PVS1PredictionSeqVarPath = PVS1PredictionSeqVarPath.NotSet
 
-    def _convert_consequence(self, var_data: AutoACMGData) -> SeqVarPVS1Consequence:
+    def _convert_consequence(self, var_data: AutoACMGSeqVarData) -> SeqVarPVS1Consequence:
         """
         Convert the VEP consequence of the sequence variant to the internal representation.
 
@@ -797,7 +797,7 @@ class AutoPVS1(SeqVarPVS1Helper):
         return SeqVarPVS1Consequence.NotSet
 
     def verify_pvs1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[PVS1Prediction, PVS1PredictionSeqVarPath, str]:
         """Make the PVS1 prediction.
 
@@ -943,7 +943,7 @@ class AutoPVS1(SeqVarPVS1Helper):
 
         return self.prediction, self.prediction_path, self.comment_pvs1
 
-    def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Predict the PVS1 criteria for the sequence variant.
 
         Args:

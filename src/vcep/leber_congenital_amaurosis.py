@@ -8,18 +8,18 @@ from typing import Optional, Tuple
 
 from loguru import logger
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     PM2BA1BS1BS2,
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     GenomicStrand,
     VcepSpec,
 )
 from src.defs.exceptions import AutoAcmgBaseException
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specifications for Leber Congenital Amaurosis/early onset Retinal Dystrophy.
 SPEC: VcepSpec = VcepSpec(
@@ -34,9 +34,9 @@ PM1_CLUSTER = {
 }
 
 
-class LeberCongenitalAmaurosisPredictor(DefaultPredictor):
+class LeberCongenitalAmaurosisPredictor(DefaultSeqVarPredictor):
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override predict_pm1 to include domain information for RPE65."""
         logger.info("Predict PM1")
 
@@ -72,7 +72,7 @@ class LeberCongenitalAmaurosisPredictor(DefaultPredictor):
     def verify_pm2ba1bs1bs2(
         self,
         seqvar: SeqVar,
-        var_data: AutoACMGData,
+        var_data: AutoACMGSeqVarData,
     ) -> Tuple[Optional[PM2BA1BS1BS2], str]:
         """
         Predicts the PM2, BA1, BS1, BS2 criteria for the sequence variant.
@@ -127,12 +127,12 @@ class LeberCongenitalAmaurosisPredictor(DefaultPredictor):
 
         return self.prediction_pm2ba1bs1bs2, self.comment_pm2ba1bs1bs2
 
-    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """BP3 is not applicable for RPE65."""
         return True
 
     def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Override predict_pp2bp1 to return not applicable status for RPE65."""
         return (
@@ -150,7 +150,7 @@ class LeberCongenitalAmaurosisPredictor(DefaultPredictor):
             ),
         )
 
-    def _is_bp7_exception(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _is_bp7_exception(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """
         Add an exception for RPE65.
 
@@ -171,7 +171,7 @@ class LeberCongenitalAmaurosisPredictor(DefaultPredictor):
                     return True
         return False
 
-    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override donor and acceptor positions for RPE65 gene."""
         var_data.thresholds.bp7_donor = 7
         var_data.thresholds.bp7_acceptor = 21

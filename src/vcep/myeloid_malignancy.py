@@ -8,17 +8,17 @@ from typing import Optional, Tuple
 
 from loguru import logger
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     PM2BA1BS1BS2,
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     VcepSpec,
 )
 from src.defs.exceptions import AutoAcmgBaseException
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specification for Myeloid Malignancy.
 SPEC: VcepSpec = VcepSpec(
@@ -48,9 +48,9 @@ PM1_CLUSTER = {
 }
 
 
-class MyeloidMalignancyPredictor(DefaultPredictor):
+class MyeloidMalignancyPredictor(DefaultSeqVarPredictor):
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override PM1 to specify critical residues for Myeloid Malignancy VCEP."""
         logger.info("Predict PM1")
 
@@ -91,14 +91,14 @@ class MyeloidMalignancyPredictor(DefaultPredictor):
             summary="Variant does not meet the PM1 criteria for RUNX1.",
         )
 
-    def _bs2_not_applicable(self, var_data: AutoACMGData) -> bool:
+    def _bs2_not_applicable(self, var_data: AutoACMGSeqVarData) -> bool:
         """BS2 is not applicable for Myeloid Malignancy VCEP."""
         return True
 
     def verify_pm2ba1bs1bs2(
         self,
         seqvar: SeqVar,
-        var_data: AutoACMGData,
+        var_data: AutoACMGSeqVarData,
     ) -> Tuple[Optional[PM2BA1BS1BS2], str]:
         """
         Predicts the PM2, BA1, BS1, BS2 criteria for the sequence variant.
@@ -153,12 +153,12 @@ class MyeloidMalignancyPredictor(DefaultPredictor):
 
         return self.prediction_pm2ba1bs1bs2, self.comment_pm2ba1bs1bs2
 
-    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """BP3 is not applicable for Myeloid Malignancy VCEP."""
         return True
 
     def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Override predict_pp2bp1 to return not applicable status for RUNX1."""
         return (
@@ -176,7 +176,7 @@ class MyeloidMalignancyPredictor(DefaultPredictor):
             ),
         )
 
-    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Change BP7 thresholds for Myeloid Malignancy VCEP."""
         var_data.thresholds.spliceAI_acceptor_gain = 0.2
         var_data.thresholds.spliceAI_acceptor_loss = 0.2

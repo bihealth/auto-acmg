@@ -8,6 +8,7 @@ from src.defs.core import AutoAcmgBaseEnum, AutoAcmgBaseModel
 from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import Exon, TranscriptGene, TranscriptSeqvar
 from src.defs.seqvar import SeqVar
+from src.defs.strucvar import StrucVar
 
 # ============ General ACMG Definitions ============
 
@@ -557,7 +558,7 @@ class AutoACMGDbscsnv(AutoAcmgBaseModel):
     rf: Optional[float] = None
 
 
-class AutoACMGScores(AutoAcmgBaseModel):
+class AutoACMGSeqVarScores(AutoAcmgBaseModel):
     """ACMG scores."""
 
     cadd: AutoACMGCADD = AutoACMGCADD()
@@ -565,7 +566,7 @@ class AutoACMGScores(AutoAcmgBaseModel):
     dbscsnv: AutoACMGDbscsnv = AutoACMGDbscsnv()
 
 
-class AutoACMGTresholds(AutoAcmgBaseModel):
+class AutoACMGSeqVarTresholds(AutoAcmgBaseModel):
     """ACMG thresholds."""
 
     #: Conservation threshold from VarSome
@@ -612,7 +613,7 @@ class AutoACMGTresholds(AutoAcmgBaseModel):
     bp7_acceptor: int = 2
 
 
-class AutoACMGData(AutoAcmgBaseModel):
+class AutoACMGSeqVarData(AutoAcmgBaseModel):
     """Response of the ACMG criteria prediction."""
 
     consequence: AutoACMGConsequence = AutoACMGConsequence()
@@ -630,24 +631,33 @@ class AutoACMGData(AutoAcmgBaseModel):
     cds_end: int = 0
     strand: GenomicStrand = GenomicStrand.NotSet
     exons: List[Exon] = []
-    scores: AutoACMGScores = AutoACMGScores()
-    thresholds: AutoACMGTresholds = AutoACMGTresholds()
+    scores: AutoACMGSeqVarScores = AutoACMGSeqVarScores()
+    thresholds: AutoACMGSeqVarTresholds = AutoACMGSeqVarTresholds()
     gnomad_exomes: Optional[GnomadExomes] = None
     gnomad_mtdna: Optional[GnomadMtDna] = None
 
 
-class AutoACMGResult(AutoAcmgBaseModel):
-    """Response of the ACMG criteria prediction."""
+class AutoACMGSeqVarResult(AutoAcmgBaseModel):
+    """Response of the ACMG criteria prediction for sequence variants."""
 
     #: Sequence variant for which the ACMG criteria are predicted
     seqvar: Optional[SeqVar] = None
     #: Data, which was used for the prediction
-    data: AutoACMGData = AutoACMGData()
+    data: AutoACMGSeqVarData = AutoACMGSeqVarData()
     # ; ACMG criteria prediction
     criteria: AutoACMGCriteriaResult = AutoACMGCriteriaResult()
 
 
+class AutoACMGStrucVarResult(AutoAcmgBaseModel):
+    """Response of the ACMG criteria prediction for structural variants."""
+
+    #: Sequence variant for which the ACMG criteria are predicted
+    strucvar: Optional[StrucVar] = None
+
+
 class VcepSpec(BaseModel):
+    """VCEP specification for specific gene."""
+
     #: Identifier, e.g., "GN002"
     identifier: str
     #: Version, e.g., "2.0.0"

@@ -12,18 +12,18 @@ from typing import Dict, List, Optional, Tuple
 
 from loguru import logger
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.annonars_variant import GnomadExomes
 from src.defs.auto_acmg import (
     PM2BA1BS1BS2,
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     VcepSpec,
 )
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specifications for Coagulation Factor Deficiency.
 SPECs: List[VcepSpec] = [
@@ -72,9 +72,9 @@ PM1_CLUSTER: Dict[str, Dict[str, Dict[str, List]]] = {
 }
 
 
-class CoagulationFactorDeficiencyPredictor(DefaultPredictor):
+class CoagulationFactorDeficiencyPredictor(DefaultSeqVarPredictor):
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Specify PM1 domains and residues for Coagulation Factor Deficiency."""
         logger.info("Predict PM1")
 
@@ -151,7 +151,7 @@ class CoagulationFactorDeficiencyPredictor(DefaultPredictor):
             summary=f"Variant does not meet the PM1 criteria for {var_data.hgnc_id}.",
         )
 
-    def _absent_in_males(self, var_data: AutoACMGData) -> bool:
+    def _absent_in_males(self, var_data: AutoACMGSeqVarData) -> bool:
         """Check if the allele frequency is absent in males."""
         if not var_data.gnomad_exomes:
             raise MissingDataError("No gnomAD exomes data found.")
@@ -163,7 +163,7 @@ class CoagulationFactorDeficiencyPredictor(DefaultPredictor):
     def verify_pm2ba1bs1bs2(
         self,
         seqvar: SeqVar,
-        var_data: AutoACMGData,
+        var_data: AutoACMGSeqVarData,
     ) -> Tuple[Optional[PM2BA1BS1BS2], str]:
         """
         Predicts the PM2, BA1, BS1, BS2 criteria for the sequence variant.
@@ -222,12 +222,12 @@ class CoagulationFactorDeficiencyPredictor(DefaultPredictor):
 
         return self.prediction_pm2ba1bs1bs2, self.comment_pm2ba1bs1bs2
 
-    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """BP3 is not applicable for Coagulation Factor Deficiency."""
         return True
 
     def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Override PP2, BP1 for Coagulation Factor Deficiency to return not applicable status."""
         return (
@@ -245,7 +245,7 @@ class CoagulationFactorDeficiencyPredictor(DefaultPredictor):
             ),
         )
 
-    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Change the spliceAI and phyloP threshold for BP7."""
         if var_data.hgnc_id == "HGNC:3546":
             var_data.thresholds.spliceAI_acceptor_gain = 0.05

@@ -2,10 +2,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGPrediction,
+    AutoACMGSeqVarData,
+    AutoACMGStrength,
+)
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 from src.vcep.monogenic_diabetes import MonogenicDiabetesPredictor
 
 
@@ -22,12 +27,12 @@ def monogenic_diabetes_predictor(seqvar):
 
 @pytest.fixture
 def auto_acmg_data():
-    return AutoACMGData()
+    return AutoACMGSeqVarData()
 
 
 @pytest.fixture
 def auto_acmg_data_gck():
-    data = AutoACMGData(hgnc_id="HGNC:4195")
+    data = AutoACMGSeqVarData(hgnc_id="HGNC:4195")
     data.consequence = MagicMock(mehari=[], cadd=None)
     return data
 
@@ -128,7 +133,7 @@ def test_predict_pm1_not_met(monogenic_diabetes_predictor, auto_acmg_data):
     ), "The summary should indicate that criteria were not met."
 
 
-@patch("src.vcep.monogenic_diabetes.DefaultPredictor.predict_pm1")
+@patch("src.vcep.monogenic_diabetes.DefaultSeqVarPredictor.predict_pm1")
 def test_predict_pm1_fallback_to_default(
     mock_predict_pm1, monogenic_diabetes_predictor, auto_acmg_data
 ):
@@ -154,7 +159,7 @@ def test_predict_pm1_fallback_to_default(
 
 
 @patch.object(
-    DefaultPredictor,
+    DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
     return_value=(
         AutoACMGCriteria(name="PM2"),

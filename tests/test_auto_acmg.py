@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.auto_acmg import AutoACMG
-from src.defs.auto_acmg import AutoACMGResult
+from src.defs.auto_acmg import AutoACMGSeqVarResult
 from src.defs.exceptions import AutoAcmgBaseException
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
@@ -64,9 +64,9 @@ def mock_seqvar_transcript():
 @patch("src.auto_acmg.SeqVarResolver.resolve_seqvar")
 @patch("src.auto_acmg.SeqVarTranscriptsHelper.initialize")
 @patch("src.auto_acmg.AutoACMG._get_variant_info")
-@patch("src.auto_acmg.AutoACMG.parse_data")
-@patch("src.auto_acmg.DefaultPredictor.predict")
-def test_predict(
+@patch("src.auto_acmg.AutoACMG.parse_seqvar_data")
+@patch("src.auto_acmg.DefaultSeqVarPredictor.predict")
+def test_predict_seqvar(
     mock_predict,
     mock_parse_data,
     mock_get_variant_info,
@@ -83,11 +83,11 @@ def test_predict(
     mock_get_variant_info.return_value = mock_variant_result
     mock_get_ts_info.return_value = (mock_seqvar_transcript, mock_seqvar_transcript, None, [], None)
     mock_parse_data.return_value = MagicMock()
-    mock_predict.return_value = MagicMock(spec=AutoACMGResult)
+    mock_predict.return_value = MagicMock(spec=AutoACMGSeqVarResult)
 
     result = auto_acmg.predict()
 
-    assert isinstance(result, AutoACMGResult), "Result should be of type AutoACMGResult."
+    assert isinstance(result, AutoACMGSeqVarResult), "Result should be of type AutoACMGResult."
     mock_predict.assert_called_once()
 
 

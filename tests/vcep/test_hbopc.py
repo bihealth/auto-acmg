@@ -2,10 +2,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGPrediction,
+    AutoACMGSeqVarData,
+    AutoACMGStrength,
+)
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 from src.vcep import HBOPCPredictor
 
 
@@ -22,12 +27,12 @@ def hbopc_predictor(seqvar):
 
 @pytest.fixture
 def auto_acmg_data():
-    return AutoACMGData()
+    return AutoACMGSeqVarData()
 
 
 @pytest.fixture
 def auto_acmg_data_atm():
-    data = AutoACMGData()
+    data = AutoACMGSeqVarData()
     data.hgnc_id = "HGNC:795"
     data.consequence = MagicMock(mehari=[], cadd=None)
     return data
@@ -35,7 +40,7 @@ def auto_acmg_data_atm():
 
 @pytest.fixture
 def auto_acmg_data_palb2():
-    data = AutoACMGData()
+    data = AutoACMGSeqVarData()
     data.hgnc_id = "HGNC:26144"
     data.consequence = MagicMock(mehari=[], cadd=None)
     return data
@@ -75,7 +80,7 @@ def test_predict_pm1_not_applicable_palb2(hbopc_predictor, auto_acmg_data):
     ), "The summary should indicate that PM1 is not applicable for PALB2."
 
 
-@patch("src.vcep.hbopc.DefaultPredictor.predict_pm1")
+@patch("src.vcep.hbopc.DefaultSeqVarPredictor.predict_pm1")
 def test_predict_pm1_fallback_to_default(mock_predict_pm1, hbopc_predictor, auto_acmg_data):
     """Test fallback to the default PM1 prediction method if logic changes."""
     auto_acmg_data.hgnc_id = "HGNC:111111"  # Gene not in the specific logic
@@ -122,7 +127,7 @@ def test_bs2_not_applicable(hbopc_predictor, auto_acmg_data):
 
 
 @patch.object(
-    DefaultPredictor,
+    DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
     return_value=(
         AutoACMGCriteria(name="PM2"),
@@ -163,7 +168,7 @@ def test_predict_pm2ba1bs1bs2_specific_genes(
     mock_super_method.reset_mock()
 
 
-@patch.object(DefaultPredictor, "verify_pm4bp3")
+@patch.object(DefaultSeqVarPredictor, "verify_pm4bp3")
 def test_predict_pm4bp3_atm(mock_verify_pm4bp3, hbopc_predictor, seqvar, auto_acmg_data):
     """Test the predict_pm4bp3 method for ATM (HGNC:795)."""
     auto_acmg_data.hgnc_id = "HGNC:795"
@@ -240,8 +245,8 @@ def test_predict_pm4bp3_palb2(hbopc_predictor, seqvar, auto_acmg_data):
     ), "The summary should indicate BP3 is not applicable for PALB2."
 
 
-@patch.object(DefaultPredictor, "verify_pm4bp3")
-@patch.object(DefaultPredictor, "predict_pm4bp3")
+@patch.object(DefaultSeqVarPredictor, "verify_pm4bp3")
+@patch.object(DefaultSeqVarPredictor, "predict_pm4bp3")
 @pytest.mark.skip("Something doesn't work here")
 def test_predict_pm4bp3_fallback(
     mock_predict_pm4bp3, mock_verify_pm4bp3, hbopc_predictor, seqvar, auto_acmg_data

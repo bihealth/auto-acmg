@@ -24,17 +24,17 @@ from typing import Dict, List, Tuple, Union
 
 from loguru import logger
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     AlleleCondition,
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     VcepSpec,
 )
 from src.defs.exceptions import MissingDataError
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specifications for Severe Combined Immunodeficiency Disease.
 SPECs: List[VcepSpec] = [
@@ -99,9 +99,9 @@ PM1_CLUSTER_SCID: Dict[str, Dict[str, List[Union[int, Tuple[int, int]]]]] = {
 }
 
 
-class SCIDPredictor(DefaultPredictor):
+class SCIDPredictor(DefaultSeqVarPredictor):
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """
         Override predict_pm1 to specify critical domains for Severe Combined Immunodeficiency
         Disease.
@@ -186,7 +186,7 @@ class SCIDPredictor(DefaultPredictor):
             summary=f"Variant does not meet the PM1 criteria for {var_data.hgnc_id}.",
         )
 
-    def _check_zyg(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _check_zyg(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """
         Check the zygosity of the sequence variant.
 
@@ -227,7 +227,7 @@ class SCIDPredictor(DefaultPredictor):
         return False
 
     def predict_pm2ba1bs1bs2(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
         """Change the thresholds for PM2, BA1 and BS1."""
         if var_data.hgnc_id == "HGNC:12765":
@@ -264,7 +264,7 @@ class SCIDPredictor(DefaultPredictor):
             var_data.thresholds.bs1_benign = 0.00249
         return super().predict_pm2ba1bs1bs2(seqvar, var_data)
 
-    def _is_conserved(self, var_data: AutoACMGData) -> bool:
+    def _is_conserved(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Override the default _is_conserved method to ignore this check for SCID genes.
         """
@@ -273,7 +273,7 @@ class SCIDPredictor(DefaultPredictor):
         return False  # Ignore conservation check for SCID genes
 
     def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """
         Override PP2 and BP1 for Severe Combined Immunodeficiency Disease to return not applicable
@@ -294,7 +294,7 @@ class SCIDPredictor(DefaultPredictor):
             ),
         )
 
-    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """
         Override donor and acceptor positions for Severe Combined Immunodeficiency Disease genes
         VCEP.

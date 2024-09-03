@@ -12,18 +12,18 @@ from typing import List, Optional, Tuple
 
 from loguru import logger
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     BP7,
     PM2BA1BS1BS2,
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     VcepSpec,
 )
 from src.defs.exceptions import AutoAcmgBaseException
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specifications for ENIGMA BRCA1 and BRCA2.
 SPECs: List[VcepSpec] = [
@@ -50,9 +50,9 @@ BP7_IMPORTANT_DOMAINS = {
 }
 
 
-class ENIGMAPredictor(DefaultPredictor):
+class ENIGMAPredictor(DefaultSeqVarPredictor):
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override PM1 to return a not applicable status."""
         logger.info("Predict PM1")
 
@@ -69,7 +69,7 @@ class ENIGMAPredictor(DefaultPredictor):
     def verify_pm2ba1bs1bs2(
         self,
         seqvar: SeqVar,
-        var_data: AutoACMGData,
+        var_data: AutoACMGSeqVarData,
     ) -> Tuple[Optional[PM2BA1BS1BS2], str]:
         """
         Predicts the PM2, BA1, BS1, BS2 criteria for the sequence variant.
@@ -125,7 +125,7 @@ class ENIGMAPredictor(DefaultPredictor):
         return self.prediction_pm2ba1bs1bs2, self.comment_pm2ba1bs1bs2
 
     def predict_pm4bp3(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Override predict_pm4bp3 to return not applicable status for PM4 and BP3."""
         logger.info("Predict PM4 and BP3")
@@ -144,7 +144,7 @@ class ENIGMAPredictor(DefaultPredictor):
             ),
         )
 
-    def _in_important_domain(self, var_data: AutoACMGData) -> bool:
+    def _in_important_domain(self, var_data: AutoACMGSeqVarData) -> bool:
         """Check if the variant is in an important domain."""
         for start, end in BP7_IMPORTANT_DOMAINS.get(var_data.hgnc_id, []):
             if start <= var_data.prot_pos <= end:
@@ -152,7 +152,7 @@ class ENIGMAPredictor(DefaultPredictor):
         return False
 
     def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """
         Override predict_pp2bp1 to include VCEP-specific logic for ENIGMA BRCA1 and BRCA2. Check if
@@ -201,7 +201,7 @@ class ENIGMAPredictor(DefaultPredictor):
             ),
         )
 
-    def verify_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[BP7], str]:
+    def verify_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> Tuple[Optional[BP7], str]:
         """
         Override verify BP7 criterion for ENIGMA BRCA1 and BRCA2. Check if the variant is synonymous
         and in an important domain or intronic and not conserved.

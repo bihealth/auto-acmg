@@ -10,8 +10,8 @@ from src.defs.auto_acmg import (
     PS1PM5,
     AminoAcid,
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
 )
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException
@@ -94,7 +94,7 @@ class AutoPS1PM5(AutoACMGHelper):
         return False
 
     @staticmethod
-    def _is_missense(var_data: AutoACMGData) -> bool:
+    def _is_missense(var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the variant's consequence is missense.
 
@@ -110,7 +110,9 @@ class AutoPS1PM5(AutoACMGHelper):
             return True
         return False
 
-    def verify_ps1pm5(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PS1PM5], str]:
+    def verify_ps1pm5(
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
+    ) -> Tuple[Optional[PS1PM5], str]:
         """
         Predicts the criteria PS1 and PM5 for the provided sequence variant.
 
@@ -194,7 +196,7 @@ class AutoPS1PM5(AutoACMGHelper):
         return self.prediction_ps1pm5, self.comment_ps1pm5
 
     def predict_ps1pm5(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """
         Predicts the criteria PS1 and PM5 for the provided sequence variant.

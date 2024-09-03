@@ -1,12 +1,11 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from loguru import logger
 
-from src.criteria.default_predictor import NOT_IMPLEMENTED_CRITERIA, DefaultPredictor
-from src.defs.auto_acmg import AutoACMGData, AutoACMGResult
+from src.defs.auto_acmg import AutoACMGSeqVarData, AutoACMGSeqVarResult
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 
 @pytest.fixture
@@ -16,27 +15,27 @@ def seqvar():
 
 @pytest.fixture
 def auto_acmg_result():
-    return AutoACMGResult()
+    return AutoACMGSeqVarResult()
 
 
 @pytest.fixture
 def auto_acmg_data():
-    return AutoACMGData()
+    return AutoACMGSeqVarData()
 
 
 @pytest.fixture
 def default_predictor(seqvar, auto_acmg_result):
-    return DefaultPredictor(seqvar=seqvar, result=auto_acmg_result, config=MagicMock())
+    return DefaultSeqVarPredictor(seqvar=seqvar, result=auto_acmg_result, config=MagicMock())
 
 
-@patch("src.criteria.default_predictor.DefaultPredictor.predict_pvs1")
-@patch("src.criteria.default_predictor.DefaultPredictor.predict_ps1pm5")
-@patch("src.criteria.default_predictor.DefaultPredictor.predict_pm1")
-@patch("src.criteria.default_predictor.DefaultPredictor.predict_pm2ba1bs1bs2")
-@patch("src.criteria.default_predictor.DefaultPredictor.predict_pm4bp3")
-@patch("src.criteria.default_predictor.DefaultPredictor.predict_pp2bp1")
-@patch("src.criteria.default_predictor.DefaultPredictor.predict_pp3bp4")
-@patch("src.criteria.default_predictor.DefaultPredictor.predict_bp7")
+@patch("src.seqvar.default_predictor.DefaultSeqVarPredictor.predict_pvs1")
+@patch("src.seqvar.default_predictor.DefaultSeqVarPredictor.predict_ps1pm5")
+@patch("src.seqvar.default_predictor.DefaultSeqVarPredictor.predict_pm1")
+@patch("src.seqvar.default_predictor.DefaultSeqVarPredictor.predict_pm2ba1bs1bs2")
+@patch("src.seqvar.default_predictor.DefaultSeqVarPredictor.predict_pm4bp3")
+@patch("src.seqvar.default_predictor.DefaultSeqVarPredictor.predict_pp2bp1")
+@patch("src.seqvar.default_predictor.DefaultSeqVarPredictor.predict_pp3bp4")
+@patch("src.seqvar.default_predictor.DefaultSeqVarPredictor.predict_bp7")
 def test_predict(
     mock_predict_bp7,
     mock_predict_pp3bp4,
@@ -50,7 +49,7 @@ def test_predict(
     auto_acmg_result,
     auto_acmg_data,
 ):
-    """Test the full prediction flow of DefaultPredictor."""
+    """Test the full prediction flow of DefaultSeqVarPredictor."""
 
     # Setting return values for each criterion prediction
     mock_predict_pvs1.return_value = MagicMock()

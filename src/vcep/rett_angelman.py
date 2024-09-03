@@ -20,18 +20,18 @@ from typing import Dict, List, Optional, Tuple, Union
 
 from loguru import logger
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     PM2BA1BS1BS2,
     PM4BP3,
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     VcepSpec,
 )
 from src.defs.exceptions import AutoAcmgBaseException
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specifications for Rett and Angelman-like Disorders.
 SPECs: List[VcepSpec] = [
@@ -101,9 +101,9 @@ FOXG1_BP3_REGION: List[Tuple[int, int]] = [
 ]
 
 
-class RettAngelmanPredictor(DefaultPredictor):
+class RettAngelmanPredictor(DefaultSeqVarPredictor):
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override predict_pm1 to specify critical domains for Rett and Angelman-like Disorders."""
         logger.info("Predict PM1")
 
@@ -144,7 +144,7 @@ class RettAngelmanPredictor(DefaultPredictor):
     def verify_pm2ba1bs1bs2(
         self,
         seqvar: SeqVar,
-        var_data: AutoACMGData,
+        var_data: AutoACMGSeqVarData,
     ) -> Tuple[Optional[PM2BA1BS1BS2], str]:
         """
         Predicts the PM2, BA1, BS1, BS2 criteria for the sequence variant.
@@ -199,7 +199,7 @@ class RettAngelmanPredictor(DefaultPredictor):
 
         return self.prediction_pm2ba1bs1bs2, self.comment_pm2ba1bs1bs2
 
-    def _exclude_pm4(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _exclude_pm4(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """Check if the variant should be excluded from PM4."""
         if var_data.hgnc_id in PM4_EXCLUDE:
             for start, end in PM4_EXCLUDE[var_data.hgnc_id]:
@@ -207,7 +207,7 @@ class RettAngelmanPredictor(DefaultPredictor):
                     return True
         return False
 
-    def _in_foxg1_bp3_region(self, var_data: AutoACMGData) -> bool:
+    def _in_foxg1_bp3_region(self, var_data: AutoACMGSeqVarData) -> bool:
         """Check if the variant is in the BP3 region for FOXG1."""
         if var_data.hgnc_id != "HGNC:3811":
             return False
@@ -216,7 +216,7 @@ class RettAngelmanPredictor(DefaultPredictor):
                 return True
         return False
 
-    def verify_pm4bp3(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PM4BP3], str]:
+    def verify_pm4bp3(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> Tuple[Optional[PM4BP3], str]:
         """
         Override PM4 and BP3 for Rett and Angelman-like Disorders. PM4 is met for stop-loss variants
         and in-frame deletions/insertions that are not in repeat regions or conserved domains.
@@ -264,7 +264,7 @@ class RettAngelmanPredictor(DefaultPredictor):
         return self.prediction_pm4bp3, self.comment_pm4bp3
 
     def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """
         Override PP2 and BP1 to return not applicable status for Rett and Angelman-like Disorders.
@@ -284,7 +284,7 @@ class RettAngelmanPredictor(DefaultPredictor):
             ),
         )
 
-    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Change BP7 thresholds for Rett and Angelman-like Disorders VCEP."""
         var_data.thresholds.phyloP100 = 0.1
         return super().predict_bp7(seqvar, var_data)

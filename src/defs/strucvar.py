@@ -4,6 +4,8 @@ import re
 from enum import auto
 from typing import Optional
 
+from pydantic import BaseModel, field_validator
+
 from src.core.config import Config
 from src.defs.core import AutoAcmgBaseEnum
 from src.defs.exceptions import InvalidPos, ParseError
@@ -33,8 +35,13 @@ class StrucVarType(AutoAcmgBaseEnum):
     # BND = auto()
 
 
-class StrucVar:
-    """A class to represent a structural variant."""
+class StrucVar(BaseModel):
+    sv_type: StrucVarType
+    genome_release: GenomeRelease
+    chrom: str
+    start: int
+    stop: int
+    user_repr: Optional[str] = None
 
     def __init__(
         self,
@@ -47,7 +54,9 @@ class StrucVar:
     ):
         self.sv_type = sv_type
         self.genome_release = genome_release
-        self.chrom = self._normalize_chromosome(chrom)
+        self.chrom = (
+            chrom.lower().replace("chr", "").replace("m", "mt").replace("mtt", "mt").upper()
+        )
         self.start = start
         self.stop = stop
         self.user_repr = (
@@ -55,31 +64,43 @@ class StrucVar:
             if user_repr
             else f"{sv_type.name}-{genome_release.name}-{self.chrom}-{start}-{stop}"
         )
+        super().__init__(
+            sv_type=self.sv_type,
+            genome_release=self.genome_release,
+            chrom=self.chrom,
+            start=self.start,
+            stop=self.stop,
+            user_repr=self.user_repr,
+        )
 
-    def _normalize_chromosome(self, chrom: str) -> str:
+    @field_validator("chrom")
+    def _normalize_chromosome(cls, v):
         """Normalize the chromosome name."""
-        return chrom.lower().replace("chr", "").replace("m", "mt").upper()
+        return v.lower().replace("chr", "").replace("m", "mt").upper()
 
-    def __repr__(self):
-        """Return a string representation of the structural variant."""
+    def __str__(self):
         return self.user_repr
 
-    def __dir__(self):
-        """Return a dictionary representation of the structural variant."""
-        return {
-            "sv_type": self.sv_type,
-            "genome_release": self.genome_release,
-            "chrom": self.chrom,
-            "start": self.start,
-            "stop": self.stop,
-            "user_repr": self.user_repr,
-        }
+    # def __repr__(self):
+    #     """Return a string representation of the structural variant."""
+    #     return self.user_repr
 
-    def __eq__(self, other):
-        """Return True if the two objects are equal."""
-        if not isinstance(other, StrucVar):
-            return False
-        return self.__dir__() == other.__dir__()
+    # def __dir__(self):
+    #     """Return a dictionary representation of the structural variant."""
+    #     return {
+    #         "sv_type": self.sv_type,
+    #         "genome_release": self.genome_release,
+    #         "chrom": self.chrom,
+    #         "start": self.start,
+    #         "stop": self.stop,
+    #         "user_repr": self.user_repr,
+    #     }
+
+    # def __eq__(self, other):
+    #     """Return True if the two objects are equal."""
+    #     if not isinstance(other, StrucVar):
+    #         return False
+    #     return self.__dir__() == other.__dir__()
 
 
 class StrucVarResolver:

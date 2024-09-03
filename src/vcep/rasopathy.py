@@ -40,17 +40,17 @@ from typing import Dict, List, Optional, Tuple, Union
 
 from loguru import logger
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     PM2BA1BS1BS2,
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     VcepSpec,
 )
 from src.defs.exceptions import AutoAcmgBaseException
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specifications for RASopathy.
 SPECs: List[VcepSpec] = [
@@ -168,9 +168,9 @@ PM1_CLUSTER_RASOPATHY: Dict[str, Dict[str, List[Union[int, Tuple[int, int]]]]] =
 }
 
 
-class RASopathyPredictor(DefaultPredictor):
+class RASopathyPredictor(DefaultSeqVarPredictor):
 
-    def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """PVS1 is not applicable."""
         if var_data.hgnc_id != "HGNC:6742":   # LZTR1 exception
             logger.info("Predict PVS1")
@@ -182,7 +182,7 @@ class RASopathyPredictor(DefaultPredictor):
             )
         return super().predict_pvs1(seqvar, var_data)
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override predict_pm1 to specify critical domains for RASopathy."""
         logger.info("Predict PM1")
 
@@ -239,7 +239,7 @@ class RASopathyPredictor(DefaultPredictor):
     def verify_pm2ba1bs1bs2(
         self,
         seqvar: SeqVar,
-        var_data: AutoACMGData,
+        var_data: AutoACMGSeqVarData,
     ) -> Tuple[Optional[PM2BA1BS1BS2], str]:
         """
         Predicts the PM2, BA1, BS1, BS2 criteria for the sequence variant.
@@ -294,7 +294,7 @@ class RASopathyPredictor(DefaultPredictor):
 
         return self.prediction_pm2ba1bs1bs2, self.comment_pm2ba1bs1bs2
 
-    def predict_pp2bp1(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+    def predict_pp2bp1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """
         Override PP2 and BP1 for RASopathy. PP2 is met for missense changes. BP1 is not applicable.
         """
@@ -326,6 +326,6 @@ class RASopathyPredictor(DefaultPredictor):
         )
 
 
-    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """BP3 is not applicable for RASopathy."""
         return True

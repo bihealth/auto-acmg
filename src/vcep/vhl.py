@@ -8,17 +8,17 @@ from typing import Optional, Tuple
 
 from loguru import logger
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     PM4BP3,
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     VcepSpec,
 )
 from src.defs.exceptions import AutoAcmgBaseException
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specification for VHL.
 SPEC: VcepSpec = VcepSpec(
@@ -55,9 +55,9 @@ BP3_REPEAT_REGIONS = [
 ]
 
 
-class VHLPredictor(DefaultPredictor):
+class VHLPredictor(DefaultSeqVarPredictor):
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override PM1 prediction to specify critical residues for VHL."""
         logger.info("Predict PM1")
 
@@ -86,7 +86,7 @@ class VHLPredictor(DefaultPredictor):
         )
 
     def predict_pm2ba1bs1bs2(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
         """Change the thresholds for PM2, BA1 and BS1."""
         var_data.thresholds.pm2_pathogenic = 0.00000156
@@ -95,7 +95,7 @@ class VHLPredictor(DefaultPredictor):
         return super().predict_pm2ba1bs1bs2(seqvar, var_data)
 
     @staticmethod
-    def _in_vhl_important_domain(var_data: AutoACMGData) -> bool:
+    def _in_vhl_important_domain(var_data: AutoACMGSeqVarData) -> bool:
         """Check if the variant is in an important VHL domain."""
         for start, end in PM4_CLUSTER:
             if start <= var_data.prot_pos <= end:
@@ -103,14 +103,14 @@ class VHLPredictor(DefaultPredictor):
         return False
 
     @staticmethod
-    def _in_gxeex_repeat_region(var_data: AutoACMGData) -> bool:
+    def _in_gxeex_repeat_region(var_data: AutoACMGSeqVarData) -> bool:
         """Check if the variant is in the GXEEX repeat region."""
         for start, end in BP3_REPEAT_REGIONS:
             if start <= var_data.prot_pos <= end:
                 return True
         return False
 
-    def verify_pm4bp3(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PM4BP3], str]:
+    def verify_pm4bp3(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> Tuple[Optional[PM4BP3], str]:
         """
         Override PM4 and BP3 verification for VHL. PM4 is met if the variant is in an important
         domain. BP3 is met if the variant is in the GXEEX repeat region.
@@ -158,7 +158,7 @@ class VHLPredictor(DefaultPredictor):
         return self.prediction_pm4bp3, self.comment_pm4bp3
 
     def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Override predict_pp2bp1 to return not applicable status for VHL."""
         return (
@@ -176,7 +176,7 @@ class VHLPredictor(DefaultPredictor):
             ),
         )
 
-    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Change the BP7 threshold for PhyloP."""
         var_data.thresholds.phyloP100 = 0.2
         return super().predict_bp7(seqvar, var_data)

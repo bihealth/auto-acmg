@@ -2,10 +2,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGPrediction,
+    AutoACMGSeqVarData,
+    AutoACMGStrength,
+)
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 from src.vcep.thrombosis import ThrombosisPredictor
 
 
@@ -22,7 +27,7 @@ def thrombosis_predictor(seqvar):
 
 @pytest.fixture
 def auto_acmg_data():
-    return AutoACMGData()
+    return AutoACMGSeqVarData()
 
 
 def test_predict_pm1_in_cysteine_residue(thrombosis_predictor, auto_acmg_data):
@@ -97,7 +102,7 @@ def test_predict_pm1_not_met(thrombosis_predictor, auto_acmg_data):
     ), "The summary should indicate the PM1 criteria."
 
 
-@patch("src.vcep.thrombosis.DefaultPredictor.predict_pm1")
+@patch("src.vcep.thrombosis.DefaultSeqVarPredictor.predict_pm1")
 def test_predict_pm1_fallback_to_default(mock_predict_pm1, thrombosis_predictor, auto_acmg_data):
     """Test fallback to the default PM1 prediction method for unhandled cases."""
     auto_acmg_data.hgnc_id = "HGNC:9999"  # Gene not in the Thrombosis VCEP
@@ -119,7 +124,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, thrombosis_predictor,
 
 
 @patch.object(
-    DefaultPredictor,
+    DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
     return_value=(
         AutoACMGCriteria(name="PM2"),

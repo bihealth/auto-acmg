@@ -7,8 +7,8 @@ from loguru import logger
 from src.defs.auto_acmg import (
     PP3BP4,
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
 )
 from src.defs.exceptions import AutoAcmgBaseException, MissingDataError
@@ -27,7 +27,7 @@ class AutoPP3BP4(AutoACMGHelper):
         self.comment_pp3bp4: str = ""
 
     @staticmethod
-    def _splice_variant(var_data: AutoACMGData) -> bool:
+    def _splice_variant(var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the variant's consequence is a splice related.
 
@@ -44,7 +44,7 @@ class AutoPP3BP4(AutoACMGHelper):
         return False
 
     @staticmethod
-    def _is_pathogenic_score(var_data: AutoACMGData) -> bool:
+    def _is_pathogenic_score(var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if any of the pathogenic scores meet the threshold.
 
@@ -73,7 +73,7 @@ class AutoPP3BP4(AutoACMGHelper):
         return False
 
     @staticmethod
-    def _is_benign_score(var_data: AutoACMGData) -> bool:
+    def _is_benign_score(var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if any of the benign scores meet the threshold.
 
@@ -102,7 +102,7 @@ class AutoPP3BP4(AutoACMGHelper):
         return False
 
     @staticmethod
-    def _is_pathogenic_splicing(var_data: AutoACMGData) -> bool:
+    def _is_pathogenic_splicing(var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the variant is pathogenic based on splicing scores.
 
@@ -128,7 +128,7 @@ class AutoPP3BP4(AutoACMGHelper):
         return False
 
     @staticmethod
-    def _is_benign_splicing(var_data: AutoACMGData) -> bool:
+    def _is_benign_splicing(var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the variant is benign based on splicing scores.
 
@@ -153,7 +153,9 @@ class AutoPP3BP4(AutoACMGHelper):
                 return True
         return False
 
-    def verify_pp3bp4(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PP3BP4], str]:
+    def verify_pp3bp4(
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
+    ) -> Tuple[Optional[PP3BP4], str]:
         """Predict PP3 and BP4 criteria."""
         self.prediction_pp3bp4 = PP3BP4()
         self.comment_pp3bp4 = ""
@@ -192,7 +194,7 @@ class AutoPP3BP4(AutoACMGHelper):
         return self.prediction_pp3bp4, self.comment_pp3bp4
 
     def predict_pp3bp4(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Predict PP3 and BP4 criteria."""
         logger.info("Predict PP3 and BP4")

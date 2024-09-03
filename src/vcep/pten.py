@@ -8,16 +8,16 @@ from typing import Optional, Tuple
 
 from loguru import logger
 
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import (
     PM4BP3,
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     VcepSpec,
 )
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specification for PTEN.
 SPEC: VcepSpec = VcepSpec(
@@ -36,9 +36,9 @@ PM1_CLUSTER = {
 }
 
 
-class PTENPredictor(DefaultPredictor):
+class PTENPredictor(DefaultSeqVarPredictor):
 
-    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override predict_pm1 to specify critical residues for PTEN."""
         logger.info("Predict PM1")
 
@@ -67,7 +67,7 @@ class PTENPredictor(DefaultPredictor):
         )
 
     def predict_pm2ba1bs1bs2(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
         """Change the thresholds for PM2, BA1 and BS1."""
         var_data.thresholds.pm2_pathogenic = 0.00001
@@ -75,11 +75,13 @@ class PTENPredictor(DefaultPredictor):
         var_data.thresholds.bs1_benign = 0.000043
         return super().predict_pm2ba1bs1bs2(seqvar, var_data)
 
-    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """BP3 is not applicable for PTEN."""
         return True
 
-    def verify_pm4bp3(self, seqvar: SeqVar, var_data: AutoACMGData) -> Tuple[Optional[PM4BP3], str]:
+    def verify_pm4bp3(
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
+    ) -> Tuple[Optional[PM4BP3], str]:
         """
         Override predict_pm4bp3 to include VCEP-specific logic for PTEN. Include in-frame deletions
         and insertions that affect the catalytic motifs as PM4. Stop-loss variants are also
@@ -116,7 +118,7 @@ class PTENPredictor(DefaultPredictor):
         return self.prediction_pm4bp3, self.comment_pm4bp3
 
     def predict_pp2bp1(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
         """Override predict_pp2bp1 to return not applicable status for PTEN. PP2 is not changed."""
         logger.info("Predict PP2 and BP1")
@@ -146,7 +148,7 @@ class PTENPredictor(DefaultPredictor):
             ),
         )
 
-    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+    def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override donor and acceptor positions for PTEN VCEP."""
         var_data.thresholds.bp7_donor = 7
         var_data.thresholds.bp7_acceptor = 21

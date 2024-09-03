@@ -6,16 +6,16 @@ import pytest
 
 from src.auto_acmg import VCEP_MAPPING, AutoACMG
 from src.core.config import Config
-from src.criteria.auto_pvs1 import AutoPVS1
 from src.defs.auto_acmg import (
     AutoACMGCriteria,
     AutoACMGPrediction,
-    AutoACMGResult,
+    AutoACMGSeqVarResult,
     AutoACMGStrength,
 )
 from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionSeqVarPath
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.auto_pvs1 import AutoPVS1
 from tests.utils import load_test_data_pvs1
 
 #: Type for PVS1 test data.
@@ -60,8 +60,8 @@ def test_pvs1(
     seqvar = auto_acmg.resolve_variant()
     assert isinstance(seqvar, SeqVar)
     # Then, setup the data
-    auto_acmg_result = auto_acmg.parse_data(seqvar)
-    assert isinstance(auto_acmg_result, AutoACMGResult)
+    auto_acmg_result = auto_acmg.parse_seqvar_data(seqvar)
+    assert isinstance(auto_acmg_result, AutoACMGSeqVarResult)
     # Then, predict PVS1
     if auto_acmg_result.data.hgnc_id in VCEP_MAPPING:
         predictor_class = VCEP_MAPPING[auto_acmg_result.data.hgnc_id]

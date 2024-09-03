@@ -6,11 +6,11 @@ import pytest
 
 from src.auto_acmg import VCEP_MAPPING, AutoACMG
 from src.core.config import Config
-from src.criteria.auto_ps1_pm5 import AutoPS1PM5
 from src.defs.annonars_variant import AnnonarsVariantResponse
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGPrediction, AutoACMGResult
+from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGPrediction, AutoACMGSeqVarResult
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.auto_ps1_pm5 import AutoPS1PM5
 
 
 @pytest.mark.default_cassette("integ_ps1_pm5.yaml")
@@ -194,8 +194,8 @@ def test_ps1_pm5(
     seqvar = auto_acmg.resolve_variant()
     assert isinstance(seqvar, SeqVar)
     # Then, setup the data
-    auto_acmg_result = auto_acmg.parse_data(seqvar)
-    assert isinstance(auto_acmg_result, AutoACMGResult)
+    auto_acmg_result = auto_acmg.parse_seqvar_data(seqvar)
+    assert isinstance(auto_acmg_result, AutoACMGSeqVarResult)
     # Then, predict PS1 and PM5
     if auto_acmg_result.data.hgnc_id in VCEP_MAPPING:
         predictor_class = VCEP_MAPPING[auto_acmg_result.data.hgnc_id]

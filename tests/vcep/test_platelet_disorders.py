@@ -2,10 +2,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGPrediction,
+    AutoACMGSeqVarData,
+    AutoACMGStrength,
+)
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 from src.vcep.platelet_disorders import PlateletDisordersPredictor
 
 
@@ -22,7 +27,7 @@ def platelet_disorders_predictor(seqvar):
 
 @pytest.fixture
 def auto_acmg_data():
-    return AutoACMGData()
+    return AutoACMGSeqVarData()
 
 
 def test_predict_pm1_not_met_for_itga2b(platelet_disorders_predictor, auto_acmg_data):
@@ -59,7 +64,7 @@ def test_predict_pm1_not_met_for_itgb3(platelet_disorders_predictor, auto_acmg_d
     ), "The summary should explain the reason."
 
 
-@patch("src.vcep.platelet_disorders.DefaultPredictor.predict_pm1")
+@patch("src.vcep.platelet_disorders.DefaultSeqVarPredictor.predict_pm1")
 def test_predict_pm1_fallback_to_default(
     mock_predict_pm1, platelet_disorders_predictor, auto_acmg_data
 ):
@@ -85,7 +90,7 @@ def test_predict_pm1_fallback_to_default(
 
 
 @patch.object(
-    DefaultPredictor,
+    DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
     return_value=(
         AutoACMGCriteria(name="PM2"),

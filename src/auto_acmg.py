@@ -6,21 +6,23 @@ from loguru import logger
 
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config
-from src.criteria.auto_bp7 import AutoBP7
-from src.criteria.auto_pm1 import AutoPM1
-from src.criteria.auto_pm2_ba1_bs1_bs2 import AutoPM2BA1BS1BS2
-from src.criteria.auto_pm4_bp3 import AutoPM4BP3
-from src.criteria.auto_pp2_bp1 import AutoPP2BP1
-from src.criteria.auto_pp3_bp4 import AutoPP3BP4
-from src.criteria.auto_ps1_pm5 import AutoPS1PM5
-from src.criteria.auto_pvs1 import AutoPVS1
-from src.criteria.default_predictor import DefaultPredictor
 from src.defs.annonars_variant import VariantResult
-from src.defs.auto_acmg import AutoACMGResult, CdsInfo, GenomicStrand
+from src.defs.auto_acmg import AutoACMGSeqVarResult, AutoACMGStrucVarResult, CdsInfo, GenomicStrand
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, ParseError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import CdsPos, ProteinPos, TxPos
 from src.defs.seqvar import SeqVar, SeqVarResolver
+from src.defs.strucvar import StrucVar, StrucVarResolver
+from src.seqvar.auto_bp7 import AutoBP7
+from src.seqvar.auto_pm1 import AutoPM1
+from src.seqvar.auto_pm2_ba1_bs1_bs2 import AutoPM2BA1BS1BS2
+from src.seqvar.auto_pm4_bp3 import AutoPM4BP3
+from src.seqvar.auto_pp2_bp1 import AutoPP2BP1
+from src.seqvar.auto_pp3_bp4 import AutoPP3BP4
+from src.seqvar.auto_ps1_pm5 import AutoPS1PM5
+from src.seqvar.auto_pvs1 import AutoPVS1
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
+from src.strucvar.default_predictor import DefaultStrucVarPredictor
 from src.utils import SeqVarTranscriptsHelper
 from src.vcep import (
     ACADVLPredictor,
@@ -206,8 +208,12 @@ class AutoACMG:
         self.genome_release = genome_release
         #: The resolved sequence variant.
         self.seqvar: Optional[SeqVar] = None
-        #: Prediction result.
-        self.result: AutoACMGResult = AutoACMGResult()
+        #: The resolved structural variant.
+        self.strucvar: Optional[StrucVar] = None
+        #: Prediction result for sequence variants.
+        self.seqvar_result: AutoACMGSeqVarResult = AutoACMGSeqVarResult()
+        #: Prediction result for structural variants.
+        self.strucvar_result: AutoACMGStrucVarResult = AutoACMGStrucVarResult()
 
     def _get_variant_info(self, seqvar: SeqVar) -> Optional[VariantResult]:
         """
@@ -254,7 +260,7 @@ class AutoACMG:
             logger.error("Failed to convert score value to float. Error: {}", e)
             raise AlgorithmError("Failed to convert score value to float.") from e
 
-    def resolve_variant(self) -> Optional[SeqVar]:
+    def resolve_variant(self) -> Union[SeqVar, StrucVar, None]:
         """Attempts to resolve the specified variant as either a sequence or structural variant.
 
         This method first tries to resolve the variant as a sequence variant. If it fails, it then
@@ -274,13 +280,22 @@ class AutoACMG:
             logger.debug("Resolved sequence variant: {}", seqvar)
             return seqvar
         except ParseError:
-            logger.exception("Failed to resolve sequence variant.")
-            return None
+            logger.debug("Failed to resolve sequence variant.")
+            try:
+                logger.debug("Trying to resolve structural variant.")
+                strucvar_resolver = StrucVarResolver(config=self.config)
+                strucvar: StrucVar = strucvar_resolver.resolve_strucvar(
+                    self.variant_name, self.genome_release
+                )
+                return strucvar
+            except ParseError as e:
+                logger.debug("Failed to resolve the structure variant")
+                return None
         except AutoAcmgBaseException as e:
             logger.error("An unexpected error occurred: {}", e)
             return None
 
-    def parse_data(self, seqvar: SeqVar) -> AutoACMGResult:
+    def parse_seqvar_data(self, seqvar: SeqVar) -> AutoACMGSeqVarResult:
         """Parses the data for the prediction."""
         # Mehari data
         ts_helper = SeqVarTranscriptsHelper(seqvar)
@@ -289,28 +304,28 @@ class AutoACMG:
         if not seqvar_transcript or not gene_transcript:
             raise AutoAcmgBaseException("Transcript information is missing.")
 
-        self.result.data.consequence.mehari = seqvar_transcript.consequences
-        self.result.data.gene_symbol = seqvar_transcript.gene_symbol
-        self.result.data.hgnc_id = seqvar_transcript.gene_id
-        self.result.data.transcript_id = seqvar_transcript.feature_id
-        self.result.data.transcript_tags = seqvar_transcript.feature_tag
-        self.result.data.tx_pos_utr = (
+        self.seqvar_result.data.consequence.mehari = seqvar_transcript.consequences
+        self.seqvar_result.data.gene_symbol = seqvar_transcript.gene_symbol
+        self.seqvar_result.data.hgnc_id = seqvar_transcript.gene_id
+        self.seqvar_result.data.transcript_id = seqvar_transcript.feature_id
+        self.seqvar_result.data.transcript_tags = seqvar_transcript.feature_tag
+        self.seqvar_result.data.tx_pos_utr = (
             seqvar_transcript.tx_pos.ord if isinstance(seqvar_transcript.tx_pos, TxPos) else -1
         )
-        self.result.data.cds_pos = (
+        self.seqvar_result.data.cds_pos = (
             seqvar_transcript.cds_pos.ord if isinstance(seqvar_transcript.cds_pos, CdsPos) else 0
         )
-        self.result.data.prot_pos = (
+        self.seqvar_result.data.prot_pos = (
             seqvar_transcript.protein_pos.ord
             if isinstance(seqvar_transcript.protein_pos, ProteinPos)
             else -1
         )
-        self.result.data.prot_length = (
+        self.seqvar_result.data.prot_length = (
             seqvar_transcript.protein_pos.total
             if isinstance(seqvar_transcript.protein_pos, ProteinPos)
             else -1
         )
-        self.result.data.cds_info = {
+        self.seqvar_result.data.cds_info = {
             ts.id: CdsInfo(
                 start_codon=ts.startCodon,
                 stop_codon=ts.stopCodon,
@@ -321,12 +336,12 @@ class AutoACMG:
             )
             for ts in all_genes_tx
         }
-        self.result.data.cds_start = gene_transcript.genomeAlignments[0].cdsStart
-        self.result.data.cds_end = gene_transcript.genomeAlignments[0].cdsEnd
-        self.result.data.strand = GenomicStrand.from_string(
+        self.seqvar_result.data.cds_start = gene_transcript.genomeAlignments[0].cdsStart
+        self.seqvar_result.data.cds_end = gene_transcript.genomeAlignments[0].cdsEnd
+        self.seqvar_result.data.strand = GenomicStrand.from_string(
             gene_transcript.genomeAlignments[0].strand
         )
-        self.result.data.exons = gene_transcript.genomeAlignments[0].exons
+        self.seqvar_result.data.exons = gene_transcript.genomeAlignments[0].exons
 
         # Annonars data
         variant_info = self._get_variant_info(seqvar)
@@ -335,41 +350,49 @@ class AutoACMG:
             raise AutoAcmgBaseException("Failed to get variant information.")
 
         if cadd := variant_info.cadd:
-            self.result.data.consequence.cadd = cadd.ConsDetail or ""
-            self.result.data.consequence.cadd_consequence = cadd.Consequence or ""
-            self.result.data.scores.cadd.phyloP100 = cadd.verPhyloP
-            self.result.data.scores.cadd.gerp = cadd.GerpS
-            self.result.data.scores.cadd.spliceAI_acceptor_gain = cadd.SpliceAI_acc_gain
-            self.result.data.scores.cadd.spliceAI_acceptor_loss = cadd.SpliceAI_acc_loss
-            self.result.data.scores.cadd.spliceAI_donor_gain = cadd.SpliceAI_don_gain
-            self.result.data.scores.cadd.spliceAI_donor_loss = cadd.SpliceAI_don_loss
-            self.result.data.scores.cadd.ada = cadd.dbscSNV_ada
-            self.result.data.scores.cadd.rf = cadd.dbscSNV_rf
+            self.seqvar_result.data.consequence.cadd = cadd.ConsDetail or ""
+            self.seqvar_result.data.consequence.cadd_consequence = cadd.Consequence or ""
+            self.seqvar_result.data.scores.cadd.phyloP100 = cadd.verPhyloP
+            self.seqvar_result.data.scores.cadd.gerp = cadd.GerpS
+            self.seqvar_result.data.scores.cadd.spliceAI_acceptor_gain = cadd.SpliceAI_acc_gain
+            self.seqvar_result.data.scores.cadd.spliceAI_acceptor_loss = cadd.SpliceAI_acc_loss
+            self.seqvar_result.data.scores.cadd.spliceAI_donor_gain = cadd.SpliceAI_don_gain
+            self.seqvar_result.data.scores.cadd.spliceAI_donor_loss = cadd.SpliceAI_don_loss
+            self.seqvar_result.data.scores.cadd.ada = cadd.dbscSNV_ada
+            self.seqvar_result.data.scores.cadd.rf = cadd.dbscSNV_rf
         if dbsnfp := variant_info.dbnsfp:
-            self.result.data.pHGVS = dbsnfp.HGVSp_VEP or ""
-            self.result.data.scores.dbnsfp.alpha_missense = self._convert_score_val(
+            self.seqvar_result.data.pHGVS = dbsnfp.HGVSp_VEP or ""
+            self.seqvar_result.data.scores.dbnsfp.alpha_missense = self._convert_score_val(
                 dbsnfp.AlphaMissense_score
             )
-            self.result.data.scores.dbnsfp.metaRNN = self._convert_score_val(dbsnfp.MetaRNN_score)
-            self.result.data.scores.dbnsfp.bayesDel_noAF = self._convert_score_val(
+            self.seqvar_result.data.scores.dbnsfp.metaRNN = self._convert_score_val(
+                dbsnfp.MetaRNN_score
+            )
+            self.seqvar_result.data.scores.dbnsfp.bayesDel_noAF = self._convert_score_val(
                 dbsnfp.BayesDel_noAF_score
             )
-            self.result.data.scores.dbnsfp.revel = self._convert_score_val(dbsnfp.REVEL_score)
-            self.result.data.scores.dbnsfp.phyloP100 = self._convert_score_val(
+            self.seqvar_result.data.scores.dbnsfp.revel = self._convert_score_val(
+                dbsnfp.REVEL_score
+            )
+            self.seqvar_result.data.scores.dbnsfp.phyloP100 = self._convert_score_val(
                 dbsnfp.phyloP100way_vertebrate
             )
         if dbscsnv := variant_info.dbscsnv:
-            self.result.data.scores.dbscsnv.ada = dbscsnv.ada_score
-            self.result.data.scores.dbscsnv.rf = dbscsnv.rf_score
-        self.result.data.gnomad_exomes = variant_info.gnomad_exomes
-        self.result.data.gnomad_mtdna = variant_info.gnomad_mtdna
+            self.seqvar_result.data.scores.dbscsnv.ada = dbscsnv.ada_score
+            self.seqvar_result.data.scores.dbscsnv.rf = dbscsnv.rf_score
+        self.seqvar_result.data.gnomad_exomes = variant_info.gnomad_exomes
+        self.seqvar_result.data.gnomad_mtdna = variant_info.gnomad_mtdna
 
         # Thresholds
         pass
 
-        return self.result
+        return self.seqvar_result
 
-    def select_predictor(self, hgnc_id: str) -> Type[DefaultPredictor]:
+    def parse_strucvar_data(self, strucvar: StrucVar) -> AutoACMGStrucVarResult:
+        """Parse the data for the prediction."""
+        return self.strucvar_result
+
+    def select_predictor(self, hgnc_id: str) -> Type[DefaultSeqVarPredictor]:
         """Selects the predictor for the specified gene.
 
         Args:
@@ -380,9 +403,9 @@ class AutoACMG:
         """
         if hgnc_id in VCEP_MAPPING:
             return VCEP_MAPPING[hgnc_id]
-        return DefaultPredictor
+        return DefaultSeqVarPredictor
 
-    def predict(self) -> Optional[AutoACMGResult]:
+    def predict(self) -> Union[AutoACMGSeqVarResult, AutoACMGStrucVarResult, None]:
         """
         Predict ACMG criteria for the specified variant.
 
@@ -398,20 +421,39 @@ class AutoACMG:
             raised if the prediction fails.
         """
         logger.info("Predicting ACMG criteria for variant: {}", self.variant_name)
-        self.seqvar = self.resolve_variant()
-        self.result.seqvar = self.seqvar
-        if not self.result.seqvar:
-            logger.error("Unable to make a prediction for the variant: {}", self.variant_name)
+        variant = self.resolve_variant()
+        if not variant:
+            logger.error("Failed to resolve the variant.")
             return None
+        elif isinstance(variant, SeqVar):
+            self.seqvar = variant
+            self.seqvar_result.seqvar = self.seqvar
+        elif isinstance(variant, StrucVar):
+            self.strucvar = variant
+            self.strucvar_result.strucvar = self.strucvar
 
         if isinstance(self.seqvar, SeqVar):
+            if not self.seqvar:
+                logger.error("Failed to resolve the sequence variant.")
+                return None
             # ====== Setup the data ======
-            self.parse_data(self.seqvar)
+            self.parse_seqvar_data(self.seqvar)
 
             # ====== Predict ======
-            predictor_class = self.select_predictor(self.result.data.hgnc_id)
-            predictor = predictor_class(self.result.seqvar, self.result, self.config)
+            predictor_class = self.select_predictor(self.seqvar_result.data.hgnc_id)
+            predictor = predictor_class(self.seqvar, self.seqvar_result, self.config)
             return predictor.predict()
+
+        elif isinstance(self.strucvar, StrucVar):
+            if not self.strucvar:
+                logger.error("Failed to resolve the structural variant.")
+                return None
+            # ====== Setup the data ======
+            self.parse_strucvar_data(self.strucvar)
+
+            # ====== Predict ======
+            sp = DefaultStrucVarPredictor(self.strucvar, self.strucvar_result, self.config)
+            return sp.predict()
 
         else:
             logger.info("Structural variants are not supported for ACMG criteria prediction yet.")

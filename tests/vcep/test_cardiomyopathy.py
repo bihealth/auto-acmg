@@ -2,10 +2,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.criteria.default_predictor import DefaultPredictor
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import (
+    AutoACMGCriteria,
+    AutoACMGPrediction,
+    AutoACMGSeqVarData,
+    AutoACMGStrength,
+)
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 from src.vcep import CardiomyopathyPredictor
 
 
@@ -22,10 +27,10 @@ def cardiomyopathy_predictor(seqvar):
 
 @pytest.fixture
 def auto_acmg_data():
-    return AutoACMGData()
+    return AutoACMGSeqVarData()
 
 
-@patch.object(DefaultPredictor, "predict_pvs1")
+@patch.object(DefaultSeqVarPredictor, "predict_pvs1")
 def test_predict_pvs1_not_applicable(
     mock_super_predict_pvs1, cardiomyopathy_predictor, seqvar, auto_acmg_data
 ):
@@ -48,7 +53,7 @@ def test_predict_pvs1_not_applicable(
 
 
 @patch.object(
-    DefaultPredictor,
+    DefaultSeqVarPredictor,
     "predict_pvs1",
     return_value=AutoACMGCriteria(
         name="PVS1",
@@ -112,7 +117,7 @@ def test_predict_pm1_not_applicable(cardiomyopathy_predictor, auto_acmg_data):
     assert "Not applicable" in result.summary, "The summary should indicate non-applicability."
 
 
-@patch("src.vcep.cardiomyopathy.DefaultPredictor.predict_pm1")
+@patch("src.vcep.cardiomyopathy.DefaultSeqVarPredictor.predict_pm1")
 def test_predict_pm1_fallback_to_default(
     mock_predict_pm1, cardiomyopathy_predictor, auto_acmg_data
 ):
@@ -170,7 +175,7 @@ def test_bs2_not_applicable(cardiomyopathy_predictor, auto_acmg_data):
 
 
 @patch.object(
-    DefaultPredictor,
+    DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
     return_value=(
         AutoACMGCriteria(name="PM2"),
@@ -205,7 +210,7 @@ def test_predict_pm2ba1bs1bs2_myh7(
 
 
 @patch.object(
-    DefaultPredictor,
+    DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
     return_value=(
         AutoACMGCriteria(name="PM2"),
@@ -294,7 +299,7 @@ def test_predict_bp7_threshold_adjustment(cardiomyopathy_predictor, auto_acmg_da
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
 
 
-@patch.object(DefaultPredictor, "predict_bp7")
+@patch.object(DefaultSeqVarPredictor, "predict_bp7")
 def test_predict_bp7_fallback_to_default(
     mock_super_predict_bp7, cardiomyopathy_predictor, auto_acmg_data
 ):

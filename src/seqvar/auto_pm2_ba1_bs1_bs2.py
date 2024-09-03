@@ -10,8 +10,8 @@ from src.defs.auto_acmg import (
     PM2BA1BS1BS2,
     AlleleCondition,
     AutoACMGCriteria,
-    AutoACMGData,
     AutoACMGPrediction,
+    AutoACMGSeqVarData,
     AutoACMGStrength,
     ClingenDosageMap,
 )
@@ -31,7 +31,7 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
         #: comment_pm2ba1bs1bs2 to store the prediction explanation.
         self.comment_pm2ba1bs1bs2: str = ""
 
-    def _get_control_af(self, var_data: AutoACMGData) -> Optional[AlleleCount]:
+    def _get_control_af(self, var_data: AutoACMGSeqVarData) -> Optional[AlleleCount]:
         """
         Get the allele frequency information for the control population.
 
@@ -48,7 +48,7 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
                 return af
         return None
 
-    def _get_any_af(self, var_data: AutoACMGData) -> Optional[AlleleCount]:
+    def _get_any_af(self, var_data: AutoACMGSeqVarData) -> Optional[AlleleCount]:
         """
         Get the highest allele frequency information for any population.
 
@@ -81,7 +81,7 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
     def _get_af(
         self,
         seqvar: SeqVar,
-        var_data: AutoACMGData,
+        var_data: AutoACMGSeqVarData,
     ) -> Optional[float]:
         """
         Get the allele frequency for the sequence variant.
@@ -102,7 +102,7 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
 
     def _get_m_af(
         self,
-        var_data: AutoACMGData,
+        var_data: AutoACMGSeqVarData,
     ) -> Optional[float]:
         """
         Get the allele frequency for the mitochondrial sequence variant.
@@ -185,7 +185,7 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
                     clingen_dosage = AlleleCondition.Recessive
         return clingen_dosage
 
-    def _check_zyg(self, seqvar: SeqVar, var_data: AutoACMGData) -> bool:
+    def _check_zyg(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """
         Check the zygosity of the sequence variant.
 
@@ -315,7 +315,7 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
             return True
         return False
 
-    def _bs2_not_applicable(self, var_data: AutoACMGData) -> bool:
+    def _bs2_not_applicable(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the BS2 criteria is not applicable.
 
@@ -332,7 +332,7 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
     def verify_pm2ba1bs1bs2(
         self,
         seqvar: SeqVar,
-        var_data: AutoACMGData,
+        var_data: AutoACMGSeqVarData,
     ) -> Tuple[Optional[PM2BA1BS1BS2], str]:
         """
         Predicts the PM2, BA1, BS1, BS2 criteria for the sequence variant.
@@ -409,7 +409,7 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
         return self.prediction_pm2ba1bs1bs2, self.comment_pm2ba1bs1bs2
 
     def predict_pm2ba1bs1bs2(
-        self, seqvar: SeqVar, var_data: AutoACMGData
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
         """
         Predicts the PM2, BA1, BS1, BS2 criteria for the sequence variant.

@@ -3,11 +3,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 import tabix
 
-from src.criteria.auto_pm4_bp3 import AutoPM4BP3
-from src.defs.auto_acmg import AutoACMGData, AutoACMGPrediction, AutoACMGStrength
+from src.defs.auto_acmg import AutoACMGPrediction, AutoACMGSeqVarData, AutoACMGStrength
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.auto_pm4_bp3 import AutoPM4BP3
 
 
 @pytest.fixture
@@ -22,7 +22,7 @@ def auto_pm4bp3():
 
 @pytest.fixture
 def var_data():
-    data = MagicMock(spec=AutoACMGData)
+    data = MagicMock(spec=AutoACMGSeqVarData)
     data.consequence = MagicMock()
     return data
 
@@ -30,7 +30,7 @@ def var_data():
 # ============== _in_repeat_region =================
 
 
-@patch("src.criteria.auto_pm4_bp3.tabix.open")
+@patch("src.seqvar.auto_pm4_bp3.tabix.open")
 def test_in_repeat_region_true(mock_tabix_open, auto_pm4bp3, seqvar):
     mock_tabix = MagicMock()
     mock_tabix.query.return_value = iter(
@@ -42,7 +42,7 @@ def test_in_repeat_region_true(mock_tabix_open, auto_pm4bp3, seqvar):
     assert result == True
 
 
-@patch("src.criteria.auto_pm4_bp3.tabix.open")
+@patch("src.seqvar.auto_pm4_bp3.tabix.open")
 def test_in_repeat_region_false(mock_tabix_open, auto_pm4bp3, seqvar):
     mock_tabix = MagicMock()
     mock_tabix.query.return_value = iter([])  # No records returned
@@ -52,7 +52,7 @@ def test_in_repeat_region_false(mock_tabix_open, auto_pm4bp3, seqvar):
     assert result == False
 
 
-@patch("src.criteria.auto_pm4_bp3.tabix.open")
+@patch("src.seqvar.auto_pm4_bp3.tabix.open")
 def test_in_repeat_region_error(mock_tabix_open, auto_pm4bp3, seqvar):
     mock_tabix_open.side_effect = tabix.TabixError("Failed to open file")
 
@@ -139,7 +139,7 @@ def test_inframe_delins_false(var_data_is_inframe_delins):
 
 @pytest.fixture
 def auto_acmg_data():
-    return AutoACMGData()
+    return AutoACMGSeqVarData()
 
 
 def test_bp3_not_applicable_mitochondrial(auto_pm4bp3, seqvar, auto_acmg_data):
