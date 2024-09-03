@@ -21,6 +21,7 @@ def test_strucvar_initialization():
     assert variant.chrom == "1"
     assert variant.start == 100
     assert variant.stop == 200
+    assert variant.user_repr == "DEL-GRCh37-1-100-200"
 
 
 def test_strucvar_initialization_user_representation():
@@ -28,6 +29,7 @@ def test_strucvar_initialization_user_representation():
     variant = StrucVar(
         StrucVarType.DEL, GenomeRelease.GRCh37, "chr1", 100, 200, user_repr="1:100-200"
     )
+    assert variant.user_repr == "1:100-200"
 
 
 @pytest.mark.parametrize(

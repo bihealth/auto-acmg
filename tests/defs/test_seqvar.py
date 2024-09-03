@@ -39,11 +39,13 @@ def test_seqvar_initialization():
     assert variant.pos == 100
     assert variant.delete == "A"
     assert variant.insert == "T"
+    assert variant.user_repr == "GRCh37-1-100-A-T"
 
 
 def test_seqvar_initialization_user_representation():
     """Test SeqVar initialization with custom user representation."""
     variant = SeqVar(GenomeRelease.GRCh37, "chr1", 100, "A", "T", user_repr="1:100:A:T")
+    assert variant.user_repr == "1:100:A:T"
 
 
 @pytest.mark.parametrize(
@@ -121,7 +123,7 @@ def test_parse_separated_seqvar(seqvar_resolver, representation, expected):
     assert variant.pos == expected.pos
     assert variant.delete == expected.delete
     assert variant.insert == expected.insert
-    assert variant._user_repr == expected._user_repr
+    assert variant.user_repr == expected.user_repr
 
 
 @pytest.mark.parametrize(
@@ -157,7 +159,7 @@ def test_parse_canonical_spdi_seqvar_success(seqvar_resolver, value, expected):
     assert variant.pos == expected.pos
     assert variant.delete == expected.delete
     assert variant.insert == expected.insert
-    assert variant._user_repr == expected._user_repr
+    assert variant.user_repr == expected.user_repr
 
 
 @pytest.mark.parametrize(

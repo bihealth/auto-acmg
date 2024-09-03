@@ -41,7 +41,7 @@ class StrucVar(BaseModel):
     chrom: str
     start: int
     stop: int
-    _user_repr: Optional[str] = None
+    user_repr: Optional[str] = None
 
     def __init__(
         self,
@@ -57,7 +57,7 @@ class StrucVar(BaseModel):
         chrom = chrom.lower().replace("chr", "").replace("m", "mt").replace("mtt", "mt").upper()
         start = start
         stop = stop
-        _user_repr = (
+        user_repr = (
             user_repr
             if user_repr
             else f"{sv_type.name}-{genome_release.name}-{chrom}-{start}-{stop}"
@@ -68,7 +68,7 @@ class StrucVar(BaseModel):
             chrom=chrom,
             start=start,
             stop=stop,
-            _user_repr=_user_repr,
+            user_repr=user_repr,
         )
 
     @field_validator("chrom")
@@ -77,28 +77,18 @@ class StrucVar(BaseModel):
         return v.lower().replace("chr", "").replace("m", "mt").upper()
 
     def __str__(self):
-        return self._user_repr
+        return self.user_repr
 
-    # def __repr__(self):
-    #     """Return a string representation of the structural variant."""
-    #     return self.user_repr
-
-    # def __dir__(self):
-    #     """Return a dictionary representation of the structural variant."""
-    #     return {
-    #         "sv_type": self.sv_type,
-    #         "genome_release": self.genome_release,
-    #         "chrom": self.chrom,
-    #         "start": self.start,
-    #         "stop": self.stop,
-    #         "user_repr": self.user_repr,
-    #     }
-
-    # def __eq__(self, other):
-    #     """Return True if the two objects are equal."""
-    #     if not isinstance(other, StrucVar):
-    #         return False
-    #     return self.__dir__() == other.__dir__()
+    def __eq__(self, other):
+        if not isinstance(other, StrucVar):
+            return NotImplemented
+        return (
+            self.sv_type == other.sv_type
+            and self.genome_release == other.genome_release
+            and self.chrom == other.chrom
+            and self.start == other.start
+            and self.stop == other.stop
+        )
 
 
 class StrucVarResolver:
