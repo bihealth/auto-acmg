@@ -26,6 +26,16 @@ def auto_acmg_data():
     return AutoACMGData()
 
 
+def test_predict_pvs1_not_applicable(glaucoma_predictor, seqvar, auto_acmg_data):
+    result = glaucoma_predictor.predict_pvs1(seqvar, auto_acmg_data)
+
+    # Verify the outcome is as expected, always not applicable
+    assert result.name == "PVS1"
+    assert result.prediction == AutoACMGPrediction.NotApplicable
+    assert result.strength == AutoACMGStrength.PathogenicVeryStrong
+    assert result.summary == "PVS1 is not applicable for the gene."
+
+
 def test_predict_pm1_not_applicable(glaucoma_predictor, auto_acmg_data):
     """Test when PM1 is not applicable for MYOC in Glaucoma."""
     auto_acmg_data.hgnc_id = "HGNC:7610"  # MYOC gene

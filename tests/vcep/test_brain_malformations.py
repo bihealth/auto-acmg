@@ -25,6 +25,21 @@ def brain_malformations_predictor(seqvar, auto_acmg_data):
     return BrainMalformationsPredictor(seqvar=seqvar, result=result, config=MagicMock())
 
 
+def test_predict_pvs1_not_applicable(brain_malformations_predictor, seqvar, auto_acmg_data):
+    result = brain_malformations_predictor.predict_pvs1(seqvar, auto_acmg_data)
+
+    assert result.name == "PVS1", "The criterion name should be 'PVS1'"
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "The prediction should be NotApplicable"
+    assert (
+        result.strength == AutoACMGStrength.PathogenicVeryStrong
+    ), "The strength should be PathogenicVeryStrong"
+    assert (
+        result.summary == "PVS1 is not applicable for the gene."
+    ), "The summary should indicate that PVS1 is not applicable"
+
+
 def test_predict_pm1_in_critical_domain(brain_malformations_predictor, auto_acmg_data):
     """Test when variant falls within a critical domain for the specified gene."""
     auto_acmg_data.prot_pos = 100  # Set protein position within a critical domain

@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from src.criteria.default_predictor import DefaultPredictor
 from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGData, AutoACMGPrediction, AutoACMGStrength
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
@@ -22,6 +23,52 @@ def rasopathy_predictor(seqvar):
 @pytest.fixture
 def auto_acmg_data():
     return AutoACMGData()
+
+
+@patch.object(
+    DefaultPredictor,
+    "predict_pvs1",
+    return_value=AutoACMGCriteria(
+        name="PVS1",
+        prediction=AutoACMGPrediction.Met,
+        strength=AutoACMGStrength.PathogenicVeryStrong,
+        summary="Superclass not applicable.",
+    ),
+)
+def test_predict_pvs1_not_applicable(mock_super, rasopathy_predictor, seqvar, auto_acmg_data):
+    # Set the HGNC ID to something other than LZTR1
+    auto_acmg_data.hgnc_id = "HGNC:9999"
+    result = rasopathy_predictor.predict_pvs1(seqvar, auto_acmg_data)
+
+    # Verify the outcome is as expected, not applicable for non-LZTR1 genes
+    assert result.name == "PVS1"
+    assert result.prediction == AutoACMGPrediction.NotApplicable
+    assert result.strength == AutoACMGStrength.PathogenicVeryStrong
+    assert result.summary == "PVS1 is not applicable for the gene."
+    mock_super.assert_not_called()
+
+
+@patch.object(
+    DefaultPredictor,
+    "predict_pvs1",
+    return_value=AutoACMGCriteria(
+        name="PVS1",
+        prediction=AutoACMGPrediction.Met,
+        strength=AutoACMGStrength.PathogenicVeryStrong,
+        summary="Superclass applicable.",
+    ),
+)
+def test_predict_pvs1_applicable_lztr1(mock_super, rasopathy_predictor, seqvar, auto_acmg_data):
+    # Set the HGNC ID to LZTR1 to test the condition where the superclass method should be called
+    auto_acmg_data.hgnc_id = "HGNC:6742"
+    result = rasopathy_predictor.predict_pvs1(seqvar, auto_acmg_data)
+
+    # Assertions to ensure the superclass method behaves as expected
+    mock_super.assert_called_once_with(seqvar, auto_acmg_data)
+    assert result.name == "PVS1"
+    assert result.prediction == AutoACMGPrediction.Met
+    assert result.strength == AutoACMGStrength.PathogenicVeryStrong
+    assert result.summary == "Superclass applicable."
 
 
 def test_predict_pm1_in_critical_region(rasopathy_predictor, auto_acmg_data):

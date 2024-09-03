@@ -25,6 +25,57 @@ def auto_acmg_data():
     return AutoACMGData()
 
 
+@patch.object(
+    DefaultPredictor,
+    "predict_pvs1",
+    return_value=AutoACMGCriteria(
+        name="PVS1",
+        prediction=AutoACMGPrediction.NotApplicable,
+        strength=AutoACMGStrength.PathogenicVeryStrong,
+        summary="Default behavior.",
+    ),
+)
+def test_predict_pvs1_not_applicable_for_specific_gene(
+    mock_super_predict_pvs1, congenital_myopathies_predictor, seqvar, auto_acmg_data
+):
+    # Set the HGNC ID to one that makes PVS1 not applicable
+    auto_acmg_data.hgnc_id = "HGNC:2974"
+    result = congenital_myopathies_predictor.predict_pvs1(seqvar, auto_acmg_data)
+
+    # Verify the outcome is as expected for the specific HGNC ID
+    assert result.name == "PVS1"
+    assert result.prediction == AutoACMGPrediction.NotApplicable
+    assert result.strength == AutoACMGStrength.PathogenicVeryStrong
+    assert result.summary == "PVS1 is not applicable for the gene."
+    mock_super_predict_pvs1.assert_not_called()  # Ensure superclass method is not called
+
+
+@patch.object(
+    DefaultPredictor,
+    "predict_pvs1",
+    return_value=AutoACMGCriteria(
+        name="PVS1",
+        prediction=AutoACMGPrediction.Met,
+        strength=AutoACMGStrength.PathogenicVeryStrong,
+        summary="Superclass default behavior.",
+    ),
+)
+def test_predict_pvs1_calls_superclass_when_not_specific_gene(
+    mock_super_predict_pvs1, congenital_myopathies_predictor, seqvar, auto_acmg_data
+):
+    # Set the HGNC ID to one not affecting the PVS1 applicability
+    auto_acmg_data.hgnc_id = "HGNC:Random"
+    result = congenital_myopathies_predictor.predict_pvs1(seqvar, auto_acmg_data)
+
+    # Verify that the superclass method is called
+    mock_super_predict_pvs1.assert_called_once_with(seqvar, auto_acmg_data)
+    # Check the response from the superclass method
+    assert result.name == "PVS1"
+    assert result.prediction == AutoACMGPrediction.Met
+    assert result.strength == AutoACMGStrength.PathogenicVeryStrong
+    assert result.summary == "Superclass default behavior."
+
+
 def test_predict_pm1_in_critical_domain(congenital_myopathies_predictor, auto_acmg_data):
     """Test when the variant falls within a critical domain for RYR1."""
     auto_acmg_data.prot_pos = 4850  # Within the critical domain (4800-4950) for RYR1
