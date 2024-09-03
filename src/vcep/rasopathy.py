@@ -170,6 +170,18 @@ PM1_CLUSTER_RASOPATHY: Dict[str, Dict[str, List[Union[int, Tuple[int, int]]]]] =
 
 class RASopathyPredictor(DefaultPredictor):
 
+    def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+        """PVS1 is not applicable."""
+        if var_data.hgnc_id != "HGNC:6742":   # LZTR1 exception
+            logger.info("Predict PVS1")
+            return AutoACMGCriteria(
+                name="PVS1",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicVeryStrong,
+                summary="PVS1 is not applicable for the gene.",
+            )
+        return super().predict_pvs1(seqvar, var_data)
+
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Override predict_pm1 to specify critical domains for RASopathy."""
         logger.info("Predict PM1")

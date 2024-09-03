@@ -29,6 +29,64 @@ from src.defs.mehari import Exon
 from src.defs.seqvar import SeqVar
 from src.utils import AutoACMGHelper, SplicingPrediction
 
+#: List of genes with custom PVS1 criteria.
+CUSTOM_VCEP_PVS1 = [
+    "HGNC:92",  # ACADVL
+    "HGNC:7551",  # MYBPC3
+    "HGNC:1748",  # CDH1
+    "HGNC:4175",  # GATM
+    "HGNC:4136",  # GAMT
+    "HGNC:3546",  # F8
+    "HGNC:3551",  # F9
+    "HGNC:7720",  # NEB
+    "HGNC:129",  # ACTA1
+    "HGNC:7448",  # MTM1
+    "HGNC:10483",  # RYR1
+    "HGNC:17098",  # DICER1
+    "HGNC:1100",  # BRCA1
+    "HGNC:1101",  # BRCA2
+    "HGNC:10585",  # SCN1A
+    "HGNC:10588",  # SCN2A
+    "HGNC:10590",  # SCN3A
+    "HGNC:10596",  # SCN8A
+    "HGNC:10586",  # SCN1B
+    "HGNC:6547",  # LDLR
+    "HGNC:795",  # ATM
+    "HGNC:26144",  # PALB2
+    "HGNC:175",  # ACVRL1
+    "HGNC:3349",  # ENG
+    "HGNC:583",  # APC
+    "HGNC:7127",  # MLH1
+    "HGNC:7325",  # MSH2
+    "HGNC:7329",  # MSH6
+    "HGNC:9122",  # PMS2
+    "HGNC:10294",  # RPE65
+    "HGNC:4065",  # GAA
+    "HGNC:11621",  # HNF1A
+    "HGNC:5024",  # HNF4A
+    "HGNC:4195",  # GCK
+    "HGNC:10471",  # RUNX1
+    "HGNC:8582",  # PAH
+    "HGNC:9588",  # PTEN
+    "HGNC:6742",  # LZTR1
+    "HGNC:11634",  # TCF4
+    "HGNC:11079",  # SLC9A6
+    "HGNC:11411",  # CDKL5
+    "HGNC:3811",  # FOXG1
+    "HGNC:6990",  # MECP2
+    "HGNC:12496",  # UBE3A
+    "HGNC:12765",  # FOXN1
+    "HGNC:186",  # ADA
+    "HGNC:17642",  # DCLRE1C
+    "HGNC:6024",  # IL7R
+    "HGNC:6193",  # JAK3
+    "HGNC:9831",  # RAG1
+    "HGNC:9832",  # RAG2
+    "HGNC:6010",  # IL2RG
+    "HGNC:11998",  # TP53
+    "HGNC:12687",  # VHL
+]
+
 
 class SeqVarPVS1Helper(AutoACMGHelper):
     """Helper methods for PVS1 criteria for sequence variants."""
@@ -906,6 +964,11 @@ class AutoPVS1(SeqVarPVS1Helper):
             PVS1Prediction.UnsupportedConsequence: AutoACMGStrength.PathogenicVeryStrong,
             PVS1Prediction.NotSet: AutoACMGStrength.PathogenicVeryStrong,
         }
+        if var_data.hgnc_id in CUSTOM_VCEP_PVS1:
+            comment = (
+                f"The gene {var_data.hgnc_id} has custom PVS1 criteria, which are not implemented "
+                "yet! " + comment
+            )
         return AutoACMGCriteria(
             name="PVS1",
             prediction=(

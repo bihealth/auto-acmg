@@ -61,6 +61,18 @@ PM1_CLUSTER = {
 
 class CongenitalMyopathiesPredictor(DefaultPredictor):
 
+    def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
+        """PVS1 is not applicable."""
+        if var_data.hgnc_id == "HGNC:2974":
+            logger.info("Predict PVS1")
+            return AutoACMGCriteria(
+                name="PVS1",
+                prediction=AutoACMGPrediction.NotApplicable,
+                strength=AutoACMGStrength.PathogenicVeryStrong,
+                summary="PVS1 is not applicable for the gene.",
+            )
+        return super().predict_pvs1(seqvar, var_data)
+
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGData) -> AutoACMGCriteria:
         """Override PM1 to specify critical domains for congenital myopathies."""
         logger.info("Predict PM1")
