@@ -6,9 +6,10 @@ from src.api.annonars import AnnonarsClient
 from src.core.config import Config
 from src.defs.auto_acmg import AutoACMGStrucVarResult
 from src.defs.strucvar import StrucVar
+from src.strucvar.auto_pvs1 import AutoPVS1
 
 
-class DefaultStrucVarPredictor:
+class DefaultStrucVarPredictor(AutoPVS1):
 
     def __init__(self, strucvar: StrucVar, result: AutoACMGStrucVarResult, config: Config):
         #: Configuration to use.
@@ -23,5 +24,11 @@ class DefaultStrucVarPredictor:
         self.result = result
 
     def predict(self) -> Optional[AutoACMGStrucVarResult]:
-        logger.info("Predicting ACMG criteria for structural variant.")
-        return None
+        # Currently only PVS1 prediction
+        logger.warning("Currently only PVS1 prediction is implemented.")
+
+        # PVS1
+        self.result.criteria.pvs1 = self.predict_pvs1()
+
+        logger.info("StrucVar prediction finished.")
+        return self.result

@@ -423,7 +423,7 @@ class AutoACMGCriteria(AutoAcmgBaseModel):
     description: str = ""
 
 
-class AutoACMGCriteriaResult(AutoAcmgBaseModel):
+class AutoACMGCriteriaPred(AutoAcmgBaseModel):
     """ACMG criteria prediction."""
 
     pvs1: AutoACMGCriteria = AutoACMGCriteria(
@@ -614,7 +614,6 @@ class AutoACMGSeqVarTresholds(AutoAcmgBaseModel):
 
 
 class AutoACMGSeqVarData(AutoAcmgBaseModel):
-    """Response of the ACMG criteria prediction."""
 
     consequence: AutoACMGConsequence = AutoACMGConsequence()
     gene_symbol: str = ""
@@ -645,7 +644,20 @@ class AutoACMGSeqVarResult(AutoAcmgBaseModel):
     #: Data, which was used for the prediction
     data: AutoACMGSeqVarData = AutoACMGSeqVarData()
     # ; ACMG criteria prediction
-    criteria: AutoACMGCriteriaResult = AutoACMGCriteriaResult()
+    criteria: AutoACMGCriteriaPred = AutoACMGCriteriaPred()
+
+
+class AutoACMGStrucVarData(AutoAcmgBaseModel):
+
+    gene_symbol: str = ""
+    hgnc_id: str = ""
+
+
+class AutoACMGStrucVarPred(AutoAcmgBaseModel):
+
+    pvs1: AutoACMGCriteria = AutoACMGCriteria(
+        name="PVS1", strength=AutoACMGStrength.PathogenicVeryStrong
+    )
 
 
 class AutoACMGStrucVarResult(AutoAcmgBaseModel):
@@ -653,6 +665,10 @@ class AutoACMGStrucVarResult(AutoAcmgBaseModel):
 
     #: Sequence variant for which the ACMG criteria are predicted
     strucvar: Optional[StrucVar] = None
+    #: Data, which was used for the prediction
+    data: AutoACMGStrucVarData = AutoACMGStrucVarData()
+    #: ACMG criteria prediction
+    criteria: AutoACMGStrucVarPred = AutoACMGStrucVarPred()
 
 
 class VcepSpec(BaseModel):
