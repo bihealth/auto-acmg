@@ -1,3 +1,4 @@
+from typing import List
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -282,9 +283,6 @@ def test_del_disrupt_rf_no_affected_exons(strucvar_helper, strucvar):
         strucvar_helper.del_disrupt_rf(strucvar, exons, GenomicStrand.Plus)
 
 
-# --------- dup_disrupt_rf ---------
-
-
 # --------- undergo_nmd ---------
 
 
@@ -352,6 +350,49 @@ def test_undergo_nmd_single_exon(strucvar_helper, strucvar):
     exons = [MagicMock(altStartI=100, altEndI=200)]
     with pytest.raises(AlgorithmError):
         strucvar_helper.undergo_nmd(strucvar, exons, GenomicStrand.Plus)
+
+
+# --------- in_bio_relevant_tsx ---------
+
+
+def test_in_bio_relevant_tsx_mane_select(strucvar_helper):
+    """Test if in_bio_relevant_tsx correctly identifies MANE Select transcripts."""
+    transcript_tags = ["ManeSelect", "BasicTag"]
+    assert (
+        strucvar_helper.in_bio_relevant_tsx(transcript_tags) is True
+    ), "Transcript with ManeSelect tag should be identified as biologically relevant"
+
+
+def test_in_bio_relevant_tsx_no_mane_select(strucvar_helper):
+    """Test if in_bio_relevant_tsx correctly identifies non-MANE Select transcripts."""
+    transcript_tags = ["BasicTag", "OtherTag"]
+    assert (
+        strucvar_helper.in_bio_relevant_tsx(transcript_tags) is False
+    ), "Transcript without ManeSelect tag should not be identified as biologically relevant"
+
+
+def test_in_bio_relevant_tsx_empty_tags(strucvar_helper):
+    """Test if in_bio_relevant_tsx correctly handles empty tag list."""
+    transcript_tags: List[str] = []
+    assert (
+        strucvar_helper.in_bio_relevant_tsx(transcript_tags) is False
+    ), "Transcript with no tags should not be identified as biologically relevant"
+
+
+def test_in_bio_relevant_tsx_case_sensitivity(strucvar_helper):
+    """Test if in_bio_relevant_tsx is case-sensitive."""
+    transcript_tags = ["maneselect", "BasicTag"]
+    assert (
+        strucvar_helper.in_bio_relevant_tsx(transcript_tags) is False
+    ), "in_bio_relevant_tsx should be case-sensitive"
+
+
+def test_in_bio_relevant_tsx_multiple_mane_select(strucvar_helper):
+    """Test if in_bio_relevant_tsx correctly handles multiple ManeSelect tags."""
+    transcript_tags = ["ManeSelect", "BasicTag", "ManeSelect"]
+    assert (
+        strucvar_helper.in_bio_relevant_tsx(transcript_tags) is True
+    ), "Transcript with multiple ManeSelect tags should be identified as biologically relevant"
 
 
 # ========== AutoPVS1 ============

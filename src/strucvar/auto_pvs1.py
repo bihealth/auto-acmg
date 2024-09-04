@@ -66,6 +66,7 @@ class StrucVarHelper(AutoACMGHelper):
         Raises:
             MissingDataError: If exons are not available.
         """
+        logger.info("Checking if the variant is a full gene deletion.")
         if not exons:
             raise MissingDataError(
                 "Exons are not available. Cannot determine if the variant is a full gene deletion."
@@ -102,6 +103,7 @@ class StrucVarHelper(AutoACMGHelper):
             MissingDataError: If exons or strand are not available.
             AlgorithmError: Less than 1 full exon affected.
         """
+        logger.info("Checking if the deletion disrupts the reading frame.")
         if not exons or strand == GenomicStrand.NotSet:
             raise MissingDataError(
                 "Exons or strand are not available. Cannot determine if the deletion disrupts the "
@@ -181,11 +183,6 @@ class StrucVarHelper(AutoACMGHelper):
         # If none of the above cases apply, the deletion doesn't disrupt the reading frame
         return False
 
-    @staticmethod
-    def dup_disrupt_rf() -> bool:
-        """Check if the duplication disrupts the reading frame."""
-        return False
-
     def undergo_nmd(self, strucvar: StrucVar, exons: List[Exon], strand: GenomicStrand) -> bool:
         """
         Check if the variant undergoes NMD.
@@ -205,6 +202,7 @@ class StrucVarHelper(AutoACMGHelper):
             MissingDataError: If exons or strand are not available.
             AlgorithmError: If less than 2 exons are available.
         """
+        logger.info("Checking if the variant undergoes NMD.")
         if not exons or strand == GenomicStrand.NotSet:
             raise MissingDataError(
                 "Exons or strand are not available. Cannot determine if the variant undergoes NMD."
@@ -216,18 +214,35 @@ class StrucVarHelper(AutoACMGHelper):
 
         if strand == GenomicStrand.Plus:
             nmd_cutoff = max(exons[-2].altEndI - 50, exons[-2].altStartI)
+            self.comment_pvs1 += f"NMD cutoff: {nmd_cutoff}."
             if strucvar.start >= nmd_cutoff:
+                self.comment_pvs1 += "The variant undergoes NMD."
                 return False
         elif strand == GenomicStrand.Minus:
             nmd_cutoff = min(exons[1].altStartI + 50, exons[1].altEndI)
+            self.comment_pvs1 += f"NMD cutoff: {nmd_cutoff}."
             if strucvar.stop <= nmd_cutoff:
+                self.comment_pvs1 += "The variant undergoes NMD."
                 return False
+
+        self.comment_pvs1 += "The variant does not undergo NMD."
         return True
 
-    @staticmethod
-    def in_bio_relevant_tsx() -> bool:
-        """Check if the deletion is in a biologically relevant transcript."""
-        return False
+    def in_bio_relevant_tsx(self, transcript_tags: List[str]) -> bool:
+        """
+        Check if the deletion is in a biologically relevant transcript.
+
+        Check if the transcript has a MANE Select tag.
+
+        Args:
+            transcript_tags: The tags of the transcript.
+
+        Returns:
+            True if the deletion is in a biologically relevant transcript, False otherwise.
+        """
+        logger.info("Checking if the deletion is in a biologically relevant transcript.")
+        self.comment_pvs1 += f"Transcript tags: {', '.join(transcript_tags)}."
+        return "ManeSelect" in transcript_tags
 
     @staticmethod
     def crit4prot_func() -> bool:
@@ -242,6 +257,11 @@ class StrucVarHelper(AutoACMGHelper):
     @staticmethod
     def lof_rm_gt_10pct_of_prot() -> bool:
         """Check if the loss-of-function removes more than 10% of the protein."""
+        return False
+
+    @staticmethod
+    def dup_disrupt_rf() -> bool:
+        """Check if the duplication disrupts the reading frame."""
         return False
 
     @staticmethod
@@ -285,7 +305,7 @@ class AutoPVS1(StrucVarHelper):
                 strucvar, var_data.exons, var_data.strand
             ) and self.undergo_nmd(strucvar, var_data.exons, var_data.strand):
                 self.comment_pvs1 += " =>"
-                if self.in_bio_relevant_tsx():
+                if self.in_bio_relevant_tsx(var_data.transcript_tags):
                     self.prediction = PVS1Prediction.PVS1
                     self.prediction_path = PVS1PredictionStrucVarPath.DEL2
                 else:
@@ -300,7 +320,9 @@ class AutoPVS1(StrucVarHelper):
                     self.prediction_path = PVS1PredictionStrucVarPath.DEL4
                 else:
                     self.comment_pvs1 += " =>"
-                    if self.lof_freq_in_pop() or not self.in_bio_relevant_tsx():
+                    if self.lof_freq_in_pop() or not self.in_bio_relevant_tsx(
+                        var_data.transcript_tags
+                    ):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionStrucVarPath.DEL5_1
                     else:
@@ -318,7 +340,9 @@ class AutoPVS1(StrucVarHelper):
                     self.prediction_path = PVS1PredictionStrucVarPath.DEL8
                 else:
                     self.comment_pvs1 += " =>"
-                    if self.lof_freq_in_pop() or not self.in_bio_relevant_tsx():
+                    if self.lof_freq_in_pop() or not self.in_bio_relevant_tsx(
+                        var_data.transcript_tags
+                    ):
                         self.prediction = PVS1Prediction.NotPVS1
                         self.prediction_path = PVS1PredictionStrucVarPath.DEL5_2
                     else:
