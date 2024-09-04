@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.auto_acmg import AutoACMG
-from src.defs.auto_acmg import AutoACMGSeqVarResult, AutoACMGStrucVarResult
+from src.defs.auto_acmg import AutoACMGSeqVarResult, AutoACMGStrucVarResult, GenomicStrand
 from src.defs.exceptions import AutoAcmgBaseException, ParseError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
@@ -69,6 +69,23 @@ def mock_seqvar_transcript():
     transcript.feature_tag = "MANE"
     transcript.tx_pos = MagicMock(ord=10)
     transcript.protein_pos = MagicMock(ord=11, total=20)
+    return transcript
+
+
+@pytest.fixture
+def mock_strucvar_transcript():
+    transcript = MagicMock()
+    transcript.hgnc_id = "HGNC:1234"
+    return transcript
+
+
+@pytest.fixture
+def mock_gene_transcript():
+    transcript = MagicMock()
+    transcript.geneSymbol = "GENE"
+    transcript.id = "ENST00000367770"
+    transcript.tags = ["MANE"]
+    transcript.genomeAlignments = [MagicMock(strand="Plus", exons=[(100, 200), (300, 400)])]
     return transcript
 
 
@@ -182,7 +199,7 @@ def test_resolve_strucvar_successful(
 
 @patch("src.auto_acmg.SeqVarTranscriptsHelper.initialize")
 @patch("src.auto_acmg.AutoACMG._get_variant_info", return_value=None)
-def test_parse_data_variant_info_failure(
+def test_parse_seqvar_data_variant_info_failure(
     mock_get_variant_info, mock_initialize, auto_acmg: AutoACMG, seqvar: SeqVar
 ):
     """Test parse_data method when getting variant information fails."""
@@ -198,7 +215,6 @@ def test_convert_score_val(mock_convert_score_val, auto_acmg: AutoACMG):
     assert result == 0.5, "Should return the maximum score value."
 
 
-# Test individual methods like _get_variant_info, _convert_score_val, resolve_variant, etc.
 @patch("src.auto_acmg.AnnonarsClient.get_variant_info")
 def test_get_variant_info(
     mock_get_variant_info, auto_acmg: AutoACMG, seqvar: SeqVar, mock_variant_result: MagicMock
@@ -214,3 +230,60 @@ def test_get_variant_info_failure(mock_get_variant_info, auto_acmg: AutoACMG, se
     """Test _get_variant_info method failure case."""
     result = auto_acmg._get_variant_info(seqvar)
     assert result is None, "Should return None if getting variant info fails."
+
+
+@patch("src.auto_acmg.StrucVarTranscriptsHelper.get_ts_info")
+@patch("src.auto_acmg.StrucVarTranscriptsHelper.initialize")
+def test_parse_strucvar_data(
+    mock_initialize,
+    mock_get_ts_info,
+    auto_acmg: AutoACMG,
+    strucvar: StrucVar,
+    mock_strucvar_transcript: MagicMock,
+    mock_gene_transcript: MagicMock,
+):
+    """Test the parse_strucvar_data method of AutoACMG."""
+    # Setup
+    mock_get_ts_info.return_value = (
+        mock_strucvar_transcript,
+        mock_gene_transcript,
+        [mock_strucvar_transcript],
+        [mock_gene_transcript],
+    )
+
+    # Execute
+    result = auto_acmg.parse_strucvar_data(strucvar)
+
+    # Assert
+    assert isinstance(result, AutoACMGStrucVarResult)
+    assert result.data.hgnc_id == "HGNC:1234"
+    assert result.data.gene_symbol == "GENE"
+    assert result.data.transcript_id == "ENST00000367770"
+    assert result.data.transcript_tags == ["MANE"]
+    assert result.data.strand == GenomicStrand.Plus
+    assert result.data.exons == [(100, 200), (300, 400)]
+
+    # Verify method calls
+    mock_initialize.assert_called_once()
+    mock_get_ts_info.assert_called_once()
+
+
+@patch("src.auto_acmg.StrucVarTranscriptsHelper.get_ts_info")
+@patch("src.auto_acmg.StrucVarTranscriptsHelper.initialize")
+def test_parse_strucvar_data_missing_transcript(
+    mock_initialize,
+    mock_get_ts_info,
+    auto_acmg: AutoACMG,
+    strucvar: StrucVar,
+):
+    """Test parse_strucvar_data method when transcript information is missing."""
+    # Setup
+    mock_get_ts_info.return_value = (None, None, [], [])
+
+    # Execute and Assert
+    with pytest.raises(AutoAcmgBaseException, match="Transcript information is missing."):
+        auto_acmg.parse_strucvar_data(strucvar)
+
+    # Verify method calls
+    mock_initialize.assert_called_once()
+    mock_get_ts_info.assert_called_once()

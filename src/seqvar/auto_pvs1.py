@@ -146,8 +146,6 @@ class SeqVarPVS1Helper(AutoACMGHelper):
         """
         logger.debug("Counting pathogenic variants in the range {} - {}.", start_pos, end_pos)
         if end_pos < start_pos:
-            logger.error("End position is less than the start position.")
-            logger.debug("Positions given: {} - {}", start_pos, end_pos)
             raise AlgorithmError("End position is less than the start position.")
 
         response = self.annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
@@ -171,7 +169,6 @@ class SeqVarPVS1Helper(AutoACMGHelper):
             )
             return len(pathogenic_variants), len(response.clinvar)
         else:
-            logger.error("Failed to get variant from range. No ClinVar data.")
             raise InvalidAPIResposeError("Failed to get variant from range. No ClinVar data.")
 
     def _find_aff_exon_pos(self, var_pos: int, exons: List[Exon]) -> Tuple[int, int]:
@@ -231,8 +228,6 @@ class SeqVarPVS1Helper(AutoACMGHelper):
         """
         logger.debug("Counting LoF variants in the range {} - {}.", start_pos, end_pos)
         if end_pos < start_pos:
-            logger.error("End position is less than the start position.")
-            logger.debug("Positions given: {} - {}", start_pos, end_pos)
             raise AlgorithmError("End position is less than the start position.")
 
         response = self.annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
@@ -260,7 +255,6 @@ class SeqVarPVS1Helper(AutoACMGHelper):
             )
             return frequent_lof_variants, lof_variants
         else:
-            logger.error("Failed to get variant from range. No gnomAD genomes data.")
             raise InvalidAPIResposeError(
                 "Failed to get variant from range. No gnomAD genomes data."
             )
@@ -281,7 +275,6 @@ class SeqVarPVS1Helper(AutoACMGHelper):
         """
         logger.debug("Checking if the variant introduces an alternative start codon.")
         if hgvs not in cds_info:  # Should never happen
-            logger.error("Main transcript ID {} not found in the transcripts data.", hgvs)
             raise MissingDataError(f"Main transcript ID {hgvs} not found in the transcripts data.")
 
         main_cds_start = (
@@ -330,7 +323,6 @@ class SeqVarPVS1Helper(AutoACMGHelper):
                 end_pos = exon.altEndI
                 break
         if not start_pos or not end_pos:
-            logger.error("Exon not found. Variant position: {}. Exons: {}", seqvar.pos, exons)
             raise AlgorithmError("Exon not found.")
         return start_pos, end_pos
 
@@ -376,7 +368,6 @@ class SeqVarPVS1Helper(AutoACMGHelper):
             )
             return True
         if strand == GenomicStrand.NotSet or not exons:
-            logger.error("Strand information or exons are not available. Cannot determine NMD.")
             raise MissingDataError(
                 "Strand information or exons are not available. Cannot determine NMD."
             )
@@ -386,16 +377,10 @@ class SeqVarPVS1Helper(AutoACMGHelper):
             tx_sizes = tx_sizes[::-1]  # Reverse the exons
 
         if len(tx_sizes) == 1:
-            logger.debug("The only exon. Predicted to undergo NMD.")
             self.comment_pvs1 += "The only exon found. Predicted to undergo NMD."
             return False
 
         nmd_cutoff = sum(tx_sizes[:-1]) - min(50, tx_sizes[-2])
-        logger.debug(
-            "New stop codon: {}, NMD cutoff: {}.",
-            var_pos,
-            nmd_cutoff,
-        )
         self.comment_pvs1 += (
             f"New stop codon: {var_pos}, NMD cutoff: {nmd_cutoff}."
             f"{'Predicted to undergo NMD.' if var_pos <= nmd_cutoff else 'Predicted to escape NMD.'}"
@@ -416,7 +401,6 @@ class SeqVarPVS1Helper(AutoACMGHelper):
         Returns:
             bool: True if the variant is in a biologically relevant transcript, False otherwise.
         """
-        logger.debug("Checking if the variant is in a biologically relevant transcript.")
         self.comment_pvs1 += (
             "Variant is in a biologically relevant transcript. "
             f"Transcript tags: {', '.join(transcript_tags)}."
@@ -463,9 +447,6 @@ class SeqVarPVS1Helper(AutoACMGHelper):
         """
         logger.debug("Checking if the altered region is critical for the protein function.")
         if strand == GenomicStrand.NotSet or not exons:
-            logger.error(
-                "Genomic strand or exons are not available. " "Cannot determine criticality."
-            )
             raise MissingDataError(
                 "Genomic strand or exons are not available. " "Cannot determine criticality."
             )
@@ -497,7 +478,6 @@ class SeqVarPVS1Helper(AutoACMGHelper):
                 )
                 return False
         except AutoAcmgBaseException as e:
-            logger.error("Failed to predict criticality for variant. Error: {}", e)
             raise AlgorithmError("Failed to predict criticality for variant.") from e
 
     def lof_freq_in_pop(
@@ -538,7 +518,6 @@ class SeqVarPVS1Helper(AutoACMGHelper):
         """
         logger.debug("Checking if LoF variants are frequent in the general population.")
         if strand == GenomicStrand.NotSet:
-            logger.error("Genomic strand is not available. Cannot determine LoF frequency.")
             raise MissingDataError(
                 "Genomic strand position is not available. Cannot determine LoF frequency."
             )
@@ -568,7 +547,6 @@ class SeqVarPVS1Helper(AutoACMGHelper):
                 )
                 return False
         except AutoAcmgBaseException as e:
-            logger.error("Failed to predict LoF frequency for variant. Error: {}", e)
             raise AlgorithmError("Failed to predict LoF frequency for variant.") from e
 
     def lof_rm_gt_10pct_of_prot(self, prot_pos: int, prot_length: int) -> bool:
@@ -634,7 +612,6 @@ class SeqVarPVS1Helper(AutoACMGHelper):
             "Checking if the variant causes exon skipping or cryptic splice site disruption."
         )
         if strand == GenomicStrand.NotSet:
-            logger.error("Strand is not available. Cannot determine exon skipping.")
             raise MissingDataError("Strand is not available. Cannot determine exon skipping.")
         start_pos, end_pos = self._skipping_exon_pos(seqvar, exons)
         self.comment_pvs1 += f"Variant's exon position: {start_pos} - {end_pos}."
@@ -746,7 +723,6 @@ class SeqVarPVS1Helper(AutoACMGHelper):
         )
 
         if strand == GenomicStrand.NotSet:
-            logger.error("Strand is not available. Cannot determine upstream pathogenic variants.")
             raise MissingDataError(
                 "Strand is not available. Cannot determine upstream pathogenic variants."
             )
@@ -767,7 +743,6 @@ class SeqVarPVS1Helper(AutoACMGHelper):
             )
             return pathogenic_variants > 0
         except AutoAcmgBaseException as e:
-            logger.error("Failed to check upstream pathogenic variants. Error: {}", e)
             raise AlgorithmError("Failed to check upstream pathogenic variants.") from e
 
 
@@ -796,8 +771,7 @@ class AutoPVS1(SeqVarPVS1Helper):
             return SeqvarConsequenceMapping[var_data.consequence.cadd]
         return SeqVarPVS1Consequence.NotSet
 
-    # pragma: no cover
-    def verify_pvs1(
+    def verify_pvs1(  # pragma: no cover
         self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[PVS1Prediction, PVS1PredictionSeqVarPath, str]:
         """Make the PVS1 prediction.

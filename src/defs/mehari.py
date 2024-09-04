@@ -57,7 +57,7 @@ class Version(BaseModel):
     mehari: str
 
 
-class Query(BaseModel):
+class SeqvarQuery(BaseModel):
     genome_release: str
     chromosome: str
     position: int
@@ -115,5 +115,29 @@ class TranscriptSeqvar(BaseModel):
 
 class TranscriptsSeqVar(BaseModel):
     version: Version
-    query: Query
+    query: SeqvarQuery
     result: List[TranscriptSeqvar]
+
+
+# ====================
+# Mehari Strucvar
+# ====================
+
+
+class StrucvarQuery(BaseModel):
+    genome_release: str
+    chromosome: str
+    start: int
+    stop: int
+    sv_type: str
+
+
+class TranscriptStrucvar(BaseModel):
+    hgnc_id: str
+    transcript_effects: List[str]
+
+
+class TranscriptsStrucVar(BaseModel):
+    version: Version
+    query: StrucvarQuery
+    result: List[TranscriptStrucvar]

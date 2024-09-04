@@ -4,8 +4,9 @@ from pytest_httpx import HTTPXMock
 from src.api.mehari import MehariClient
 from src.defs.exceptions import MehariException
 from src.defs.genome_builds import GenomeRelease
-from src.defs.mehari import GeneTranscripts, TranscriptsSeqVar
+from src.defs.mehari import GeneTranscripts, TranscriptsSeqVar, TranscriptsStrucVar
 from src.defs.seqvar import SeqVar
+from src.defs.strucvar import StrucVar, StrucVarType
 from tests.utils import get_json_object
 
 #: Example sequence variant
@@ -16,6 +17,16 @@ example_seqvar = SeqVar(
     insert="T",
     genome_release=GenomeRelease.GRCh38,
     user_repr="1:1000A>T",
+)
+
+#: Example structural variant
+example_strucvar = StrucVar(
+    sv_type=StrucVarType.DEL,
+    chrom="1",
+    start=1000,
+    stop=2000,
+    genome_release=GenomeRelease.GRCh38,
+    user_repr="1:1000-2000DEL",
 )
 
 #: Example HGNC gene ID
@@ -66,6 +77,52 @@ async def test_get_seqvar_transcripts_500(httpx_mock: HTTPXMock):
     client = MehariClient(api_base_url="https://example.com/mehari")
     with pytest.raises(MehariException):
         client.get_seqvar_transcripts(example_seqvar)
+
+
+@pytest.mark.asyncio
+async def test_get_strucvar_transcripts_success(httpx_mock: HTTPXMock):
+    """Test get_strucvar_transcripts method with a successful response."""
+    mock_response = get_json_object("mehari/KRTAP9-2_strucvar.json")
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/mehari/strucvars/csq?genome_release={example_strucvar.genome_release.name.lower()}&chromosome={example_strucvar.chrom}&start={example_strucvar.start}&stop={example_strucvar.stop}&sv_type={example_strucvar.sv_type.name.upper()}",
+        json=mock_response,
+        status_code=200,
+    )
+
+    client = MehariClient(api_base_url="https://example.com/mehari")
+    response = client.get_strucvar_transcripts(example_strucvar)
+    assert response == TranscriptsStrucVar.model_validate(mock_response)
+
+
+@pytest.mark.asyncio
+async def test_get_strucvar_transcripts_failure(httpx_mock: HTTPXMock):
+    """Test get_strucvar_transcripts method with a failed response."""
+    mock_response = get_json_object("mehari/strucvar_failure.json")
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/mehari/strucvars/csq?genome_release={example_strucvar.genome_release.name.lower()}&chromosome={example_strucvar.chrom}&start={example_strucvar.start}&stop={example_strucvar.stop}&sv_type={example_strucvar.sv_type.name.upper()}",
+        json=mock_response,
+        status_code=200,
+    )
+
+    client = MehariClient(api_base_url="https://example.com/mehari")
+    response = client.get_strucvar_transcripts(example_strucvar)
+    assert response == TranscriptsStrucVar.model_validate(mock_response)
+
+
+@pytest.mark.asyncio
+async def test_get_strucvar_transcripts_500(httpx_mock: HTTPXMock):
+    """Test get_strucvar_transcripts method with a 500 response."""
+    httpx_mock.add_response(
+        method="GET",
+        url=f"https://example.com/mehari/strucvars/csq?genome_release={example_strucvar.genome_release.name.lower()}&chromosome={example_strucvar.chrom}&start={example_strucvar.start}&stop={example_strucvar.stop}&sv_type={example_strucvar.sv_type.name.upper()}",
+        status_code=500,
+    )
+
+    client = MehariClient(api_base_url="https://example.com/mehari")
+    with pytest.raises(MehariException):
+        client.get_strucvar_transcripts(example_strucvar)
 
 
 @pytest.mark.asyncio

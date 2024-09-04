@@ -564,6 +564,7 @@ class AutoACMGSeqVarScores(AutoAcmgBaseModel):
     cadd: AutoACMGCADD = AutoACMGCADD()
     dbnsfp: AutoACMGDbnsfp = AutoACMGDbnsfp()
     dbscsnv: AutoACMGDbscsnv = AutoACMGDbscsnv()
+    misZ: Optional[float] = None
 
 
 class AutoACMGSeqVarTresholds(AutoAcmgBaseModel):
@@ -653,8 +654,8 @@ class AutoACMGStrucVarData(AutoAcmgBaseModel):
     hgnc_id: str = ""
     transcript_id: str = ""
     transcript_tags: List[str] = []
-    prot_pos: int = -1
-    prot_length: int = -1
+    # prot_pos: int = -1
+    # prot_length: int = -1
     strand: GenomicStrand = GenomicStrand.NotSet
     exons: List[Exon] = []
 
