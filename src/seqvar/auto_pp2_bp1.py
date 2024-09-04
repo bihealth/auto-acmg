@@ -50,11 +50,6 @@ class AutoPP2BP1(AutoACMGHelper):
             InvalidAPIResposeError: If the API response is invalid or cannot be processed.
         """
         if end_pos < start_pos:
-            logger.error(
-                "End position is less than the start position. Positions given: {} - {}",
-                start_pos,
-                end_pos,
-            )
             raise AlgorithmError("End position is less than the start position.")
 
         response = self.annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
@@ -91,7 +86,6 @@ class AutoPP2BP1(AutoACMGHelper):
                 len(pathogenic_variants) + len(benign_variants),
             )
         else:
-            logger.error("Failed to get variant from range. No ClinVar data.")
             raise InvalidAPIResposeError("Failed to get variant from range. No ClinVar data.")
 
     @staticmethod
@@ -172,7 +166,6 @@ class AutoPP2BP1(AutoACMGHelper):
                     )
 
             except AutoAcmgBaseException as e:
-                logger.error("Failed to predict PP2 and BP1 criteria. Error: {}", e)
                 self.comment_pp2bp1 = f"Error occurred during PP2 and BP1 prediction. Error: {e}"
                 self.prediction_pp2bp1 = None
         return self.prediction_pp2bp1, self.comment_pp2bp1

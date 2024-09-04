@@ -4,11 +4,13 @@ Included gene: DICER1 (HGNC:17098).
 Link: https://cspec.genome.network/cspec/ui/svi/doc/GN024
 """
 
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from loguru import logger
 
+from src.defs.annonars_variant import VariantResult
 from src.defs.auto_acmg import (
+    PS1PM5,
     AutoACMGCriteria,
     AutoACMGPrediction,
     AutoACMGSeqVarData,
@@ -39,6 +41,30 @@ PM1_CLUSTER: Dict[str, Dict[str, Dict[str, List]]] = {
 
 
 class DICER1Predictor(DefaultSeqVarPredictor):
+
+    def _is_pathogenic(self, variant_info: VariantResult) -> bool:
+        """Override _is_pathogenic for DICER1."""
+        if variant_info.clinvar and variant_info.clinvar.records:
+            for rec in variant_info.clinvar.records:
+                if (
+                    (r := rec.classifications)
+                    and (g := r.germlineClassification)
+                    and g.description in ["Pathogenic"]
+                ):
+                    return True
+        return False
+
+    def verify_ps1pm5(
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
+    ) -> Tuple[Optional[PS1PM5], str]:
+        """Override PS1/PM5 for DICER1."""
+        self.prediction_ps1pm5, self.comment_ps1pm5 = super().verify_ps1pm5(seqvar, var_data)
+        if self.prediction_ps1pm5 and self._affect_splicing(var_data):
+            self.prediction_ps1pm5.PS1 = False
+            self.comment_ps1pm5 = "Variant affects splicing. PS1 is not applicable."
+            self.prediction_ps1pm5.PM5 = False
+            self.comment_ps1pm5 = "Variant affects splicing. PM5 is not applicable."
+        return self.prediction_ps1pm5, self.comment_ps1pm5
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override predict_pm1 to specify critical domains for DICER1."""

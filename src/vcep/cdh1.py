@@ -27,6 +27,39 @@ SPEC: VcepSpec = VcepSpec(
 
 class CDH1Predictor(DefaultSeqVarPredictor):
 
+    def predict_ps1pm5(
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Override predict_ps1pm5 to return a not applicable status for PS1 and evaluate PM5."""
+        ps1 = AutoACMGCriteria(
+            name="PS1",
+            prediction=AutoACMGPrediction.NotApplicable,
+            strength=AutoACMGStrength.PathogenicSupporting,
+            summary="PS1 is not applicable for CDH1.",
+        )
+        if any(
+            cons in ["frameshift_variant", "stop_gained"] for cons in var_data.consequence.mehari
+        ) and self.undergo_nmd(
+            var_data.tx_pos_utr, var_data.hgnc_id, var_data.strand, var_data.exons
+        ):
+            pm5 = AutoACMGCriteria(
+                name="PM5",
+                prediction=AutoACMGPrediction.Met,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="Nonsense or frameshift variant predicted to undergo NMD. PM5 is met.",
+            )
+        else:
+            pm5 = AutoACMGCriteria(
+                name="PM5",
+                prediction=AutoACMGPrediction.NotMet,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary=(
+                    "Consequence is not frameshift or nonsense or variant is not predicted to "
+                    "undergo NMD. PM5 is not met."
+                ),
+            )
+        return ps1, pm5
+
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override predict_pm1 to return a not applicable status for PM1."""
         logger.info("Predict PM1")

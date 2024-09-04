@@ -15,6 +15,7 @@ from loguru import logger
 from src.defs.annonars_variant import GnomadExomes
 from src.defs.auto_acmg import (
     PM2BA1BS1BS2,
+    PS1PM5,
     AutoACMGCriteria,
     AutoACMGPrediction,
     AutoACMGSeqVarData,
@@ -23,6 +24,7 @@ from src.defs.auto_acmg import (
 )
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
 from src.defs.seqvar import SeqVar
+from src.seqvar.auto_ps1_pm5 import DNA_BASES
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specifications for Coagulation Factor Deficiency.
@@ -73,6 +75,18 @@ PM1_CLUSTER: Dict[str, Dict[str, Dict[str, List]]] = {
 
 
 class CoagulationFactorDeficiencyPredictor(DefaultSeqVarPredictor):
+
+    def verify_ps1pm5(
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
+    ) -> Tuple[Optional[PS1PM5], str]:
+        """Override PS1/PM5 for Coagulation Factor Deficiency."""
+        self.prediction_ps1pm5, self.comment_ps1pm5 = super().verify_ps1pm5(seqvar, var_data)
+        if self.prediction_ps1pm5 and self._affect_splicing(var_data):
+            self.prediction_ps1pm5.PS1 = False
+            self.comment_ps1pm5 = "Variant affects splicing. PS1 is not applicable."
+            self.prediction_ps1pm5.PM5 = False
+            self.comment_ps1pm5 = "Variant affects splicing. PM5 is not applicable."
+        return self.prediction_ps1pm5, self.comment_ps1pm5
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Specify PM1 domains and residues for Coagulation Factor Deficiency."""

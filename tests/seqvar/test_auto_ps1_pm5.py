@@ -59,7 +59,7 @@ def test_get_var_info_exception(auto_ps1pm5, seqvar):
 )
 def test_parse_HGVSp_valid(pHGVSp, expected):
     """Test parsing valid pHGVSp strings."""
-    result = AutoPS1PM5._parse_HGVSp(pHGVSp)
+    result = AutoPS1PM5()._parse_HGVSp(pHGVSp)
     assert result == expected, f"Expected {expected} but got {result}"
 
 
@@ -76,7 +76,7 @@ def test_parse_HGVSp_valid(pHGVSp, expected):
 )
 def test_parse_HGVSp_invalid(pHGVSp):
     """Test parsing invalid pHGVSp strings."""
-    result = AutoPS1PM5._parse_HGVSp(pHGVSp)
+    result = AutoPS1PM5()._parse_HGVSp(pHGVSp)
     assert result is None, f"Expected None for invalid input but got {result}"
 
 
@@ -84,14 +84,14 @@ def test_parse_HGVSp_multiple():
     """Test parsing pHGVSp strings with multiple values."""
     pHGVSp = "p.Gly12Asp;p.Ser78Ala"
     expected = AminoAcid.Asp
-    result = AutoPS1PM5._parse_HGVSp(pHGVSp)
+    result = AutoPS1PM5()._parse_HGVSp(pHGVSp)
     assert result == expected, f"Expected {expected} but got {result}"
 
 
 def test_parse_HGVSp_exception():
     """Test parsing pHGVSp strings that raise an exception."""
     pHGVSp = "p.Invalid123"
-    result = AutoPS1PM5._parse_HGVSp(pHGVSp)
+    result = AutoPS1PM5()._parse_HGVSp(pHGVSp)
     assert result is None, f"Expected None for invalid input but got {result}"
 
 
@@ -130,28 +130,28 @@ def no_clinvar_info():
 def test_is_pathogenic_true_pathogenic(pathogenic_variant_info):
     """Test when the variant is classified as Pathogenic."""
     assert (
-        AutoPS1PM5._is_pathogenic(pathogenic_variant_info) is True
+        AutoPS1PM5()._is_pathogenic(pathogenic_variant_info) is True
     ), "Should return True for Pathogenic variant"
 
 
 def test_is_pathogenic_true_likely_pathogenic(likely_pathogenic_variant_info):
     """Test when the variant is classified as Likely Pathogenic."""
     assert (
-        AutoPS1PM5._is_pathogenic(likely_pathogenic_variant_info) is True
+        AutoPS1PM5()._is_pathogenic(likely_pathogenic_variant_info) is True
     ), "Should return True for Likely Pathogenic variant"
 
 
 def test_is_pathogenic_false_benign(benign_variant_info):
     """Test when the variant is classified as Benign."""
     assert (
-        AutoPS1PM5._is_pathogenic(benign_variant_info) is False
+        AutoPS1PM5()._is_pathogenic(benign_variant_info) is False
     ), "Should return False for Benign variant"
 
 
 def test_is_pathogenic_false_no_clinvar(no_clinvar_info):
     """Test when there is no ClinVar information."""
     assert (
-        AutoPS1PM5._is_pathogenic(no_clinvar_info) is False
+        AutoPS1PM5()._is_pathogenic(no_clinvar_info) is False
     ), "Should return False when no ClinVar data is present"
 
 
@@ -179,21 +179,21 @@ def var_data_not_missense():
 def test_is_missense_true_cadd(var_data_missense_cadd):
     """Test when the variant is a missense variant according to CADD."""
     assert (
-        AutoPS1PM5._is_missense(var_data_missense_cadd) is True
+        AutoPS1PM5()._is_missense(var_data_missense_cadd) is True
     ), "Should return True for missense variant in CADD"
 
 
 def test_is_missense_true_mehari(var_data_missense_mehari):
     """Test when the variant is a missense variant according to Mehari."""
     assert (
-        AutoPS1PM5._is_missense(var_data_missense_mehari) is True
+        AutoPS1PM5()._is_missense(var_data_missense_mehari) is True
     ), "Should return True for missense variant in Mehari"
 
 
 def test_is_missense_false(var_data_not_missense):
     """Test when the variant is not a missense variant."""
     assert (
-        AutoPS1PM5._is_missense(var_data_not_missense) is False
+        AutoPS1PM5()._is_missense(var_data_not_missense) is False
     ), "Should return False for non-missense variant"
 
 
