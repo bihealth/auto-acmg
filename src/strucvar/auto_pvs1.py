@@ -242,7 +242,7 @@ class StrucVarHelper(AutoACMGHelper):
         """
         logger.info("Checking if the deletion is in a biologically relevant transcript.")
         self.comment_pvs1 += f"Transcript tags: {', '.join(transcript_tags)}."
-        return "ManeSelect" in transcript_tags
+        return "TRANSCRIPT_TAG_MANE_SELECT" in transcript_tags
 
     @staticmethod
     def crit4prot_func() -> bool:

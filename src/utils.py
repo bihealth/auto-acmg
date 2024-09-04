@@ -1,6 +1,6 @@
 """Utility functions for the AutoACMG and AutoPVS1."""
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 from biocommons.seqrepo import SeqRepo
 from loguru import logger
@@ -14,8 +14,9 @@ from src.defs.auto_acmg import GenomicStrand, SpliceType, TranscriptInfo
 from src.defs.auto_pvs1 import SeqvarConsequenceMapping, SeqVarPVS1Consequence
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException
 from src.defs.genome_builds import CHROM_REFSEQ_37, CHROM_REFSEQ_38, GenomeRelease
-from src.defs.mehari import Exon, TranscriptGene, TranscriptSeqvar
+from src.defs.mehari import Exon, TranscriptGene, TranscriptSeqvar, TranscriptStrucvar
 from src.defs.seqvar import SeqVar
+from src.defs.strucvar import StrucVar
 
 
 class AutoACMGHelper:
@@ -402,7 +403,6 @@ class SeqVarTranscriptsHelper:
                 self.consequence = SeqVarPVS1Consequence.NotSet
 
         except AutoAcmgBaseException as e:
-            logger.error("Failed to get transcripts for the sequence variant. Error: {}", e)
             raise AlgorithmError("Failed to get transcripts for the sequence variant.") from e
 
     @staticmethod
@@ -481,3 +481,119 @@ class SeqVarTranscriptsHelper:
             seqvar_transcript = transcripts_mapping[max_length_transcript].seqvar
             gene_transcript = transcripts_mapping[max_length_transcript].gene
         return seqvar_transcript, gene_transcript
+
+
+class StrucVarTranscriptsHelper:
+    """Transcript information for a structural variant."""
+
+    def __init__(self, strucvar: StrucVar, *, config: Optional[Config] = None):
+        self.config: Config = config or Config()
+        self.strucvar: StrucVar = strucvar
+
+        # Attributes to be set
+        self.strucvar_ts_info: List[TranscriptStrucvar] = []
+        self.strucvar_transcript: TranscriptStrucvar | None = None
+        self.gene_ts_info: List[TranscriptGene] = []
+        self.gene_transcript: TranscriptGene | None = None
+
+    def get_ts_info(
+        self,
+    ) -> Tuple[
+        TranscriptStrucvar | None,
+        TranscriptGene | None,
+        List[TranscriptStrucvar],
+        List[TranscriptGene],
+    ]:
+        """Return the transcript information.
+
+        Returns:
+            Tuple[TranscriptStrucvar | None, TranscriptGene | None, List[TranscriptStrucvar],
+            List[TranscriptGene]]:
+            The structural variant transcript,
+            gene transcript, and the consequence of the sequence variant.
+        """
+        return (
+            self.strucvar_transcript,
+            self.gene_transcript,
+            self.strucvar_ts_info,
+            self.gene_ts_info,
+        )
+
+    def initialize(self):
+        """Get all transcripts for the given structural variant from Mehari."""
+        try:
+            # Get transcripts from Mehari
+            mehari_client = MehariClient(api_base_url=self.config.api_base_url_mehari)
+            response_strucvar = mehari_client.get_strucvar_transcripts(self.strucvar)
+            if not response_strucvar:
+                self.strucvar_ts_info = []
+            else:
+                self.strucvar_ts_info = response_strucvar.result
+
+            if not self.strucvar_ts_info or len(self.strucvar_ts_info) == 0:
+                self.strucvar_transcript = None
+                self.gene_transcript = None
+                logger.warning("No transcripts found for the structural variant.")
+                return
+            else:
+                self.strucvar_transcript = self.strucvar_ts_info[0]
+
+            # Get the first HGNC ID
+            self.HGNC_id = self.strucvar_transcript.hgnc_id
+            # Get gene transcripts from Mehari
+            response_gene = mehari_client.get_gene_transcripts(
+                self.HGNC_id, self.strucvar.genome_release
+            )
+            if not response_gene:
+                self.gene_ts_info = []
+            else:
+                self.gene_ts_info = response_gene.transcripts
+
+            # Choose the most suitable gene transcript
+            self.gene_transcript = self._choose_transcript(self.gene_ts_info)
+
+        except AutoAcmgBaseException as e:
+            raise AlgorithmError("Failed to get transcripts for the structural variant.") from e
+
+    @staticmethod
+    def _choose_transcript(
+        gene_transcripts: List[TranscriptGene],
+    ) -> Union[TranscriptGene, None]:
+        """Choose the most suitable transcript for the PVS1 prediction.
+
+        Note:
+            The first consideration is the MANE transcript, if available,
+            and then the length of the exons.
+
+        Args:
+            gene_transcripts: The gene transcripts.
+
+        Returns:
+            TranscriptGene | None: The most suitable transcript (with ManeSelect tag) for the PVS1
+            prediction.
+        """
+        if not gene_transcripts:
+            return None
+        mane_transcripts: List[str] = []
+        exon_lengths: Dict[str, int] = {}
+        transcripts_mapping: Dict[str, TranscriptGene] = {}
+        for transcript in gene_transcripts:
+            transcripts_mapping[transcript.id] = transcript
+            if transcript.tags and "TRANSCRIPT_TAG_MANE_SELECT" in transcript.tags:
+                mane_transcripts.append(transcript.id)
+            cds_sizes = [
+                exon.altEndI - exon.altStartI for exon in transcript.genomeAlignments[0].exons
+            ]
+            exon_lengths[transcript.id] = sum(cds_sizes)
+
+        if len(mane_transcripts) == 1:
+            logger.debug("The MANE transcript found: {}", mane_transcripts[0])
+            return transcripts_mapping[mane_transcripts[0]]
+        else:
+            logger.debug("Choosing the longest transcript.")
+            lookup_group = mane_transcripts if mane_transcripts else list(exon_lengths.keys())
+            if not lookup_group or not exon_lengths:
+                logger.warning("No overlapping transcripts found.")
+                return None
+            max_length_transcript = max(lookup_group, key=lambda x: exon_lengths[x])
+            return transcripts_mapping[max_length_transcript]

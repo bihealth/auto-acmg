@@ -23,7 +23,7 @@ from src.seqvar.auto_ps1_pm5 import AutoPS1PM5
 from src.seqvar.auto_pvs1 import AutoPVS1
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
 from src.strucvar.default_predictor import DefaultStrucVarPredictor
-from src.utils import SeqVarTranscriptsHelper
+from src.utils import SeqVarTranscriptsHelper, StrucVarTranscriptsHelper
 from src.vcep import (
     ACADVLPredictor,
     BrainMalformationsPredictor,
@@ -383,13 +383,37 @@ class AutoACMG:
         self.seqvar_result.data.gnomad_exomes = variant_info.gnomad_exomes
         self.seqvar_result.data.gnomad_mtdna = variant_info.gnomad_mtdna
 
-        # Thresholds
-        pass
-
+        # Gene info from Annonars
+        gene_info = self.annonars_client.get_gene_info(self.seqvar_result.data.hgnc_id)
+        if not gene_info:
+            logger.error("Failed to get gene information.")
+            raise AutoAcmgBaseException("Failed to get gene information.")
+        if gnomad_constraints := gene_info.genes.root[
+            self.seqvar_result.data.hgnc_id
+        ].gnomadConstraints:
+            self.seqvar_result.data.scores.misZ = gnomad_constraints.misZ
         return self.seqvar_result
 
     def parse_strucvar_data(self, strucvar: StrucVar) -> AutoACMGStrucVarResult:
         """Parse the data for the prediction."""
+        # Mehari data
+        ts_helper = StrucVarTranscriptsHelper(strucvar)
+        ts_helper.initialize()
+        strucvar_transcript, gene_transcript, all_strucvar_tx, all_genes_tx = (
+            ts_helper.get_ts_info()
+        )
+        if not strucvar_transcript or not gene_transcript:
+            raise AutoAcmgBaseException("Transcript information is missing.")
+
+        self.strucvar_result.data.hgnc_id = strucvar_transcript.hgnc_id
+        self.strucvar_result.data.gene_symbol = gene_transcript.geneSymbol
+        self.strucvar_result.data.transcript_id = gene_transcript.id
+        self.strucvar_result.data.transcript_tags = gene_transcript.tags or []
+        self.strucvar_result.data.strand = GenomicStrand.from_string(
+            gene_transcript.genomeAlignments[0].strand
+        )
+        self.strucvar_result.data.exons = gene_transcript.genomeAlignments[0].exons
+
         return self.strucvar_result
 
     def select_predictor(self, hgnc_id: str) -> Type[DefaultSeqVarPredictor]:
@@ -442,7 +466,9 @@ class AutoACMG:
             # ====== Predict ======
             predictor_class = self.select_predictor(self.seqvar_result.data.hgnc_id)
             predictor = predictor_class(self.seqvar, self.seqvar_result, self.config)
-            return predictor.predict()
+            seqvar_prediction = predictor.predict()
+            logger.info("Prediction: {}", seqvar_prediction)
+            return seqvar_prediction
 
         elif isinstance(self.strucvar, StrucVar):
             if not self.strucvar:
@@ -453,7 +479,9 @@ class AutoACMG:
 
             # ====== Predict ======
             sp = DefaultStrucVarPredictor(self.strucvar, self.strucvar_result, self.config)
-            return sp.predict()
+            strucvar_prediction = sp.predict()
+            # logger.info("Prediction: {}", strucvar_prediction)
+            return strucvar_prediction
 
         else:
             logger.info("Structural variants are not supported for ACMG criteria prediction yet.")

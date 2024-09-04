@@ -357,10 +357,10 @@ def test_undergo_nmd_single_exon(strucvar_helper, strucvar):
 
 def test_in_bio_relevant_tsx_mane_select(strucvar_helper):
     """Test if in_bio_relevant_tsx correctly identifies MANE Select transcripts."""
-    transcript_tags = ["ManeSelect", "BasicTag"]
+    transcript_tags = ["TRANSCRIPT_TAG_MANE_SELECT", "BasicTag"]
     assert (
         strucvar_helper.in_bio_relevant_tsx(transcript_tags) is True
-    ), "Transcript with ManeSelect tag should be identified as biologically relevant"
+    ), "Transcript with Mane tag should be identified as biologically relevant"
 
 
 def test_in_bio_relevant_tsx_no_mane_select(strucvar_helper):
@@ -368,7 +368,7 @@ def test_in_bio_relevant_tsx_no_mane_select(strucvar_helper):
     transcript_tags = ["BasicTag", "OtherTag"]
     assert (
         strucvar_helper.in_bio_relevant_tsx(transcript_tags) is False
-    ), "Transcript without ManeSelect tag should not be identified as biologically relevant"
+    ), "Transcript without Mane tag should not be identified as biologically relevant"
 
 
 def test_in_bio_relevant_tsx_empty_tags(strucvar_helper):
@@ -389,10 +389,10 @@ def test_in_bio_relevant_tsx_case_sensitivity(strucvar_helper):
 
 def test_in_bio_relevant_tsx_multiple_mane_select(strucvar_helper):
     """Test if in_bio_relevant_tsx correctly handles multiple ManeSelect tags."""
-    transcript_tags = ["ManeSelect", "BasicTag", "ManeSelect"]
+    transcript_tags = ["TRANSCRIPT_TAG_MANE_SELECT", "BasicTag", "TRANSCRIPT_TAG_MANE_SELECT"]
     assert (
         strucvar_helper.in_bio_relevant_tsx(transcript_tags) is True
-    ), "Transcript with multiple ManeSelect tags should be identified as biologically relevant"
+    ), "Transcript with multiple Mane tags should be identified as biologically relevant"
 
 
 # ========== AutoPVS1 ============

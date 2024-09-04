@@ -31,11 +31,15 @@ class DecipherHi(BaseModel):
     hiIndex: Optional[float] = None
 
 
+class GnomadConstraints(BaseModel):
+    misZ: Optional[float] = None
+
+
 class GeneInfo(BaseModel):
     acmgSf: Optional[Any] = None
     clingen: Optional[Clingen] = None
     dbnsfp: Optional[Any] = None
-    gnomadConstraints: Optional[Any] = None
+    gnomadConstraints: Optional[GnomadConstraints] = None
     hgnc: Optional[Any] = None
     ncbi: Optional[Any] = None
     omim: Optional[Any] = None
