@@ -9,9 +9,10 @@ from src.defs.auto_acmg import (
     AutoACMGPrediction,
     AutoACMGStrength,
     AutoACMGStrucVarData,
+    GenomicStrand,
 )
 from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionPathMapping, PVS1PredictionStrucVarPath
-from src.defs.exceptions import MissingDataError
+from src.defs.exceptions import AlgorithmError, MissingDataError
 from src.defs.mehari import Exon
 from src.defs.strucvar import StrucVar, StrucVarType
 from src.utils import AutoACMGHelper
@@ -44,16 +45,101 @@ class StrucVarHelper(AutoACMGHelper):
                 "Exons are not available. Cannot determine if the variant is a full gene deletion."
             )
 
-        gene_start = min(
-            exons[0].altStartI, exons[0].altEndI, exons[-1].altStartI, exons[-1].altEndI
-        )
-        gene_end = max(exons[0].altStartI, exons[0].altEndI, exons[-1].altStartI, exons[-1].altEndI)
+        gene_start = exons[0].altStartI
+        gene_end = exons[-1].altEndI
         self.comment_pvs1 += f"Gene start: {gene_start}, gene end: {gene_end}."
         return strucvar.start <= gene_start and strucvar.stop >= gene_end
 
-    @staticmethod
-    def del_disrupt_rf() -> bool:
-        """Check if the single or multiple exon deletion disrupts the reading frame."""
+    def del_disrupt_rf(self, strucvar: StrucVar, exons: List[Exon], strand: GenomicStrand) -> bool:
+        """
+        Check if the single or multiple exon deletion disrupts the reading frame.
+
+        Find the start and end positions of alteration based on the affected exon(s). If the
+        positions lie within the intron(s) of the affected exon(s), the deletion does not disrupt
+        the reading frame. Otherwise, there're two cases:
+        - Check if the deletion starts within an exon. If so, check if the offset from the start
+        of the exon to the start of the deletion is a multiple of 3. If so, the deletion does not
+        disrupt the reading frame.
+        - Check if the deletion stops within an exon. If so, check if the offset from the start
+        of the last affected exon to the stop of the deletion is a multiple of 3. If so, the
+        deletion does not disrupt the reading frame.
+
+        Args:
+            strucvar: The structural variant.
+            exons: The exons of the gene.
+            strand: The genomic strand of the variant.
+
+        Returns:
+            True if the deletion disrupts the reading frame, False otherwise.
+
+        Raises:
+            AlgorithmError: If the deletion affects less than one full exon.
+        """
+        # Find affected exons
+        affected_exons = [
+            exon
+            for exon in exons
+            if (
+                # The deletion affects the whole exon
+                (strucvar.start <= exon.altStartI and strucvar.stop >= exon.altEndI)
+                # The deletion starts within the exon
+                or (strucvar.start > exon.altStartI and strucvar.start < exon.altEndI)
+                # The deletion ends within the exon
+                or (strucvar.stop > exon.altStartI and strucvar.stop < exon.altEndI)
+            )
+        ]
+
+        if (
+            # No affected exons
+            len(affected_exons) < 1
+            # Deletion doesn't affect the full exon
+            or (
+                strucvar.start > affected_exons[0].altStartI
+                and strucvar.stop < affected_exons[0].altEndI
+            )
+        ):
+            raise AlgorithmError("The deletion affects less than one full exon.")
+
+        first_affected_exon = affected_exons[0]
+        last_affected_exon = affected_exons[-1]
+
+        # Check if deletion is entirely within introns
+        if (
+            strucvar.start <= first_affected_exon.altStartI
+            and strucvar.stop >= last_affected_exon.altEndI
+        ):
+            return False
+
+        if strand == GenomicStrand.Plus:
+            # Case 1: Check if deletion starts within an exon
+            if (
+                strucvar.start > first_affected_exon.altStartI
+                and strucvar.start <= first_affected_exon.altEndI
+            ):
+                return (strucvar.start - first_affected_exon.altStartI + 1) % 3 != 0
+
+            # Case 2: Check if deletion stops within an exon
+            if (
+                strucvar.stop >= last_affected_exon.altStartI
+                and strucvar.stop < last_affected_exon.altEndI
+            ):
+                return (strucvar.stop - last_affected_exon.altStartI + 1) % 3 != 0
+        elif strand == GenomicStrand.Minus:
+            # Case 1: Check if deletion starts within an exon
+            if (
+                strucvar.stop < last_affected_exon.altEndI
+                and strucvar.stop >= last_affected_exon.altStartI
+            ):
+                return (last_affected_exon.altEndI - strucvar.stop + 1) % 3 != 0
+
+            # Case 2: Check if deletion stops within an exon
+            if (
+                strucvar.start <= first_affected_exon.altEndI
+                and strucvar.start > first_affected_exon.altStartI
+            ):
+                return (first_affected_exon.altEndI - strucvar.start + 1) % 3 != 0
+
+        # If none of the above cases apply, the deletion doesn't disrupt the reading frame
         return False
 
     @staticmethod
@@ -116,7 +202,10 @@ class AutoPVS1(StrucVarHelper):
             if self.full_gene_del(strucvar, var_data.exons):
                 self.prediction = PVS1Prediction.PVS1
                 self.prediction_path = PVS1PredictionStrucVarPath.DEL1
-            elif self.del_disrupt_rf() and self.undergo_nmd():
+            elif (
+                self.del_disrupt_rf(strucvar, var_data.exons, var_data.strand)
+                and self.undergo_nmd()
+            ):
                 self.comment_pvs1 += " =>"
                 if self.in_bio_relevant_tsx():
                     self.prediction = PVS1Prediction.PVS1
@@ -124,7 +213,10 @@ class AutoPVS1(StrucVarHelper):
                 else:
                     self.prediction = PVS1Prediction.NotPVS1
                     self.prediction_path = PVS1PredictionStrucVarPath.DEL3
-            elif self.del_disrupt_rf() and not self.undergo_nmd():
+            elif (
+                self.del_disrupt_rf(strucvar, var_data.exons, var_data.strand)
+                and not self.undergo_nmd()
+            ):
                 self.comment_pvs1 += " =>"
                 if self.crit4prot_func():
                     self.prediction = PVS1Prediction.PVS1_Strong
