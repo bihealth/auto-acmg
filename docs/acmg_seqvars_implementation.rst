@@ -11,7 +11,18 @@ implementation of the different ACMG criteria for sequence variants.
 PVS1
 ----
 
-.. automodule:: src.criteria.auto_pvs1
+For sequence variants:
+
+.. automodule:: src.seqvar.auto_pvs1
+    :members:
+    :inherited-members:
+    :undoc-members:
+    :show-inheritance:
+    :private-members:
+
+For structural variants:
+
+.. automodule:: src.strucvar.auto_pvs1
     :members:
     :inherited-members:
     :undoc-members:
@@ -22,7 +33,7 @@ PVS1
 PS1 and PM5
 -----------
 
-.. automodule:: src.criteria.auto_ps1_pm5
+.. automodule:: src.seqvar.auto_ps1_pm5
     :members:
     :inherited-members:
     :undoc-members:
@@ -33,7 +44,7 @@ PS1 and PM5
 PM1
 ---
 
-.. automodule:: src.criteria.auto_pm1
+.. automodule:: src.seqvar.auto_pm1
     :members:
     :inherited-members:
     :undoc-members:
@@ -44,7 +55,7 @@ PM1
 PM2, BA1, BS1, BS2
 ------------------
 
-.. automodule:: src.criteria.auto_pm2_ba1_bs1_bs2
+.. automodule:: src.seqvar.auto_pm2_ba1_bs1_bs2
     :members:
     :inherited-members:
     :undoc-members:
@@ -55,7 +66,7 @@ PM2, BA1, BS1, BS2
 PM4 and BP3
 -----------
 
-.. automodule:: src.criteria.auto_pm4_bp3
+.. automodule:: src.seqvar.auto_pm4_bp3
     :members:
     :inherited-members:
     :undoc-members:
@@ -66,7 +77,7 @@ PM4 and BP3
 PP2 and BP1
 -----------
 
-.. automodule:: src.criteria.auto_pp2_bp1
+.. automodule:: src.seqvar.auto_pp2_bp1
     :members:
     :inherited-members:
     :undoc-members:
@@ -77,7 +88,7 @@ PP2 and BP1
 PP3 and BP4
 -----------
 
-.. automodule:: src.criteria.auto_pp3_bp4
+.. automodule:: src.seqvar.auto_pp3_bp4
     :members:
     :inherited-members:
     :undoc-members:
@@ -88,7 +99,7 @@ PP3 and BP4
 BP7
 ---
 
-.. automodule:: src.criteria.auto_bp7
+.. automodule:: src.seqvar.auto_bp7
     :members:
     :inherited-members:
     :undoc-members:
