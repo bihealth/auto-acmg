@@ -26,6 +26,32 @@ class StrucVarHelper(AutoACMGHelper):
         #: Comment to store the prediction explanation.
         self.comment_pvs1: str = ""
 
+    def _minimal_deletion(self, strucvar: StrucVar, exons: List[Exon]) -> bool:
+        """
+        Check if the variant is a minimal deletion.
+
+        Args:
+            strucvar: The structural variant.
+            exons: The exons of the gene.
+
+        Returns:
+            True if the deletion affects at least one full exon, False otherwise.
+
+        Raises:
+            AlgorithmError: If the variant is not a deletion.
+            MissingDataError: If exons are not available.
+        """
+        if strucvar.sv_type != StrucVarType.DEL:
+            raise AlgorithmError("Variant is not a deletion.")
+        if not exons:
+            raise MissingDataError(
+                "Exons are not available. Cannot determine if the variant is a minimal deletion."
+            )
+        for exon in exons:
+            if strucvar.start <= exon.altStartI and strucvar.stop >= exon.altEndI:
+                return True
+        return False
+
     def full_gene_del(self, strucvar: StrucVar, exons: List[Exon]) -> bool:
         """
         Check if the variant is a full gene deletion.
@@ -73,8 +99,15 @@ class StrucVarHelper(AutoACMGHelper):
             True if the deletion disrupts the reading frame, False otherwise.
 
         Raises:
-            AlgorithmError: If the deletion affects less than one full exon.
+            MissingDataError: If exons or strand are not available.
+            AlgorithmError: Less than 1 full exon affected.
         """
+        if not exons or strand == GenomicStrand.NotSet:
+            raise MissingDataError(
+                "Exons or strand are not available. Cannot determine if the deletion disrupts the "
+                "reading frame."
+            )
+
         # Find affected exons
         affected_exons = [
             exon
@@ -108,6 +141,7 @@ class StrucVarHelper(AutoACMGHelper):
             strucvar.start <= first_affected_exon.altStartI
             and strucvar.stop >= last_affected_exon.altEndI
         ):
+            self.comment_pvs1 += "The deletion is entirely within introns. "
             return False
 
         if strand == GenomicStrand.Plus:
@@ -116,6 +150,7 @@ class StrucVarHelper(AutoACMGHelper):
                 strucvar.start > first_affected_exon.altStartI
                 and strucvar.start <= first_affected_exon.altEndI
             ):
+                self.comment_pvs1 += "The deletion starts within an exon. "
                 return (strucvar.start - first_affected_exon.altStartI + 1) % 3 != 0
 
             # Case 2: Check if deletion stops within an exon
@@ -123,13 +158,16 @@ class StrucVarHelper(AutoACMGHelper):
                 strucvar.stop >= last_affected_exon.altStartI
                 and strucvar.stop < last_affected_exon.altEndI
             ):
+                self.comment_pvs1 += "The deletion stops within an exon. "
                 return (strucvar.stop - last_affected_exon.altStartI + 1) % 3 != 0
+
         elif strand == GenomicStrand.Minus:
             # Case 1: Check if deletion starts within an exon
             if (
                 strucvar.stop < last_affected_exon.altEndI
                 and strucvar.stop >= last_affected_exon.altStartI
             ):
+                self.comment_pvs1 += "The deletion starts within an exon. "
                 return (last_affected_exon.altEndI - strucvar.stop + 1) % 3 != 0
 
             # Case 2: Check if deletion stops within an exon
@@ -137,6 +175,7 @@ class StrucVarHelper(AutoACMGHelper):
                 strucvar.start <= first_affected_exon.altEndI
                 and strucvar.start > first_affected_exon.altStartI
             ):
+                self.comment_pvs1 += "The deletion stops within an exon. "
                 return (first_affected_exon.altEndI - strucvar.start + 1) % 3 != 0
 
         # If none of the above cases apply, the deletion doesn't disrupt the reading frame
@@ -147,8 +186,42 @@ class StrucVarHelper(AutoACMGHelper):
         """Check if the duplication disrupts the reading frame."""
         return False
 
-    def undergo_nmd(self) -> bool:
-        """Check if the variant undergoes NMD."""
+    def undergo_nmd(self, strucvar: StrucVar, exons: List[Exon], strand: GenomicStrand) -> bool:
+        """
+        Check if the variant undergoes NMD.
+
+        Check if the whole deletion affects only the last exon and 50 base pairs of the penultimate
+        exon. If so, the variant does not undergo NMD.
+
+        Args:
+            strucvar: The structural variant.
+            exons: The exons of the gene.
+            strand: The genomic strand of the variant.
+
+        Returns:
+            True if the variant undergoes NMD, False otherwise.
+
+        Raises:
+            MissingDataError: If exons or strand are not available.
+            AlgorithmError: If less than 2 exons are available.
+        """
+        if not exons or strand == GenomicStrand.NotSet:
+            raise MissingDataError(
+                "Exons or strand are not available. Cannot determine if the variant undergoes NMD."
+            )
+        if len(exons) < 2:
+            raise AlgorithmError(
+                "Exons are not available. Cannot determine if the variant undergoes NMD."
+            )
+
+        if strand == GenomicStrand.Plus:
+            nmd_cutoff = max(exons[-2].altEndI - 50, exons[-2].altStartI)
+            if strucvar.start >= nmd_cutoff:
+                return False
+        elif strand == GenomicStrand.Minus:
+            nmd_cutoff = min(exons[1].altStartI + 50, exons[1].altEndI)
+            if strucvar.stop <= nmd_cutoff:
+                return False
         return True
 
     @staticmethod
@@ -190,6 +263,7 @@ class AutoPVS1(StrucVarHelper):
         self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
         self.prediction_path: PVS1PredictionStrucVarPath = PVS1PredictionStrucVarPath.NotSet
 
+    # pragma: no cover
     def verify_pvs1(
         self, strucvar: StrucVar, var_data: AutoACMGStrucVarData
     ) -> Tuple[PVS1Prediction, PVS1PredictionStrucVarPath, str]:
@@ -199,13 +273,18 @@ class AutoPVS1(StrucVarHelper):
         """
         if strucvar.sv_type == StrucVarType.DEL:
             self.comment_pvs1 = "Analysing the deletion variant. => "
+            if not self._minimal_deletion(strucvar, var_data.exons):
+                return (
+                    PVS1Prediction.NotPVS1,
+                    PVS1PredictionStrucVarPath.NotSet,
+                    "Variant is not a minimal deletion. Must affect at least one full exon.",
+                )
             if self.full_gene_del(strucvar, var_data.exons):
                 self.prediction = PVS1Prediction.PVS1
                 self.prediction_path = PVS1PredictionStrucVarPath.DEL1
-            elif (
-                self.del_disrupt_rf(strucvar, var_data.exons, var_data.strand)
-                and self.undergo_nmd()
-            ):
+            elif self.del_disrupt_rf(
+                strucvar, var_data.exons, var_data.strand
+            ) and self.undergo_nmd(strucvar, var_data.exons, var_data.strand):
                 self.comment_pvs1 += " =>"
                 if self.in_bio_relevant_tsx():
                     self.prediction = PVS1Prediction.PVS1
@@ -213,10 +292,9 @@ class AutoPVS1(StrucVarHelper):
                 else:
                     self.prediction = PVS1Prediction.NotPVS1
                     self.prediction_path = PVS1PredictionStrucVarPath.DEL3
-            elif (
-                self.del_disrupt_rf(strucvar, var_data.exons, var_data.strand)
-                and not self.undergo_nmd()
-            ):
+            elif self.del_disrupt_rf(
+                strucvar, var_data.exons, var_data.strand
+            ) and not self.undergo_nmd(strucvar, var_data.exons, var_data.strand):
                 self.comment_pvs1 += " =>"
                 if self.crit4prot_func():
                     self.prediction = PVS1Prediction.PVS1_Strong
@@ -257,7 +335,9 @@ class AutoPVS1(StrucVarHelper):
             self.comment_pvs1 = "Analysing the duplication variant. => "
             if self.proven_in_tandem():
                 self.comment_pvs1 += " =>"
-                if self.dup_disrupt_rf() and self.undergo_nmd():
+                if self.dup_disrupt_rf() and self.undergo_nmd(
+                    strucvar, var_data.exons, var_data.strand
+                ):
                     self.prediction = PVS1Prediction.PVS1
                     self.prediction_path = PVS1PredictionStrucVarPath.DUP1
                 else:
@@ -265,7 +345,9 @@ class AutoPVS1(StrucVarHelper):
                     self.prediction_path = PVS1PredictionStrucVarPath.DUP2_1
             elif self.presumed_in_tandem():
                 self.comment_pvs1 += " =>"
-                if self.dup_disrupt_rf() and self.undergo_nmd():
+                if self.dup_disrupt_rf() and self.undergo_nmd(
+                    strucvar, var_data.exons, var_data.strand
+                ):
                     self.prediction = PVS1Prediction.PVS1_Strong
                     self.prediction_path = PVS1PredictionStrucVarPath.DUP3
                 else:

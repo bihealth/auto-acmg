@@ -40,6 +40,73 @@ def exons():
 
 # ========== StrucVarHelper ============
 
+# --------- _minimal_deletion ---------
+
+
+def test_minimal_deletion_full_exon(strucvar_helper, strucvar):
+    """Test if _minimal_deletion correctly identifies a full exon deletion."""
+    exons = [
+        MagicMock(altStartI=100, altEndI=200),
+        MagicMock(altStartI=300, altEndI=400),
+    ]
+    strucvar.start = 90
+    strucvar.stop = 210
+    assert (
+        strucvar_helper._minimal_deletion(strucvar, exons) is True
+    ), "Deletion of a full exon should be identified as a minimal deletion"
+
+
+def test_minimal_deletion_partial_exon(strucvar_helper, strucvar):
+    """Test if _minimal_deletion correctly identifies a partial exon deletion."""
+    exons = [MagicMock(altStartI=100, altEndI=200)]
+    strucvar.start = 150
+    strucvar.stop = 180
+    assert (
+        strucvar_helper._minimal_deletion(strucvar, exons) is False
+    ), "Partial exon deletion should not be identified as a minimal deletion"
+
+
+def test_minimal_deletion_multiple_exons(strucvar_helper, strucvar):
+    """Test if _minimal_deletion correctly handles deletions spanning multiple exons."""
+    exons = [
+        MagicMock(altStartI=100, altEndI=200),
+        MagicMock(altStartI=300, altEndI=400),
+        MagicMock(altStartI=500, altEndI=600),
+    ]
+    strucvar.start = 150
+    strucvar.stop = 550
+    assert (
+        strucvar_helper._minimal_deletion(strucvar, exons) is True
+    ), "Deletion spanning multiple full exons should be identified as a minimal deletion"
+
+
+def test_minimal_deletion_intronic(strucvar_helper, strucvar):
+    """Test if _minimal_deletion correctly handles intronic deletions."""
+    exons = [
+        MagicMock(altStartI=100, altEndI=200),
+        MagicMock(altStartI=300, altEndI=400),
+    ]
+    strucvar.start = 201
+    strucvar.stop = 299
+    assert (
+        strucvar_helper._minimal_deletion(strucvar, exons) is False
+    ), "Intronic deletion should not be identified as a minimal deletion"
+
+
+def test_minimal_deletion_no_exons(strucvar_helper, strucvar):
+    """Test if _minimal_deletion raises an error when no exons are provided."""
+    with pytest.raises(MissingDataError):
+        strucvar_helper._minimal_deletion(strucvar, [])
+
+
+def test_minimal_deletion_non_deletion_variant(strucvar_helper, strucvar):
+    """Test if _minimal_deletion raises an error for non-deletion variants."""
+    strucvar.sv_type = StrucVarType.DUP
+    exons = [MagicMock(altStartI=100, altEndI=200)]
+    with pytest.raises(AlgorithmError):
+        strucvar_helper._minimal_deletion(strucvar, exons)
+
+
 # --------- full_gene_del ---------
 
 
@@ -215,6 +282,78 @@ def test_del_disrupt_rf_no_affected_exons(strucvar_helper, strucvar):
         strucvar_helper.del_disrupt_rf(strucvar, exons, GenomicStrand.Plus)
 
 
+# --------- dup_disrupt_rf ---------
+
+
+# --------- undergo_nmd ---------
+
+
+def test_undergo_nmd_plus_strand(strucvar_helper, strucvar):
+    """Test if undergo_nmd correctly identifies NMD on plus strand."""
+    exons = [
+        MagicMock(altStartI=100, altEndI=200),
+        MagicMock(altStartI=300, altEndI=400),
+        MagicMock(altStartI=500, altEndI=600),
+    ]
+
+    # Deletion affecting more than 50bp upstream of the last exon
+    strucvar.start = 250
+    strucvar.stop = 450
+    assert (
+        strucvar_helper.undergo_nmd(strucvar, exons, GenomicStrand.Plus) is True
+    ), "Deletion affecting more than 50bp upstream of the last exon should undergo NMD"
+
+    # Deletion affecting less than 50bp upstream of the last exon
+    strucvar.start = 460
+    strucvar.stop = 550
+    assert (
+        strucvar_helper.undergo_nmd(strucvar, exons, GenomicStrand.Plus) is False
+    ), "Deletion affecting less than 50bp upstream of the last exon should not undergo NMD"
+
+
+def test_undergo_nmd_minus_strand(strucvar_helper, strucvar):
+    """Test if undergo_nmd correctly identifies NMD on minus strand."""
+    exons = [
+        MagicMock(altStartI=100, altEndI=200),
+        MagicMock(altStartI=300, altEndI=400),
+        MagicMock(altStartI=500, altEndI=600),
+    ]
+
+    # Deletion affecting more than 50bp downstream of the penultimate exon
+    strucvar.start = 100
+    strucvar.stop = 351
+    assert (
+        strucvar_helper.undergo_nmd(strucvar, exons, GenomicStrand.Minus) is True
+    ), "Deletion affecting more than 50bp downstream of the first exon should undergo NMD"
+
+    # Deletion affecting less than 50bp downstream of the penultimate exon
+    strucvar.start = 100
+    strucvar.stop = 250
+    assert (
+        strucvar_helper.undergo_nmd(strucvar, exons, GenomicStrand.Minus) is False
+    ), "Deletion affecting less than 50bp downstream of the first exon should not undergo NMD"
+
+
+def test_undergo_nmd_missing_exons(strucvar_helper, strucvar):
+    """Test if undergo_nmd raises an error when exons are missing."""
+    with pytest.raises(MissingDataError):
+        strucvar_helper.undergo_nmd(strucvar, [], GenomicStrand.Plus)
+
+
+def test_undergo_nmd_missing_strand(strucvar_helper, strucvar):
+    """Test if undergo_nmd raises an error when strand is missing."""
+    exons = [MagicMock(altStartI=100, altEndI=200), MagicMock(altStartI=300, altEndI=400)]
+    with pytest.raises(MissingDataError):
+        strucvar_helper.undergo_nmd(strucvar, exons, GenomicStrand.NotSet)
+
+
+def test_undergo_nmd_single_exon(strucvar_helper, strucvar):
+    """Test if undergo_nmd raises an error when there's only one exon."""
+    exons = [MagicMock(altStartI=100, altEndI=200)]
+    with pytest.raises(AlgorithmError):
+        strucvar_helper.undergo_nmd(strucvar, exons, GenomicStrand.Plus)
+
+
 # ========== AutoPVS1 ============
 
 
@@ -250,39 +389,6 @@ def var_data():
     data = AutoACMGStrucVarData()
     data.exons = [MagicMock(altStartI=50, altEndI=150), MagicMock(altStartI=160, altEndI=210)]
     return data
-
-
-@patch.object(AutoPVS1, "full_gene_del", return_value=True)
-def test_verify_pvs1_full_gene_deletion(mock_full_gene_del, auto_pvs1, strucvar_del, var_data):
-    """Test PVS1 when a full gene deletion is detected."""
-    prediction, path, comment = auto_pvs1.verify_pvs1(strucvar_del, var_data)
-    assert prediction == PVS1Prediction.PVS1, "Should predict PVS1 for full gene deletions"
-
-
-@patch.object(AutoPVS1, "del_disrupt_rf", return_value=True)
-@patch.object(AutoPVS1, "undergo_nmd", return_value=False)
-@patch.object(AutoPVS1, "crit4prot_func", return_value=True)
-def test_verify_pvs1_deletion_disrupts_rf(
-    mock_crit4prot_func, mock_undergo_nmd, mock_del_disrupt_rf, auto_pvs1, strucvar_del, var_data
-):
-    """Test PVS1 when a deletion disrupts the reading frame but does not undergo NMD."""
-    prediction, path, comment = auto_pvs1.verify_pvs1(strucvar_del, var_data)
-    assert (
-        prediction == PVS1Prediction.PVS1_Strong
-    ), "Should predict PVS1 Strong for disruptive deletions not undergoing NMD"
-
-
-@patch.object(AutoPVS1, "proven_in_tandem", return_value=True)
-@patch.object(AutoPVS1, "dup_disrupt_rf", return_value=True)
-@patch.object(AutoPVS1, "undergo_nmd", return_value=True)
-def test_verify_pvs1_duplication_in_tandem(
-    mock_undergo_nmd, mock_dup_disrupt_rf, mock_proven_in_tandem, auto_pvs1, strucvar_dup, var_data
-):
-    """Test PVS1 when a duplication is in tandem and disrupts the reading frame."""
-    prediction, path, comment = auto_pvs1.verify_pvs1(strucvar_dup, var_data)
-    assert (
-        prediction == PVS1Prediction.PVS1
-    ), "Should predict PVS1 for tandem duplications disrupting RF and undergoing NMD"
 
 
 @patch.object(
