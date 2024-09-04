@@ -263,8 +263,7 @@ class AutoPVS1(StrucVarHelper):
         self.prediction: PVS1Prediction = PVS1Prediction.NotPVS1
         self.prediction_path: PVS1PredictionStrucVarPath = PVS1PredictionStrucVarPath.NotSet
 
-    # pragma: no cover
-    def verify_pvs1(
+    def verify_pvs1(  # pragma: no cover
         self, strucvar: StrucVar, var_data: AutoACMGStrucVarData
     ) -> Tuple[PVS1Prediction, PVS1PredictionStrucVarPath, str]:
         """Make the PVS1 prediction.

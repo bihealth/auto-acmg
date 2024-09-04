@@ -796,8 +796,7 @@ class AutoPVS1(SeqVarPVS1Helper):
             return SeqvarConsequenceMapping[var_data.consequence.cadd]
         return SeqVarPVS1Consequence.NotSet
 
-    # pragma: no cover
-    def verify_pvs1(
+    def verify_pvs1(  # pragma: no cover
         self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[PVS1Prediction, PVS1PredictionSeqVarPath, str]:
         """Make the PVS1 prediction.
