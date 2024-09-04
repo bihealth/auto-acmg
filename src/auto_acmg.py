@@ -257,7 +257,6 @@ class AutoACMG:
             scores = [float(score) for score in score_value.split(";") if score != "."]
             return max(scores) if scores else None
         except ValueError as e:
-            logger.error("Failed to convert score value to float. Error: {}", e)
             raise AlgorithmError("Failed to convert score value to float.") from e
 
     def resolve_variant(self) -> Union[SeqVar, StrucVar, None]:
@@ -346,7 +345,6 @@ class AutoACMG:
         # Annonars data
         variant_info = self._get_variant_info(seqvar)
         if not variant_info:
-            logger.error("Failed to get variant information.")
             raise AutoAcmgBaseException("Failed to get variant information.")
 
         if cadd := variant_info.cadd:
@@ -386,7 +384,6 @@ class AutoACMG:
         # Gene info from Annonars
         gene_info = self.annonars_client.get_gene_info(self.seqvar_result.data.hgnc_id)
         if not gene_info:
-            logger.error("Failed to get gene information.")
             raise AutoAcmgBaseException("Failed to get gene information.")
         if gnomad_constraints := gene_info.genes.root[
             self.seqvar_result.data.hgnc_id

@@ -8,9 +8,10 @@ from src.defs.auto_acmg import GenomicStrand, SpliceType
 from src.defs.auto_pvs1 import SeqVarPVS1Consequence
 from src.defs.exceptions import AlgorithmError
 from src.defs.genome_builds import GenomeRelease
-from src.defs.mehari import GeneTranscripts, TranscriptsSeqVar
+from src.defs.mehari import GeneTranscripts, TranscriptsSeqVar, TranscriptsStrucVar
 from src.defs.seqvar import SeqVar
-from src.utils import SeqVarTranscriptsHelper, SplicingPrediction
+from src.defs.strucvar import StrucVar, StrucVarType
+from src.utils import SeqVarTranscriptsHelper, SplicingPrediction, StrucVarTranscriptsHelper
 from tests.utils import get_json_object
 
 
@@ -602,7 +603,7 @@ def test_find_cryptic_acceptor_sites_no_ag_in_splice_context(
 # === SeqVarTranscriptsHelper ===
 
 
-def test_get_ts_info_success(ts_helper):
+def test_get_ts_info_seqvar_success(ts_helper):
     """Test get_ts_info method with a successful response."""
     # Mock the actual data that would be returned from the Mehari API
     ts_helper.seqvar_ts_info = TranscriptsSeqVar.model_validate(
@@ -628,7 +629,7 @@ def test_get_ts_info_success(ts_helper):
     assert consequence == SeqVarPVS1Consequence.InitiationCodon
 
 
-def test_get_ts_info_failure(ts_helper):
+def test_get_ts_info_seqvar_failure(ts_helper):
     """Test get_ts_info method with a failed response."""
     seqvar_transcript, gene_transcript, seqvar_ts_info, gene_ts_info, consequence = (
         ts_helper.get_ts_info()
@@ -643,7 +644,7 @@ def test_get_ts_info_failure(ts_helper):
 
 @patch.object(MehariClient, "get_seqvar_transcripts")
 @patch.object(MehariClient, "get_gene_transcripts")
-def test_initialize_success(
+def test_initialize_seqvar_success(
     mock_get_gene_transcripts,
     mock_get_seqvar_transcripts,
     seqvar,
@@ -666,7 +667,7 @@ def test_initialize_success(
 
 @patch.object(MehariClient, "get_seqvar_transcripts")
 @patch.object(MehariClient, "get_gene_transcripts")
-def test_initialize_failure(
+def test_initialize_seqvar_failure(
     mock_get_gene_transcripts, mock_get_seqvar_transcripts, seqvar, ts_helper
 ):
     # Mock failed responses
@@ -686,7 +687,9 @@ def test_initialize_failure(
 
 @patch.object(MehariClient, "get_seqvar_transcripts")
 @patch.object(MehariClient, "get_gene_transcripts")
-def test_initialize_no_seqvar(mock_get_gene_transcripts, mock_get_seqvar_transcripts, ts_helper):
+def test_initialize_seqvar_no_transcripts(
+    mock_get_gene_transcripts, mock_get_seqvar_transcripts, ts_helper
+):
     # Mock the MehariClient methods for CI
     mock_get_gene_transcripts, mock_get_seqvar_transcripts = MagicMock(), MagicMock()
     ts_helper.initialize()
@@ -744,7 +747,9 @@ def test_get_consequence_none_input():
         ),
     ],
 )
-def test_choose_transcript_success(hgvss, gene_ts_file, seqvar_ts_file, expected_hgvs, ts_helper):
+def test_choose_transcript_seqvar_success(
+    hgvss, gene_ts_file, seqvar_ts_file, expected_hgvs, ts_helper
+):
     """Test choose_transcript method."""
     ts_helper.seqvar_ts_info = TranscriptsSeqVar.model_validate(
         get_json_object(seqvar_ts_file)
@@ -766,7 +771,7 @@ def test_choose_transcript_success(hgvss, gene_ts_file, seqvar_ts_file, expected
         ([], "mehari/LARP7_gene.json", "mehari/LARP7_seqvar.json"),
     ],
 )
-def test_choose_transcript_invalid(hgvss, gene_ts_file, seqvar_ts_file, ts_helper):
+def test_choose_transcript_seqvar_invalid(hgvss, gene_ts_file, seqvar_ts_file, ts_helper):
     """Test choose_transcript method."""
     ts_helper.seqvar_ts_info = TranscriptsSeqVar.model_validate(
         get_json_object(seqvar_ts_file)
@@ -779,3 +784,175 @@ def test_choose_transcript_invalid(hgvss, gene_ts_file, seqvar_ts_file, ts_helpe
         hgvss, ts_helper.seqvar_ts_info, ts_helper.gene_ts_info
     )
     assert seqvar_ts == None
+
+
+# === StrucVarTranscriptsHelper ===
+
+
+@pytest.fixture
+def strucvar():
+    return StrucVar(
+        sv_type=StrucVarType.DEL,
+        genome_release=GenomeRelease.GRCh38,
+        chrom="1",
+        start=1000,
+        stop=2000,
+        user_repr="1:1000-2000DEL",
+    )
+
+
+@pytest.fixture
+def strucvar_ts_helper(strucvar):
+    return StrucVarTranscriptsHelper(strucvar)
+
+
+@pytest.fixture
+def strucvar_transcripts(file_name: str = "mehari/KRTAP9-2_strucvar.json"):
+    return TranscriptsStrucVar.model_validate(get_json_object(file_name)).result
+
+
+@pytest.fixture
+def gene_transcripts_strucvar():
+    # Simulate a list of TranscriptGene objects with varying lengths and MANE select tags
+    return [
+        MagicMock(
+            id="T1",
+            tags=["TRANSCRIPT_TAG_MANE_SELECT"],
+            genomeAlignments=[MagicMock(exons=[MagicMock(altStartI=100, altEndI=200)])],
+        ),
+        MagicMock(
+            id="T2",
+            tags=[],
+            genomeAlignments=[MagicMock(exons=[MagicMock(altStartI=100, altEndI=300)])],
+        ),
+        MagicMock(
+            id="T3",
+            tags=["TRANSCRIPT_TAG_MANE_SELECT"],
+            genomeAlignments=[MagicMock(exons=[MagicMock(altStartI=100, altEndI=250)])],
+        ),
+        MagicMock(
+            id="T4",
+            tags=[],
+            genomeAlignments=[MagicMock(exons=[MagicMock(altStartI=100, altEndI=500)])],
+        ),
+    ]
+
+
+def test_get_ts_info_strucvar_success(strucvar_ts_helper):
+    """Test get_ts_info method with a successful response."""
+    # Mock the actual data that would be returned from the Mehari API
+    strucvar_ts_helper.strucvar_ts_info = TranscriptsStrucVar.model_validate(
+        get_json_object("mehari/KRTAP9-2_strucvar.json")
+    )
+    strucvar_ts_helper.strucvar_transcript = TranscriptsStrucVar.model_validate(
+        get_json_object("mehari/KRTAP9-2_strucvar.json")
+    ).result[
+        0
+    ]  # assuming the first result is the most relevant
+    strucvar_ts_helper.gene_ts_info = GeneTranscripts.model_validate(
+        get_json_object("mehari/HAL_gene.json")
+    )
+    strucvar_ts_helper.gene_transcript = GeneTranscripts.model_validate(
+        get_json_object("mehari/HAL_gene.json")
+    ).transcripts[
+        0
+    ]  # assuming the first transcript is the most relevant
+
+    strucvar_transcript, gene_transcript, strucvar_ts_info, gene_ts_info = (
+        strucvar_ts_helper.get_ts_info()
+    )
+
+    assert strucvar_transcript is not None
+    assert gene_transcript is not None
+    assert strucvar_ts_info is not None
+    assert gene_ts_info is not None
+
+
+def test_get_ts_info_strucvar_failure(strucvar_ts_helper):
+    """Test get_ts_info method with a failed response."""
+    strucvar_transcript, gene_transcript, strucvar_ts_info, gene_ts_info = (
+        strucvar_ts_helper.get_ts_info()
+    )
+
+    assert strucvar_transcript is None
+    assert gene_transcript is None
+    assert strucvar_ts_info == []
+    assert gene_ts_info == []
+
+
+@patch.object(MehariClient, "get_strucvar_transcripts")
+@patch.object(MehariClient, "get_gene_transcripts")
+def test_initialize_strucvar_success(
+    mock_get_gene_transcripts,
+    mock_get_strucvar_transcripts,
+    strucvar,
+    strucvar_ts_helper,
+    strucvar_transcripts,
+    gene_transcripts,
+):
+    """Test initialize method with a successful response."""
+    # Mock successful responses
+    mock_get_strucvar_transcripts.return_value = MagicMock(result=strucvar_transcripts)
+    mock_get_gene_transcripts.return_value = MagicMock(transcripts=gene_transcripts)
+
+    strucvar_ts_helper.strucvar = strucvar
+    strucvar_ts_helper.initialize()
+
+    assert strucvar_ts_helper.strucvar_ts_info is strucvar_transcripts
+    assert strucvar_ts_helper.gene_ts_info is gene_transcripts
+
+
+@patch.object(MehariClient, "get_strucvar_transcripts")
+@patch.object(MehariClient, "get_gene_transcripts")
+def test_initialize_strucvar_failure(
+    mock_get_gene_transcripts, mock_get_strucvar_transcripts, strucvar, strucvar_ts_helper
+):
+    """Test initialize method with a failed response."""
+    # Mock failed responses
+    mock_get_strucvar_transcripts.return_value = None
+    mock_get_gene_transcripts.return_value = None
+
+    strucvar_ts_helper.strucvar = strucvar
+    strucvar_ts_helper.initialize()
+
+    assert strucvar_ts_helper.strucvar_ts_info == []
+    assert strucvar_ts_helper.gene_ts_info == []
+
+
+def test_choose_transcript_mane_select(gene_transcripts_strucvar):
+    """Test that the MANE Select tagged transcript is chosen when available."""
+    chosen_transcript = StrucVarTranscriptsHelper._choose_transcript(gene_transcripts_strucvar)
+    assert chosen_transcript is not None
+    assert chosen_transcript.id == "T3", "The longest MANE transcript should be chosen."
+
+
+def test_choose_transcript_longest_when_no_mane(gene_transcripts_strucvar):
+    """Test that the longest transcript is chosen when no MANE Select tag is present."""
+    # Remove MANE select tags for this test
+    for transcript in gene_transcripts_strucvar:
+        transcript.tags = []
+    chosen_transcript = StrucVarTranscriptsHelper._choose_transcript(gene_transcripts_strucvar)
+    assert chosen_transcript is not None
+    assert (
+        chosen_transcript.id == "T4"
+    ), "The longest transcript should be chosen when no MANE transcript is available."
+
+
+def test_choose_transcript_none_available():
+    """Test the behavior when no transcripts are available."""
+    chosen_transcript = StrucVarTranscriptsHelper._choose_transcript([])
+    assert chosen_transcript is None, "Should return None when no transcripts are available."
+
+
+def test_choose_transcript_exon_length_priority(gene_transcripts_strucvar):
+    """Test that exon length is considered for MANE transcripts with equal priority."""
+    # Adjusting to create equal MANE priority but different lengths
+    gene_transcripts_strucvar[0].genomeAlignments[0].exons[0] = MagicMock(
+        altStartI=100, altEndI=300
+    )  # Longer exon for T1
+    gene_transcripts_strucvar[2].genomeAlignments[0].exons[0] = MagicMock(
+        altStartI=100, altEndI=250
+    )  # Shorter exon for T3
+    chosen_transcript = StrucVarTranscriptsHelper._choose_transcript(gene_transcripts_strucvar)
+    assert chosen_transcript is not None
+    assert chosen_transcript.id == "T1", "The MANE transcript with longer exons should be chosen."
