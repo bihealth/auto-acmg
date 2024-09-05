@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.defs.auto_acmg import (
+    PS1PM5,
     AlleleCondition,
     AutoACMGCriteria,
     AutoACMGPrediction,
@@ -32,6 +33,31 @@ def cerebral_creatine_predictor(seqvar):
 @pytest.fixture
 def auto_acmg_data():
     return AutoACMGSeqVarData()
+
+
+@patch.object(DefaultSeqVarPredictor, "verify_ps1pm5")
+def test_verify_ps1pm5_overrides(
+    mock_verify_ps1pm5, cerebral_creatine_predictor, seqvar, auto_acmg_data
+):
+    """Test that the overridden verify_ps1pm5 method works correctly."""
+    mock_verify_ps1pm5.return_value = (
+        PS1PM5(PS1=True, PM5=True),
+        "Variant affects splicing. PS1 is not applicable.",
+    )
+    # Setup the data
+    auto_acmg_data.hgnc_id = "HGNC:4175"
+    auto_acmg_data.consequence = MagicMock(mehari=["missense_variant"])
+    auto_acmg_data.thresholds.spliceAI_acceptor_gain = 0.5
+    auto_acmg_data.thresholds.spliceAI_acceptor_loss = 0.5
+    auto_acmg_data.thresholds.spliceAI_donor_gain = 0.5
+    auto_acmg_data.thresholds.spliceAI_donor_loss = 0.5
+    auto_acmg_data.scores.cadd.spliceAI_acceptor_gain = 0.6
+    auto_acmg_data.scores.cadd.spliceAI_donor_gain = 0.6
+
+    prediction, comment = cerebral_creatine_predictor.verify_ps1pm5(seqvar, auto_acmg_data)
+
+    assert not prediction.PS1, "PS1 should be marked as not applicable due to splicing effect."
+    assert not prediction.PM5, "PM5 should be marked as not applicable due to splicing effect."
 
 
 def test_predict_pm1_not_applicable(cerebral_creatine_predictor, auto_acmg_data):

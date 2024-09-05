@@ -61,6 +61,11 @@ class HBOPCPredictor(DefaultSeqVarPredictor):
             return True
         if any("frameshift" in cons for cons in var_data.consequence.mehari):
             return True
+
+        # Stop gained
+        if "stop_gained" in var_data.consequence.mehari:
+            return True
+
         return False
 
     def verify_ps1pm5(

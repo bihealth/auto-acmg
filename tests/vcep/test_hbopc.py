@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.defs.auto_acmg import (
+    PS1PM5,
     AutoACMGCriteria,
     AutoACMGPrediction,
     AutoACMGSeqVarData,
@@ -44,6 +45,106 @@ def auto_acmg_data_palb2():
     data.hgnc_id = "HGNC:26144"
     data.consequence = MagicMock(mehari=[], cadd=None)
     return data
+
+
+def test_is_nonsense_true(hbopc_predictor, auto_acmg_data):
+    """Test _is_nonsense method when the variant is a nonsense mutation."""
+    auto_acmg_data.consequence = MagicMock(mehari=["stop_gained"])
+
+    result = hbopc_predictor._is_nonsense(auto_acmg_data)
+
+    assert result is True, "Should return True for a nonsense mutation"
+
+
+def test_is_nonsense_false(hbopc_predictor, auto_acmg_data):
+    """Test _is_nonsense method when the variant is not a nonsense mutation."""
+    auto_acmg_data.consequence = MagicMock(mehari=["missense_variant"])
+
+    result = hbopc_predictor._is_nonsense(auto_acmg_data)
+
+    assert result is False, "Should return False for a non-nonsense mutation"
+
+
+def test_is_nonsense_empty_consequence(hbopc_predictor, auto_acmg_data):
+    """Test _is_nonsense method when the consequence list is empty."""
+    auto_acmg_data.consequence = MagicMock(mehari=[])
+
+    result = hbopc_predictor._is_nonsense(auto_acmg_data)
+
+    assert result is False, "Should return False when consequence list is empty"
+
+
+@patch.object(DefaultSeqVarPredictor, "verify_ps1pm5")
+def test_verify_ps1pm5_nonsense(mock_super_verify, hbopc_predictor, seqvar, auto_acmg_data):
+    """Test verify_ps1pm5 method for nonsense mutations."""
+    mock_super_verify.return_value = (PS1PM5(PS1=True, PM5=True), "Initial evaluation")
+    auto_acmg_data.consequence = MagicMock(mehari=["stop_gained"])
+
+    prediction, comment = hbopc_predictor.verify_ps1pm5(seqvar, auto_acmg_data)
+
+    assert prediction.PS1 is True
+    assert prediction.PM5 is True
+
+
+@patch.object(DefaultSeqVarPredictor, "verify_ps1pm5")
+def test_verify_ps1pm5_splicing_effect(mock_super_verify, hbopc_predictor, seqvar, auto_acmg_data):
+    """Test verify_ps1pm5 method for variants affecting splicing."""
+    mock_super_verify.return_value = (PS1PM5(PS1=True, PM5=True), "Initial evaluation")
+    auto_acmg_data.consequence = MagicMock(mehari=["missense_variant"])
+    auto_acmg_data.thresholds = MagicMock(
+        spliceAI_acceptor_gain=0.5,
+        spliceAI_acceptor_loss=0.5,
+        spliceAI_donor_gain=0.5,
+        spliceAI_donor_loss=0.5,
+    )
+    auto_acmg_data.scores = MagicMock(
+        cadd=MagicMock(spliceAI_acceptor_gain=0.6, spliceAI_donor_gain=0.6)
+    )
+
+    prediction, comment = hbopc_predictor.verify_ps1pm5(seqvar, auto_acmg_data)
+
+    assert prediction.PS1 is True
+    assert prediction.PM5 is True
+
+
+@patch.object(DefaultSeqVarPredictor, "verify_ps1pm5")
+def test_verify_ps1pm5_no_override(mock_super_verify, hbopc_predictor, seqvar, auto_acmg_data):
+    """Test verify_ps1pm5 method when no override is needed."""
+    mock_super_verify.return_value = (PS1PM5(PS1=True, PM5=True), "Initial evaluation")
+    auto_acmg_data.consequence = MagicMock(mehari=["missense_variant"])
+    auto_acmg_data.thresholds = MagicMock(
+        spliceAI_acceptor_gain=0.5,
+        spliceAI_acceptor_loss=0.5,
+        spliceAI_donor_gain=0.5,
+        spliceAI_donor_loss=0.5,
+    )
+    auto_acmg_data.scores = MagicMock(
+        cadd=MagicMock(
+            spliceAI_acceptor_gain=0.4,
+            spliceAI_acceptor_loss=0.4,
+            spliceAI_donor_gain=0.4,
+            spliceAI_donor_loss=0.4,
+        )
+    )
+
+    prediction, comment = hbopc_predictor.verify_ps1pm5(seqvar, auto_acmg_data)
+
+    assert prediction.PS1 is True, "PS1 should remain True when no override is needed"
+    assert prediction.PM5 is True, "PM5 should remain True when no override is needed"
+    assert "Initial evaluation" in comment, "Comment should reflect initial evaluation"
+
+
+@patch.object(DefaultSeqVarPredictor, "verify_ps1pm5")
+def test_verify_ps1pm5_exception_handling(
+    mock_super_verify, hbopc_predictor, seqvar, auto_acmg_data
+):
+    """Test verify_ps1pm5 method exception handling."""
+    mock_super_verify.side_effect = Exception("Test exception")
+
+    with pytest.raises(Exception) as exc_info:
+        hbopc_predictor.verify_ps1pm5(seqvar, auto_acmg_data)
+
+    assert "Test exception" in str(exc_info.value), "Should raise the original exception"
 
 
 def test_predict_pm1_not_applicable(hbopc_predictor, auto_acmg_data):

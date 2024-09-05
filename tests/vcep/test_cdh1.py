@@ -7,6 +7,7 @@ from src.defs.auto_acmg import (
     AutoACMGPrediction,
     AutoACMGSeqVarData,
     AutoACMGStrength,
+    GenomicStrand,
 )
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
@@ -28,6 +29,55 @@ def cdh1_predictor(seqvar):
 @pytest.fixture
 def auto_acmg_data():
     return AutoACMGSeqVarData()
+
+
+def test_predict_ps1pm5_not_applicable(cdh1_predictor, seqvar, auto_acmg_data):
+    """Test PS1 is always not applicable and PM5 is evaluated based on specific conditions."""
+    auto_acmg_data.consequence = MagicMock(mehari=["frameshift_variant"])
+    auto_acmg_data.tx_pos_utr = 10
+    auto_acmg_data.hgnc_id = "HGNC:1748"
+    auto_acmg_data.strand = GenomicStrand.Plus
+    auto_acmg_data.exons = [
+        MagicMock(altStartI=1, altEndI=100, altCdsStartI=1, altCdsEndI=100),
+        MagicMock(altStartI=200, altEndI=300, altCdsStartI=200, altCdsEndI=300),
+    ]
+    # Need for undergo_nmd
+    cdh1_predictor.comment_pvs1 = ""
+    ps1, pm5 = cdh1_predictor.predict_ps1pm5(seqvar, auto_acmg_data)
+
+    # Check PS1
+    assert ps1.name == "PS1"
+    assert ps1.prediction == AutoACMGPrediction.NotApplicable
+    assert ps1.strength == AutoACMGStrength.PathogenicSupporting
+    assert "PS1 is not applicable for CDH1." in ps1.summary
+
+    # Check PM5
+    assert pm5.name == "PM5"
+    assert pm5.prediction == AutoACMGPrediction.Met
+    assert pm5.strength == AutoACMGStrength.PathogenicSupporting
+    assert "Nonsense or frameshift variant predicted to undergo NMD. PM5 is met." in pm5.summary
+
+
+def test_predict_ps1pm5_not_met(cdh1_predictor, seqvar, auto_acmg_data):
+    """Test PM5 is not met if the variant does not lead to NMD."""
+    auto_acmg_data.consequence = MagicMock(mehari=["stop_gained"])
+    auto_acmg_data.tx_pos_utr = 5000
+    auto_acmg_data.hgnc_id = "HGNC:1748"
+    auto_acmg_data.strand = GenomicStrand.Plus
+    auto_acmg_data.exons = [
+        MagicMock(altStartI=1, altEndI=100, altCdsStartI=1, altCdsEndI=100),
+        MagicMock(altStartI=200, altEndI=300, altCdsStartI=200, altCdsEndI=300),
+    ]
+    # Need for undergo_nmd
+    cdh1_predictor.comment_pvs1 = ""
+    ps1, pm5 = cdh1_predictor.predict_ps1pm5(seqvar, auto_acmg_data)
+
+    # Check PM5 not met
+    assert pm5.prediction == AutoACMGPrediction.NotMet
+    assert (
+        "Consequence is not frameshift or nonsense or variant is not predicted to undergo NMD. PM5 is not met."
+        in pm5.summary
+    )
 
 
 def test_predict_pm1_not_applicable(cdh1_predictor, auto_acmg_data):

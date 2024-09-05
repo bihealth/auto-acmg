@@ -75,6 +75,12 @@ class MyeloidMalignancyPredictor(DefaultSeqVarPredictor):
         if any("frameshift" in cons for cons in var_data.consequence.mehari):
             allowed = True
 
+        # Check the stop_gained
+        if "stop_gained" in var_data.consequence.cadd:
+            allowed = True
+        if any("stop_gained" in cons for cons in var_data.consequence.mehari):
+            allowed = True
+
         # Check the protein position (downstream of c.98)
         if allowed and var_data.cds_pos > 98:
             allowed = True
