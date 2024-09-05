@@ -58,7 +58,6 @@ class AutoPM4BP3(AutoACMGHelper):
             else:
                 return False
         except tabix.TabixError as e:
-            logger.error("Failed to check if the variant is in a repeat region. Error: {}", e)
             raise AlgorithmError("Failed to check if the variant is in a repeat region.") from e
 
     @staticmethod
@@ -165,7 +164,6 @@ class AutoPM4BP3(AutoACMGHelper):
                 self.prediction_pm4bp3.BP3 = False
 
         except AutoAcmgBaseException as e:
-            logger.error("Failed to predict PM4 and BP3 criteria. Error: {}", e)
             self.comment_pm4bp3 = f"An error occured while predicting PM4 and BP3 criteria: {e}"
             self.prediction_pm4bp3 = None
         return self.prediction_pm4bp3, self.comment_pm4bp3

@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.defs.auto_acmg import (
+    PS1PM5,
     AutoACMGCriteria,
     AutoACMGPrediction,
     AutoACMGSeqVarData,
@@ -11,6 +12,7 @@ from src.defs.auto_acmg import (
 from src.defs.exceptions import AutoAcmgBaseException
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 from src.vcep import ENIGMAPredictor
 
 
@@ -28,6 +30,99 @@ def enigma_predictor(seqvar):
 @pytest.fixture
 def auto_acmg_data():
     return AutoACMGSeqVarData()
+
+
+@patch.object(DefaultSeqVarPredictor, "verify_ps1pm5")
+def test_verify_ps1pm5_overrides(mock_super_verify, enigma_predictor, seqvar, auto_acmg_data):
+    """Test that the overridden verify_ps1pm5 method in ENIGMAPredictor works correctly."""
+    # Set up the mock to return PS1 and PM5 as applicable initially
+    mock_super_verify.return_value = (PS1PM5(PS1=True, PM5=True), "Initial evaluation")
+
+    # Setup the data
+    auto_acmg_data.consequence = MagicMock(mehari=["missense_variant"])
+    auto_acmg_data.thresholds = MagicMock(
+        spliceAI_acceptor_gain=0.5,
+        spliceAI_acceptor_loss=0.5,
+        spliceAI_donor_gain=0.5,
+        spliceAI_donor_loss=0.5,
+    )
+    auto_acmg_data.scores = MagicMock(
+        cadd=MagicMock(spliceAI_acceptor_gain=0.6, spliceAI_donor_gain=0.6)
+    )
+
+    # Run the method under test
+    prediction, comment = enigma_predictor.verify_ps1pm5(seqvar, auto_acmg_data)
+
+    # Check that the splicing effect leads to overriding PS1 and PM5 as not applicable
+    assert not prediction.PS1, "PS1 should be marked as not applicable due to splicing effect."
+    assert not prediction.PM5, "PM5 should be marked as not applicable due to splicing effect."
+    assert "Variant affects splicing" in comment, "Comment should note the splicing effect."
+
+    # Ensure that the mock of the superclass method is called to simulate the inherited behavior
+    mock_super_verify.assert_called_once_with(seqvar, auto_acmg_data)
+
+
+@patch.object(DefaultSeqVarPredictor, "verify_ps1pm5")
+def test_verify_ps1pm5_no_splicing_effect(
+    mock_super_verify, enigma_predictor, seqvar, auto_acmg_data
+):
+    """Test that PS1 and PM5 remain applicable when there's no splicing effect."""
+    # Set up the mock to return PS1 and PM5 as applicable initially
+    mock_super_verify.return_value = (PS1PM5(PS1=True, PM5=True), "Initial evaluation")
+
+    # Setup the data with no splicing effect
+    auto_acmg_data.consequence = MagicMock(mehari=["missense_variant"])
+    auto_acmg_data.thresholds = MagicMock(
+        spliceAI_acceptor_gain=0.5,
+        spliceAI_acceptor_loss=0.5,
+        spliceAI_donor_gain=0.5,
+        spliceAI_donor_loss=0.5,
+    )
+    auto_acmg_data.scores = MagicMock(
+        cadd=MagicMock(
+            spliceAI_acceptor_gain=0.4,
+            spliceAI_acceptor_loss=0.4,
+            spliceAI_donor_gain=0.4,
+            spliceAI_donor_loss=0.4,
+        )
+    )
+
+    # Run the method under test
+    prediction, comment = enigma_predictor.verify_ps1pm5(seqvar, auto_acmg_data)
+
+    # Check that PS1 and PM5 remain applicable
+    assert prediction.PS1, "PS1 should remain applicable when there's no splicing effect."
+    assert prediction.PM5, "PM5 should remain applicable when there's no splicing effect."
+    assert "Initial evaluation" in comment, "Comment should reflect the initial evaluation."
+
+    # Ensure that the mock of the superclass method is called to simulate the inherited behavior
+    mock_super_verify.assert_called_once_with(seqvar, auto_acmg_data)
+
+
+@patch.object(DefaultSeqVarPredictor, "verify_ps1pm5")
+def test_verify_ps1pm5_non_missense(mock_super_verify, enigma_predictor, seqvar, auto_acmg_data):
+    """Test that PS1 and PM5 remain as per superclass for non-missense variants."""
+    # Set up the mock to return PS1 and PM5 as not applicable initially
+    mock_super_verify.return_value = (
+        PS1PM5(PS1=False, PM5=False),
+        "Not applicable for non-missense",
+    )
+
+    # Setup the data with a non-missense variant
+    auto_acmg_data.consequence = MagicMock(mehari=["synonymous_variant"])
+
+    # Run the method under test
+    prediction, comment = enigma_predictor.verify_ps1pm5(seqvar, auto_acmg_data)
+
+    # Check that PS1 and PM5 remain as per superclass evaluation
+    assert not prediction.PS1, "PS1 should remain not applicable for non-missense variants."
+    assert not prediction.PM5, "PM5 should remain not applicable for non-missense variants."
+    assert (
+        "Not applicable for non-missense" in comment
+    ), "Comment should reflect superclass evaluation."
+
+    # Ensure that the mock of the superclass method is called to simulate the inherited behavior
+    mock_super_verify.assert_called_once_with(seqvar, auto_acmg_data)
 
 
 def test_predict_pm1_not_applicable_brca1(enigma_predictor, auto_acmg_data):

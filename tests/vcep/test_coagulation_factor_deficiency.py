@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.defs.auto_acmg import (
+    PS1PM5,
     AutoACMGCriteria,
     AutoACMGPrediction,
     AutoACMGSeqVarData,
@@ -37,6 +38,35 @@ def auto_acmg_data():
     data.exons = [MagicMock(altStartI=1, altEndI=1000000)]
     data.strand = GenomicStrand.Plus
     return data
+
+
+@patch.object(DefaultSeqVarPredictor, "verify_ps1pm5")
+def test_verify_ps1pm5_overrides(mock_super_verify, coagulation_predictor, seqvar, auto_acmg_data):
+    # Set up the mock to return PS1 and PM5 as applicable initially
+    mock_super_verify.return_value = (PS1PM5(PS1=True, PM5=True), "Initial evaluation")
+
+    # Set up the data
+    auto_acmg_data.consequence = MagicMock(mehari=["missense_variant"])
+    auto_acmg_data.thresholds = MagicMock(
+        spliceAI_acceptor_gain=0.5,
+        spliceAI_acceptor_loss=0.5,
+        spliceAI_donor_gain=0.5,
+        spliceAI_donor_loss=0.5,
+    )
+    auto_acmg_data.scores = MagicMock(
+        cadd=MagicMock(spliceAI_acceptor_gain=0.6, spliceAI_donor_gain=0.6)
+    )
+
+    # Run the method under test
+    prediction, comment = coagulation_predictor.verify_ps1pm5(seqvar, auto_acmg_data)
+
+    # Check that the splicing effect leads to overriding PS1 and PM5 as not applicable
+    assert not prediction.PS1, "PS1 should be marked as not applicable due to splicing effect."
+    assert not prediction.PM5, "PM5 should be marked as not applicable due to splicing effect."
+    assert "Variant affects splicing" in comment, "Comment should note the splicing effect."
+
+    # Ensure that the mock of the superclass method is called to simulate the inherited behavior
+    mock_super_verify.assert_called_once_with(seqvar, auto_acmg_data)
 
 
 def test_predict_pm1_strong_criteria(coagulation_predictor, auto_acmg_data):

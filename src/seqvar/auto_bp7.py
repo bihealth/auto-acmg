@@ -229,7 +229,6 @@ class AutoBP7(AutoACMGHelper):
                 self.prediction_bp7.BP7 = False
 
         except AutoAcmgBaseException as e:
-            logger.error("Failed to predict BP7 criterion. Error: {}", e)
             self.comment_bp7 = f"Failed to predict BP7 criterion. Error: {e}"
             self.prediction_bp7 = None
 

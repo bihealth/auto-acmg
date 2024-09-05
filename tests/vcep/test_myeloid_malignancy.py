@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.defs.auto_acmg import (
+    PS1PM5,
     AutoACMGCriteria,
     AutoACMGPrediction,
     AutoACMGSeqVarData,
@@ -10,6 +11,7 @@ from src.defs.auto_acmg import (
 )
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 from src.vcep.monogenic_diabetes import MonogenicDiabetesPredictor
 from src.vcep.myeloid_malignancy import MyeloidMalignancyPredictor
 
@@ -28,6 +30,118 @@ def myeloid_malignancy_predictor(seqvar):
 @pytest.fixture
 def auto_acmg_data():
     return AutoACMGSeqVarData()
+
+
+def test_is_allowed_nonsense_true(myeloid_malignancy_predictor, auto_acmg_data):
+    """Test _is_allowed_nonsense method when the variant is an allowed nonsense mutation."""
+    auto_acmg_data.consequence = MagicMock(cadd="nonsense", mehari=["nonsense_variant"])
+    auto_acmg_data.cds_pos = 100  # Position downstream of c.98
+
+    result = myeloid_malignancy_predictor._is_allowed_nonsense(auto_acmg_data)
+
+    assert result is True, "Should return True for an allowed nonsense mutation"
+
+
+def test_is_allowed_nonsense_false_upstream(myeloid_malignancy_predictor, auto_acmg_data):
+    """Test _is_allowed_nonsense method when the variant is upstream of c.98."""
+    auto_acmg_data.consequence = MagicMock(cadd="nonsense", mehari=["nonsense_variant"])
+    auto_acmg_data.cds_pos = 50  # Position upstream of c.98
+
+    result = myeloid_malignancy_predictor._is_allowed_nonsense(auto_acmg_data)
+
+    assert result is False, "Should return False for a nonsense mutation upstream of c.98"
+
+
+def test_is_allowed_nonsense_false_not_nonsense(myeloid_malignancy_predictor, auto_acmg_data):
+    """Test _is_allowed_nonsense method when the variant is not a nonsense mutation."""
+    auto_acmg_data.consequence = MagicMock(cadd="missense", mehari=["missense_variant"])
+    auto_acmg_data.cds_pos = 100  # Position doesn't matter in this case
+
+    result = myeloid_malignancy_predictor._is_allowed_nonsense(auto_acmg_data)
+
+    assert result is False, "Should return False for a non-nonsense mutation"
+
+
+def test_is_allowed_nonsense_frameshift(myeloid_malignancy_predictor, auto_acmg_data):
+    """Test _is_allowed_nonsense method when the variant is a frameshift mutation."""
+    auto_acmg_data.consequence = MagicMock(cadd="frameshift", mehari=["frameshift_variant"])
+    auto_acmg_data.cds_pos = 100  # Position downstream of c.98
+
+    result = myeloid_malignancy_predictor._is_allowed_nonsense(auto_acmg_data)
+
+    assert result is True, "Should return True for an allowed frameshift mutation"
+
+
+def test_is_allowed_nonsense_stop_gained(myeloid_malignancy_predictor, auto_acmg_data):
+    """Test _is_allowed_nonsense method when the variant is a stop_gained mutation."""
+    auto_acmg_data.consequence = MagicMock(cadd="stop_gained", mehari=["stop_gained"])
+    auto_acmg_data.cds_pos = 100  # Position downstream of c.98
+
+    result = myeloid_malignancy_predictor._is_allowed_nonsense(auto_acmg_data)
+
+    assert result is True, "Should return True for an allowed stop_gained mutation"
+
+
+@patch.object(DefaultSeqVarPredictor, "verify_ps1pm5")
+@patch.object(MyeloidMalignancyPredictor, "_is_allowed_nonsense")
+def test_verify_ps1pm5_not_allowed_nonsense(
+    mock_is_allowed_nonsense,
+    mock_super_verify,
+    myeloid_malignancy_predictor,
+    seqvar,
+    auto_acmg_data,
+):
+    """Test verify_ps1pm5 method for a non-allowed nonsense mutation."""
+    # Set up the mocks
+    mock_super_verify.return_value = (PS1PM5(PS1=True, PM5=False), "Initial evaluation")
+    mock_is_allowed_nonsense.return_value = False
+
+    # Run the method under test
+    prediction, comment = myeloid_malignancy_predictor.verify_ps1pm5(seqvar, auto_acmg_data)
+
+    # Check that PM5 remains False for a non-allowed nonsense mutation
+    assert prediction.PM5 is False, "PM5 should remain False for a non-allowed nonsense mutation"
+    assert "Initial evaluation" in comment, "Comment should reflect the initial evaluation"
+
+
+@patch.object(DefaultSeqVarPredictor, "verify_ps1pm5")
+@patch.object(MyeloidMalignancyPredictor, "_is_allowed_nonsense")
+@patch.object(MyeloidMalignancyPredictor, "_parse_HGVSp")
+def test_verify_ps1pm5_no_amino_acid_change(
+    mock_parse_HGVSp,
+    mock_is_allowed_nonsense,
+    mock_super_verify,
+    myeloid_malignancy_predictor,
+    seqvar,
+    auto_acmg_data,
+):
+    """Test verify_ps1pm5 method when there's no valid amino acid change."""
+    # Set up the mocks
+    mock_super_verify.return_value = (PS1PM5(PS1=True, PM5=False), "Initial evaluation")
+    mock_is_allowed_nonsense.return_value = True
+    mock_parse_HGVSp.return_value = None
+
+    # Run the method under test
+    prediction, comment = myeloid_malignancy_predictor.verify_ps1pm5(seqvar, auto_acmg_data)
+
+    # Check that PM5 remains False when there's no valid amino acid change
+    assert (
+        prediction.PM5 is False
+    ), "PM5 should remain False when there's no valid amino acid change"
+    assert "Initial evaluation" in comment, "Comment should reflect the initial evaluation"
+
+
+@patch.object(DefaultSeqVarPredictor, "verify_ps1pm5")
+def test_verify_ps1pm5_exception_handling(
+    mock_super_verify, myeloid_malignancy_predictor, seqvar, auto_acmg_data
+):
+    """Test verify_ps1pm5 method exception handling."""
+    mock_super_verify.side_effect = Exception("Test exception")
+
+    with pytest.raises(Exception) as exc_info:
+        myeloid_malignancy_predictor.verify_ps1pm5(seqvar, auto_acmg_data)
+
+    assert "Test exception" in str(exc_info.value), "Should raise the original exception"
 
 
 def test_predict_pm1_moderate_criteria_runx1(myeloid_malignancy_predictor, auto_acmg_data):

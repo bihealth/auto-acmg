@@ -46,8 +46,7 @@ class AutoPS1PM5(AutoACMGHelper):
         except AutoAcmgBaseException as e:
             return None
 
-    @staticmethod
-    def _parse_HGVSp(pHGVSp: str) -> Optional[AminoAcid]:
+    def _parse_HGVSp(self, pHGVSp: str) -> Optional[AminoAcid]:
         """Parse the pHGVSp from VEP into its components.
 
         Args:
@@ -69,8 +68,7 @@ class AutoPS1PM5(AutoACMGHelper):
             logger.debug("Invalid pHGVSp: {}", pHGVSp)
             return None
 
-    @staticmethod
-    def _is_pathogenic(variant_info: VariantResult) -> bool:
+    def _is_pathogenic(self, variant_info: VariantResult) -> bool:
         """Check if the variant is pathogenic based on ClinVar data.
 
         Args:
@@ -82,19 +80,14 @@ class AutoPS1PM5(AutoACMGHelper):
         if variant_info.clinvar and variant_info.clinvar.records:
             for rec in variant_info.clinvar.records:
                 if (
-                    rec.classifications
-                    and rec.classifications.germlineClassification
-                    and rec.classifications.germlineClassification.description
-                    in [
-                        "Pathogenic",
-                        "Likely pathogenic",
-                    ]
+                    (r := rec.classifications)
+                    and (g := r.germlineClassification)
+                    and g.description in ["Pathogenic", "Likely pathogenic"]
                 ):
                     return True
         return False
 
-    @staticmethod
-    def _is_missense(var_data: AutoACMGSeqVarData) -> bool:
+    def _is_missense(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the variant's consequence is missense.
 
@@ -109,6 +102,43 @@ class AutoPS1PM5(AutoACMGHelper):
         if any("missense" in cons for cons in var_data.consequence.mehari):
             return True
         return False
+
+    def _is_splice_affecting(self, var_data: AutoACMGSeqVarData) -> bool:
+        """
+        Check if the variant is a splice-affecting variant.
+
+        Args:
+            var_data (AutoACMGSeqVarData): The variant information.
+
+        Returns:
+            bool: True if the variant is a splice-affecting variant, False otherwise.
+        """
+        if "splice" in var_data.consequence.cadd:
+            return True
+        if any("splice" in cons for cons in var_data.consequence.mehari):
+            return True
+        return False
+
+    def _affect_splicing(self, var_data: AutoACMGSeqVarData) -> bool:
+        """
+        Check if the variant affects splicing.
+
+        Args:
+            var_data (AutoACMGSeqVarData): The variant information.
+
+        Returns:
+            bool: True if the variant affects splicing, False otherwise.
+        """
+        score_checks = {
+            "spliceAI_acceptor_gain": var_data.thresholds.spliceAI_acceptor_gain,
+            "spliceAI_acceptor_loss": var_data.thresholds.spliceAI_acceptor_loss,
+            "spliceAI_donor_gain": var_data.thresholds.spliceAI_donor_gain,
+            "spliceAI_donor_loss": var_data.thresholds.spliceAI_donor_loss,
+        }
+        return any(
+            (getattr(var_data.scores.cadd, score_name) or 0) > threshold
+            for score_name, threshold in score_checks.items()
+        )
 
     def verify_ps1pm5(
         self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
@@ -141,8 +171,10 @@ class AutoPS1PM5(AutoACMGHelper):
         self.prediction_ps1pm5 = PS1PM5()
         self.comment_ps1pm5 = ""
         try:
-            if not self._is_missense(var_data):
-                raise AlgorithmError("Variant is not a missense variant. PS1/PM5 not applicable.")
+            if not self._is_missense(var_data) and not self._is_splice_affecting(var_data):
+                raise AlgorithmError(
+                    "Variant is not a missense or splice-affecting variant. PS1/PM5 not applicable."
+                )
 
             primary_aa_change = self._parse_HGVSp(var_data.pHGVS)
             if not primary_aa_change:
@@ -190,7 +222,6 @@ class AutoPS1PM5(AutoACMGHelper):
                     self.comment_ps1pm5 += f"Failed to get variant information for {alt_seqvar}. "
 
         except AutoAcmgBaseException as e:
-            logger.error("Error occurred during PS1/PM5 prediction. Error: {}", e)
             self.comment_ps1pm5 = f"Error occurred during PS1/PM5 prediction. Error: {e}"
             self.prediction_ps1pm5 = None
         return self.prediction_ps1pm5, self.comment_ps1pm5

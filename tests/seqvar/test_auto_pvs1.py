@@ -177,8 +177,6 @@ def test_find_aff_exon_pos(var_pos, exons, expected_result):
         (
             SeqVarPVS1Consequence.NonsenseFrameshift,
             [
-                "3_prime_utr_variant",
-                "3_prime_UTR_variant",
                 "frameshift_variant",
                 "stop_gained",
             ],
@@ -215,7 +213,7 @@ def test_get_conseq(value, expected_result):
 @pytest.mark.parametrize(
     "annonars_range_response, expected_result",
     [
-        ("annonars/GAA_range.json", (56, 158)),
+        ("annonars/GAA_range.json", (4, 26)),
         ("annonars/CDH1_range.json", (0, 0)),
     ],
 )

@@ -2,7 +2,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from src.defs.annonars_variant import VariantResult
 from src.defs.auto_acmg import (
+    PS1PM5,
     AutoACMGCriteria,
     AutoACMGPrediction,
     AutoACMGSeqVarData,
@@ -28,6 +30,92 @@ def dicer1_predictor(seqvar):
 @pytest.fixture
 def auto_acmg_data():
     return AutoACMGSeqVarData()
+
+
+@pytest.fixture
+def variant_result():
+    return VariantResult()
+
+
+def test_is_pathogenic_with_pathogenic_variant(dicer1_predictor, variant_result):
+    """Test _is_pathogenic method with a pathogenic variant."""
+    # Create a mock ClinvarRecord with a pathogenic classification
+    clinvar_record = MagicMock()
+    clinvar_record.classifications.germlineClassification.description = "Pathogenic"
+    variant_result.clinvar = MagicMock(records=[clinvar_record])
+
+    result = dicer1_predictor._is_pathogenic(variant_result)
+    assert result is True, "Should return True for a pathogenic variant"
+
+
+def test_is_pathogenic_with_non_pathogenic_variant(dicer1_predictor, variant_result):
+    """Test _is_pathogenic method with a non-pathogenic variant."""
+    # Create a mock ClinvarRecord with a non-pathogenic classification
+    clinvar_record = MagicMock()
+    clinvar_record.classifications.germlineClassification.description = "Benign"
+    variant_result.clinvar = MagicMock(records=[clinvar_record])
+
+    result = dicer1_predictor._is_pathogenic(variant_result)
+    assert result is False, "Should return False for a non-pathogenic variant"
+
+
+def test_is_pathogenic_with_no_clinvar_data(dicer1_predictor, variant_result):
+    """Test _is_pathogenic method with no ClinVar data."""
+    variant_result.clinvar = None
+
+    result = dicer1_predictor._is_pathogenic(variant_result)
+    assert result is False, "Should return False when no ClinVar data is available"
+
+
+def test_is_pathogenic_with_empty_clinvar_records(dicer1_predictor, variant_result):
+    """Test _is_pathogenic method with empty ClinVar records."""
+    variant_result.clinvar = MagicMock(records=[])
+
+    result = dicer1_predictor._is_pathogenic(variant_result)
+    assert result is False, "Should return False when ClinVar records are empty"
+
+
+def test_is_pathogenic_with_multiple_classifications(dicer1_predictor, variant_result):
+    """Test _is_pathogenic method with multiple ClinVar classifications."""
+    # Create mock ClinvarRecords with different classifications
+    clinvar_record1 = MagicMock()
+    clinvar_record1.classifications.germlineClassification.description = "Benign"
+    clinvar_record2 = MagicMock()
+    clinvar_record2.classifications.germlineClassification.description = "Pathogenic"
+    variant_result.clinvar = MagicMock(records=[clinvar_record1, clinvar_record2])
+
+    result = dicer1_predictor._is_pathogenic(variant_result)
+    assert result is True, "Should return True if any classification is Pathogenic"
+
+
+@patch.object(DefaultSeqVarPredictor, "verify_ps1pm5")
+def test_verify_ps1pm5_overrides(mock_super_verify, dicer1_predictor, seqvar, auto_acmg_data):
+    """Test that the overridden verify_ps1pm5 method in DICER1Predictor works correctly."""
+    # Set up the mock to return PS1 and PM5 as applicable initially
+    mock_super_verify.return_value = (PS1PM5(PS1=True, PM5=True), "Initial evaluation")
+
+    # Setup the data
+    auto_acmg_data.consequence = MagicMock(mehari=["missense_variant"])
+    auto_acmg_data.thresholds = MagicMock(
+        spliceAI_acceptor_gain=0.5,
+        spliceAI_acceptor_loss=0.5,
+        spliceAI_donor_gain=0.5,
+        spliceAI_donor_loss=0.5,
+    )
+    auto_acmg_data.scores = MagicMock(
+        cadd=MagicMock(spliceAI_acceptor_gain=0.6, spliceAI_donor_gain=0.6)
+    )
+
+    # Run the method under test
+    prediction, comment = dicer1_predictor.verify_ps1pm5(seqvar, auto_acmg_data)
+
+    # Check that the splicing effect leads to overriding PS1 and PM5 as not applicable
+    assert not prediction.PS1, "PS1 should be marked as not applicable due to splicing effect."
+    assert not prediction.PM5, "PM5 should be marked as not applicable due to splicing effect."
+    assert "Variant affects splicing" in comment, "Comment should note the splicing effect."
+
+    # Ensure that the mock of the superclass method is called to simulate the inherited behavior
+    mock_super_verify.assert_called_once_with(seqvar, auto_acmg_data)
 
 
 def test_predict_pm1_moderate_criteria_residue(dicer1_predictor, auto_acmg_data):

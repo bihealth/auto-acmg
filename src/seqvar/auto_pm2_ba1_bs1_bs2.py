@@ -400,7 +400,6 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
                 self.prediction_pm2ba1bs1bs2.BS2 = True
 
         except AutoAcmgBaseException as e:
-            logger.error("Error occurred during PM2, BA1, BS1, BS2 prediction. Error: {}", e)
             self.comment_pm2ba1bs1bs2 = (
                 f"An error occurred while predicting PM2, BA1, BS1, BS2 criteria: {e}"
             )

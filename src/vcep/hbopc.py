@@ -8,18 +8,21 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN020
 https://cspec.genome.network/cspec/ui/svi/doc/GN077
 """
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from loguru import logger
 
 from src.defs.auto_acmg import (
+    PS1PM5,
     AutoACMGCriteria,
     AutoACMGPrediction,
     AutoACMGSeqVarData,
     AutoACMGStrength,
     VcepSpec,
 )
+from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException
 from src.defs.seqvar import SeqVar
+from src.seqvar.auto_ps1_pm5 import DNA_BASES
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specifications for Heriditary Breast, Ovarian and Pancreatic Cancer.
@@ -36,6 +39,131 @@ SPECs: List[VcepSpec] = [
 
 
 class HBOPCPredictor(DefaultSeqVarPredictor):
+
+    def _is_nonsense(self, var_data: AutoACMGSeqVarData) -> bool:
+        """
+        Check if the variant is a nonsense/frameshift variant.
+
+        Args:
+            var_data (AutoACMGSeqVarData): The variant information.
+
+        Returns:
+            bool: True if the variant is a nonsense/frameshift variant.
+        """
+        # Check the nonsense
+        if "nonsense" in var_data.consequence.cadd:
+            return True
+        if any("nonsense" in cons for cons in var_data.consequence.mehari):
+            return True
+
+        # Check the frameshift
+        if "frameshift" in var_data.consequence.cadd:
+            return True
+        if any("frameshift" in cons for cons in var_data.consequence.mehari):
+            return True
+
+        # Stop gained
+        if "stop_gained" in var_data.consequence.mehari:
+            return True
+
+        return False
+
+    def verify_ps1pm5(
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
+    ) -> Tuple[Optional[PS1PM5], str]:
+        """Override PS1/PM5 for Hearing Loss."""
+        self.prediction_ps1pm5, self.comment_ps1pm5 = super().verify_ps1pm5(seqvar, var_data)
+        if var_data.hgnc_id == "HGNC:795" and self.prediction_ps1pm5:
+            if self._is_missense(var_data):
+                self.prediction_ps1pm5.PM5 = False
+                if self._affect_splicing(var_data):
+                    self.prediction_ps1pm5.PS1 = False
+            elif self._is_splice_affecting(var_data):
+                if (
+                    self.prediction_ps1pm5.PM5
+                    and var_data.prot_pos < 3047
+                    and self.undergo_nmd(
+                        var_data.tx_pos_utr, var_data.hgnc_id, var_data.strand, var_data.exons
+                    )
+                ):
+                    self.comment_ps1pm5 += (
+                        "Variant is splice-affecting variant and is upstream of p.3047 and "
+                        "undergoes NMD. PM5 is met."
+                    )
+                    self.prediction_ps1pm5.PM5 = True
+                else:
+                    self.comment_ps1pm5 += (
+                        "Variant is splice-affecting variant and doesn't fulfill PM5 or is "
+                        "upstream of p.3047 or does not undergo NMD. PM5 is not met."
+                    )
+                    self.prediction_ps1pm5.PM5 = False
+        elif var_data.hgnc_id == "HGNC:26144" and self.prediction_ps1pm5:
+            if self._is_missense(var_data):
+                self.prediction_ps1pm5.PS1 = False
+                self.prediction_ps1pm5.PM5 = False
+            elif self._is_splice_affecting(var_data):
+                if (
+                    self.prediction_ps1pm5.PM5
+                    and var_data.prot_pos < 1183
+                    and self.undergo_nmd(
+                        var_data.tx_pos_utr, var_data.hgnc_id, var_data.strand, var_data.exons
+                    )
+                ):
+                    self.comment_ps1pm5 += (
+                        "Variant is splice-affecting variant and is upstream of p.1183 and "
+                        "undergoes NMD. PM5 is met."
+                    )
+                    self.prediction_ps1pm5.PM5 = True
+                else:
+                    self.comment_ps1pm5 += (
+                        "Variant is splice-affecting variant and doesn't fulfill PM5 or is "
+                        "upstream of p.1183 or does not undergo NMD. PM5 is not met."
+                    )
+                    self.prediction_ps1pm5.PM5 = False
+
+        # Check nonsense/frameshift variants for PM5
+        try:
+            if not self.prediction_ps1pm5 or not self._is_nonsense(var_data):
+                raise AlgorithmError("Variant is not nonsense/frameshift variant.")
+
+            if (
+                var_data.hgnc_id == "HGNC:795"
+                and var_data.prot_pos >= 3047
+                or var_data.hgnc_id == "HGNC:26144"
+                and var_data.prot_pos >= 1183
+            ):
+                raise AlgorithmError(
+                    "Variant is nonsence/frameshift variant and is downstream of p.3047 or p.1183. "
+                    "PM5 is not met."
+                )
+
+            primary_aa_change = self._parse_HGVSp(var_data.pHGVS)
+            if not primary_aa_change:
+                raise AlgorithmError("No valid primary amino acid change for PS1/PM5 prediction.")
+
+            for alt_base in DNA_BASES:
+                # Skip the same base insert
+                if alt_base == seqvar.insert:
+                    continue
+                alt_seqvar = SeqVar(
+                    genome_release=seqvar.genome_release,
+                    chrom=seqvar.chrom,
+                    pos=seqvar.pos,
+                    delete=seqvar.delete,
+                    insert=alt_base,
+                )
+                alt_info = self._get_var_info(alt_seqvar)
+
+                if alt_info and alt_info.result.dbnsfp and alt_info.result.dbnsfp.HGVSp_VEP:
+                    alt_aa_change = self._parse_HGVSp(alt_info.result.dbnsfp.HGVSp_VEP)
+                    if alt_aa_change and self._is_pathogenic(alt_info.result):
+                        if primary_aa_change != alt_aa_change:
+                            self.comment_ps1pm5 += "PM5 is met as nonsense/frameshift variant."
+                            self.prediction_ps1pm5.PM5 = True
+
+        except AutoAcmgBaseException:
+            pass
+        return self.prediction_ps1pm5, self.comment_ps1pm5
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """

@@ -188,7 +188,6 @@ class AutoPP3BP4(AutoACMGHelper):
                     )
 
             except AutoAcmgBaseException as e:
-                logger.error("Failed to predict PP3 and BP4 criteria. Error: {}", e)
                 self.comment_pp3bp4 = f"An error occurred during prediction. Error: {e}"
                 self.prediction_pp3bp4 = None
         return self.prediction_pp3bp4, self.comment_pp3bp4

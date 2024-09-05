@@ -59,7 +59,7 @@ def test_get_var_info_exception(auto_ps1pm5, seqvar):
 )
 def test_parse_HGVSp_valid(pHGVSp, expected):
     """Test parsing valid pHGVSp strings."""
-    result = AutoPS1PM5._parse_HGVSp(pHGVSp)
+    result = AutoPS1PM5()._parse_HGVSp(pHGVSp)
     assert result == expected, f"Expected {expected} but got {result}"
 
 
@@ -76,7 +76,7 @@ def test_parse_HGVSp_valid(pHGVSp, expected):
 )
 def test_parse_HGVSp_invalid(pHGVSp):
     """Test parsing invalid pHGVSp strings."""
-    result = AutoPS1PM5._parse_HGVSp(pHGVSp)
+    result = AutoPS1PM5()._parse_HGVSp(pHGVSp)
     assert result is None, f"Expected None for invalid input but got {result}"
 
 
@@ -84,14 +84,14 @@ def test_parse_HGVSp_multiple():
     """Test parsing pHGVSp strings with multiple values."""
     pHGVSp = "p.Gly12Asp;p.Ser78Ala"
     expected = AminoAcid.Asp
-    result = AutoPS1PM5._parse_HGVSp(pHGVSp)
+    result = AutoPS1PM5()._parse_HGVSp(pHGVSp)
     assert result == expected, f"Expected {expected} but got {result}"
 
 
 def test_parse_HGVSp_exception():
     """Test parsing pHGVSp strings that raise an exception."""
     pHGVSp = "p.Invalid123"
-    result = AutoPS1PM5._parse_HGVSp(pHGVSp)
+    result = AutoPS1PM5()._parse_HGVSp(pHGVSp)
     assert result is None, f"Expected None for invalid input but got {result}"
 
 
@@ -130,28 +130,28 @@ def no_clinvar_info():
 def test_is_pathogenic_true_pathogenic(pathogenic_variant_info):
     """Test when the variant is classified as Pathogenic."""
     assert (
-        AutoPS1PM5._is_pathogenic(pathogenic_variant_info) is True
+        AutoPS1PM5()._is_pathogenic(pathogenic_variant_info) is True
     ), "Should return True for Pathogenic variant"
 
 
 def test_is_pathogenic_true_likely_pathogenic(likely_pathogenic_variant_info):
     """Test when the variant is classified as Likely Pathogenic."""
     assert (
-        AutoPS1PM5._is_pathogenic(likely_pathogenic_variant_info) is True
+        AutoPS1PM5()._is_pathogenic(likely_pathogenic_variant_info) is True
     ), "Should return True for Likely Pathogenic variant"
 
 
 def test_is_pathogenic_false_benign(benign_variant_info):
     """Test when the variant is classified as Benign."""
     assert (
-        AutoPS1PM5._is_pathogenic(benign_variant_info) is False
+        AutoPS1PM5()._is_pathogenic(benign_variant_info) is False
     ), "Should return False for Benign variant"
 
 
 def test_is_pathogenic_false_no_clinvar(no_clinvar_info):
     """Test when there is no ClinVar information."""
     assert (
-        AutoPS1PM5._is_pathogenic(no_clinvar_info) is False
+        AutoPS1PM5()._is_pathogenic(no_clinvar_info) is False
     ), "Should return False when no ClinVar data is present"
 
 
@@ -179,22 +179,119 @@ def var_data_not_missense():
 def test_is_missense_true_cadd(var_data_missense_cadd):
     """Test when the variant is a missense variant according to CADD."""
     assert (
-        AutoPS1PM5._is_missense(var_data_missense_cadd) is True
+        AutoPS1PM5()._is_missense(var_data_missense_cadd) is True
     ), "Should return True for missense variant in CADD"
 
 
 def test_is_missense_true_mehari(var_data_missense_mehari):
     """Test when the variant is a missense variant according to Mehari."""
     assert (
-        AutoPS1PM5._is_missense(var_data_missense_mehari) is True
+        AutoPS1PM5()._is_missense(var_data_missense_mehari) is True
     ), "Should return True for missense variant in Mehari"
 
 
 def test_is_missense_false(var_data_not_missense):
     """Test when the variant is not a missense variant."""
     assert (
-        AutoPS1PM5._is_missense(var_data_not_missense) is False
+        AutoPS1PM5()._is_missense(var_data_not_missense) is False
     ), "Should return False for non-missense variant"
+
+
+# =========== _is_splice_affecting ===========
+
+
+@pytest.fixture
+def var_data_splice_affecting_cadd():
+    consequence = MagicMock(cadd="splice_acceptor_variant;some_other_annotation", mehari=[])
+    return MagicMock(consequence=consequence)
+
+
+@pytest.fixture
+def var_data_splice_affecting_mehari():
+    consequence = MagicMock(cadd="", mehari=["splice_donor_variant", "intronic"])
+    return MagicMock(consequence=consequence)
+
+
+@pytest.fixture
+def var_data_not_splice_affecting():
+    consequence = MagicMock(cadd="missense_variant", mehari=["nonsense_variant"])
+    return MagicMock(consequence=consequence)
+
+
+def test_is_splice_affecting_true_cadd(auto_ps1pm5, var_data_splice_affecting_cadd):
+    """Test when the variant is identified as splice-affecting by CADD annotations."""
+    assert (
+        auto_ps1pm5._is_splice_affecting(var_data_splice_affecting_cadd) is True
+    ), "Should return True for variants with splice-affecting CADD annotations"
+
+
+def test_is_splice_affecting_true_mehari(auto_ps1pm5, var_data_splice_affecting_mehari):
+    """Test when the variant is identified as splice-affecting by Mehari annotations."""
+    assert (
+        auto_ps1pm5._is_splice_affecting(var_data_splice_affecting_mehari) is True
+    ), "Should return True for variants with splice-affecting Mehari annotations"
+
+
+def test_is_splice_affecting_false(auto_ps1pm5, var_data_not_splice_affecting):
+    """Test when the variant does not affect splicing according to CADD or Mehari."""
+    assert (
+        auto_ps1pm5._is_splice_affecting(var_data_not_splice_affecting) is False
+    ), "Should return False for variants that do not affect splicing according to both CADD and Mehari"
+
+
+# =========== _affect_splicing ===========
+
+
+@pytest.fixture
+def var_data_splicing_affected():
+    thresholds = MagicMock(
+        spliceAI_acceptor_gain=0.2,
+        spliceAI_acceptor_loss=0.2,
+        spliceAI_donor_gain=0.2,
+        spliceAI_donor_loss=0.2,
+    )
+    scores = MagicMock(
+        cadd=MagicMock(
+            spliceAI_acceptor_gain=0.3,
+            spliceAI_acceptor_loss=0.1,
+            spliceAI_donor_gain=0.25,
+            spliceAI_donor_loss=0.05,
+        )
+    )
+    return MagicMock(scores=scores, thresholds=thresholds)
+
+
+@pytest.fixture
+def var_data_splicing_not_affected():
+    thresholds = MagicMock(
+        spliceAI_acceptor_gain=0.5,
+        spliceAI_acceptor_loss=0.5,
+        spliceAI_donor_gain=0.5,
+        spliceAI_donor_loss=0.5,
+    )
+    scores = MagicMock(
+        cadd=MagicMock(
+            spliceAI_acceptor_gain=0.1,
+            spliceAI_acceptor_loss=0.1,
+            spliceAI_donor_gain=0.1,
+            spliceAI_donor_loss=0.1,
+        )
+    )
+    return MagicMock(scores=scores, thresholds=thresholds)
+
+
+def test_affect_splicing_true(auto_ps1pm5, var_data_splicing_affected):
+    """Test cases where SpliceAI scores indicate that splicing is affected."""
+    assert (
+        auto_ps1pm5._affect_splicing(var_data_splicing_affected) is True
+    ), "Should return True for variants that affect splicing based on SpliceAI scores above threshold"
+
+
+def test_affect_splicing_false(auto_ps1pm5, var_data_splicing_not_affected):
+    """Test cases where SpliceAI scores are below the threshold indicating no splicing effect."""
+    assert (
+        auto_ps1pm5._affect_splicing(var_data_splicing_not_affected) is False
+    ), "Should return False for variants with SpliceAI scores below the threshold"
 
 
 # =========== verify_ps1pm5 ===========
