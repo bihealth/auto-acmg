@@ -125,6 +125,16 @@ class GlaucomaPredictor(DefaultSeqVarPredictor):
             ),
         )
 
+    def predict_pp3bp4(
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Change SpliceAI scores."""
+        var_data.thresholds.spliceAI_acceptor_gain = 0.2
+        var_data.thresholds.spliceAI_acceptor_loss = 0.2
+        var_data.thresholds.spliceAI_donor_gain = 0.2
+        var_data.thresholds.spliceAI_donor_loss = 0.2
+        return super().predict_pp3bp4(seqvar, var_data)
+
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Change BP7 thresholds for Glaucoma VCEP."""
         var_data.thresholds.spliceAI_acceptor_gain = 0.2

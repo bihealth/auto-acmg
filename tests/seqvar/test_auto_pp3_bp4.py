@@ -19,7 +19,7 @@ def seqvar():
     return SeqVar(genome_release=GenomeRelease.GRCh37, chrom="1", pos=100, delete="A", insert="T")
 
 
-# =========== _splice_variant ===========
+# =========== _is_splice_variant ===========
 
 
 @pytest.fixture
@@ -40,14 +40,14 @@ def var_data_no_splice():
 def test_splice_variant_positive(auto_pp3bp4: AutoPP3BP4, var_data_splice: MagicMock):
     """Test that _splice_variant correctly identifies a splice variant."""
     assert (
-        auto_pp3bp4._splice_variant(var_data_splice) is True
+        auto_pp3bp4._is_splice_variant(var_data_splice) is True
     ), "Should return True when splice indicators are present in the data."
 
 
 def test_splice_variant_negative(auto_pp3bp4: AutoPP3BP4, var_data_no_splice: MagicMock):
     """Test that _splice_variant correctly identifies non-splice variants."""
     assert (
-        auto_pp3bp4._splice_variant(var_data_no_splice) is False
+        auto_pp3bp4._is_splice_variant(var_data_no_splice) is False
     ), "Should return False when no splice indicators are present in the data."
 
 
@@ -56,7 +56,7 @@ def test_splice_variant_with_other_effects(auto_pp3bp4: AutoPP3BP4, var_data_spl
     # Adjust the mock to include other non-splice related effects
     var_data_splice.consequence.mehari.append("non_splice_effect")
     assert (
-        auto_pp3bp4._splice_variant(var_data_splice) is True
+        auto_pp3bp4._is_splice_variant(var_data_splice) is True
     ), "Should still return True as long as one splice indicator is present."
 
 
@@ -108,21 +108,30 @@ def var_data_missing_pathogenic_scores():
 def test_is_pathogenic_score_true(auto_pp3bp4, var_data_pathogenic):
     """Test when pathogenic scores are above the thresholds."""
     assert (
-        auto_pp3bp4._is_pathogenic_score(var_data_pathogenic) is True
+        auto_pp3bp4._is_pathogenic_score(
+            var_data_pathogenic, ("metaRNN", 0.5), ("bayesDel_noAF", 0.5)
+        )
+        is True
     ), "Should return True when any pathogenic score exceeds its threshold."
 
 
 def test_is_pathogenic_score_false(auto_pp3bp4, var_data_non_pathogenic):
     """Test when pathogenic scores are below the thresholds."""
     assert (
-        auto_pp3bp4._is_pathogenic_score(var_data_non_pathogenic) is False
+        auto_pp3bp4._is_pathogenic_score(
+            var_data_non_pathogenic, ("metaRNN", 0.5), ("bayesDel_noAF", 0.5)
+        )
+        is False
     ), "Should return False when no pathogenic score exceeds its threshold."
 
 
 def test_is_pathogenic_score_missing_scores(auto_pp3bp4, var_data_missing_pathogenic_scores):
     """Test when pathogenic scores are missing."""
     assert (
-        auto_pp3bp4._is_pathogenic_score(var_data_missing_pathogenic_scores) is False
+        auto_pp3bp4._is_pathogenic_score(
+            var_data_missing_pathogenic_scores, ("metaRNN", 0.5), ("bayesDel_noAF", 0.5)
+        )
+        is False
     ), "Should return False when pathogenic scores are missing."
 
 
@@ -130,7 +139,10 @@ def test_is_pathogenic_score_mixed(auto_pp3bp4, var_data_pathogenic, var_data_no
     """Test when one pathogenic score is above the threshold and another is below."""
     var_data_pathogenic.scores.dbnsfp.bayesDel_noAF = 0.3  # Below threshold
     assert (
-        auto_pp3bp4._is_pathogenic_score(var_data_pathogenic) is True
+        auto_pp3bp4._is_pathogenic_score(
+            var_data_pathogenic, ("metaRNN", 0.5), ("bayesDel_noAF", 0.5)
+        )
+        is True
     ), "Should return True when at least one pathogenic score exceeds its threshold."
 
 
@@ -182,21 +194,26 @@ def var_data_missing_benign_scores():
 def test_is_benign_score_true(auto_pp3bp4, var_data_benign):
     """Test when benign scores are below the thresholds."""
     assert (
-        auto_pp3bp4._is_benign_score(var_data_benign) is True
+        auto_pp3bp4._is_benign_score(var_data_benign, ("metaRNN", 0.3), ("bayesDel_noAF", 0.3))
+        is True
     ), "Should return True when any benign score is below its threshold."
 
 
 def test_is_benign_score_false(auto_pp3bp4, var_data_non_benign):
     """Test when benign scores are above the thresholds."""
     assert (
-        auto_pp3bp4._is_benign_score(var_data_non_benign) is False
+        auto_pp3bp4._is_benign_score(var_data_non_benign, ("metaRNN", 0.3), ("bayesDel_noAF", 0.3))
+        is False
     ), "Should return False when no benign score is below its threshold."
 
 
 def test_is_benign_score_missing_scores(auto_pp3bp4, var_data_missing_benign_scores):
     """Test when benign scores are missing."""
     assert (
-        auto_pp3bp4._is_benign_score(var_data_missing_benign_scores) is False
+        auto_pp3bp4._is_benign_score(
+            var_data_missing_benign_scores, ("metaRNN", 0.3), ("bayesDel_noAF", 0.3)
+        )
+        is False
     ), "Should return False when benign scores are missing."
 
 
@@ -204,7 +221,8 @@ def test_is_benign_score_mixed(auto_pp3bp4, var_data_benign, var_data_non_benign
     """Test when one benign score is below the threshold and another is above."""
     var_data_benign.scores.dbnsfp.bayesDel_noAF = 0.4  # Above threshold
     assert (
-        auto_pp3bp4._is_benign_score(var_data_benign) is True
+        auto_pp3bp4._is_benign_score(var_data_benign, ("metaRNN", 0.3), ("bayesDel_noAF", 0.3))
+        is True
     ), "Should return True when at least one benign score is below its threshold."
 
 
@@ -370,130 +388,70 @@ def seqvar_mt():
 
 @pytest.fixture
 def var_data_verify():
-    thresholds = MagicMock(
-        ada=0.6,
-        rf=0.7,
+    return MagicMock(
+        thresholds=MagicMock(pp3bp4_strategy="default"),
+        scores=MagicMock(dbnsfp=MagicMock(metaRNN=0.9, bayesDel_noAF=0.8)),
     )
-    scores_dbscsnv = MagicMock(
-        ada=0.7,  # Above ada threshold
-        rf=0.8,  # Above rf threshold
-    )
-    scores_dbnsfp = MagicMock(
-        metaRNN=0.9,
-        bayesDel_noAF=0.8,
-    )
-    consequence = MagicMock(
-        cadd={"splice": True},
-        mehari=["splice"],
-    )
-    scores = MagicMock(dbscsnv=scores_dbscsnv, cadd=scores_dbscsnv, dbnsfp=scores_dbnsfp)
-    return MagicMock(scores=scores, thresholds=thresholds, consequence=consequence)
 
 
-@pytest.fixture
-def var_data_verify_non_splice():
-    thresholds = MagicMock(
-        metaRNN_pathogenic=0.85,
-        bayesDel_noAF_pathogenic=0.75,
-    )
-    scores_dbscsnv = MagicMock(
-        ada=0.4,  # Below ada threshold
-        rf=0.5,  # Below rf threshold
-    )
-    scores_dbnsfp = MagicMock(
-        metaRNN=0.9,  # Above pathogenic threshold
-        bayesDel_noAF=0.8,  # Above pathogenic threshold
-    )
-    consequence = MagicMock(
-        cadd={"missense": True},
-        mehari=["missense"],
-    )
-    scores = MagicMock(dbscsnv=scores_dbscsnv, cadd=scores_dbscsnv, dbnsfp=scores_dbnsfp)
-    return MagicMock(scores=scores, thresholds=thresholds, consequence=consequence)
+@patch.object(AutoPP3BP4, "_is_pathogenic_score")
+@patch.object(AutoPP3BP4, "_is_benign_score")
+def test_verify_pp3bp4_default_strategy_pathogenic(
+    mock_is_benign, mock_is_pathogenic, auto_pp3bp4, seqvar, var_data_verify
+):
+    """Test verify_pp3bp4 with default strategy and pathogenic scores."""
+    mock_is_pathogenic.return_value = True
+    mock_is_benign.return_value = False
+
+    prediction, comment = auto_pp3bp4.verify_pp3bp4(seqvar, var_data_verify)
+
+    assert prediction.PP3 is True
+    assert prediction.BP4 is False
+    assert "MetaRNN score:" in comment
+    assert "BayesDel_noAF score:" in comment
 
 
-@patch.object(AutoPP3BP4, "_splice_variant", return_value=True)
-@patch.object(AutoPP3BP4, "_is_pathogenic_splicing", return_value=True)
-@patch.object(AutoPP3BP4, "_is_benign_splicing", return_value=False)
-def test_verify_pp3bp4_splice_variant(
+@patch.object(AutoPP3BP4, "_is_pathogenic_score")
+@patch.object(AutoPP3BP4, "_is_benign_score")
+def test_verify_pp3bp4_default_strategy_benign(
+    mock_is_benign, mock_is_pathogenic, auto_pp3bp4, seqvar, var_data_verify
+):
+    """Test verify_pp3bp4 with default strategy and benign scores."""
+    mock_is_pathogenic.return_value = False
+    mock_is_benign.return_value = True
+
+    prediction, comment = auto_pp3bp4.verify_pp3bp4(seqvar, var_data_verify)
+
+    assert prediction.PP3 is False
+    assert prediction.BP4 is True
+    assert "MetaRNN score:" in comment
+    assert "BayesDel_noAF score:" in comment
+
+
+@patch.object(AutoPP3BP4, "_is_pathogenic_score")
+@patch.object(AutoPP3BP4, "_is_benign_score")
+@patch.object(AutoPP3BP4, "_is_pathogenic_splicing")
+@patch.object(AutoPP3BP4, "_is_benign_splicing")
+def test_verify_pp3bp4_custom_strategy(
     mock_benign_splicing,
     mock_pathogenic_splicing,
-    mock_splice_variant,
+    mock_is_benign,
+    mock_is_pathogenic,
     auto_pp3bp4,
     seqvar,
     var_data_verify,
 ):
-    """Test verify_pp3bp4 when the variant is a splice variant."""
+    """Test verify_pp3bp4 with a custom strategy."""
+    var_data_verify.thresholds.pp3bp4_strategy = "custom_score"
+    mock_is_pathogenic.return_value = True
+    mock_is_benign.return_value = False
+    mock_pathogenic_splicing.return_value = False
+    mock_benign_splicing.return_value = False
+
     prediction, comment = auto_pp3bp4.verify_pp3bp4(seqvar, var_data_verify)
+
     assert prediction.PP3 is True
     assert prediction.BP4 is False
-    assert "Variant is a splice variant." in comment
-
-
-@patch.object(AutoPP3BP4, "_splice_variant", return_value=False)
-@patch.object(AutoPP3BP4, "_is_pathogenic_score", return_value=True)
-@patch.object(AutoPP3BP4, "_is_benign_score", return_value=False)
-def test_verify_pp3bp4_non_splice_variant(
-    mock_benign_score,
-    mock_pathogenic_score,
-    mock_splice_variant,
-    auto_pp3bp4,
-    seqvar,
-    var_data_verify_non_splice,
-):
-    """Test verify_pp3bp4 when the variant is not a splice variant."""
-    prediction, comment = auto_pp3bp4.verify_pp3bp4(seqvar, var_data_verify_non_splice)
-    assert prediction.PP3 is True
-    assert prediction.BP4 is False
-    assert "Variant is not a splice variant." in comment
-
-
-@patch.object(AutoPP3BP4, "_splice_variant", return_value=True)
-@patch.object(AutoPP3BP4, "_is_pathogenic_splicing", return_value=False)
-@patch.object(AutoPP3BP4, "_is_benign_splicing", return_value=True)
-def test_verify_pp3bp4_splice_variant_benign(
-    mock_benign_splicing,
-    mock_pathogenic_splicing,
-    mock_splice_variant,
-    auto_pp3bp4,
-    seqvar,
-    var_data_verify,
-):
-    """Test verify_pp3bp4 when the variant is a splice variant and benign."""
-    prediction, comment = auto_pp3bp4.verify_pp3bp4(seqvar, var_data_verify)
-    assert prediction.PP3 is False
-    assert prediction.BP4 is True
-    assert "Variant is a splice variant." in comment
-
-
-@patch.object(AutoPP3BP4, "_splice_variant", return_value=False)
-@patch.object(AutoPP3BP4, "_is_pathogenic_score", return_value=False)
-@patch.object(AutoPP3BP4, "_is_benign_score", return_value=True)
-def test_verify_pp3bp4_non_splice_variant_benign(
-    mock_benign_score,
-    mock_pathogenic_score,
-    mock_splice_variant,
-    auto_pp3bp4,
-    seqvar,
-    var_data_verify_non_splice,
-):
-    """Test verify_pp3bp4 when the variant is not a splice variant and benign."""
-    prediction, comment = auto_pp3bp4.verify_pp3bp4(seqvar, var_data_verify_non_splice)
-    assert prediction.PP3 is False
-    assert prediction.BP4 is True
-    assert "Variant is not a splice variant." in comment
-
-
-@patch.object(
-    AutoPP3BP4,
-    "_splice_variant",
-    side_effect=AutoAcmgBaseException("Error predicting splice variant"),
-)
-def test_verify_pp3bp4_exception(mock_splice_variant, auto_pp3bp4, seqvar, var_data_verify):
-    """Test verify_pp3bp4 when an exception occurs."""
-    prediction, comment = auto_pp3bp4.verify_pp3bp4(seqvar, var_data_verify)
-    assert prediction is None
-    assert "An error occurred during prediction." in comment
 
 
 def test_verify_pp3bp4_mitochondrial(auto_pp3bp4, seqvar_mt, var_data_verify):
@@ -502,6 +460,18 @@ def test_verify_pp3bp4_mitochondrial(auto_pp3bp4, seqvar_mt, var_data_verify):
     assert prediction.PP3 is False
     assert prediction.BP4 is False
     assert "Variant is in mitochondrial DNA" in comment
+
+
+@patch.object(AutoPP3BP4, "_is_pathogenic_score")
+def test_verify_pp3bp4_exception(mock_is_pathogenic, auto_pp3bp4, seqvar, var_data_verify):
+    """Test verify_pp3bp4 when an exception occurs."""
+    mock_is_pathogenic.side_effect = AutoAcmgBaseException("Test exception")
+
+    prediction, comment = auto_pp3bp4.verify_pp3bp4(seqvar, var_data_verify)
+
+    assert prediction is None
+    assert "An error occurred during prediction" in comment
+    assert "Test exception" in comment
 
 
 # =========== predict_pp3bp4 ===========
