@@ -10,14 +10,16 @@ from loguru import logger
 
 from src.defs.auto_acmg import (
     PM2BA1BS1BS2,
+    PS1PM5,
     AutoACMGCriteria,
     AutoACMGPrediction,
     AutoACMGSeqVarData,
     AutoACMGStrength,
     VcepSpec,
 )
-from src.defs.exceptions import AutoAcmgBaseException
+from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException
 from src.defs.seqvar import SeqVar
+from src.seqvar.auto_ps1_pm5 import DNA_BASES
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specification for Myeloid Malignancy.
@@ -49,6 +51,74 @@ PM1_CLUSTER = {
 
 
 class MyeloidMalignancyPredictor(DefaultSeqVarPredictor):
+
+    def _is_allowed_nonsense(self, var_data: AutoACMGSeqVarData) -> bool:
+        """
+        Check if the variant is a nonsense/frameshift variant and is downstream of c.98.
+
+        Args:
+            var_data (AutoACMGSeqVarData): The variant information.
+
+        Returns:
+            bool: True if the variant is a nonsense/frameshift variant and is downstream of c.98.
+        """
+        allowed = False
+        # Check the nonsense
+        if "nonsense" in var_data.consequence.cadd:
+            allowed = True
+        if any("nonsense" in cons for cons in var_data.consequence.mehari):
+            allowed = True
+
+        # Check the frameshift
+        if "frameshift" in var_data.consequence.cadd:
+            allowed = True
+        if any("frameshift" in cons for cons in var_data.consequence.mehari):
+            allowed = True
+
+        # Check the protein position (downstream of c.98)
+        if allowed and var_data.cds_pos > 98:
+            allowed = True
+        else:
+            allowed = False
+        return allowed
+
+    def verify_ps1pm5(
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
+    ) -> Tuple[Optional[PS1PM5], str]:
+        """Override PS1/PM5 for InSIGHT Hereditary Colorectal Cancer/Polyposis."""
+        self.prediction_ps1pm5, self.comment_ps1pm5 = super().verify_ps1pm5(seqvar, var_data)
+        # Check nonsense/frameshift variants for PM5
+        try:
+            if not self.prediction_ps1pm5 or not self._is_allowed_nonsense(var_data):
+                raise AlgorithmError("Variant is not nonsense/frameshift variant.")
+
+            primary_aa_change = self._parse_HGVSp(var_data.pHGVS)
+            if not primary_aa_change:
+                raise AlgorithmError("No valid primary amino acid change for PS1/PM5 prediction.")
+
+            for alt_base in DNA_BASES:
+                # Skip the same base insert
+                if alt_base == seqvar.insert:
+                    continue
+                alt_seqvar = SeqVar(
+                    genome_release=seqvar.genome_release,
+                    chrom=seqvar.chrom,
+                    pos=seqvar.pos,
+                    delete=seqvar.delete,
+                    insert=alt_base,
+                )
+                alt_info = self._get_var_info(alt_seqvar)
+
+                if alt_info and alt_info.result.dbnsfp and alt_info.result.dbnsfp.HGVSp_VEP:
+                    alt_aa_change = self._parse_HGVSp(alt_info.result.dbnsfp.HGVSp_VEP)
+                    if alt_aa_change and self._is_pathogenic(alt_info.result):
+                        if primary_aa_change != alt_aa_change:
+                            self.comment_ps1pm5 += "PM5 is met as nonsense/frameshift variant."
+                            self.prediction_ps1pm5.PM5 = True
+
+        except AutoAcmgBaseException:
+            pass
+        return self.prediction_ps1pm5, self.comment_ps1pm5
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override PM1 to specify critical residues for Myeloid Malignancy VCEP."""

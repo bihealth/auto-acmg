@@ -14,11 +14,12 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN138
 https://cspec.genome.network/cspec/ui/svi/doc/GN139
 """
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from loguru import logger
 
 from src.defs.auto_acmg import (
+    PS1PM5,
     AutoACMGCriteria,
     AutoACMGPrediction,
     AutoACMGSeqVarData,
@@ -54,6 +55,26 @@ SPECs: List[VcepSpec] = [
 
 
 class InsightColorectalCancerPredictor(DefaultSeqVarPredictor):
+
+    def verify_ps1pm5(
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
+    ) -> Tuple[Optional[PS1PM5], str]:
+        """Override PS1/PM5 for InSIGHT Hereditary Colorectal Cancer/Polyposis."""
+        self.prediction_ps1pm5, self.comment_ps1pm5 = super().verify_ps1pm5(seqvar, var_data)
+        var_data.thresholds.spliceAI_acceptor_gain = 0.2
+        var_data.thresholds.spliceAI_acceptor_loss = 0.2
+        var_data.thresholds.spliceAI_donor_gain = 0.2
+        var_data.thresholds.spliceAI_donor_loss = 0.2
+        if (
+            self.prediction_ps1pm5
+            and self._is_missense(var_data)
+            and self._affect_splicing(var_data)
+        ):
+            self.prediction_ps1pm5.PS1 = False
+            self.comment_ps1pm5 = "Variant affects splicing. PS1 is not applicable."
+            self.prediction_ps1pm5.PM5 = False
+            self.comment_ps1pm5 = "Variant affects splicing. PM5 is not applicable."
+        return self.prediction_ps1pm5, self.comment_ps1pm5
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """

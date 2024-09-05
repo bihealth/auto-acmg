@@ -15,6 +15,7 @@ from loguru import logger
 from src.defs.auto_acmg import (
     BP7,
     PM2BA1BS1BS2,
+    PS1PM5,
     AutoACMGCriteria,
     AutoACMGPrediction,
     AutoACMGSeqVarData,
@@ -51,6 +52,22 @@ BP7_IMPORTANT_DOMAINS = {
 
 
 class ENIGMAPredictor(DefaultSeqVarPredictor):
+
+    def verify_ps1pm5(
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
+    ) -> Tuple[Optional[PS1PM5], str]:
+        """Override PS1/PM5 for ENIGMA BRCA1 and BRCA2."""
+        self.prediction_ps1pm5, self.comment_ps1pm5 = super().verify_ps1pm5(seqvar, var_data)
+        if (
+            self.prediction_ps1pm5
+            and self._is_missense(var_data)
+            and self._affect_splicing(var_data)
+        ):
+            self.prediction_ps1pm5.PS1 = False
+            self.comment_ps1pm5 = "Variant affects splicing. PS1 is not applicable."
+            self.prediction_ps1pm5.PM5 = False
+            self.comment_ps1pm5 = "Variant affects splicing. PM5 is not applicable."
+        return self.prediction_ps1pm5, self.comment_ps1pm5
 
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override PM1 to return a not applicable status."""

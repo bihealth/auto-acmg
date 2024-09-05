@@ -81,7 +81,11 @@ class CoagulationFactorDeficiencyPredictor(DefaultSeqVarPredictor):
     ) -> Tuple[Optional[PS1PM5], str]:
         """Override PS1/PM5 for Coagulation Factor Deficiency."""
         self.prediction_ps1pm5, self.comment_ps1pm5 = super().verify_ps1pm5(seqvar, var_data)
-        if self.prediction_ps1pm5 and self._affect_splicing(var_data):
+        if (
+            self.prediction_ps1pm5
+            and self._is_missense(var_data)
+            and self._affect_splicing(var_data)
+        ):
             self.prediction_ps1pm5.PS1 = False
             self.comment_ps1pm5 = "Variant affects splicing. PS1 is not applicable."
             self.prediction_ps1pm5.PM5 = False

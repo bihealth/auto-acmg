@@ -45,7 +45,11 @@ class TP53Predictor(DefaultSeqVarPredictor):
         var_data.thresholds.spliceAI_acceptor_loss = 0.2
         var_data.thresholds.spliceAI_donor_gain = 0.2
         var_data.thresholds.spliceAI_donor_loss = 0.2
-        if self.prediction_ps1pm5 and self._affect_splicing(var_data):
+        if (
+            self.prediction_ps1pm5
+            and self._is_missense(var_data)
+            and self._affect_splicing(var_data)
+        ):
             self.prediction_ps1pm5.PS1 = False
             self.comment_ps1pm5 = "Variant affects splicing. PS1 is not applicable."
             self.prediction_ps1pm5.PM5 = False
