@@ -4,11 +4,12 @@ Included gene: BMPR2 (HGNC:1078).
 Link: https://cspec.genome.network/cspec/ui/svi/doc/GN125
 """
 
-from typing import Tuple
+from typing import Optional, Tuple
 
 from loguru import logger
 
 from src.defs.auto_acmg import (
+    PP3BP4,
     AutoACMGCriteria,
     AutoACMGPrediction,
     AutoACMGSeqVarData,
@@ -16,6 +17,7 @@ from src.defs.auto_acmg import (
     GenomicStrand,
     VcepSpec,
 )
+from src.defs.exceptions import AutoAcmgBaseException
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
@@ -131,6 +133,46 @@ class PulmonaryHypertensionPredictor(DefaultSeqVarPredictor):
                 summary="BP1 is not applicable for the gene.",
             ),
         )
+
+    def verify_pp3bp4(
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
+    ) -> Tuple[Optional[PP3BP4], str]:
+        """Predict PP3 and BP4 criteria."""
+        self.prediction_pp3bp4 = PP3BP4()
+        self.comment_pp3bp4 = ""
+        try:
+            var_data.thresholds.revel_pathogenic = 0.75
+            var_data.thresholds.revel_benign = 0.25
+            self.prediction_pp3bp4.PP3 = self._is_pathogenic_score(
+                var_data,
+                ("revel", getattr(var_data.thresholds, "revel_pathogenic")),
+                ("cadd", getattr(var_data.thresholds, "cadd_pathogenic")),
+            )
+            self.prediction_pp3bp4.BP4 = self._is_benign_score(
+                var_data,
+                ("revel", getattr(var_data.thresholds, "revel_benign")),
+                ("cadd", getattr(var_data.thresholds, "cadd_benign")),
+            )
+
+            var_data.thresholds.spliceAI_acceptor_gain = 0.2
+            var_data.thresholds.spliceAI_acceptor_loss = 0.2
+            var_data.thresholds.spliceAI_donor_gain = 0.2
+            var_data.thresholds.spliceAI_donor_loss = 0.2
+            self.prediction_pp3bp4.PP3 = self.prediction_pp3bp4.PP3 or self._affect_spliceAI(
+                var_data
+            )
+            var_data.thresholds.spliceAI_acceptor_gain = 0.1
+            var_data.thresholds.spliceAI_acceptor_loss = 0.1
+            var_data.thresholds.spliceAI_donor_gain = 0.1
+            var_data.thresholds.spliceAI_donor_loss = 0.1
+            self.prediction_pp3bp4.BP4 = self.prediction_pp3bp4.BP4 and not self._affect_spliceAI(
+                var_data
+            )
+
+        except AutoAcmgBaseException as e:
+            self.comment_pp3bp4 = f"An error occurred during prediction. Error: {e}"
+            self.prediction_pp3bp4 = None
+        return self.prediction_pp3bp4, self.comment_pp3bp4
 
     def _is_bp7_exception(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """

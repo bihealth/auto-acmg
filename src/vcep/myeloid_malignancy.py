@@ -10,6 +10,7 @@ from loguru import logger
 
 from src.defs.auto_acmg import (
     PM2BA1BS1BS2,
+    PP3BP4,
     PS1PM5,
     AutoACMGCriteria,
     AutoACMGPrediction,
@@ -251,6 +252,48 @@ class MyeloidMalignancyPredictor(DefaultSeqVarPredictor):
                 summary="BP1 is not applicable for the gene.",
             ),
         )
+
+    def verify_pp3bp4(
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
+    ) -> Tuple[Optional[PP3BP4], str]:
+        """Override verify_pp3bp4 to return not applicable status for RUNX1."""
+        self.prediction_pp3bp4 = PP3BP4()
+        self.comment_pp3bp4 = ""
+        if self._is_missense_variant(var_data):
+            score = "revel"
+            var_data.thresholds.revel_pathogenic = 0.88
+            var_data.thresholds.revel_benign = 0.5
+            self.prediction_pp3bp4.PP3 = self._is_pathogenic_score(
+                var_data,
+                (score, getattr(var_data.thresholds, f"{score}_pathogenic")),
+            )
+            self.prediction_pp3bp4.BP4 = self._is_benign_score(
+                var_data,
+                (score, getattr(var_data.thresholds, f"{score}_benign")),
+            )
+            var_data.thresholds.spliceAI_acceptor_gain = 0.2
+            var_data.thresholds.spliceAI_acceptor_loss = 0.2
+            var_data.thresholds.spliceAI_donor_gain = 0.2
+            var_data.thresholds.spliceAI_donor_loss = 0.2
+            self.prediction_pp3bp4.BP4 = self.prediction_pp3bp4.BP4 and not self._affect_spliceAI(
+                var_data
+            )
+        elif self._is_synonymous_variant(var_data) or self._is_splice_variant(var_data):
+            var_data.thresholds.spliceAI_acceptor_gain = 0.38
+            var_data.thresholds.spliceAI_acceptor_loss = 0.38
+            var_data.thresholds.spliceAI_donor_gain = 0.38
+            var_data.thresholds.spliceAI_donor_loss = 0.38
+            self.prediction_pp3bp4.PP3 = self.prediction_pp3bp4.PP3 or self._affect_spliceAI(
+                var_data
+            )
+            var_data.thresholds.spliceAI_acceptor_gain = 0.2
+            var_data.thresholds.spliceAI_acceptor_loss = 0.2
+            var_data.thresholds.spliceAI_donor_gain = 0.2
+            var_data.thresholds.spliceAI_donor_loss = 0.2
+            self.prediction_pp3bp4.BP4 = self.prediction_pp3bp4.BP4 and not self._affect_spliceAI(
+                var_data
+            )
+        return self.prediction_pp3bp4, self.comment_pp3bp4
 
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Change BP7 thresholds for Myeloid Malignancy VCEP."""

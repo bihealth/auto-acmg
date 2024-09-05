@@ -599,13 +599,17 @@ class AutoACMGSeqVarTresholds(AutoAcmgBaseModel):
     #: BayesDel_noAF pathogenic threshold
     bayesDel_noAF_pathogenic: float = 0.521
     #: Revel pathogenic threshold
-    revel_pathogenic: float = 100.0
+    revel_pathogenic: float = 0.773
+    #: CADD pathogenic threshold
+    cadd_pathogenic: float = 20.0
     #: MetaRNN benign threshold
     metaRNN_benign: float = 0.267
     #: BayesDel_noAF benign threshold
     bayesDel_noAF_benign: float = -0.476
     #: Revel benign threshold
-    revel_benign: float = -100.0
+    revel_benign: float = 0.016
+    #: CADD benign threshold
+    cadd_benign: float = 10.0
     #: PP2 and BP1 pathogenic threshold
     pp2bp1_pathogenic: float = 0.808
     #: PP2 and BP1 benign threshold

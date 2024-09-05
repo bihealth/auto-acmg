@@ -9,6 +9,7 @@ from typing import Optional, Tuple
 from loguru import logger
 
 from src.defs.auto_acmg import (
+    PP3BP4,
     PS1PM5,
     AutoACMGCriteria,
     AutoACMGPrediction,
@@ -16,6 +17,7 @@ from src.defs.auto_acmg import (
     AutoACMGStrength,
     VcepSpec,
 )
+from src.defs.exceptions import AutoAcmgBaseException
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
