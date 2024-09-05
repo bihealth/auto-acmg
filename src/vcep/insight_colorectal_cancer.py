@@ -19,6 +19,7 @@ from typing import List, Optional, Tuple
 from loguru import logger
 
 from src.defs.auto_acmg import (
+    PP3BP4,
     PS1PM5,
     AutoACMGCriteria,
     AutoACMGPrediction,
@@ -26,6 +27,7 @@ from src.defs.auto_acmg import (
     AutoACMGStrength,
     VcepSpec,
 )
+from src.defs.exceptions import AutoAcmgBaseException
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
@@ -196,6 +198,50 @@ class InsightColorectalCancerPredictor(DefaultSeqVarPredictor):
                 summary=comment,
             ),
         )
+
+    def verify_pp3bp4(
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
+    ) -> Tuple[Optional[PP3BP4], str]:
+        """Predict PP3 and BP4 criteria."""
+        self.prediction_pp3bp4 = PP3BP4()
+        self.comment_pp3bp4 = ""
+        try:
+            self.prediction_pp3bp4.PP3 = self._is_pathogenic_score(
+                var_data,
+                ("metaRNN", var_data.thresholds.metaRNN_pathogenic),
+                ("bayesDel_noAF", var_data.thresholds.bayesDel_noAF_pathogenic),
+            )
+            self.prediction_pp3bp4.BP4 = self._is_benign_score(
+                var_data,
+                ("metaRNN", var_data.thresholds.metaRNN_benign),
+                ("bayesDel_noAF", var_data.thresholds.bayesDel_noAF_benign),
+            )
+            self.comment_pp3bp4 += (
+                f"MetaRNN score: {var_data.scores.dbnsfp.metaRNN}, "
+                f"MetaRNN threshold: {var_data.thresholds.metaRNN_pathogenic}. "
+                f"BayesDel_noAF score: {var_data.scores.dbnsfp.bayesDel_noAF}, "
+                f"BayesDel_noAF threshold: {var_data.thresholds.bayesDel_noAF_pathogenic}. "
+            )
+
+            var_data.thresholds.spliceAI_acceptor_gain = 0.2
+            var_data.thresholds.spliceAI_acceptor_loss = 0.2
+            var_data.thresholds.spliceAI_donor_gain = 0.2
+            var_data.thresholds.spliceAI_donor_loss = 0.2
+            self.prediction_pp3bp4.PP3 = self.prediction_pp3bp4.PP3 or self._affect_spliceAI(
+                var_data
+            )
+            var_data.thresholds.spliceAI_acceptor_gain = 0.1
+            var_data.thresholds.spliceAI_acceptor_loss = 0.1
+            var_data.thresholds.spliceAI_donor_gain = 0.1
+            var_data.thresholds.spliceAI_donor_loss = 0.1
+            self.prediction_pp3bp4.BP4 = self.prediction_pp3bp4.BP4 and not self._affect_spliceAI(
+                var_data
+            )
+
+        except AutoAcmgBaseException as e:
+            self.comment_pp3bp4 = f"An error occurred during prediction. Error: {e}"
+            self.prediction_pp3bp4 = None
+        return self.prediction_pp3bp4, self.comment_pp3bp4
 
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """
