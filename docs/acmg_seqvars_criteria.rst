@@ -251,10 +251,6 @@ Criteria
 PVS1 (null variant)
 ===================
 
-.. note::
-
-    For full information visit the dedicated section of :ref:`PVS1 Algorithm <acmg_pvs1_algorithm>`.
-
 Original Definition
 -------------------
 
