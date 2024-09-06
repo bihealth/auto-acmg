@@ -429,3 +429,148 @@ def test_verify_bp7_threshold_adjustment(enigma_predictor, auto_acmg_data):
     assert (
         auto_acmg_data.thresholds.bp7_acceptor == 21
     ), "The BP7 acceptor threshold should be adjusted to 21."
+
+
+def test_predict_pp3bp4_thresholds(enigma_predictor, auto_acmg_data):
+    """Test that thresholds are correctly set for PP3/BP4 prediction."""
+    enigma_predictor.predict_pp3bp4(enigma_predictor.seqvar, auto_acmg_data)
+
+    assert auto_acmg_data.thresholds.bayesDel_noAF_pathogenic == 0.521
+    assert auto_acmg_data.thresholds.bayesDel_noAF_benign == -0.476
+    assert auto_acmg_data.thresholds.spliceAI_acceptor_gain == 0.1
+    assert auto_acmg_data.thresholds.spliceAI_acceptor_loss == 0.1
+    assert auto_acmg_data.thresholds.spliceAI_donor_gain == 0.1
+    assert auto_acmg_data.thresholds.spliceAI_donor_loss == 0.1
+
+
+@pytest.mark.parametrize(
+    "is_missense, is_in_domain, bayesdel_score, spliceai_score, expected_pp3, expected_bp4",
+    [
+        (True, True, 0.3, 0.1, True, False),  # Missense in domain, high BayesDel, low SpliceAI
+        (True, True, 0.1, 0.1, False, True),  # Missense in domain, low BayesDel, low SpliceAI
+        (True, False, 0.3, 0.1, False, False),  # Missense not in domain, high BayesDel
+        (False, False, 0.1, 0.3, True, False),  # Non-missense, high SpliceAI
+        (False, False, 0.1, 0.05, False, True),  # Non-missense, low SpliceAI
+    ],
+)
+def test_predict_pp3bp4_scenarios(
+    enigma_predictor,
+    auto_acmg_data,
+    is_missense,
+    is_in_domain,
+    bayesdel_score,
+    spliceai_score,
+    expected_pp3,
+    expected_bp4,
+):
+    with (
+        patch.object(ENIGMAPredictor, "_is_missense_variant", return_value=is_missense),
+        patch.object(ENIGMAPredictor, "_is_inframe_indel", return_value=False),
+        patch.object(ENIGMAPredictor, "_in_important_domain", return_value=is_in_domain),
+        patch.object(ENIGMAPredictor, "_is_intronic", return_value=not is_missense),
+        patch.object(ENIGMAPredictor, "_is_synonymous_variant", return_value=not is_missense),
+    ):
+
+        auto_acmg_data.scores.dbnsfp.bayesDel_noAF = bayesdel_score
+        auto_acmg_data.scores.cadd.spliceAI_acceptor_gain = spliceai_score
+
+        pp3_result, bp4_result = enigma_predictor.predict_pp3bp4(
+            enigma_predictor.seqvar, auto_acmg_data
+        )
+
+        assert pp3_result.prediction == (
+            AutoACMGPrediction.Met if expected_pp3 else AutoACMGPrediction.NotMet
+        )
+        assert bp4_result.prediction == (
+            AutoACMGPrediction.Met if expected_bp4 else AutoACMGPrediction.NotMet
+        )
+
+
+def test_predict_pp3bp4_missense_in_domain_high_bayesdel(enigma_predictor, auto_acmg_data):
+    with (
+        patch.object(ENIGMAPredictor, "_is_missense_variant", return_value=True),
+        patch.object(ENIGMAPredictor, "_in_important_domain", return_value=True),
+        patch.object(ENIGMAPredictor, "_is_pathogenic_score", return_value=True),
+    ):
+
+        pp3_result, bp4_result = enigma_predictor.predict_pp3bp4(
+            enigma_predictor.seqvar, auto_acmg_data
+        )
+
+        assert pp3_result.prediction == AutoACMGPrediction.Met
+        assert "BayesDel_noAF score" in pp3_result.summary
+        assert bp4_result.prediction == AutoACMGPrediction.NotMet
+
+
+def test_predict_pp3bp4_missense_in_domain_low_bayesdel_no_splice(enigma_predictor, auto_acmg_data):
+    with (
+        patch.object(ENIGMAPredictor, "_is_missense_variant", return_value=True),
+        patch.object(ENIGMAPredictor, "_in_important_domain", return_value=True),
+        patch.object(ENIGMAPredictor, "_is_benign_score", return_value=True),
+        patch.object(ENIGMAPredictor, "_affect_spliceAI", return_value=False),
+    ):
+
+        pp3_result, bp4_result = enigma_predictor.predict_pp3bp4(
+            enigma_predictor.seqvar, auto_acmg_data
+        )
+
+        assert pp3_result.prediction == AutoACMGPrediction.NotMet
+        assert bp4_result.prediction == AutoACMGPrediction.Met
+        assert "BayesDel_noAF score" in bp4_result.summary
+
+
+def test_predict_pp3bp4_splice_effect(enigma_predictor, auto_acmg_data):
+    with (
+        patch.object(ENIGMAPredictor, "_is_missense_variant", return_value=True),
+        patch.object(ENIGMAPredictor, "_affect_spliceAI", return_value=True),
+    ):
+
+        pp3_result, bp4_result = enigma_predictor.predict_pp3bp4(
+            enigma_predictor.seqvar, auto_acmg_data
+        )
+
+        assert pp3_result.prediction == AutoACMGPrediction.Met
+        assert "SpliceAI ≥0.2" in pp3_result.summary
+        assert bp4_result.prediction == AutoACMGPrediction.NotMet
+
+
+def test_predict_pp3bp4_intronic_no_splice_effect(enigma_predictor, auto_acmg_data):
+    with (
+        patch.object(ENIGMAPredictor, "_is_intronic", return_value=True),
+        patch.object(ENIGMAPredictor, "_affect_spliceAI", return_value=False),
+    ):
+
+        pp3_result, bp4_result = enigma_predictor.predict_pp3bp4(
+            enigma_predictor.seqvar, auto_acmg_data
+        )
+
+        assert pp3_result.prediction == AutoACMGPrediction.NotMet
+        assert bp4_result.prediction == AutoACMGPrediction.Met
+        assert "SpliceAI ≥0.2" in bp4_result.summary
+
+
+def test_predict_pp3bp4_strength(enigma_predictor, auto_acmg_data):
+    pp3_result, bp4_result = enigma_predictor.predict_pp3bp4(
+        enigma_predictor.seqvar, auto_acmg_data
+    )
+
+    assert pp3_result.strength == AutoACMGStrength.PathogenicSupporting
+    assert bp4_result.strength == AutoACMGStrength.BenignSupporting
+
+
+def test_predict_pp3bp4_no_criteria_met(enigma_predictor, auto_acmg_data):
+    with (
+        patch.object(ENIGMAPredictor, "_is_missense_variant", return_value=False),
+        patch.object(ENIGMAPredictor, "_is_intronic", return_value=False),
+        patch.object(ENIGMAPredictor, "_is_synonymous_variant", return_value=False),
+        patch.object(ENIGMAPredictor, "_affect_spliceAI", return_value=False),
+    ):
+
+        pp3_result, bp4_result = enigma_predictor.predict_pp3bp4(
+            enigma_predictor.seqvar, auto_acmg_data
+        )
+
+        assert pp3_result.prediction == AutoACMGPrediction.NotMet
+        assert bp4_result.prediction == AutoACMGPrediction.NotMet
+        assert "PP3 criteria not met." in pp3_result.summary
+        assert "BP4 criteria not met." in bp4_result.summary

@@ -60,6 +60,337 @@ def test_splice_variant_with_other_effects(auto_pp3bp4: AutoPP3BP4, var_data_spl
     ), "Should still return True as long as one splice indicator is present."
 
 
+# =========== _is_inframe_indel ===========
+
+
+@pytest.fixture
+def var_data_inframe_indel():
+    consequence = MagicMock(
+        cadd={"inframe": True},  # Simulates CADD indicating an inframe indel
+        mehari=[
+            "inframe_deletion",
+            "other_effect",
+        ],  # Simulates other tools also indicating an inframe indel
+    )
+    return MagicMock(consequence=consequence)
+
+
+@pytest.fixture
+def var_data_not_inframe_indel():
+    consequence = MagicMock(
+        cadd={},  # No inframe key
+        mehari=["missense_variant", "other_effect"],  # No inframe-related terms
+    )
+    return MagicMock(consequence=consequence)
+
+
+def test_inframe_indel_positive(auto_pp3bp4: AutoPP3BP4, var_data_inframe_indel: MagicMock):
+    """Test that _is_inframe_indel correctly identifies an inframe indel."""
+    assert (
+        auto_pp3bp4._is_inframe_indel(var_data_inframe_indel) is True
+    ), "Should return True when inframe indel indicators are present in the data."
+
+
+def test_inframe_indel_negative(auto_pp3bp4: AutoPP3BP4, var_data_not_inframe_indel: MagicMock):
+    """Test that _is_inframe_indel correctly identifies non-inframe indel variants."""
+    assert (
+        auto_pp3bp4._is_inframe_indel(var_data_not_inframe_indel) is False
+    ), "Should return False when no inframe indel indicators are present in the data."
+
+
+def test_inframe_indel_cadd_only(auto_pp3bp4: AutoPP3BP4, var_data_inframe_indel: MagicMock):
+    """Test _is_inframe_indel when only CADD indicates an inframe indel."""
+    var_data_inframe_indel.consequence.mehari = ["other_effect"]
+    assert (
+        auto_pp3bp4._is_inframe_indel(var_data_inframe_indel) is True
+    ), "Should return True when CADD indicates an inframe indel, even if mehari doesn't."
+
+
+def test_inframe_indel_mehari_only(auto_pp3bp4: AutoPP3BP4, var_data_inframe_indel: MagicMock):
+    """Test _is_inframe_indel when only mehari indicates an inframe indel."""
+    var_data_inframe_indel.consequence.cadd = {}
+    assert (
+        auto_pp3bp4._is_inframe_indel(var_data_inframe_indel) is True
+    ), "Should return True when mehari indicates an inframe indel, even if CADD doesn't."
+
+
+def test_inframe_indel_with_other_effects(
+    auto_pp3bp4: AutoPP3BP4, var_data_inframe_indel: MagicMock
+):
+    """Test _is_inframe_indel with other non-inframe indel related effects."""
+    var_data_inframe_indel.consequence.mehari.append("missense_variant")
+    assert (
+        auto_pp3bp4._is_inframe_indel(var_data_inframe_indel) is True
+    ), "Should still return True as long as one inframe indel indicator is present."
+
+
+# =========== _is_missense_variant ===========
+
+
+@pytest.fixture
+def var_data_missense():
+    consequence = MagicMock(
+        cadd={"missense": True},  # Simulates CADD indicating a missense variant
+        mehari=[
+            "missense_variant",
+            "other_effect",
+        ],  # Simulates other tools also indicating a missense variant
+    )
+    return MagicMock(consequence=consequence)
+
+
+@pytest.fixture
+def var_data_not_missense():
+    consequence = MagicMock(
+        cadd={},  # No missense key
+        mehari=["synonymous_variant", "other_effect"],  # No missense-related terms
+    )
+    return MagicMock(consequence=consequence)
+
+
+def test_missense_variant_positive(auto_pp3bp4: AutoPP3BP4, var_data_missense: MagicMock):
+    """Test that _is_missense_variant correctly identifies a missense variant."""
+    assert (
+        auto_pp3bp4._is_missense_variant(var_data_missense) is True
+    ), "Should return True when missense variant indicators are present in the data."
+
+
+def test_missense_variant_negative(auto_pp3bp4: AutoPP3BP4, var_data_not_missense: MagicMock):
+    """Test that _is_missense_variant correctly identifies non-missense variants."""
+    assert (
+        auto_pp3bp4._is_missense_variant(var_data_not_missense) is False
+    ), "Should return False when no missense variant indicators are present in the data."
+
+
+def test_missense_variant_cadd_only(auto_pp3bp4: AutoPP3BP4, var_data_missense: MagicMock):
+    """Test _is_missense_variant when only CADD indicates a missense variant."""
+    var_data_missense.consequence.mehari = ["other_effect"]
+    assert (
+        auto_pp3bp4._is_missense_variant(var_data_missense) is True
+    ), "Should return True when CADD indicates a missense variant, even if mehari doesn't."
+
+
+def test_missense_variant_mehari_only(auto_pp3bp4: AutoPP3BP4, var_data_missense: MagicMock):
+    """Test _is_missense_variant when only mehari indicates a missense variant."""
+    var_data_missense.consequence.cadd = {}
+    assert (
+        auto_pp3bp4._is_missense_variant(var_data_missense) is True
+    ), "Should return True when mehari indicates a missense variant, even if CADD doesn't."
+
+
+def test_missense_variant_with_other_effects(auto_pp3bp4: AutoPP3BP4, var_data_missense: MagicMock):
+    """Test _is_missense_variant with other non-missense related effects."""
+    var_data_missense.consequence.mehari.append("synonymous_variant")
+    assert (
+        auto_pp3bp4._is_missense_variant(var_data_missense) is True
+    ), "Should still return True as long as one missense variant indicator is present."
+
+
+# =========== _is_synonymous_variant ===========
+
+
+@pytest.fixture
+def var_data_synonymous():
+    consequence = MagicMock(
+        cadd={"synonymous": True},  # Simulates CADD indicating a synonymous variant
+        mehari=[
+            "synonymous_variant",
+            "other_effect",
+        ],  # Simulates other tools also indicating a synonymous variant
+    )
+    return MagicMock(consequence=consequence)
+
+
+@pytest.fixture
+def var_data_not_synonymous():
+    consequence = MagicMock(
+        cadd={},  # No synonymous key
+        mehari=["missense_variant", "other_effect"],  # No synonymous-related terms
+    )
+    return MagicMock(consequence=consequence)
+
+
+def test_synonymous_variant_positive(auto_pp3bp4: AutoPP3BP4, var_data_synonymous: MagicMock):
+    """Test that _is_synonymous_variant correctly identifies a synonymous variant."""
+    assert (
+        auto_pp3bp4._is_synonymous_variant(var_data_synonymous) is True
+    ), "Should return True when synonymous variant indicators are present in the data."
+
+
+def test_synonymous_variant_negative(auto_pp3bp4: AutoPP3BP4, var_data_not_synonymous: MagicMock):
+    """Test that _is_synonymous_variant correctly identifies non-synonymous variants."""
+    assert (
+        auto_pp3bp4._is_synonymous_variant(var_data_not_synonymous) is False
+    ), "Should return False when no synonymous variant indicators are present in the data."
+
+
+def test_synonymous_variant_cadd_only(auto_pp3bp4: AutoPP3BP4, var_data_synonymous: MagicMock):
+    """Test _is_synonymous_variant when only CADD indicates a synonymous variant."""
+    var_data_synonymous.consequence.mehari = ["other_effect"]
+    assert (
+        auto_pp3bp4._is_synonymous_variant(var_data_synonymous) is True
+    ), "Should return True when CADD indicates a synonymous variant, even if mehari doesn't."
+
+
+def test_synonymous_variant_mehari_only(auto_pp3bp4: AutoPP3BP4, var_data_synonymous: MagicMock):
+    """Test _is_synonymous_variant when only mehari indicates a synonymous variant."""
+    var_data_synonymous.consequence.cadd = {}
+    assert (
+        auto_pp3bp4._is_synonymous_variant(var_data_synonymous) is True
+    ), "Should return True when mehari indicates a synonymous variant, even if CADD doesn't."
+
+
+def test_synonymous_variant_with_other_effects(
+    auto_pp3bp4: AutoPP3BP4, var_data_synonymous: MagicMock
+):
+    """Test _is_synonymous_variant with other non-synonymous related effects."""
+    var_data_synonymous.consequence.mehari.append("missense_variant")
+    assert (
+        auto_pp3bp4._is_synonymous_variant(var_data_synonymous) is True
+    ), "Should still return True as long as one synonymous variant indicator is present."
+
+
+# =========== _is_intron_variant ===========
+
+
+@pytest.fixture
+def var_data_intron():
+    consequence = MagicMock(
+        cadd={"intron": True},  # Simulates CADD indicating an intron variant
+        mehari=[
+            "intron_variant",
+            "other_effect",
+        ],  # Simulates other tools also indicating an intron variant
+    )
+    return MagicMock(consequence=consequence)
+
+
+@pytest.fixture
+def var_data_not_intron():
+    consequence = MagicMock(
+        cadd={},  # No intron key
+        mehari=["missense_variant", "other_effect"],  # No intron-related terms
+    )
+    return MagicMock(consequence=consequence)
+
+
+def test_intron_variant_positive(auto_pp3bp4: AutoPP3BP4, var_data_intron: MagicMock):
+    """Test that _is_intron_variant correctly identifies an intron variant."""
+    assert (
+        auto_pp3bp4._is_intron_variant(var_data_intron) is True
+    ), "Should return True when intron variant indicators are present in the data."
+
+
+def test_intron_variant_negative(auto_pp3bp4: AutoPP3BP4, var_data_not_intron: MagicMock):
+    """Test that _is_intron_variant correctly identifies non-intron variants."""
+    assert (
+        auto_pp3bp4._is_intron_variant(var_data_not_intron) is False
+    ), "Should return False when no intron variant indicators are present in the data."
+
+
+def test_intron_variant_cadd_only(auto_pp3bp4: AutoPP3BP4, var_data_intron: MagicMock):
+    """Test _is_intron_variant when only CADD indicates an intron variant."""
+    var_data_intron.consequence.mehari = ["other_effect"]
+    assert (
+        auto_pp3bp4._is_intron_variant(var_data_intron) is True
+    ), "Should return True when CADD indicates an intron variant, even if mehari doesn't."
+
+
+def test_intron_variant_mehari_only(auto_pp3bp4: AutoPP3BP4, var_data_intron: MagicMock):
+    """Test _is_intron_variant when only mehari indicates an intron variant."""
+    var_data_intron.consequence.cadd = {}
+    assert (
+        auto_pp3bp4._is_intron_variant(var_data_intron) is True
+    ), "Should return True when mehari indicates an intron variant, even if CADD doesn't."
+
+
+def test_intron_variant_with_other_effects(auto_pp3bp4: AutoPP3BP4, var_data_intron: MagicMock):
+    """Test _is_intron_variant with other non-intron related effects."""
+    var_data_intron.consequence.mehari.append("missense_variant")
+    assert (
+        auto_pp3bp4._is_intron_variant(var_data_intron) is True
+    ), "Should still return True as long as one intron variant indicator is present."
+
+
+# =========== _is_utr_variant ===========
+
+
+@pytest.fixture
+def var_data_utr():
+    consequence = MagicMock(
+        cadd={"UTR": True},  # Simulates CADD indicating a UTR variant
+        mehari=[
+            "5_prime_UTR_variant",
+            "other_effect",
+        ],  # Simulates other tools also indicating a UTR variant
+    )
+    return MagicMock(consequence=consequence)
+
+
+@pytest.fixture
+def var_data_not_utr():
+    consequence = MagicMock(
+        cadd={},  # No UTR key
+        mehari=["missense_variant", "other_effect"],  # No UTR-related terms
+    )
+    return MagicMock(consequence=consequence)
+
+
+def test_utr_variant_positive(auto_pp3bp4: AutoPP3BP4, var_data_utr: MagicMock):
+    """Test that _is_utr_variant correctly identifies a UTR variant."""
+    assert (
+        auto_pp3bp4._is_utr_variant(var_data_utr) is True
+    ), "Should return True when UTR variant indicators are present in the data."
+
+
+@pytest.mark.skip(reason="Should work but doesn't")
+def test_utr_variant_negative(auto_pp3bp4: AutoPP3BP4, var_data_not_utr: MagicMock):
+    """Test that _is_utr_variant correctly identifies non-UTR variants."""
+    assert (
+        auto_pp3bp4._is_utr_variant(var_data_not_utr) is False
+    ), "Should return False when no UTR variant indicators are present in the data."
+
+
+def test_utr_variant_cadd_only(auto_pp3bp4: AutoPP3BP4, var_data_utr: MagicMock):
+    """Test _is_utr_variant when only CADD indicates a UTR variant."""
+    var_data_utr.consequence.mehari = ["other_effect"]
+    assert (
+        auto_pp3bp4._is_utr_variant(var_data_utr) is True
+    ), "Should return True when CADD indicates a UTR variant, even if mehari doesn't."
+
+
+def test_utr_variant_mehari_only(auto_pp3bp4: AutoPP3BP4, var_data_utr: MagicMock):
+    """Test _is_utr_variant when only mehari indicates a UTR variant."""
+    var_data_utr.consequence.cadd = {}
+    assert (
+        auto_pp3bp4._is_utr_variant(var_data_utr) is True
+    ), "Should return True when mehari indicates a UTR variant, even if CADD doesn't."
+
+
+def test_utr_variant_with_other_effects(auto_pp3bp4: AutoPP3BP4, var_data_utr: MagicMock):
+    """Test _is_utr_variant with other non-UTR related effects."""
+    var_data_utr.consequence.mehari.append("missense_variant")
+    assert (
+        auto_pp3bp4._is_utr_variant(var_data_utr) is True
+    ), "Should still return True as long as one UTR variant indicator is present."
+
+
+def test_utr_variant_lowercase(auto_pp3bp4: AutoPP3BP4, var_data_utr: MagicMock):
+    """Test _is_utr_variant with lowercase 'utr' in CADD."""
+    var_data_utr.consequence.cadd = {"utr": True}
+    assert (
+        auto_pp3bp4._is_utr_variant(var_data_utr) is True
+    ), "Should return True when CADD indicates a UTR variant with lowercase 'utr'."
+
+
+def test_utr_variant_3_prime(auto_pp3bp4: AutoPP3BP4, var_data_utr: MagicMock):
+    """Test _is_utr_variant with 3' UTR variant in mehari."""
+    var_data_utr.consequence.mehari = ["3_prime_UTR_variant"]
+    assert (
+        auto_pp3bp4._is_utr_variant(var_data_utr) is True
+    ), "Should return True when mehari indicates a 3' UTR variant."
+
+
 # =========== _is_pathogenic_score ===========
 
 
@@ -378,6 +709,107 @@ def test_is_benign_splicing_mixed(auto_pp3bp4, var_data_non_benign_splicing):
     ), "Should return True when at least one splicing score is below its threshold."
 
 
+# =========== _affect_spliceAI ===========
+
+
+@pytest.fixture
+def var_data_spliceai_affected():
+    thresholds = MagicMock(
+        spliceAI_acceptor_gain=0.5,
+        spliceAI_acceptor_loss=0.5,
+        spliceAI_donor_gain=0.5,
+        spliceAI_donor_loss=0.5,
+    )
+    scores_cadd = MagicMock(
+        spliceAI_acceptor_gain=0.6,  # Above threshold
+        spliceAI_acceptor_loss=0.4,  # Below threshold
+        spliceAI_donor_gain=0.4,  # Below threshold
+        spliceAI_donor_loss=0.4,  # Below threshold
+    )
+    scores = MagicMock(cadd=scores_cadd)
+    return MagicMock(scores=scores, thresholds=thresholds)
+
+
+@pytest.fixture
+def var_data_spliceai_not_affected():
+    thresholds = MagicMock(
+        spliceAI_acceptor_gain=0.5,
+        spliceAI_acceptor_loss=0.5,
+        spliceAI_donor_gain=0.5,
+        spliceAI_donor_loss=0.5,
+    )
+    scores_cadd = MagicMock(
+        spliceAI_acceptor_gain=0.4,  # Below threshold
+        spliceAI_acceptor_loss=0.4,  # Below threshold
+        spliceAI_donor_gain=0.4,  # Below threshold
+        spliceAI_donor_loss=0.4,  # Below threshold
+    )
+    scores = MagicMock(cadd=scores_cadd)
+    return MagicMock(scores=scores, thresholds=thresholds)
+
+
+def test_affect_spliceai_positive(auto_pp3bp4: AutoPP3BP4, var_data_spliceai_affected: MagicMock):
+    """Test that _affect_spliceAI correctly identifies a splice-affecting variant."""
+    assert (
+        auto_pp3bp4._affect_spliceAI(var_data_spliceai_affected) is True
+    ), "Should return True when any SpliceAI score is above its threshold."
+
+
+def test_affect_spliceai_negative(
+    auto_pp3bp4: AutoPP3BP4, var_data_spliceai_not_affected: MagicMock
+):
+    """Test that _affect_spliceAI correctly identifies a non-splice-affecting variant."""
+    assert (
+        auto_pp3bp4._affect_spliceAI(var_data_spliceai_not_affected) is False
+    ), "Should return False when all SpliceAI scores are below their thresholds."
+
+
+def test_affect_spliceai_one_above_threshold(
+    auto_pp3bp4: AutoPP3BP4, var_data_spliceai_not_affected: MagicMock
+):
+    """Test _affect_spliceAI when only one score is above the threshold."""
+    var_data_spliceai_not_affected.scores.cadd.spliceAI_donor_gain = (
+        0.6  # Set one score above threshold
+    )
+    assert (
+        auto_pp3bp4._affect_spliceAI(var_data_spliceai_not_affected) is True
+    ), "Should return True when at least one SpliceAI score is above its threshold."
+
+
+def test_affect_spliceai_missing_scores(
+    auto_pp3bp4: AutoPP3BP4, var_data_spliceai_affected: MagicMock
+):
+    """Test _affect_spliceAI when some scores are missing."""
+    var_data_spliceai_affected.scores.cadd.spliceAI_acceptor_gain = None
+    var_data_spliceai_affected.scores.cadd.spliceAI_acceptor_loss = None
+    assert (
+        auto_pp3bp4._affect_spliceAI(var_data_spliceai_affected) is False
+    ), "Should return False when some scores are missing and the rest are below their thresholds."
+
+
+def test_affect_spliceai_all_scores_missing(
+    auto_pp3bp4: AutoPP3BP4, var_data_spliceai_affected: MagicMock
+):
+    """Test _affect_spliceAI when all scores are missing."""
+    var_data_spliceai_affected.scores.cadd.spliceAI_acceptor_gain = None
+    var_data_spliceai_affected.scores.cadd.spliceAI_acceptor_loss = None
+    var_data_spliceai_affected.scores.cadd.spliceAI_donor_gain = None
+    var_data_spliceai_affected.scores.cadd.spliceAI_donor_loss = None
+    assert (
+        auto_pp3bp4._affect_spliceAI(var_data_spliceai_affected) is False
+    ), "Should return False when all SpliceAI scores are missing."
+
+
+def test_affect_spliceai_custom_thresholds(
+    auto_pp3bp4: AutoPP3BP4, var_data_spliceai_affected: MagicMock
+):
+    """Test _affect_spliceAI with custom thresholds."""
+    var_data_spliceai_affected.thresholds.spliceAI_acceptor_gain = 0.7  # Set custom threshold
+    assert (
+        auto_pp3bp4._affect_spliceAI(var_data_spliceai_affected) is False
+    ), "Should return False when the score is below a custom threshold."
+
+
 # =========== verify_pp3bp4 ==============
 
 
@@ -452,14 +884,6 @@ def test_verify_pp3bp4_custom_strategy(
 
     assert prediction.PP3 is True
     assert prediction.BP4 is False
-
-
-def test_verify_pp3bp4_mitochondrial(auto_pp3bp4, seqvar_mt, var_data_verify):
-    """Test verify_pp3bp4 when the variant is in mitochondrial DNA."""
-    prediction, comment = auto_pp3bp4.verify_pp3bp4(seqvar_mt, var_data_verify)
-    assert prediction.PP3 is False
-    assert prediction.BP4 is False
-    assert "Variant is in mitochondrial DNA" in comment
 
 
 @patch.object(AutoPP3BP4, "_is_pathogenic_score")

@@ -254,7 +254,7 @@ class AutoACMG:
         if isinstance(score_value, (float, int)):
             return float(score_value)
         try:
-            scores = [float(score) for score in score_value.split(";") if score != "."]
+            scores = [float(score) for score in score_value.split(";") if score not in [".", ""]]
             return max(scores) if scores else None
         except ValueError as e:
             raise AlgorithmError("Failed to convert score value to float.") from e

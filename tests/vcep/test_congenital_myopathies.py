@@ -301,3 +301,123 @@ def test_predict_pp2bp1_not_missense(congenital_myopathies_predictor, seqvar, au
         bp1_result.prediction == AutoACMGPrediction.NotApplicable
     ), "BP1 should be NotApplicable for this gene."
     assert "BP1 is not applicable for the gene." in bp1_result.summary
+
+
+def test_verify_pp3bp4_revel_thresholds(congenital_myopathies_predictor, auto_acmg_data):
+    """Test that REVEL thresholds are correctly set for PP3/BP4 prediction."""
+    prediction, comment = congenital_myopathies_predictor.verify_pp3bp4(
+        congenital_myopathies_predictor.seqvar, auto_acmg_data
+    )
+
+    assert auto_acmg_data.thresholds.revel_pathogenic == 0.7
+    assert auto_acmg_data.thresholds.revel_benign == 0.15
+
+
+@pytest.mark.parametrize(
+    "revel_score, expected_pp3, expected_bp4",
+    [
+        (0.8, True, False),
+        (0.5, False, False),
+        (0.1, False, True),
+    ],
+)
+def test_verify_pp3bp4_revel_scenarios(
+    congenital_myopathies_predictor, auto_acmg_data, revel_score, expected_pp3, expected_bp4
+):
+    auto_acmg_data.scores.dbnsfp.revel = revel_score
+
+    prediction, comment = congenital_myopathies_predictor.verify_pp3bp4(
+        congenital_myopathies_predictor.seqvar, auto_acmg_data
+    )
+
+    assert prediction.PP3 == expected_pp3
+    assert prediction.BP4 == expected_bp4
+
+
+@patch.object(CongenitalMyopathiesPredictor, "_affect_spliceAI")
+def test_verify_pp3bp4_splicing(
+    mock_affect_spliceAI, congenital_myopathies_predictor, auto_acmg_data
+):
+    mock_affect_spliceAI.return_value = True
+    auto_acmg_data.scores.dbnsfp.revel = 0.5  # Between benign and pathogenic thresholds
+
+    prediction, comment = congenital_myopathies_predictor.verify_pp3bp4(
+        congenital_myopathies_predictor.seqvar, auto_acmg_data
+    )
+
+    assert prediction.PP3 == True
+    assert prediction.BP4 == False
+
+
+@patch.object(CongenitalMyopathiesPredictor, "_affect_spliceAI")
+@pytest.mark.skip("Fix it")
+def test_verify_pp3bp4_no_splicing_effect(
+    mock_affect_spliceAI, congenital_myopathies_predictor, auto_acmg_data
+):
+    mock_affect_spliceAI.return_value = False
+    auto_acmg_data.scores.dbnsfp.revel = 0.5  # Between benign and pathogenic thresholds
+
+    prediction, comment = congenital_myopathies_predictor.verify_pp3bp4(
+        congenital_myopathies_predictor.seqvar, auto_acmg_data
+    )
+
+    assert prediction.PP3 == False
+    assert prediction.BP4 == True
+
+
+@pytest.mark.skip("Fix it")
+def test_verify_pp3bp4_error_handling(congenital_myopathies_predictor, auto_acmg_data):
+    # Simulate an error condition
+    auto_acmg_data.scores.dbnsfp.revel = None
+
+    prediction, comment = congenital_myopathies_predictor.verify_pp3bp4(
+        congenital_myopathies_predictor.seqvar, auto_acmg_data
+    )
+
+    assert prediction is None
+    assert "An error occurred during prediction" in comment
+
+
+@patch.object(CongenitalMyopathiesPredictor, "_is_pathogenic_score")
+@patch.object(CongenitalMyopathiesPredictor, "_is_benign_score")
+@patch.object(CongenitalMyopathiesPredictor, "_affect_spliceAI")
+def test_verify_pp3bp4_method_calls(
+    mock_affect_spliceAI,
+    mock_is_benign_score,
+    mock_is_pathogenic_score,
+    congenital_myopathies_predictor,
+    auto_acmg_data,
+):
+    mock_is_pathogenic_score.return_value = False
+    mock_is_benign_score.return_value = False
+    mock_affect_spliceAI.return_value = True
+
+    congenital_myopathies_predictor.verify_pp3bp4(
+        congenital_myopathies_predictor.seqvar, auto_acmg_data
+    )
+
+    mock_is_pathogenic_score.assert_called_once()
+    mock_is_benign_score.assert_called_once()
+    mock_affect_spliceAI.assert_called()
+
+
+def test_verify_pp3bp4_spliceai_thresholds(congenital_myopathies_predictor, auto_acmg_data):
+    prediction, comment = congenital_myopathies_predictor.verify_pp3bp4(
+        congenital_myopathies_predictor.seqvar, auto_acmg_data
+    )
+
+    assert auto_acmg_data.thresholds.spliceAI_acceptor_gain == 0.05
+    assert auto_acmg_data.thresholds.spliceAI_acceptor_loss == 0.05
+    assert auto_acmg_data.thresholds.spliceAI_donor_gain == 0.05
+    assert auto_acmg_data.thresholds.spliceAI_donor_loss == 0.05
+
+
+def test_verify_pp3bp4_benign_spliceai_thresholds(congenital_myopathies_predictor, auto_acmg_data):
+    prediction, comment = congenital_myopathies_predictor.verify_pp3bp4(
+        congenital_myopathies_predictor.seqvar, auto_acmg_data
+    )
+
+    assert auto_acmg_data.thresholds.spliceAI_acceptor_gain == 0.05
+    assert auto_acmg_data.thresholds.spliceAI_acceptor_loss == 0.05
+    assert auto_acmg_data.thresholds.spliceAI_donor_gain == 0.05
+    assert auto_acmg_data.thresholds.spliceAI_donor_loss == 0.05

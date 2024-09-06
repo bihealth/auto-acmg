@@ -121,7 +121,10 @@ def test_predict_pm1_not_applicable(cardiomyopathy_predictor, auto_acmg_data):
 def test_predict_pm1_fallback_to_default(
     mock_predict_pm1, cardiomyopathy_predictor, auto_acmg_data
 ):
-    """Test when the transcript ID is not in the PM1_CLUSTER mapping, it should fallback to default PM1 prediction."""
+    """
+    Test when the transcript ID is not in the PM1_CLUSTER mapping, it should fallback to default
+    PM1 prediction.
+    """
     auto_acmg_data.hgnc_id = "HGNC:111111111111111"  # Not in the PM1_CLUSTER mapping
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
@@ -325,3 +328,107 @@ def test_predict_bp7_fallback_to_default(
         "Default BP7 prediction fallback." in result.summary
     ), "The summary should indicate the fallback."
     assert mock_super_predict_bp7.called, "super().predict_bp7 should have been called."
+
+
+def test_predict_pp3bp4_revel_thresholds(cardiomyopathy_predictor, auto_acmg_data):
+    """Test that REVEL thresholds are correctly set for PP3/BP4 prediction."""
+    pp3, bp4 = cardiomyopathy_predictor.predict_pp3bp4(
+        cardiomyopathy_predictor.seqvar, auto_acmg_data
+    )
+
+    assert auto_acmg_data.thresholds.pp3bp4_strategy == "revel"
+    assert auto_acmg_data.thresholds.revel_pathogenic == 0.7
+    assert auto_acmg_data.thresholds.revel_benign == 0.4
+
+
+@patch.object(DefaultSeqVarPredictor, "predict_pp3bp4")
+def test_predict_pp3bp4_calls_superclass(
+    mock_super_predict_pp3bp4, cardiomyopathy_predictor, auto_acmg_data
+):
+    mock_super_predict_pp3bp4.return_value = (
+        AutoACMGCriteria(name="PP3", prediction=AutoACMGPrediction.Met),
+        AutoACMGCriteria(name="BP4", prediction=AutoACMGPrediction.NotMet),
+    )
+
+    pp3, bp4 = cardiomyopathy_predictor.predict_pp3bp4(
+        cardiomyopathy_predictor.seqvar, auto_acmg_data
+    )
+
+    mock_super_predict_pp3bp4.assert_called_once_with(
+        cardiomyopathy_predictor.seqvar, auto_acmg_data
+    )
+    assert pp3.name == "PP3"
+    assert bp4.name == "BP4"
+
+
+@pytest.mark.parametrize(
+    "revel_score, expected_pp3, expected_bp4",
+    [
+        (0.8, AutoACMGPrediction.Met, AutoACMGPrediction.NotMet),
+        (0.5, AutoACMGPrediction.NotMet, AutoACMGPrediction.NotMet),
+        (0.3, AutoACMGPrediction.NotMet, AutoACMGPrediction.Met),
+    ],
+)
+def test_predict_pp3bp4_revel_scenarios(
+    cardiomyopathy_predictor, auto_acmg_data, revel_score, expected_pp3, expected_bp4
+):
+    auto_acmg_data.scores.dbnsfp.revel = revel_score
+
+    with patch.object(DefaultSeqVarPredictor, "predict_pp3bp4") as mock_super:
+        mock_super.return_value = (
+            AutoACMGCriteria(name="PP3", prediction=expected_pp3),
+            AutoACMGCriteria(name="BP4", prediction=expected_bp4),
+        )
+
+        pp3, bp4 = cardiomyopathy_predictor.predict_pp3bp4(
+            cardiomyopathy_predictor.seqvar, auto_acmg_data
+        )
+
+    assert pp3.prediction == expected_pp3
+    assert bp4.prediction == expected_bp4
+
+
+def test_predict_pp3bp4_revel_details(cardiomyopathy_predictor, auto_acmg_data):
+    auto_acmg_data.scores.dbnsfp.revel = 0.75
+
+    with patch.object(DefaultSeqVarPredictor, "predict_pp3bp4") as mock_super:
+        mock_super.return_value = (
+            AutoACMGCriteria(
+                name="PP3", prediction=AutoACMGPrediction.Met, summary="REVEL score: 0.75"
+            ),
+            AutoACMGCriteria(
+                name="BP4", prediction=AutoACMGPrediction.NotMet, summary="REVEL score: 0.75"
+            ),
+        )
+
+        pp3, bp4 = cardiomyopathy_predictor.predict_pp3bp4(
+            cardiomyopathy_predictor.seqvar, auto_acmg_data
+        )
+
+    assert "REVEL score: 0.75" in pp3.summary
+    assert "REVEL score: 0.75" in bp4.summary
+
+
+@patch.object(DefaultSeqVarPredictor, "predict_pp3bp4")
+def test_predict_pp3bp4_strength(
+    mock_super_predict_pp3bp4, cardiomyopathy_predictor, auto_acmg_data
+):
+    mock_super_predict_pp3bp4.return_value = (
+        AutoACMGCriteria(
+            name="PP3",
+            prediction=AutoACMGPrediction.Met,
+            strength=AutoACMGStrength.PathogenicSupporting,
+        ),
+        AutoACMGCriteria(
+            name="BP4",
+            prediction=AutoACMGPrediction.NotMet,
+            strength=AutoACMGStrength.BenignSupporting,
+        ),
+    )
+
+    pp3, bp4 = cardiomyopathy_predictor.predict_pp3bp4(
+        cardiomyopathy_predictor.seqvar, auto_acmg_data
+    )
+
+    assert pp3.strength == AutoACMGStrength.PathogenicSupporting
+    assert bp4.strength == AutoACMGStrength.BenignSupporting

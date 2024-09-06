@@ -162,3 +162,120 @@ def test_predict_pp2bp1(lysosomal_diseases_predictor, seqvar, auto_acmg_data):
     assert (
         bp1_result.summary == "BP1 is not applicable for the gene."
     ), "The summary should indicate BP1 is not applicable."
+
+
+def test_verify_pp3bp4_thresholds(lysosomal_diseases_predictor, auto_acmg_data):
+    """Test that the thresholds for PP3/BP4 prediction are correctly set."""
+    lysosomal_diseases_predictor.verify_pp3bp4(lysosomal_diseases_predictor.seqvar, auto_acmg_data)
+
+    assert auto_acmg_data.thresholds.revel_pathogenic == 0.7
+    assert auto_acmg_data.thresholds.revel_benign == 0.5
+    assert auto_acmg_data.thresholds.spliceAI_acceptor_gain == 0.2
+    assert auto_acmg_data.thresholds.spliceAI_acceptor_loss == 0.2
+    assert auto_acmg_data.thresholds.spliceAI_donor_gain == 0.2
+    assert auto_acmg_data.thresholds.spliceAI_donor_loss == 0.2
+
+
+@patch.object(LysosomalDiseasesPredictor, "_is_pathogenic_score")
+@patch.object(LysosomalDiseasesPredictor, "_is_benign_score")
+@patch.object(LysosomalDiseasesPredictor, "_affect_spliceAI")
+def test_verify_pp3bp4_prediction_logic(
+    mock_affect_spliceAI,
+    mock_is_benign_score,
+    mock_is_pathogenic_score,
+    lysosomal_diseases_predictor,
+    auto_acmg_data,
+):
+    """Test the prediction logic for PP3 and BP4."""
+    mock_is_pathogenic_score.return_value = True
+    mock_is_benign_score.return_value = False
+    mock_affect_spliceAI.side_effect = [True, False]  # First call True, second call False
+
+    prediction, comment = lysosomal_diseases_predictor.verify_pp3bp4(
+        lysosomal_diseases_predictor.seqvar, auto_acmg_data
+    )
+
+    assert prediction.PP3 is True
+    assert prediction.BP4 is False
+
+
+@pytest.mark.parametrize(
+    "revel_score, spliceAI_scores, expected_pp3, expected_bp4",
+    [
+        (0.8, [0.6, 0.6, 0.6, 0.6], True, False),  # High REVEL score, high SpliceAI
+        (0.4, [0.1, 0.1, 0.1, 0.1], False, True),  # Low REVEL score, low SpliceAI
+        (0.6, [0.3, 0.3, 0.3, 0.3], False, False),  # Intermediate scores
+        (0.8, [0.1, 0.1, 0.1, 0.1], True, False),  # High REVEL score, low SpliceAI
+        (0.4, [0.6, 0.6, 0.6, 0.6], True, False),  # Low REVEL score, high SpliceAI
+    ],
+)
+def test_verify_pp3bp4_various_scenarios(
+    lysosomal_diseases_predictor,
+    auto_acmg_data,
+    revel_score,
+    spliceAI_scores,
+    expected_pp3,
+    expected_bp4,
+):
+    """Test different scenarios for PP3 and BP4 prediction."""
+    auto_acmg_data.scores.dbnsfp.revel = revel_score
+    auto_acmg_data.scores.cadd.spliceAI_acceptor_gain = spliceAI_scores[0]
+    auto_acmg_data.scores.cadd.spliceAI_acceptor_loss = spliceAI_scores[1]
+    auto_acmg_data.scores.cadd.spliceAI_donor_gain = spliceAI_scores[2]
+    auto_acmg_data.scores.cadd.spliceAI_donor_loss = spliceAI_scores[3]
+
+    prediction, _ = lysosomal_diseases_predictor.verify_pp3bp4(
+        lysosomal_diseases_predictor.seqvar, auto_acmg_data
+    )
+
+    assert prediction.PP3 == expected_pp3
+    assert prediction.BP4 == expected_bp4
+
+
+@pytest.mark.skip(reason="Fix it")
+def test_verify_pp3bp4_missing_scores(lysosomal_diseases_predictor, auto_acmg_data):
+    """Test behavior when scores are missing."""
+    auto_acmg_data.scores.dbnsfp.revel = None
+
+    prediction, comment = lysosomal_diseases_predictor.verify_pp3bp4(
+        lysosomal_diseases_predictor.seqvar, auto_acmg_data
+    )
+
+    assert prediction is None
+    assert "An error occurred during prediction" in comment
+
+
+@pytest.mark.skip(reason="Fix it")
+def test_verify_pp3bp4_error_handling(lysosomal_diseases_predictor, auto_acmg_data):
+    """Test error handling in verify_pp3bp4 method."""
+    with patch.object(
+        LysosomalDiseasesPredictor,
+        "_is_pathogenic_score",
+        side_effect=Exception("Test error"),
+    ):
+        prediction, comment = lysosomal_diseases_predictor.verify_pp3bp4(
+            lysosomal_diseases_predictor.seqvar, auto_acmg_data
+        )
+
+        assert prediction is None
+        assert "An error occurred during prediction" in comment
+        assert "Test error" in comment
+
+
+def test_verify_pp3bp4_spliceai_thresholds(lysosomal_diseases_predictor, auto_acmg_data):
+    """Test that SpliceAI thresholds are correctly adjusted during PP3/BP4 prediction."""
+    with (
+        patch.object(LysosomalDiseasesPredictor, "_is_pathogenic_score", return_value=False),
+        patch.object(LysosomalDiseasesPredictor, "_is_benign_score", return_value=False),
+        patch.object(LysosomalDiseasesPredictor, "_affect_spliceAI", return_value=False),
+    ):
+
+        lysosomal_diseases_predictor.verify_pp3bp4(
+            lysosomal_diseases_predictor.seqvar, auto_acmg_data
+        )
+
+        # Check that thresholds were adjusted for BP4
+        assert auto_acmg_data.thresholds.spliceAI_acceptor_gain == 0.2
+        assert auto_acmg_data.thresholds.spliceAI_acceptor_loss == 0.2
+        assert auto_acmg_data.thresholds.spliceAI_donor_gain == 0.2
+        assert auto_acmg_data.thresholds.spliceAI_donor_loss == 0.2

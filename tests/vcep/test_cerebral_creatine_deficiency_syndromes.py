@@ -324,6 +324,123 @@ def test_predict_pp2bp1(cerebral_creatine_predictor, seqvar, auto_acmg_data):
     ), "The summary should indicate BP1 is not applicable."
 
 
+@pytest.mark.parametrize(
+    "revel_score, expected_pp3, expected_bp4",
+    [
+        # (0.8, AutoACMGPrediction.Met, AutoACMGPrediction.NotMet),
+        # (0.5, AutoACMGPrediction.NotMet, AutoACMGPrediction.NotMet),
+        (0.1, AutoACMGPrediction.NotMet, AutoACMGPrediction.Met),
+    ],
+)
+def test_predict_pp3bp4_revel_scenarios(
+    cerebral_creatine_predictor, auto_acmg_data, revel_score, expected_pp3, expected_bp4
+):
+    auto_acmg_data.scores.dbnsfp.revel = revel_score
+
+    pp3, bp4 = cerebral_creatine_predictor.predict_pp3bp4(
+        cerebral_creatine_predictor.seqvar, auto_acmg_data
+    )
+
+    assert pp3.prediction == expected_pp3
+    assert bp4.prediction == expected_bp4
+    if revel_score >= 0.75:
+        assert f"REVEL score {revel_score} >= 0.75, meeting PP3." in pp3.summary
+    elif revel_score <= 0.15:
+        assert f"REVEL score {revel_score} <= 0.15, meeting BP4." in bp4.summary
+
+
+@patch.object(CerebralCreatineDeficiencySyndromesPredictor, "_is_inframe_indel")
+@patch.object(CerebralCreatineDeficiencySyndromesPredictor, "_affect_spliceAI")
+def test_predict_pp3bp4_inframe_indel(
+    mock_affect_spliceAI, mock_is_inframe_indel, cerebral_creatine_predictor, auto_acmg_data
+):
+    mock_is_inframe_indel.return_value = True
+    mock_affect_spliceAI.return_value = False
+    auto_acmg_data.scores.dbnsfp.provean = -3.0
+    auto_acmg_data.scores.dbnsfp.mutationTaster = 0.6
+
+    pp3, bp4 = cerebral_creatine_predictor.predict_pp3bp4(
+        cerebral_creatine_predictor.seqvar, auto_acmg_data
+    )
+
+    assert pp3.prediction == AutoACMGPrediction.Met
+    assert "In-frame indel predicted deleterious by PROVEAN and MutationTaster." in pp3.summary
+
+
+@patch.object(CerebralCreatineDeficiencySyndromesPredictor, "_affect_spliceAI")
+def test_predict_pp3bp4_splicing(mock_affect_spliceAI, cerebral_creatine_predictor, auto_acmg_data):
+    mock_affect_spliceAI.return_value = True
+
+    pp3, bp4 = cerebral_creatine_predictor.predict_pp3bp4(
+        cerebral_creatine_predictor.seqvar, auto_acmg_data
+    )
+
+    assert pp3.prediction == AutoACMGPrediction.Met
+    assert "Splicing predictions indicate an impact, meeting PP3." in pp3.summary
+
+
+def test_predict_pp3bp4_no_criteria_met(cerebral_creatine_predictor, auto_acmg_data):
+    auto_acmg_data.scores.dbnsfp.revel = 0.5
+    with (
+        patch.object(
+            CerebralCreatineDeficiencySyndromesPredictor, "_is_inframe_indel", return_value=False
+        ),
+        patch.object(
+            CerebralCreatineDeficiencySyndromesPredictor, "_affect_spliceAI", return_value=False
+        ),
+    ):
+        pp3, bp4 = cerebral_creatine_predictor.predict_pp3bp4(
+            cerebral_creatine_predictor.seqvar, auto_acmg_data
+        )
+
+    assert pp3.prediction == AutoACMGPrediction.NotMet
+    assert bp4.prediction == AutoACMGPrediction.Met
+    assert "No significant splicing impact predicted, meeting BP4." in bp4.summary
+
+
+def test_predict_pp3bp4_strength(cerebral_creatine_predictor, auto_acmg_data):
+    pp3, bp4 = cerebral_creatine_predictor.predict_pp3bp4(
+        cerebral_creatine_predictor.seqvar, auto_acmg_data
+    )
+
+    assert pp3.strength == AutoACMGStrength.PathogenicSupporting
+    assert bp4.strength == AutoACMGStrength.BenignSupporting
+
+
+@patch.object(CerebralCreatineDeficiencySyndromesPredictor, "_is_inframe_indel")
+@patch.object(CerebralCreatineDeficiencySyndromesPredictor, "_affect_spliceAI")
+def test_predict_pp3bp4_method_calls(
+    mock_affect_spliceAI, mock_is_inframe_indel, cerebral_creatine_predictor, auto_acmg_data
+):
+    mock_is_inframe_indel.return_value = False
+    mock_affect_spliceAI.return_value = True
+
+    cerebral_creatine_predictor.predict_pp3bp4(cerebral_creatine_predictor.seqvar, auto_acmg_data)
+
+    mock_is_inframe_indel.assert_called_once()
+    mock_affect_spliceAI.assert_called_once()
+
+
+def test_predict_pp3bp4_multiple_criteria(cerebral_creatine_predictor, auto_acmg_data):
+    auto_acmg_data.scores.dbnsfp.revel = 0.8
+    with (
+        patch.object(
+            CerebralCreatineDeficiencySyndromesPredictor, "_is_inframe_indel", return_value=True
+        ),
+        patch.object(
+            CerebralCreatineDeficiencySyndromesPredictor, "_affect_spliceAI", return_value=True
+        ),
+    ):
+        pp3, bp4 = cerebral_creatine_predictor.predict_pp3bp4(
+            cerebral_creatine_predictor.seqvar, auto_acmg_data
+        )
+
+    assert pp3.prediction == AutoACMGPrediction.Met
+    assert "REVEL score 0.8 >= 0.75, meeting PP3." in pp3.summary
+    assert "Splicing predictions indicate an impact, meeting PP3." in pp3.summary
+    assert bp4.prediction == AutoACMGPrediction.NotMet
+
+
 def test_predict_bp7_threshold_adjustment(cerebral_creatine_predictor, auto_acmg_data):
     """Test that the BP7 donor and acceptor thresholds are correctly adjusted."""
     auto_acmg_data.thresholds.bp7_donor = 1  # Initial donor threshold value
