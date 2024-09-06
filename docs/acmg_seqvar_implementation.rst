@@ -1,4 +1,4 @@
-.. _acmg_seqvars_implementation:
+.. _acmg_seqvar_implementation:
 
 ===============================================================
 Implementation of different ACMG criteria for sequence variants
@@ -14,15 +14,6 @@ PVS1
 For sequence variants:
 
 .. automodule:: src.seqvar.auto_pvs1
-    :members:
-    :inherited-members:
-    :undoc-members:
-    :show-inheritance:
-    :private-members:
-
-For structural variants:
-
-.. automodule:: src.strucvar.auto_pvs1
     :members:
     :inherited-members:
     :undoc-members:
