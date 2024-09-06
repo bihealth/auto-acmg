@@ -325,7 +325,15 @@ class RASopathyPredictor(DefaultSeqVarPredictor):
             ),
         )
 
-
     def _bp3_not_applicable(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> bool:
         """BP3 is not applicable for RASopathy."""
         return True
+
+    def predict_pp3bp4(
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Use REVEL for PP3 and BP4 for RASopathy."""
+        var_data.thresholds.pp3bp4_strategy = "revel"
+        var_data.thresholds.revel_pathogenic = 0.7
+        var_data.thresholds.revel_benign = 0.3
+        return super().predict_pp3bp4(seqvar, var_data)

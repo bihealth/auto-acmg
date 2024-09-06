@@ -550,6 +550,14 @@ class AutoACMGDbnsfp(AutoAcmgBaseModel):
     bayesDel_noAF: Optional[float] = None
     revel: Optional[float] = None
     phyloP100: Optional[float] = None
+    sift: Optional[float] = None
+    polyphen2: Optional[float] = None
+    mutationTaster: Optional[float] = None
+    fathmm: Optional[float] = None
+    provean: Optional[float] = None
+    vest4: Optional[float] = None
+    mutpred: Optional[float] = None
+    primateAI: Optional[float] = None
 
 
 class AutoACMGDbscsnv(AutoAcmgBaseModel):
@@ -590,10 +598,18 @@ class AutoACMGSeqVarTresholds(AutoAcmgBaseModel):
     metaRNN_pathogenic: float = 0.841
     #: BayesDel_noAF pathogenic threshold
     bayesDel_noAF_pathogenic: float = 0.521
+    #: Revel pathogenic threshold
+    revel_pathogenic: float = 0.773
+    #: CADD pathogenic threshold
+    cadd_pathogenic: float = 20.0
     #: MetaRNN benign threshold
     metaRNN_benign: float = 0.267
     #: BayesDel_noAF benign threshold
     bayesDel_noAF_benign: float = -0.476
+    #: Revel benign threshold
+    revel_benign: float = 0.016
+    #: CADD benign threshold
+    cadd_benign: float = 10.0
     #: PP2 and BP1 pathogenic threshold
     pp2bp1_pathogenic: float = 0.808
     #: PP2 and BP1 benign threshold
@@ -608,6 +624,8 @@ class AutoACMGSeqVarTresholds(AutoAcmgBaseModel):
     pm2_pathogenic: float = 0.0001
     #: Minimum number of alleles
     an_min: int = 2000
+    #: PP3 and BP4 strategy
+    pp3bp4_strategy: str = "default"
     #: BP7 donor position
     bp7_donor: int = 1
     #: BP7 acceptor position

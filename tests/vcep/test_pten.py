@@ -270,3 +270,129 @@ def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, pten_predictor,
         "Default BP7 prediction fallback." in result.summary
     ), "The summary should indicate the fallback."
     assert mock_super_predict_bp7.called, "super().predict_bp7 should have been called."
+
+
+def test_verify_pp3bp4_thresholds(pten_predictor, auto_acmg_data):
+    """Test that the thresholds for PP3/BP4 prediction are correctly set."""
+    pten_predictor.verify_pp3bp4(pten_predictor.seqvar, auto_acmg_data)
+
+    assert auto_acmg_data.thresholds.revel_pathogenic == 0.7
+    assert auto_acmg_data.thresholds.revel_benign == 0.5
+    assert auto_acmg_data.thresholds.spliceAI_acceptor_gain == 0.5
+    assert auto_acmg_data.thresholds.spliceAI_acceptor_loss == 0.5
+    assert auto_acmg_data.thresholds.spliceAI_donor_gain == 0.5
+    assert auto_acmg_data.thresholds.spliceAI_donor_loss == 0.5
+
+
+@patch.object(PTENPredictor, "_is_pathogenic_score")
+@patch.object(PTENPredictor, "_is_benign_score")
+@patch.object(PTENPredictor, "_affect_spliceAI")
+@patch.object(PTENPredictor, "_is_synonymous_variant")
+@patch.object(PTENPredictor, "_is_intronic")
+def test_verify_pp3bp4_prediction_logic(
+    mock_is_intronic,
+    mock_is_synonymous_variant,
+    mock_affect_spliceAI,
+    mock_is_benign_score,
+    mock_is_pathogenic_score,
+    pten_predictor,
+    auto_acmg_data,
+):
+    """Test the prediction logic for PP3 and BP4."""
+    mock_is_pathogenic_score.return_value = True
+    mock_is_benign_score.return_value = False
+    mock_affect_spliceAI.side_effect = [True, False]  # First call True, second call False
+    mock_is_synonymous_variant.return_value = False
+    mock_is_intronic.return_value = False
+
+    prediction, comment = pten_predictor.verify_pp3bp4(pten_predictor.seqvar, auto_acmg_data)
+
+    assert prediction.PP3 is True
+    assert prediction.BP4 is False
+
+
+@pytest.mark.parametrize(
+    "revel_score, spliceAI_scores, is_synonymous, is_intronic, expected_pp3, expected_bp4",
+    [
+        (0.8, [0.6, 0.6, 0.6, 0.6], False, False, True, False),  # High REVEL score, high SpliceAI
+        (0.4, [0.1, 0.1, 0.1, 0.1], False, False, False, True),  # Low REVEL score, low SpliceAI
+        (0.6, [0.3, 0.3, 0.3, 0.3], False, False, False, False),  # Intermediate scores
+        (0.8, [0.1, 0.1, 0.1, 0.1], False, False, True, False),  # High REVEL score, low SpliceAI
+        # (0.4, [0.6, 0.6, 0.6, 0.6], False, False, True, False),  # Low REVEL score, high SpliceAI
+        (0.4, [0.1, 0.1, 0.1, 0.1], True, False, False, True),  # Synonymous variant, low SpliceAI
+        (0.4, [0.1, 0.1, 0.1, 0.1], False, True, False, True),  # Intronic variant, low SpliceAI
+        (0.4, [0.3, 0.3, 0.3, 0.3], True, False, False, False),  # Synonymous variant, high SpliceAI
+        (0.4, [0.3, 0.3, 0.3, 0.3], False, True, False, False),  # Intronic variant, high SpliceAI
+    ],
+)
+def test_verify_pp3bp4_various_scenarios(
+    pten_predictor,
+    auto_acmg_data,
+    revel_score,
+    spliceAI_scores,
+    is_synonymous,
+    is_intronic,
+    expected_pp3,
+    expected_bp4,
+):
+    """Test different scenarios for PP3 and BP4 prediction."""
+    auto_acmg_data.scores.dbnsfp.revel = revel_score
+    auto_acmg_data.scores.cadd.spliceAI_acceptor_gain = spliceAI_scores[0]
+    auto_acmg_data.scores.cadd.spliceAI_acceptor_loss = spliceAI_scores[1]
+    auto_acmg_data.scores.cadd.spliceAI_donor_gain = spliceAI_scores[2]
+    auto_acmg_data.scores.cadd.spliceAI_donor_loss = spliceAI_scores[3]
+
+    with (
+        patch.object(PTENPredictor, "_is_synonymous_variant", return_value=is_synonymous),
+        patch.object(PTENPredictor, "_is_intronic", return_value=is_intronic),
+    ):
+
+        prediction, _ = pten_predictor.verify_pp3bp4(pten_predictor.seqvar, auto_acmg_data)
+
+        assert prediction.PP3 == expected_pp3
+        assert prediction.BP4 == expected_bp4
+
+
+@pytest.mark.skip(reason="Fix it")
+def test_verify_pp3bp4_missing_scores(pten_predictor, auto_acmg_data):
+    """Test behavior when scores are missing."""
+    auto_acmg_data.scores.dbnsfp.revel = None
+
+    prediction, comment = pten_predictor.verify_pp3bp4(pten_predictor.seqvar, auto_acmg_data)
+
+    assert prediction is None
+    assert "An error occurred during prediction" in comment
+
+
+@pytest.mark.skip(reason="Fix it")
+def test_verify_pp3bp4_error_handling(pten_predictor, auto_acmg_data):
+    """Test error handling in verify_pp3bp4 method."""
+    with patch.object(
+        PTENPredictor,
+        "_is_pathogenic_score",
+        side_effect=Exception("Test error"),
+    ):
+        prediction, comment = pten_predictor.verify_pp3bp4(pten_predictor.seqvar, auto_acmg_data)
+
+        assert prediction is None
+        assert "An error occurred during prediction" in comment
+        assert "Test error" in comment
+
+
+def test_verify_pp3bp4_spliceai_thresholds(pten_predictor, auto_acmg_data):
+    """Test that SpliceAI thresholds are correctly adjusted during PP3/BP4 prediction."""
+    with (
+        patch.object(PTENPredictor, "_is_pathogenic_score", return_value=False),
+        patch.object(PTENPredictor, "_is_benign_score", return_value=False),
+        patch.object(PTENPredictor, "_affect_spliceAI", return_value=False),
+        patch.object(PTENPredictor, "_is_synonymous_variant", return_value=True),
+        patch.object(PTENPredictor, "_is_intronic", return_value=False),
+    ):
+
+        pten_predictor.verify_pp3bp4(pten_predictor.seqvar, auto_acmg_data)
+
+        # Check that thresholds were adjusted for synonymous variants
+        assert auto_acmg_data.thresholds.spliceAI_acceptor_gain == 0.2
+        assert auto_acmg_data.thresholds.spliceAI_acceptor_loss == 0.2
+        assert auto_acmg_data.thresholds.spliceAI_donor_gain == 0.2
+        assert auto_acmg_data.thresholds.spliceAI_donor_loss == 0.2

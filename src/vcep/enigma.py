@@ -15,6 +15,7 @@ from loguru import logger
 from src.defs.auto_acmg import (
     BP7,
     PM2BA1BS1BS2,
+    PP3BP4,
     PS1PM5,
     AutoACMGCriteria,
     AutoACMGPrediction,
@@ -217,6 +218,81 @@ class ENIGMAPredictor(DefaultSeqVarPredictor):
                 summary=comment,
             ),
         )
+
+    def predict_pp3bp4(
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Predict PP3 and BP4 criteria based on ENIGMA VCEP specific rules."""
+        logger.info("Predict PP3 and BP4")
+        pp3_met = False
+        bp4_met = False
+        comments = []
+        self.prediction_pp3bp4 = PP3BP4()
+
+        # Evaluate missense changes
+        if self._is_missense_variant(var_data) or self._is_inframe_indel(var_data):
+            bayesDel_noAF_score = var_data.scores.dbnsfp.bayesDel_noAF
+            var_data.thresholds.bayesDel_noAF_pathogenic = 0.28
+            var_data.thresholds.bayesDel_noAF_benign = 0.15
+            if self._in_important_domain(var_data) and self._is_pathogenic_score(
+                var_data, ("bayesDel_noAF", var_data.thresholds.bayesDel_noAF_pathogenic)
+            ):
+                pp3_met = True
+                comments.append(
+                    f"BayesDel_noAF score {bayesDel_noAF_score} > {var_data.thresholds.bayesDel_noAF_pathogenic}, PP3 met."
+                )
+            if (
+                self._in_important_domain(var_data)
+                and self._is_benign_score(
+                    var_data, ("bayesDel_noAF", var_data.thresholds.bayesDel_noAF_benign)
+                )
+                and not self._affect_spliceAI(var_data)
+            ):
+                bp4_met = True
+                comments.append(
+                    f"BayesDel_noAF score {bayesDel_noAF_score} < {var_data.thresholds.bayesDel_noAF_benign}, BP4 met."
+                )
+
+        # Evaluate splice changes for pp3
+        if (
+            self._is_missense_variant(var_data)
+            or self._is_inframe_indel(var_data)
+            or self._is_intronic(var_data)
+            or self._is_synonymous_variant(var_data)
+        ):
+            var_data.thresholds.spliceAI_acceptor_gain = 0.2
+            var_data.thresholds.spliceAI_acceptor_loss = 0.2
+            var_data.thresholds.spliceAI_donor_gain = 0.2
+            var_data.thresholds.spliceAI_donor_loss = 0.2
+            if self._affect_spliceAI(var_data):
+                pp3_met = True
+                comments.append("SpliceAI ≥0.2, PP3 met.")
+
+        # Evaluate splice changes for bp4
+        if self._is_intronic(var_data) or self._is_synonymous_variant(var_data):
+            var_data.thresholds.spliceAI_acceptor_gain = 0.1
+            var_data.thresholds.spliceAI_acceptor_loss = 0.1
+            var_data.thresholds.spliceAI_donor_gain = 0.1
+            var_data.thresholds.spliceAI_donor_loss = 0.1
+            if not self._affect_spliceAI(var_data):
+                bp4_met = True
+                comments.append("SpliceAI ≥0.2, BP4 met.")
+
+        # Set criteria results
+        pp3_result = AutoACMGCriteria(
+            name="PP3",
+            prediction=AutoACMGPrediction.Met if pp3_met else AutoACMGPrediction.NotMet,
+            strength=AutoACMGStrength.PathogenicSupporting,
+            summary=" | ".join(comments) if pp3_met else "PP3 criteria not met.",
+        )
+        bp4_result = AutoACMGCriteria(
+            name="BP4",
+            prediction=AutoACMGPrediction.Met if bp4_met else AutoACMGPrediction.NotMet,
+            strength=AutoACMGStrength.BenignSupporting,
+            summary=" | ".join(comments) if bp4_met else "BP4 criteria not met.",
+        )
+
+        return (pp3_result, bp4_result)
 
     def verify_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> Tuple[Optional[BP7], str]:
         """

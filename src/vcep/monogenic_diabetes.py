@@ -10,17 +10,19 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN085
 https://cspec.genome.network/cspec/ui/svi/doc/GN086
 """
 
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 from loguru import logger
 
 from src.defs.auto_acmg import (
+    PP3BP4,
     AutoACMGCriteria,
     AutoACMGPrediction,
     AutoACMGSeqVarData,
     AutoACMGStrength,
     VcepSpec,
 )
+from src.defs.exceptions import AutoAcmgBaseException
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
@@ -201,6 +203,42 @@ class MonogenicDiabetesPredictor(DefaultSeqVarPredictor):
                 summary="BP1 is not applicable for the gene.",
             ),
         )
+
+    def verify_pp3bp4(
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
+    ) -> Tuple[Optional[PP3BP4], str]:
+        """Predict PP3 and BP4 criteria."""
+        self.prediction_pp3bp4 = PP3BP4()
+        self.comment_pp3bp4 = ""
+        try:
+            score = "revel"
+            var_data.thresholds.revel_pathogenic = 0.7
+            var_data.thresholds.revel_benign = 0.15
+            self.prediction_pp3bp4.PP3 = self._is_pathogenic_score(
+                var_data,
+                (score, getattr(var_data.thresholds, f"{score}_pathogenic")),
+            )
+            self.prediction_pp3bp4.BP4 = self._is_benign_score(
+                var_data,
+                (score, getattr(var_data.thresholds, f"{score}_benign")),
+            )
+
+            var_data.thresholds.spliceAI_acceptor_gain = 0.2
+            var_data.thresholds.spliceAI_acceptor_loss = 0.2
+            var_data.thresholds.spliceAI_donor_gain = 0.2
+            var_data.thresholds.spliceAI_donor_loss = 0.2
+            if self._affect_spliceAI(var_data):
+                self.prediction_pp3bp4.PP3 = True
+
+            if self._is_splice_variant(var_data) and not self._affect_spliceAI(var_data):
+                self.prediction_pp3bp4.BP4 = True
+            elif self._is_synonymous(var_data) and not self._affect_spliceAI(var_data):
+                self.prediction_pp3bp4.BP4 = True
+
+        except AutoAcmgBaseException as e:
+            self.comment_pp3bp4 = f"An error occurred during prediction. Error: {e}"
+            self.prediction_pp3bp4 = None
+        return self.prediction_pp3bp4, self.comment_pp3bp4
 
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Change BP7 thresholds for Monogenic Diabetes VCEP."""

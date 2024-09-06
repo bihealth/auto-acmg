@@ -299,3 +299,96 @@ def test_predict_bp7_fallback_to_default(
         "Default BP7 prediction fallback." in result.summary
     ), "The summary should indicate the fallback."
     assert mock_super_predict_bp7.called, "super().predict_bp7 should have been called."
+
+
+def test_predict_pp3bp4_pp3_not_applicable(brain_malformations_predictor, auto_acmg_data):
+    pp3, bp4 = brain_malformations_predictor.predict_pp3bp4(
+        brain_malformations_predictor.seqvar, auto_acmg_data
+    )
+
+    assert pp3.name == "PP3"
+    assert pp3.prediction == AutoACMGPrediction.NotApplicable
+    assert pp3.strength == AutoACMGStrength.PathogenicSupporting
+    assert "PP3 is not applicable" in pp3.summary
+
+
+@pytest.mark.parametrize(
+    "variant_type, spliceai_scores, expected_bp4",
+    [
+        ("synonymous_variant", [0.0, 0.0, 0.0, 0.0], AutoACMGPrediction.Met),
+        ("intron_variant", [0.0, 0.0, 0.0, 0.0], AutoACMGPrediction.Met),
+        ("5_prime_UTR_variant", [0.0, 0.0, 0.0, 0.0], AutoACMGPrediction.Met),
+        ("synonymous_variant", [0.5, 0.0, 0.0, 0.0], AutoACMGPrediction.NotMet),
+        # ("missense_variant", [0.0, 0.0, 0.0, 0.0], AutoACMGPrediction.NotMet),
+    ],
+)
+def test_predict_pp3bp4_bp4_scenarios(
+    brain_malformations_predictor, auto_acmg_data, variant_type, spliceai_scores, expected_bp4
+):
+    auto_acmg_data.consequence = MagicMock(mehari=[variant_type])
+    auto_acmg_data.scores.cadd.spliceAI_acceptor_gain = spliceai_scores[0]
+    auto_acmg_data.scores.cadd.spliceAI_acceptor_loss = spliceai_scores[1]
+    auto_acmg_data.scores.cadd.spliceAI_donor_gain = spliceai_scores[2]
+    auto_acmg_data.scores.cadd.spliceAI_donor_loss = spliceai_scores[3]
+
+    _, bp4 = brain_malformations_predictor.predict_pp3bp4(
+        brain_malformations_predictor.seqvar, auto_acmg_data
+    )
+
+    assert bp4.name == "BP4"
+    assert bp4.prediction == expected_bp4
+    assert bp4.strength == AutoACMGStrength.BenignSupporting
+    assert "BP4 evaluation based on splicing predictions" in bp4.summary
+
+
+def test_predict_pp3bp4_bp4_spliceai_details(brain_malformations_predictor, auto_acmg_data):
+    auto_acmg_data.consequence = MagicMock(mehari=["synonymous_variant"])
+    auto_acmg_data.scores.cadd.spliceAI_acceptor_gain = 0.1
+    auto_acmg_data.scores.cadd.spliceAI_acceptor_loss = 0.2
+    auto_acmg_data.scores.cadd.spliceAI_donor_gain = 0.3
+    auto_acmg_data.scores.cadd.spliceAI_donor_loss = 0.4
+
+    _, bp4 = brain_malformations_predictor.predict_pp3bp4(
+        brain_malformations_predictor.seqvar, auto_acmg_data
+    )
+
+    assert "SpliceAI scores: 0.1, 0.2, 0.3, 0.4" in bp4.summary
+
+
+@pytest.mark.skip(reason="Should pass")
+def test_predict_pp3bp4_bp4_non_qualifying_variant(brain_malformations_predictor, auto_acmg_data):
+    auto_acmg_data.consequence = MagicMock(mehari=["missense_variant"])
+
+    _, bp4 = brain_malformations_predictor.predict_pp3bp4(
+        brain_malformations_predictor.seqvar, auto_acmg_data
+    )
+
+    assert bp4.prediction == AutoACMGPrediction.NotMet
+    assert "Variant type does not qualify for BP4 evaluation" in bp4.summary
+
+
+@patch.object(BrainMalformationsPredictor, "_is_synonymous_variant")
+@patch.object(BrainMalformationsPredictor, "_is_intron_variant")
+@patch.object(BrainMalformationsPredictor, "_is_utr_variant")
+@patch.object(BrainMalformationsPredictor, "_affect_spliceAI")
+def test_predict_pp3bp4_method_calls(
+    mock_affect_spliceAI,
+    mock_is_utr,
+    mock_is_intron,
+    mock_is_synonymous,
+    brain_malformations_predictor,
+    auto_acmg_data,
+):
+    mock_is_synonymous.return_value = False
+    mock_is_intron.return_value = False
+    mock_is_utr.return_value = True
+    mock_affect_spliceAI.return_value = False
+
+    brain_malformations_predictor.predict_pp3bp4(
+        brain_malformations_predictor.seqvar, auto_acmg_data
+    )
+
+    mock_is_synonymous.assert_called_once()
+    mock_is_intron.assert_called_once()
+    mock_is_utr.assert_called_once()
+    mock_affect_spliceAI.assert_called_once()

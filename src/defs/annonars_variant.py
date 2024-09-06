@@ -52,10 +52,15 @@ class Dbnsfp(BaseModel):
     BayesDel_noAF_score: Optional[Union[str, float, int]] = None
     REVEL_score: Optional[Union[str, float, int]] = None
     CADD_raw: Optional[Union[str, float, int]] = None
-    PrimateAI_score: Optional[Union[str, float, int]] = None
     Polyphen2_HVAR_score: Optional[Union[str, float, int]] = None
-    VEST4_score: Optional[Union[str, float, int]] = None
     phyloP100way_vertebrate: Optional[Union[str, float, int]] = None
+    SIFT_score: Optional[Union[str, float, int]] = None
+    MutationTaster_score: Optional[Union[str, float, int]] = None
+    FATHMM_score: Optional[Union[str, float, int]] = None
+    PROVEAN_score: Optional[Union[str, float, int]] = None
+    VEST4_score: Optional[Union[str, float, int]] = None
+    MutPred_score: Optional[Union[str, float, int]] = None
+    PrimateAI_score: Optional[Union[str, float, int]] = None
     HGVSc_ANNOVAR: Optional[str] = None
     HGVSp_ANNOVAR: Optional[str] = None
     HGVSc_snpEff: Optional[str] = None

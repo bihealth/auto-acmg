@@ -3,12 +3,14 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.defs.auto_acmg import (
+    PP3BP4,
     PS1PM5,
     AutoACMGCriteria,
     AutoACMGPrediction,
     AutoACMGSeqVarData,
     AutoACMGStrength,
 )
+from src.defs.exceptions import AutoAcmgBaseException
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
@@ -532,3 +534,164 @@ def test_predict_bp7_fallback_to_default_for_palb2(
         "Default BP7 prediction fallback." in result.summary
     ), "The summary should indicate the fallback."
     assert mock_super_predict_bp7.called, "super().predict_bp7 should have been called."
+
+
+def test_predict_pp3bp4_revel_strategy(hbopc_predictor, auto_acmg_data):
+    """Test that REVEL is set as the strategy for PP3/BP4 prediction."""
+    auto_acmg_data.hgnc_id = "HGNC:795"
+    pp3_result, bp4_result = hbopc_predictor.predict_pp3bp4(hbopc_predictor.seqvar, auto_acmg_data)
+
+    assert auto_acmg_data.thresholds.pp3bp4_strategy == "revel"
+
+
+@patch("src.vcep.hbopc.DefaultSeqVarPredictor.predict_pp3bp4")
+def test_predict_pp3bp4_calls_superclass(
+    mock_super_predict_pp3bp4, hbopc_predictor, auto_acmg_data
+):
+    """Test that the superclass method is called with the correct parameters."""
+    mock_super_predict_pp3bp4.return_value = (
+        AutoACMGCriteria(
+            name="PP3",
+            prediction=AutoACMGPrediction.Met,
+            strength=AutoACMGStrength.PathogenicSupporting,
+        ),
+        AutoACMGCriteria(
+            name="BP4",
+            prediction=AutoACMGPrediction.NotMet,
+            strength=AutoACMGStrength.BenignSupporting,
+        ),
+    )
+
+    pp3_result, bp4_result = hbopc_predictor.predict_pp3bp4(hbopc_predictor.seqvar, auto_acmg_data)
+
+    mock_super_predict_pp3bp4.assert_called_once_with(hbopc_predictor.seqvar, auto_acmg_data)
+    assert pp3_result.prediction == AutoACMGPrediction.Met
+    assert bp4_result.prediction == AutoACMGPrediction.NotMet
+
+
+@pytest.mark.parametrize(
+    "hgnc_id, revel_score, expected_pp3, expected_bp4",
+    [
+        (
+            "HGNC:795",
+            0.9,
+            AutoACMGPrediction.Met,
+            AutoACMGPrediction.NotMet,
+        ),  # ATM, high REVEL score
+        (
+            "HGNC:795",
+            0.5,
+            AutoACMGPrediction.NotMet,
+            AutoACMGPrediction.NotMet,
+        ),  # ATM, intermediate REVEL score
+        (
+            "HGNC:795",
+            0.1,
+            AutoACMGPrediction.NotMet,
+            AutoACMGPrediction.Met,
+        ),  # ATM, low REVEL score
+        (
+            "HGNC:26144",
+            0.9,
+            AutoACMGPrediction.NotMet,
+            AutoACMGPrediction.NotMet,
+        ),  # PALB2, high REVEL score
+        (
+            "HGNC:26144",
+            0.5,
+            AutoACMGPrediction.NotMet,
+            AutoACMGPrediction.NotMet,
+        ),  # PALB2, intermediate REVEL score
+        (
+            "HGNC:26144",
+            0.1,
+            AutoACMGPrediction.NotMet,
+            AutoACMGPrediction.NotMet,
+        ),  # PALB2, low REVEL score
+    ],
+)
+def test_predict_pp3bp4_revel_scenarios(
+    hbopc_predictor, auto_acmg_data, hgnc_id, revel_score, expected_pp3, expected_bp4
+):
+    """Test different REVEL score scenarios for ATM and PALB2."""
+    auto_acmg_data.hgnc_id = hgnc_id
+    auto_acmg_data.scores.dbnsfp.revel = revel_score
+
+    with patch("src.vcep.hbopc.DefaultSeqVarPredictor.predict_pp3bp4") as mock_super_predict_pp3bp4:
+        mock_super_predict_pp3bp4.return_value = (
+            AutoACMGCriteria(
+                name="PP3", prediction=expected_pp3, strength=AutoACMGStrength.PathogenicSupporting
+            ),
+            AutoACMGCriteria(
+                name="BP4", prediction=expected_bp4, strength=AutoACMGStrength.BenignSupporting
+            ),
+        )
+
+        pp3_result, bp4_result = hbopc_predictor.predict_pp3bp4(
+            hbopc_predictor.seqvar, auto_acmg_data
+        )
+
+        assert pp3_result.prediction == expected_pp3
+        assert bp4_result.prediction == expected_bp4
+
+
+def test_predict_pp3bp4_strength(hbopc_predictor, auto_acmg_data):
+    """Test that the strength of PP3 and BP4 is correctly set."""
+    with patch("src.vcep.hbopc.DefaultSeqVarPredictor.predict_pp3bp4") as mock_super_predict_pp3bp4:
+        mock_super_predict_pp3bp4.return_value = (
+            AutoACMGCriteria(
+                name="PP3",
+                prediction=AutoACMGPrediction.Met,
+                strength=AutoACMGStrength.PathogenicSupporting,
+            ),
+            AutoACMGCriteria(
+                name="BP4",
+                prediction=AutoACMGPrediction.NotMet,
+                strength=AutoACMGStrength.BenignSupporting,
+            ),
+        )
+
+        pp3_result, bp4_result = hbopc_predictor.predict_pp3bp4(
+            hbopc_predictor.seqvar, auto_acmg_data
+        )
+
+        assert pp3_result.strength == AutoACMGStrength.PathogenicSupporting
+        assert bp4_result.strength == AutoACMGStrength.BenignSupporting
+
+
+def test_predict_pp3bp4_no_revel_score(hbopc_predictor, auto_acmg_data):
+    """Test behavior when no REVEL score is available."""
+    auto_acmg_data.scores.dbnsfp.revel = None
+
+    with patch("src.vcep.hbopc.DefaultSeqVarPredictor.predict_pp3bp4") as mock_super_predict_pp3bp4:
+        mock_super_predict_pp3bp4.return_value = (
+            AutoACMGCriteria(
+                name="PP3",
+                prediction=AutoACMGPrediction.NotMet,
+                strength=AutoACMGStrength.PathogenicSupporting,
+            ),
+            AutoACMGCriteria(
+                name="BP4",
+                prediction=AutoACMGPrediction.NotMet,
+                strength=AutoACMGStrength.BenignSupporting,
+            ),
+        )
+
+        pp3_result, bp4_result = hbopc_predictor.predict_pp3bp4(
+            hbopc_predictor.seqvar, auto_acmg_data
+        )
+
+        assert pp3_result.prediction == AutoACMGPrediction.NotMet
+        assert bp4_result.prediction == AutoACMGPrediction.NotMet
+
+
+def test_predict_pp3bp4_error_handling(hbopc_predictor, auto_acmg_data):
+    """Test error handling in predict_pp3bp4 method."""
+    with patch(
+        "src.vcep.hbopc.DefaultSeqVarPredictor.predict_pp3bp4",
+        side_effect=Exception("Test error"),
+    ):
+        with pytest.raises(Exception) as exc_info:
+            hbopc_predictor.predict_pp3bp4(hbopc_predictor.seqvar, auto_acmg_data)
+
+        assert str(exc_info.value) == "Test error"

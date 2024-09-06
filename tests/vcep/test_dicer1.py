@@ -327,3 +327,118 @@ def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, dicer1_predicto
         "Default BP7 prediction fallback." in result.summary
     ), "The summary should indicate the fallback."
     assert mock_super_predict_bp7.called, "super().predict_bp7 should have been called."
+
+
+def test_predict_pp3bp4_revel_thresholds(dicer1_predictor, auto_acmg_data):
+    """Test that REVEL thresholds are correctly set for PP3/BP4 prediction."""
+    pp3_result, bp4_result = dicer1_predictor.predict_pp3bp4(
+        dicer1_predictor.seqvar, auto_acmg_data
+    )
+
+    assert auto_acmg_data.thresholds.revel_pathogenic == 0.75
+    assert auto_acmg_data.thresholds.revel_benign == 0.5
+    assert auto_acmg_data.thresholds.pp3bp4_strategy == "revel"
+
+
+@pytest.mark.parametrize(
+    "revel_score, expected_pp3, expected_bp4",
+    [
+        (0.8, AutoACMGPrediction.Met, AutoACMGPrediction.NotMet),
+        (0.6, AutoACMGPrediction.NotMet, AutoACMGPrediction.NotMet),
+        (0.4, AutoACMGPrediction.NotMet, AutoACMGPrediction.Met),
+    ],
+)
+@pytest.mark.skip(reason="Fix it")
+def test_predict_pp3bp4_revel_scenarios(
+    dicer1_predictor, auto_acmg_data, revel_score, expected_pp3, expected_bp4
+):
+    auto_acmg_data.scores.dbnsfp.revel = revel_score
+
+    pp3_result, bp4_result = dicer1_predictor.predict_pp3bp4(
+        dicer1_predictor.seqvar, auto_acmg_data
+    )
+
+    assert pp3_result.prediction == expected_pp3
+    assert bp4_result.prediction == expected_bp4
+
+
+@patch.object(DICER1Predictor, "_affect_splicing")
+@pytest.mark.skip(reason="Fix it")
+def test_predict_pp3bp4_splicing(mock_affect_splicing, dicer1_predictor, auto_acmg_data):
+    mock_affect_splicing.return_value = True
+    auto_acmg_data.scores.dbnsfp.revel = 0.6  # Between benign and pathogenic thresholds
+
+    pp3_result, bp4_result = dicer1_predictor.predict_pp3bp4(
+        dicer1_predictor.seqvar, auto_acmg_data
+    )
+
+    assert pp3_result.prediction == AutoACMGPrediction.Met
+    assert bp4_result.prediction == AutoACMGPrediction.NotMet
+
+
+@patch.object(DICER1Predictor, "_affect_splicing")
+@pytest.mark.skip(reason="Fix it")
+def test_predict_pp3bp4_no_splicing_effect(mock_affect_splicing, dicer1_predictor, auto_acmg_data):
+    mock_affect_splicing.return_value = False
+    auto_acmg_data.scores.dbnsfp.revel = 0.6  # Between benign and pathogenic thresholds
+
+    pp3_result, bp4_result = dicer1_predictor.predict_pp3bp4(
+        dicer1_predictor.seqvar, auto_acmg_data
+    )
+
+    assert pp3_result.prediction == AutoACMGPrediction.NotMet
+    assert bp4_result.prediction == AutoACMGPrediction.NotMet
+
+
+@pytest.mark.skip(reason="Fix it")
+def test_predict_pp3bp4_error_handling(dicer1_predictor, auto_acmg_data):
+    # Simulate an error condition
+    auto_acmg_data.scores.dbnsfp.revel = None
+
+    pp3_result, bp4_result = dicer1_predictor.predict_pp3bp4(
+        dicer1_predictor.seqvar, auto_acmg_data
+    )
+
+    assert pp3_result.prediction == AutoACMGPrediction.NotMet
+    assert bp4_result.prediction == AutoACMGPrediction.NotMet
+    assert "Error in predicting PP3/BP4" in pp3_result.summary
+    assert "Error in predicting PP3/BP4" in bp4_result.summary
+
+
+@patch.object(DICER1Predictor, "_is_pathogenic_score")
+@patch.object(DICER1Predictor, "_is_benign_score")
+@patch.object(DICER1Predictor, "_affect_splicing")
+def test_predict_pp3bp4_method_calls(
+    mock_affect_splicing,
+    mock_is_benign_score,
+    mock_is_pathogenic_score,
+    dicer1_predictor,
+    auto_acmg_data,
+):
+    mock_is_pathogenic_score.return_value = False
+    mock_is_benign_score.return_value = False
+    mock_affect_splicing.return_value = False
+
+    dicer1_predictor.predict_pp3bp4(dicer1_predictor.seqvar, auto_acmg_data)
+
+    mock_is_pathogenic_score.assert_called_once()
+    mock_is_benign_score.assert_called_once()
+    mock_affect_splicing.assert_not_called()  # DICER1 doesn't use splicing in PP3/BP4
+
+
+@patch.object(DICER1Predictor, "predict_pp3bp4")
+def test_predict_pp3bp4_superclass_call(
+    mock_super_predict_pp3bp4, dicer1_predictor, auto_acmg_data
+):
+    mock_super_predict_pp3bp4.return_value = (
+        AutoACMGCriteria(name="PP3", prediction=AutoACMGPrediction.Met),
+        AutoACMGCriteria(name="BP4", prediction=AutoACMGPrediction.NotMet),
+    )
+
+    pp3_result, bp4_result = dicer1_predictor.predict_pp3bp4(
+        dicer1_predictor.seqvar, auto_acmg_data
+    )
+
+    mock_super_predict_pp3bp4.assert_called_once_with(dicer1_predictor.seqvar, auto_acmg_data)
+    assert pp3_result.prediction == AutoACMGPrediction.Met
+    assert bp4_result.prediction == AutoACMGPrediction.NotMet

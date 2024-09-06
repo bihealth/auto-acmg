@@ -323,3 +323,197 @@ def test_predict_pp2bp1_exception_handling(mock_verify, fbn1_predictor, seqvar, 
     with pytest.raises(Exception) as exc_info:
         pp2, bp1 = fbn1_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
     assert "Internal error" in str(exc_info.value), "Should raise an internal error exception."
+
+
+def test_predict_pp3bp4_revel_strategy(fbn1_predictor, auto_acmg_data):
+    """Test that REVEL is set as the strategy for PP3/BP4 prediction."""
+    fbn1_predictor.predict_pp3bp4(fbn1_predictor.seqvar, auto_acmg_data)
+
+    assert auto_acmg_data.thresholds.pp3bp4_strategy == "revel"
+
+
+def test_predict_pp3bp4_revel_thresholds(fbn1_predictor, auto_acmg_data):
+    """Test that REVEL thresholds are correctly set for PP3/BP4 prediction."""
+    fbn1_predictor.predict_pp3bp4(fbn1_predictor.seqvar, auto_acmg_data)
+
+    assert auto_acmg_data.thresholds.revel_pathogenic == 0.75
+    assert auto_acmg_data.thresholds.revel_benign == 0.326
+
+
+@patch("src.vcep.fbn1.DefaultSeqVarPredictor.predict_pp3bp4")
+def test_predict_pp3bp4_calls_superclass(mock_super_predict_pp3bp4, fbn1_predictor, auto_acmg_data):
+    """Test that the superclass method is called with the correct parameters."""
+    mock_super_predict_pp3bp4.return_value = (
+        AutoACMGCriteria(
+            name="PP3",
+            prediction=AutoACMGPrediction.Met,
+            strength=AutoACMGStrength.PathogenicSupporting,
+        ),
+        AutoACMGCriteria(
+            name="BP4",
+            prediction=AutoACMGPrediction.NotMet,
+            strength=AutoACMGStrength.BenignSupporting,
+        ),
+    )
+
+    pp3_result, bp4_result = fbn1_predictor.predict_pp3bp4(fbn1_predictor.seqvar, auto_acmg_data)
+
+    mock_super_predict_pp3bp4.assert_called_once_with(fbn1_predictor.seqvar, auto_acmg_data)
+    assert pp3_result.prediction == AutoACMGPrediction.Met
+    assert bp4_result.prediction == AutoACMGPrediction.NotMet
+
+
+@pytest.mark.parametrize(
+    "revel_score, expected_pp3, expected_bp4",
+    [
+        (0.8, AutoACMGPrediction.Met, AutoACMGPrediction.NotMet),  # High REVEL score
+        (0.5, AutoACMGPrediction.NotMet, AutoACMGPrediction.NotMet),  # Intermediate REVEL score
+        (0.3, AutoACMGPrediction.NotMet, AutoACMGPrediction.Met),  # Low REVEL score
+    ],
+)
+def test_predict_pp3bp4_revel_scenarios(
+    fbn1_predictor, auto_acmg_data, revel_score, expected_pp3, expected_bp4
+):
+    """Test different REVEL score scenarios."""
+    auto_acmg_data.scores.dbnsfp.revel = revel_score
+
+    with patch("src.vcep.fbn1.DefaultSeqVarPredictor.predict_pp3bp4") as mock_super_predict_pp3bp4:
+        mock_super_predict_pp3bp4.return_value = (
+            AutoACMGCriteria(
+                name="PP3", prediction=expected_pp3, strength=AutoACMGStrength.PathogenicSupporting
+            ),
+            AutoACMGCriteria(
+                name="BP4", prediction=expected_bp4, strength=AutoACMGStrength.BenignSupporting
+            ),
+        )
+
+        pp3_result, bp4_result = fbn1_predictor.predict_pp3bp4(
+            fbn1_predictor.seqvar, auto_acmg_data
+        )
+
+        assert pp3_result.prediction == expected_pp3
+        assert bp4_result.prediction == expected_bp4
+
+
+def test_predict_pp3bp4_strength(fbn1_predictor, auto_acmg_data):
+    """Test that the strength of PP3 and BP4 is correctly set."""
+    with patch("src.vcep.fbn1.DefaultSeqVarPredictor.predict_pp3bp4") as mock_super_predict_pp3bp4:
+        mock_super_predict_pp3bp4.return_value = (
+            AutoACMGCriteria(
+                name="PP3",
+                prediction=AutoACMGPrediction.Met,
+                strength=AutoACMGStrength.PathogenicSupporting,
+            ),
+            AutoACMGCriteria(
+                name="BP4",
+                prediction=AutoACMGPrediction.NotMet,
+                strength=AutoACMGStrength.BenignSupporting,
+            ),
+        )
+
+        pp3_result, bp4_result = fbn1_predictor.predict_pp3bp4(
+            fbn1_predictor.seqvar, auto_acmg_data
+        )
+
+        assert pp3_result.strength == AutoACMGStrength.PathogenicSupporting
+        assert bp4_result.strength == AutoACMGStrength.BenignSupporting
+
+
+def test_predict_pp3bp4_no_revel_score(fbn1_predictor, auto_acmg_data):
+    """Test behavior when no REVEL score is available."""
+    auto_acmg_data.scores.dbnsfp.revel = None
+
+    with patch("src.vcep.fbn1.DefaultSeqVarPredictor.predict_pp3bp4") as mock_super_predict_pp3bp4:
+        mock_super_predict_pp3bp4.return_value = (
+            AutoACMGCriteria(
+                name="PP3",
+                prediction=AutoACMGPrediction.NotMet,
+                strength=AutoACMGStrength.PathogenicSupporting,
+            ),
+            AutoACMGCriteria(
+                name="BP4",
+                prediction=AutoACMGPrediction.NotMet,
+                strength=AutoACMGStrength.BenignSupporting,
+            ),
+        )
+
+        pp3_result, bp4_result = fbn1_predictor.predict_pp3bp4(
+            fbn1_predictor.seqvar, auto_acmg_data
+        )
+
+        assert pp3_result.prediction == AutoACMGPrediction.NotMet
+        assert bp4_result.prediction == AutoACMGPrediction.NotMet
+
+
+def test_predict_pp3bp4_error_handling(fbn1_predictor, auto_acmg_data):
+    """Test error handling in predict_pp3bp4 method."""
+    with patch(
+        "src.vcep.fbn1.DefaultSeqVarPredictor.predict_pp3bp4", side_effect=Exception("Test error")
+    ):
+        with pytest.raises(Exception) as exc_info:
+            fbn1_predictor.predict_pp3bp4(fbn1_predictor.seqvar, auto_acmg_data)
+
+        assert str(exc_info.value) == "Test error"
+
+
+def test_predict_pp3bp4_summary(fbn1_predictor, auto_acmg_data):
+    """Test that the summary of PP3 and BP4 is correctly set."""
+    with patch("src.vcep.fbn1.DefaultSeqVarPredictor.predict_pp3bp4") as mock_super_predict_pp3bp4:
+        mock_super_predict_pp3bp4.return_value = (
+            AutoACMGCriteria(
+                name="PP3",
+                prediction=AutoACMGPrediction.Met,
+                strength=AutoACMGStrength.PathogenicSupporting,
+                summary="REVEL score indicates pathogenicity",
+            ),
+            AutoACMGCriteria(
+                name="BP4",
+                prediction=AutoACMGPrediction.NotMet,
+                strength=AutoACMGStrength.BenignSupporting,
+                summary="REVEL score does not indicate benign",
+            ),
+        )
+
+        pp3_result, bp4_result = fbn1_predictor.predict_pp3bp4(
+            fbn1_predictor.seqvar, auto_acmg_data
+        )
+
+        assert "REVEL score indicates pathogenicity" in pp3_result.summary
+        assert "REVEL score does not indicate benign" in bp4_result.summary
+
+
+def test_predict_pp3bp4_edge_cases(fbn1_predictor, auto_acmg_data):
+    """Test edge cases for REVEL scores."""
+    edge_cases = [0.75, 0.326]  # Exactly at the thresholds
+    for score in edge_cases:
+        auto_acmg_data.scores.dbnsfp.revel = score
+        with patch(
+            "src.vcep.fbn1.DefaultSeqVarPredictor.predict_pp3bp4"
+        ) as mock_super_predict_pp3bp4:
+            mock_super_predict_pp3bp4.return_value = (
+                AutoACMGCriteria(
+                    name="PP3",
+                    prediction=(
+                        AutoACMGPrediction.Met if score >= 0.75 else AutoACMGPrediction.NotMet
+                    ),
+                    strength=AutoACMGStrength.PathogenicSupporting,
+                ),
+                AutoACMGCriteria(
+                    name="BP4",
+                    prediction=(
+                        AutoACMGPrediction.Met if score <= 0.326 else AutoACMGPrediction.NotMet
+                    ),
+                    strength=AutoACMGStrength.BenignSupporting,
+                ),
+            )
+
+            pp3_result, bp4_result = fbn1_predictor.predict_pp3bp4(
+                fbn1_predictor.seqvar, auto_acmg_data
+            )
+
+            if score == 0.75:
+                assert pp3_result.prediction == AutoACMGPrediction.Met
+                assert bp4_result.prediction == AutoACMGPrediction.NotMet
+            elif score == 0.326:
+                assert pp3_result.prediction == AutoACMGPrediction.NotMet
+                assert bp4_result.prediction == AutoACMGPrediction.Met

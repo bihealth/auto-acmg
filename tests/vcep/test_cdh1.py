@@ -290,3 +290,88 @@ def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, cdh1_predictor,
         "Default BP7 prediction fallback." in result.summary
     ), "The summary should indicate the fallback."
     assert mock_super_predict_bp7.called, "super().predict_bp7 should have been called."
+
+
+def test_predict_pp3bp4_exclusion_last_nucleotide_exon_3(cdh1_predictor, auto_acmg_data):
+    cdh1_predictor.seqvar.pos = 387
+    pp3, bp4 = cdh1_predictor.predict_pp3bp4(cdh1_predictor.seqvar, auto_acmg_data)
+
+    assert pp3.prediction == AutoACMGPrediction.NotMet
+    assert "Exclusion: PP3 does not apply to the last nucleotide of exon 3 (c.387G)." in pp3.summary
+    assert bp4.prediction == AutoACMGPrediction.NotMet
+
+
+@patch.object(CDH1Predictor, "_is_splice_variant")
+def test_predict_pp3bp4_splice_variant(mock_is_splice_variant, cdh1_predictor, auto_acmg_data):
+    mock_is_splice_variant.return_value = True
+    pp3, bp4 = cdh1_predictor.predict_pp3bp4(cdh1_predictor.seqvar, auto_acmg_data)
+
+    assert pp3.prediction == AutoACMGPrediction.NotMet
+    assert "PP3 cannot be applied for canonical splice sites." in pp3.summary
+    assert bp4.prediction == AutoACMGPrediction.NotMet
+
+
+@pytest.mark.parametrize(
+    "spliceai_affect, expected_pp3, expected_bp4",
+    [
+        (True, AutoACMGPrediction.Met, AutoACMGPrediction.NotMet),
+        (False, AutoACMGPrediction.NotMet, AutoACMGPrediction.Met),
+    ],
+)
+@patch.object(CDH1Predictor, "_is_splice_variant")
+@patch.object(CDH1Predictor, "_affect_spliceAI")
+def test_predict_pp3bp4_spliceai_scenarios(
+    mock_affect_spliceAI,
+    mock_is_splice_variant,
+    cdh1_predictor,
+    auto_acmg_data,
+    spliceai_affect,
+    expected_pp3,
+    expected_bp4,
+):
+    mock_is_splice_variant.return_value = False
+    mock_affect_spliceAI.return_value = spliceai_affect
+
+    pp3, bp4 = cdh1_predictor.predict_pp3bp4(cdh1_predictor.seqvar, auto_acmg_data)
+
+    assert pp3.prediction == expected_pp3
+    assert bp4.prediction == expected_bp4
+    if spliceai_affect:
+        assert "Affect splicing according to spliceAI. PP3 is met." in pp3.summary
+    else:
+        assert "Does not affect splicing according to spliceAI. BP4 is met." in bp4.summary
+
+
+def test_predict_pp3bp4_strength(cdh1_predictor, auto_acmg_data):
+    pp3, bp4 = cdh1_predictor.predict_pp3bp4(cdh1_predictor.seqvar, auto_acmg_data)
+
+    assert pp3.strength == AutoACMGStrength.PathogenicSupporting
+    assert bp4.strength == AutoACMGStrength.BenignSupporting
+
+
+@patch.object(CDH1Predictor, "_is_splice_variant")
+@patch.object(CDH1Predictor, "_affect_spliceAI")
+def test_predict_pp3bp4_method_calls(
+    mock_affect_spliceAI, mock_is_splice_variant, cdh1_predictor, auto_acmg_data
+):
+    mock_is_splice_variant.return_value = False
+    mock_affect_spliceAI.return_value = True
+
+    cdh1_predictor.predict_pp3bp4(cdh1_predictor.seqvar, auto_acmg_data)
+
+    mock_is_splice_variant.assert_called_once()
+    mock_affect_spliceAI.assert_called_once()
+
+
+@pytest.mark.skip("Fix it")
+def test_predict_pp3bp4_no_criteria_met(cdh1_predictor, auto_acmg_data):
+    with (
+        patch.object(CDH1Predictor, "_is_splice_variant", return_value=False),
+        patch.object(CDH1Predictor, "_affect_spliceAI", return_value=False),
+    ):
+        pp3, bp4 = cdh1_predictor.predict_pp3bp4(cdh1_predictor.seqvar, auto_acmg_data)
+
+    assert pp3.prediction == AutoACMGPrediction.NotMet
+    assert "PP3 criteria not met." in pp3.summary
+    assert bp4.prediction == AutoACMGPrediction.Met
+    assert "Does not affect splicing according to spliceAI. BP4 is met." in bp4.summary

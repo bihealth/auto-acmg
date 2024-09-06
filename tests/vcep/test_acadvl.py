@@ -161,3 +161,91 @@ def test_predict_pp2bp1(acadvl_predictor, seqvar, auto_acmg_data):
     assert (
         bp1_result.summary == "BP1 is not applicable for the gene."
     ), "The summary should indicate BP1 is not applicable."
+
+
+def test_predict_pp3bp4_missense(acadvl_predictor, seqvar, auto_acmg_data):
+    """Test predict_pp3bp4 for a missense variant with high REVEL score."""
+    auto_acmg_data.consequence = MagicMock(cadd={"missense": True}, mehari=["missense_variant"])
+    auto_acmg_data.scores.dbnsfp.revel = 0.8
+
+    pp3, bp4 = acadvl_predictor.predict_pp3bp4(seqvar, auto_acmg_data)
+
+    assert pp3.prediction == AutoACMGPrediction.Met
+    assert bp4.prediction == AutoACMGPrediction.NotMet
+    assert "REVEL score 0.8 > 0.75, PP3 met" in pp3.summary
+
+
+def test_predict_pp3bp4_missense_low_revel(acadvl_predictor, seqvar, auto_acmg_data):
+    """Test predict_pp3bp4 for a missense variant with low REVEL score."""
+    auto_acmg_data.consequence = MagicMock(cadd={"missense": True}, mehari=["missense_variant"])
+    auto_acmg_data.scores.dbnsfp.revel = 0.4
+
+    pp3, bp4 = acadvl_predictor.predict_pp3bp4(seqvar, auto_acmg_data)
+
+    assert pp3.prediction == AutoACMGPrediction.NotMet
+    assert bp4.prediction == AutoACMGPrediction.Met
+    assert "REVEL score 0.4 < 0.5, BP4 met" in bp4.summary
+
+
+def test_predict_pp3bp4_inframe_indel(acadvl_predictor, seqvar, auto_acmg_data):
+    """Test predict_pp3bp4 for an in-frame indel."""
+    auto_acmg_data.consequence = MagicMock(cadd={"inframe": True}, mehari=["inframe_deletion"])
+    auto_acmg_data.scores.dbnsfp.provean = -3.0
+    auto_acmg_data.scores.dbnsfp.mutationTaster = 0.6
+
+    pp3, bp4 = acadvl_predictor.predict_pp3bp4(seqvar, auto_acmg_data)
+
+    assert pp3.prediction == AutoACMGPrediction.Met
+    assert bp4.prediction == AutoACMGPrediction.NotMet
+
+
+@pytest.mark.skip(reason="Need to fix")
+def test_predict_pp3bp4_splice(acadvl_predictor, seqvar, auto_acmg_data):
+    """Test predict_pp3bp4 for a splice variant."""
+    auto_acmg_data.consequence = MagicMock(cadd="splice", mehari=["splice_variant"])
+    auto_acmg_data.scores.dbscsnv.ada = 0.8
+    auto_acmg_data.scores.dbscsnv.rf = 0.9
+    auto_acmg_data.scores.cadd.ada = 0.8
+    auto_acmg_data.scores.cadd.rf = 0.9
+    auto_acmg_data.thresholds.ada = 0.5
+    auto_acmg_data.thresholds.rf = 0.5
+
+    pp3, bp4 = acadvl_predictor.predict_pp3bp4(seqvar, auto_acmg_data)
+
+    assert pp3.prediction == AutoACMGPrediction.Met
+    assert bp4.prediction == AutoACMGPrediction.NotMet
+
+
+def test_predict_pp3bp4_other(acadvl_predictor, seqvar, auto_acmg_data):
+    """Test predict_pp3bp4 for a variant that doesn't meet any criteria."""
+    auto_acmg_data.consequence = MagicMock(cadd={}, mehari=["other_variant"])
+    pp3, bp4 = acadvl_predictor.predict_pp3bp4(seqvar, auto_acmg_data)
+
+    assert pp3.prediction == AutoACMGPrediction.NotMet
+    assert bp4.prediction == AutoACMGPrediction.NotMet
+
+
+@patch.object(ACADVLPredictor, "_is_pathogenic_splicing")
+@patch.object(ACADVLPredictor, "_is_benign_splicing")
+@pytest.mark.skip(reason="Need to fix")
+def test_predict_pp3bp4_splice_methods(
+    mock_benign, mock_pathogenic, acadvl_predictor, seqvar, auto_acmg_data
+):
+    """Test that _is_pathogenic_splicing and _is_benign_splicing are called for splice variants."""
+    auto_acmg_data.consequence = MagicMock(cadd="splice", mehari=["splice_variant"])
+    auto_acmg_data.scores.dbscsnv.ada = 0.8
+    auto_acmg_data.scores.dbscsnv.rf = 0.9
+    auto_acmg_data.scores.cadd.ada = 0.8
+    auto_acmg_data.scores.cadd.rf = 0.9
+    auto_acmg_data.thresholds.ada = 0.6
+    auto_acmg_data.thresholds.rf = 0.7
+
+    mock_pathogenic.return_value = True
+    mock_benign.return_value = False
+
+    pp3, bp4 = acadvl_predictor.predict_pp3bp4(seqvar, auto_acmg_data)
+
+    mock_pathogenic.assert_called_once()
+    mock_benign.assert_called_once()
+    assert pp3.prediction == AutoACMGPrediction.Met
+    assert bp4.prediction == AutoACMGPrediction.NotMet

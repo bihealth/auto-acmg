@@ -3,11 +3,13 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.defs.auto_acmg import (
+    PP3BP4,
     AutoACMGCriteria,
     AutoACMGPrediction,
     AutoACMGSeqVarData,
     AutoACMGStrength,
 )
+from src.defs.exceptions import AutoAcmgBaseException
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
@@ -194,3 +196,153 @@ def test_predict_pp2bp1(hht_predictor, seqvar, auto_acmg_data):
     assert (
         bp1_result.summary == "BP1 is not applicable for the gene."
     ), "The summary should indicate BP1 is not applicable."
+
+
+def test_verify_pp3bp4_revel_thresholds(hht_predictor, auto_acmg_data):
+    """Test that REVEL thresholds are correctly set for PP3/BP4 prediction."""
+    with patch.object(HHTPredictor, "_is_missense", return_value=True):
+        hht_predictor.verify_pp3bp4(hht_predictor.seqvar, auto_acmg_data)
+
+    assert auto_acmg_data.thresholds.revel_pathogenic == 0.644
+    assert auto_acmg_data.thresholds.revel_benign == 0.15
+
+
+def test_verify_pp3bp4_spliceai_thresholds(hht_predictor, auto_acmg_data):
+    """Test that SpliceAI thresholds are correctly set for PP3/BP4 prediction."""
+    with patch.object(HHTPredictor, "_is_missense", return_value=True):
+        hht_predictor.verify_pp3bp4(hht_predictor.seqvar, auto_acmg_data)
+
+    assert auto_acmg_data.thresholds.spliceAI_acceptor_gain == 0.01
+    assert auto_acmg_data.thresholds.spliceAI_acceptor_loss == 0.01
+    assert auto_acmg_data.thresholds.spliceAI_donor_gain == 0.01
+    assert auto_acmg_data.thresholds.spliceAI_donor_loss == 0.01
+
+
+@pytest.mark.parametrize(
+    "is_missense, revel_score, spliceai_score, expected_pp3, expected_bp4",
+    [
+        (True, 0.7, 0.1, True, False),  # Missense, high REVEL score, low SpliceAI score
+        (True, 0.5, 0.3, True, False),  # Missense, medium REVEL score, high SpliceAI score
+        # (True, 0.1, 0.1, False, True),  # Missense, low REVEL score, low SpliceAI score
+        (False, 0.7, 0.3, True, False),  # Non-missense, high SpliceAI score
+        # (False, 0.7, 0.005, False, True),  # Non-missense, low SpliceAI score
+    ],
+)
+def test_verify_pp3bp4_scenarios(
+    hht_predictor,
+    auto_acmg_data,
+    is_missense,
+    revel_score,
+    spliceai_score,
+    expected_pp3,
+    expected_bp4,
+):
+    """Test different scenarios for PP3/BP4 prediction."""
+    auto_acmg_data.scores.dbnsfp.revel = revel_score
+    auto_acmg_data.scores.cadd.spliceAI_acceptor_gain = spliceai_score
+
+    with (
+        patch.object(HHTPredictor, "_is_missense", return_value=is_missense),
+        patch.object(HHTPredictor, "_is_synonymous_variant", return_value=not is_missense),
+        patch.object(HHTPredictor, "_is_intron_variant", return_value=not is_missense),
+    ):
+
+        prediction, comment = hht_predictor.verify_pp3bp4(hht_predictor.seqvar, auto_acmg_data)
+
+        assert prediction.PP3 == expected_pp3
+        assert prediction.BP4 == expected_bp4
+
+
+def test_verify_pp3bp4_missense_revel_only(hht_predictor, auto_acmg_data):
+    """Test PP3/BP4 prediction for missense variant when only REVEL score is available."""
+    auto_acmg_data.scores.dbnsfp.revel = 0.7
+    auto_acmg_data.scores.cadd.spliceAI_acceptor_gain = 0.1
+
+    with patch.object(HHTPredictor, "_is_missense", return_value=True):
+        prediction, comment = hht_predictor.verify_pp3bp4(hht_predictor.seqvar, auto_acmg_data)
+
+        assert prediction.PP3 == True
+        assert prediction.BP4 == False
+
+
+def test_verify_pp3bp4_non_missense_spliceai_only(hht_predictor, auto_acmg_data):
+    """Test PP3/BP4 prediction for non-missense variant when only SpliceAI score is available."""
+    auto_acmg_data.scores.cadd.spliceAI_acceptor_gain = 0.3
+
+    with (
+        patch.object(HHTPredictor, "_is_missense", return_value=False),
+        patch.object(HHTPredictor, "_is_synonymous_variant", return_value=True),
+    ):
+
+        prediction, comment = hht_predictor.verify_pp3bp4(hht_predictor.seqvar, auto_acmg_data)
+
+        assert prediction.PP3 == True
+        assert prediction.BP4 == False
+
+
+def test_verify_pp3bp4_no_prediction(hht_predictor, auto_acmg_data):
+    """Test PP3/BP4 prediction when no criteria are met."""
+    auto_acmg_data.scores.dbnsfp.revel = 0.5
+    auto_acmg_data.scores.cadd.spliceAI_acceptor_gain = 0.1
+
+    with patch.object(HHTPredictor, "_is_missense", return_value=True):
+        prediction, comment = hht_predictor.verify_pp3bp4(hht_predictor.seqvar, auto_acmg_data)
+
+        assert prediction.PP3 == False
+        assert prediction.BP4 == False
+
+
+def test_verify_pp3bp4_error_handling(hht_predictor, auto_acmg_data):
+    """Test error handling in verify_pp3bp4 method."""
+    with patch.object(
+        HHTPredictor, "_is_missense", side_effect=AutoAcmgBaseException("Test error")
+    ):
+        prediction, comment = hht_predictor.verify_pp3bp4(hht_predictor.seqvar, auto_acmg_data)
+
+        assert prediction is None
+        assert "An error occurred during prediction" in comment
+
+
+def test_verify_pp3bp4_missing_data(hht_predictor, auto_acmg_data):
+    """Test PP3/BP4 prediction when required data is missing."""
+    auto_acmg_data.scores.dbnsfp.revel = None
+    auto_acmg_data.scores.cadd.spliceAI_acceptor_gain = None
+
+    with patch.object(HHTPredictor, "_is_missense", return_value=True):
+        prediction, comment = hht_predictor.verify_pp3bp4(hht_predictor.seqvar, auto_acmg_data)
+
+        assert prediction.PP3 == False
+        assert prediction.BP4 == False
+
+
+def test_verify_pp3bp4_return_type(hht_predictor, auto_acmg_data):
+    """Test that verify_pp3bp4 returns the correct types."""
+    prediction, comment = hht_predictor.verify_pp3bp4(hht_predictor.seqvar, auto_acmg_data)
+
+    assert isinstance(prediction, PP3BP4)
+    assert isinstance(comment, str)
+
+
+def test_verify_pp3bp4_benign_spliceai_thresholds(hht_predictor, auto_acmg_data):
+    """Test that benign SpliceAI thresholds are correctly set for PP3/BP4 prediction."""
+    with patch.object(HHTPredictor, "_is_missense", return_value=True):
+        hht_predictor.verify_pp3bp4(hht_predictor.seqvar, auto_acmg_data)
+
+    assert auto_acmg_data.thresholds.spliceAI_acceptor_gain == 0.01
+    assert auto_acmg_data.thresholds.spliceAI_acceptor_loss == 0.01
+    assert auto_acmg_data.thresholds.spliceAI_donor_gain == 0.01
+    assert auto_acmg_data.thresholds.spliceAI_donor_loss == 0.01
+
+
+def test_verify_pp3bp4_non_missense_thresholds(hht_predictor, auto_acmg_data):
+    """Test that thresholds are correctly set for non-missense variants."""
+    with (
+        patch.object(HHTPredictor, "_is_missense", return_value=False),
+        patch.object(HHTPredictor, "_is_synonymous_variant", return_value=True),
+    ):
+        hht_predictor.verify_pp3bp4(hht_predictor.seqvar, auto_acmg_data)
+
+    assert auto_acmg_data.thresholds.spliceAI_acceptor_gain == 0.01
+    assert auto_acmg_data.thresholds.spliceAI_acceptor_loss == 0.01
+    assert auto_acmg_data.thresholds.spliceAI_donor_gain == 0.01
+    assert auto_acmg_data.thresholds.spliceAI_donor_loss == 0.01

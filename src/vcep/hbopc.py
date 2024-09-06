@@ -13,6 +13,7 @@ from typing import List, Optional, Tuple
 from loguru import logger
 
 from src.defs.auto_acmg import (
+    PP3BP4,
     PS1PM5,
     AutoACMGCriteria,
     AutoACMGPrediction,
@@ -296,6 +297,21 @@ class HBOPCPredictor(DefaultSeqVarPredictor):
                 summary=comment,
             ),
         )
+
+    def predict_pp3bp4(
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Override predict_pp3bp4 to rewrite thresholds"""
+        if var_data.hgnc_id == "HGNC:795":
+            var_data.thresholds.pp3bp4_strategy = "revel"
+            var_data.thresholds.revel_pathogenic = 0.7333
+            var_data.thresholds.revel_benign = 0.249
+        # PALB2 can have PP3/BP4 only for splice-affecting variants
+        elif var_data.hgnc_id == "HGNC:26144":
+            var_data.thresholds.pp3bp4_strategy = "revel"
+            var_data.thresholds.revel_pathogenic = 100  # Impossible value to be pathogenic
+            var_data.thresholds.revel_benign = -100  # Impossible value to be benign
+        return super().predict_pp3bp4(seqvar, var_data)
 
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override donor and acceptor positions for ATM and PALB2."""

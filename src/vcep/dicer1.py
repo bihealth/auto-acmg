@@ -151,6 +151,15 @@ class DICER1Predictor(DefaultSeqVarPredictor):
             ),
         )
 
+    def predict_pp3bp4(
+        self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
+    ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
+        """Use REVEL scores for PP3 and BP4."""
+        var_data.thresholds.pp3bp4_strategy = "revel"
+        var_data.thresholds.revel_pathogenic = 0.75
+        var_data.thresholds.revel_benign = 0.5
+        return super().predict_pp3bp4(seqvar, var_data)
+
     def predict_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override donor and acceptor positions for DICER1 VCEP."""
         var_data.thresholds.bp7_donor = 7

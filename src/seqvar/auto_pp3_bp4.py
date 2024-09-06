@@ -26,13 +26,12 @@ class AutoPP3BP4(AutoACMGHelper):
         #: Comment to store the prediction explanation.
         self.comment_pp3bp4: str = ""
 
-    @staticmethod
-    def _splice_variant(var_data: AutoACMGSeqVarData) -> bool:
+    def _is_splice_variant(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the variant's consequence is a splice related.
 
         Args:
-            var_data (AutoACMGData): The variant information.
+            var_data (AutoACMGSeqVarData): The variant information.
 
         Returns:
             bool: True if the variant is a splice variant, False otherwise.
@@ -43,66 +42,134 @@ class AutoPP3BP4(AutoACMGHelper):
             return True
         return False
 
-    @staticmethod
-    def _is_pathogenic_score(var_data: AutoACMGSeqVarData) -> bool:
+    def _is_inframe_indel(self, var_data: AutoACMGSeqVarData) -> bool:
         """
-        Check if any of the pathogenic scores meet the threshold.
-
-        Check if any of the pathogenic scores meet the threshold. If the variant is pathogenic
-        based on the scores, return True.
-
+        Check if the variant's consequence is an inframe indel.
         Args:
-            variant_info (VariantResult): Variant information.
-
+            var_data (AutoACMGSeqVarData): The variant information.
         Returns:
-            bool: True if the variant is pathogenic, False otherwise.
-
-        Raises:
-            MissingDataError: If the variant information is missing.
+            bool: True if the variant is an inframe indel, False otherwise.
         """
-        if (
-            var_data.scores.dbnsfp.metaRNN
-            and var_data.scores.dbnsfp.metaRNN >= var_data.thresholds.metaRNN_pathogenic
-        ):
+        if "inframe" in var_data.consequence.cadd:
             return True
-        if (
-            var_data.scores.dbnsfp.bayesDel_noAF
-            and var_data.scores.dbnsfp.bayesDel_noAF >= var_data.thresholds.bayesDel_noAF_pathogenic
+        if any("inframe" in cons for cons in var_data.consequence.mehari):
+            return True
+        return False
+
+    def _is_missense_variant(self, var_data: AutoACMGSeqVarData) -> bool:
+        """
+        Check if the variant's consequence is a missense variant.
+        Args:
+            var_data (AutoACMGSeqVarData): The variant information.
+        Returns:
+            bool: True if the variant is a missense variant, False otherwise.
+        """
+        if "missense" in var_data.consequence.cadd:
+            return True
+        if "missense_variant" in var_data.consequence.mehari:
+            return True
+        return False
+
+    def _is_synonymous_variant(self, var_data: AutoACMGSeqVarData) -> bool:
+        """
+        Check if the variant's consequence is a synonymous variant.
+        Args:
+            var_data (AutoACMGSeqVarData): The variant information.
+        Returns:
+            bool: True if the variant is a synonymous variant, False otherwise.
+        """
+        if "synonymous" in var_data.consequence.cadd:
+            return True
+        if "synonymous_variant" in var_data.consequence.mehari:
+            return True
+        return False
+
+    def _is_intron_variant(self, var_data: AutoACMGSeqVarData) -> bool:
+        """
+        Check if the variant's consequence is an intron variant.
+        Args:
+            var_data (AutoACMGSeqVarData): The variant information.
+        Returns:
+            bool: True if the variant is an intron variant, False otherwise.
+        """
+        if "intron" in var_data.consequence.cadd:
+            return True
+        if any("intron" in cons for cons in var_data.consequence.mehari):
+            return True
+        return False
+
+    def _is_utr_variant(self, var_data: AutoACMGSeqVarData) -> bool:
+        """
+        Check if the variant's consequence is an UTR variant.
+        Args:
+            var_data (AutoACMGSeqVarData): The variant information.
+        Returns:
+            bool: True if the variant is an UTR variant, False otherwise.
+        """
+        if (x in var_data.consequence.cadd for x in ["UTR", "utr"]):
+            return True
+        if any("utr" in cons for cons in var_data.consequence.mehari) or any(
+            "UTR" in cons for cons in var_data.consequence.mehari
         ):
             return True
         return False
 
-    @staticmethod
-    def _is_benign_score(var_data: AutoACMGSeqVarData) -> bool:
+    def _is_pathogenic_score(
+        self, var_data: AutoACMGSeqVarData, *score_threshold_pairs: Tuple[str, float]
+    ) -> bool:
         """
-        Check if any of the benign scores meet the threshold.
-
-        Check if any of the benign scores meet the threshold. If the variant is benign
-        based on the scores, return True.
-
+        Check if any of the specified scores meet their corresponding threshold.
         Args:
-            variant_info (VariantResult): Variant information.
-
+            var_data (AutoACMGSeqVarData): Variant data containing scores and thresholds.
+            score_threshold_pairs (Tuple[str, float]): Pairs of score attributes and their corresponding pathogenic thresholds.
         Returns:
-            bool: True if the variant is benign, False otherwise.
-
-        Raises:
-            MissingDataError: If the variant information is missing.
+            bool: True if any of the specified scores meet their corresponding threshold, False otherwise.
         """
-        if (
-            var_data.scores.dbnsfp.metaRNN
-            and var_data.scores.dbnsfp.metaRNN <= var_data.thresholds.metaRNN_benign
-        ):
-            return True
-        if (
-            var_data.scores.dbnsfp.bayesDel_noAF
-            and var_data.scores.dbnsfp.bayesDel_noAF <= var_data.thresholds.bayesDel_noAF_benign
-        ):
-            return True
+        for score_attr, threshold in score_threshold_pairs:
+            score_value = getattr(var_data.scores.dbnsfp, score_attr, None)
+            if score_value is not None and score_value >= threshold:
+                return True
         return False
 
-    @staticmethod
-    def _is_pathogenic_splicing(var_data: AutoACMGSeqVarData) -> bool:
+    def _is_benign_score(
+        self, var_data: AutoACMGSeqVarData, *score_threshold_pairs: Tuple[str, float]
+    ) -> bool:
+        """
+        Check if any of the specified scores meet their corresponding threshold.
+        Args:
+            var_data (AutoACMGSeqVarData): Variant data containing scores and thresholds.
+            score_threshold_pairs (Tuple[str, float]): Pairs of score attributes and their corresponding benign thresholds.
+        Returns:
+            bool: True if any of the specified scores meet their corresponding threshold, False otherwise.
+        """
+        for score_attr, threshold in score_threshold_pairs:
+            score_value = getattr(var_data.scores.dbnsfp, score_attr, None)
+            if score_value is not None and score_value <= threshold:
+                return True
+        return False
+
+    def _affect_spliceAI(self, var_data: AutoACMGSeqVarData) -> bool:
+        """
+        Predict splice site alterations using SpliceAI.
+        If any of SpliceAI scores are greater than specific thresholds, the variant is considered a
+        splice site alteration. The thresholds are defined in the variant data thresholds.
+        Args:
+            var_data: The data containing variant scores and thresholds.
+        Returns:
+            bool: True if the variant is a splice site alteration, False otherwise.
+        """
+        score_checks = {
+            "spliceAI_acceptor_gain": var_data.thresholds.spliceAI_acceptor_gain,
+            "spliceAI_acceptor_loss": var_data.thresholds.spliceAI_acceptor_loss,
+            "spliceAI_donor_gain": var_data.thresholds.spliceAI_donor_gain,
+            "spliceAI_donor_loss": var_data.thresholds.spliceAI_donor_loss,
+        }
+        return any(
+            (getattr(var_data.scores.cadd, score_name) or 0) > threshold
+            for score_name, threshold in score_checks.items()
+        )
+
+    def _is_pathogenic_splicing(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the variant is pathogenic based on splicing scores.
 
@@ -127,8 +194,7 @@ class AutoPP3BP4(AutoACMGHelper):
                 return True
         return False
 
-    @staticmethod
-    def _is_benign_splicing(var_data: AutoACMGSeqVarData) -> bool:
+    def _is_benign_splicing(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the variant is benign based on splicing scores.
 
@@ -159,37 +225,50 @@ class AutoPP3BP4(AutoACMGHelper):
         """Predict PP3 and BP4 criteria."""
         self.prediction_pp3bp4 = PP3BP4()
         self.comment_pp3bp4 = ""
-        if seqvar.chrom == "MT":
-            self.comment_pp3bp4 = (
-                "Variant is in mitochondrial DNA. PP3 and BP4 criteria are not met."
-            )
-            self.prediction_pp3bp4.PP3, self.prediction_pp3bp4.BP4 = False, False
-        else:
-            try:
-                if self._splice_variant(var_data):
-                    self.comment_pp3bp4 = "Variant is a splice variant."
-                    self.prediction_pp3bp4.PP3 = self._is_pathogenic_splicing(var_data)
-                    self.prediction_pp3bp4.BP4 = self._is_benign_splicing(var_data)
-                    self.comment_pp3bp4 += (
-                        f"Ada score: {var_data.scores.dbscsnv.ada}, "
-                        f"Ada threshold: {var_data.thresholds.ada}. "
-                        f"RF score: {var_data.scores.dbscsnv.rf}, "
-                        f"RF threshold: {var_data.thresholds.rf}. "
-                    )
-                else:
-                    self.comment_pp3bp4 = "Variant is not a splice variant."
-                    self.prediction_pp3bp4.PP3 = self._is_pathogenic_score(var_data)
-                    self.prediction_pp3bp4.BP4 = self._is_benign_score(var_data)
-                    self.comment_pp3bp4 += (
-                        f"MetaRNN score: {var_data.scores.dbnsfp.metaRNN}, "
-                        f"MetaRNN threshold: {var_data.thresholds.metaRNN_pathogenic}. "
-                        f"BayesDel_noAF score: {var_data.scores.dbnsfp.bayesDel_noAF}, "
-                        f"BayesDel_noAF threshold: {var_data.thresholds.bayesDel_noAF_pathogenic}. "
-                    )
+        try:
+            if (score := var_data.thresholds.pp3bp4_strategy) == "default":
+                self.prediction_pp3bp4.PP3 = self._is_pathogenic_score(
+                    var_data,
+                    ("metaRNN", var_data.thresholds.metaRNN_pathogenic),
+                    ("bayesDel_noAF", var_data.thresholds.bayesDel_noAF_pathogenic),
+                )
+                self.prediction_pp3bp4.BP4 = self._is_benign_score(
+                    var_data,
+                    ("metaRNN", var_data.thresholds.metaRNN_benign),
+                    ("bayesDel_noAF", var_data.thresholds.bayesDel_noAF_benign),
+                )
+                self.comment_pp3bp4 += (
+                    f"MetaRNN score: {var_data.scores.dbnsfp.metaRNN}, "
+                    f"MetaRNN threshold: {var_data.thresholds.metaRNN_pathogenic}. "
+                    f"BayesDel_noAF score: {var_data.scores.dbnsfp.bayesDel_noAF}, "
+                    f"BayesDel_noAF threshold: {var_data.thresholds.bayesDel_noAF_pathogenic}. "
+                )
+            else:
+                self.prediction_pp3bp4.PP3 = self._is_pathogenic_score(
+                    var_data,
+                    (score, getattr(var_data.thresholds, f"{score}_pathogenic")),
+                )
+                self.prediction_pp3bp4.BP4 = self._is_benign_score(
+                    var_data,
+                    (score, getattr(var_data.thresholds, f"{score}_benign")),
+                )
 
-            except AutoAcmgBaseException as e:
-                self.comment_pp3bp4 = f"An error occurred during prediction. Error: {e}"
-                self.prediction_pp3bp4 = None
+                self.prediction_pp3bp4.PP3 = (
+                    self.prediction_pp3bp4.PP3 or self._is_pathogenic_splicing(var_data)
+                )
+                self.prediction_pp3bp4.BP4 = self.prediction_pp3bp4.BP4 or self._is_benign_splicing(
+                    var_data
+                )
+                self.comment_pp3bp4 += (
+                    f"Ada score: {var_data.scores.dbscsnv.ada}, "
+                    f"Ada threshold: {var_data.thresholds.ada}. "
+                    f"RF score: {var_data.scores.dbscsnv.rf}, "
+                    f"RF threshold: {var_data.thresholds.rf}. "
+                )
+
+        except AutoAcmgBaseException as e:
+            self.comment_pp3bp4 = f"An error occurred during prediction. Error: {e}"
+            self.prediction_pp3bp4 = None
         return self.prediction_pp3bp4, self.comment_pp3bp4
 
     def predict_pp3bp4(
