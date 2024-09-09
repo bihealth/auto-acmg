@@ -12,7 +12,12 @@ from src.defs.auto_acmg import (
     GenomicStrand,
 )
 from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionPathMapping, PVS1PredictionStrucVarPath
-from src.defs.exceptions import AlgorithmError, MissingDataError
+from src.defs.exceptions import (
+    AlgorithmError,
+    AutoAcmgBaseException,
+    InvalidAPIResposeError,
+    MissingDataError,
+)
 from src.defs.mehari import Exon
 from src.defs.strucvar import StrucVar, StrucVarType
 from src.utils import AutoACMGHelper
@@ -51,6 +56,50 @@ class StrucVarHelper(AutoACMGHelper):
             if strucvar.start <= exon.altStartI and strucvar.stop >= exon.altEndI:
                 return True
         return False
+
+    def _count_pathogenic_vars(self, strucvar: StrucVar) -> Tuple[int, int]:
+        """
+        Counts pathogenic variants in the range specified by the structural variant.
+
+        The method retrieves variants from the range defined by the structural variant's start and
+        stop positions and iterates through the ClinVar data of each variant to count the number of
+        pathogenic variants and the total number of variants.
+
+        Args:
+            strucvar: The structural variant being analyzed.
+
+        Returns:
+            Tuple[int, int]: The number of pathogenic variants and the total number of variants.
+
+        Raises:
+            InvalidAPIResposeError: If the API response is invalid or cannot be processed.
+        """
+        logger.debug(
+            "Counting pathogenic variants from position {} to {}.", strucvar.start, strucvar.stop
+        )
+        if strucvar.stop < strucvar.start:
+            raise AlgorithmError("End position is less than the start position.")
+
+        response = self.annonars_client.get_variant_from_range(
+            strucvar, strucvar.start, strucvar.stop
+        )
+        if response and response.clinvar:
+            pathogenic_variants = [
+                v
+                for v in response.clinvar
+                if v.records
+                and (clf := v.records[0].classifications)
+                and (gc := clf.germlineClassification)
+                and gc.description in ["Pathogenic", "Likely pathogenic"]
+            ]
+            logger.debug(
+                "Pathogenic variants: {}, Total variants: {}",
+                len(pathogenic_variants),
+                len(response.clinvar),
+            )
+            return len(pathogenic_variants), len(response.clinvar)
+        else:
+            raise InvalidAPIResposeError("Failed to get variant from range. No ClinVar data.")
 
     def full_gene_del(self, strucvar: StrucVar, exons: List[Exon]) -> bool:
         """
@@ -244,10 +293,42 @@ class StrucVarHelper(AutoACMGHelper):
         self.comment_pvs1 += f"Transcript tags: {', '.join(transcript_tags)}."
         return "TRANSCRIPT_TAG_MANE_SELECT" in transcript_tags
 
-    @staticmethod
-    def crit4prot_func() -> bool:
-        """Check if the deletion is critical for protein function."""
-        return False
+    def crit4prot_func(self, strucvar: StrucVar) -> bool:
+        """
+        Check if the deletion is critical for protein function.
+
+        This method is implemented by fetching variants from the start to the end of the structural
+        variant, then counting the number of pathogenic variants in that region, by iterating
+        through the clinvar data of each variant. Consider the region critical if the frequency of
+        pathogenic variants exceeds 5%.
+        """
+        logger.debug("Checking if the deletion is critical for protein function.")
+
+        try:
+            pathogenic_variants, total_variants = self._count_pathogenic_vars(strucvar)
+            self.comment_pvs1 += (
+                f"Found {pathogenic_variants} pathogenic variants from {total_variants} total "
+                f"variants in the range {strucvar.start} - {strucvar.stop}. "
+            )
+            if total_variants == 0:  # Avoid division by zero
+                self.comment_pvs1 += "No variants found. Predicted to be non-critical."
+                return False
+            if pathogenic_variants / total_variants > 0.05:
+                self.comment_pvs1 += (
+                    "Frequency of pathogenic variants "
+                    f"{pathogenic_variants/total_variants} exceeds 5%. "
+                    "Predicted to be critical."
+                )
+                return True
+            else:
+                self.comment_pvs1 += (
+                    "Frequency of pathogenic variants "
+                    f"{pathogenic_variants/total_variants} does not exceed 5%. "
+                    "Predicted to be non-critical."
+                )
+                return False
+        except AutoAcmgBaseException as e:
+            raise AlgorithmError("Failed to predict criticality for variant.") from e
 
     @staticmethod
     def lof_freq_in_pop() -> bool:
@@ -315,7 +396,7 @@ class AutoPVS1(StrucVarHelper):
                 strucvar, var_data.exons, var_data.strand
             ) and not self.undergo_nmd(strucvar, var_data.exons, var_data.strand):
                 self.comment_pvs1 += " =>"
-                if self.crit4prot_func():
+                if self.crit4prot_func(strucvar):
                     self.prediction = PVS1Prediction.PVS1_Strong
                     self.prediction_path = PVS1PredictionStrucVarPath.DEL4
                 else:
@@ -335,7 +416,7 @@ class AutoPVS1(StrucVarHelper):
                             self.prediction_path = PVS1PredictionStrucVarPath.DEL7_1
             else:
                 self.comment_pvs1 += " =>"
-                if self.crit4prot_func():
+                if self.crit4prot_func(strucvar):
                     self.prediction = PVS1Prediction.PVS1_Strong
                     self.prediction_path = PVS1PredictionStrucVarPath.DEL8
                 else:
