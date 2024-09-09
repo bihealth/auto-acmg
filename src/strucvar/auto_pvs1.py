@@ -181,41 +181,61 @@ class StrucVarHelper(AutoACMGHelper):
 
         if strand == GenomicStrand.Plus:
             # Remove 5' UTR
+            exons_remove = []
             for i, exon in enumerate(exons):
                 if exon.altEndI - exon.altStartI + 1 > start_codon:
                     exon.altStartI += start_codon
                     break
                 else:
-                    del exons[i]
+                    exons_remove.append(i)
                     start_codon -= exon.altEndI - exon.altStartI + 1
 
+            # Remove exons
+            for i in exons_remove[::-1]:
+                exons.pop(i)
+
+            exons_remove = []
             # Remove 3' UTR
             for i, exon in enumerate(exons[::-1]):
                 if exon.altEndI - exon.altStartI + 1 > stop_codon:
                     exon.altEndI -= stop_codon
                     break
                 else:
-                    del exons[-i]
+                    exons_remove.append(i + 1)
                     stop_codon -= exon.altEndI - exon.altStartI + 1
 
+            # Remove exons
+            for i in exons_remove[::-1]:
+                exons.pop(-i)
+
         elif strand == GenomicStrand.Minus:
+            exons_remove = []
             # Remove 3' UTR
             for i, exon in enumerate(exons):
                 if exon.altEndI - exon.altStartI + 1 > stop_codon:
                     exon.altStartI += stop_codon
                     break
                 else:
-                    del exons[i]
+                    exons_remove.append(i)
                     stop_codon -= exon.altEndI - exon.altStartI + 1
 
+            # Remove exons
+            for i in exons_remove[::-1]:
+                exons.pop(i)
+
+            exons_remove = []
             # Remove 5' UTR
             for i, exon in enumerate(exons[::-1]):
                 if exon.altEndI - exon.altStartI + 1 > start_codon:
                     exon.altEndI -= start_codon
                     break
                 else:
-                    del exons[-i]
+                    exons_remove.append(i + 1)
                     start_codon -= exon.altEndI - exon.altStartI + 1
+
+            # Remove exons
+            for i in exons_remove[::-1]:
+                exons.pop(-i)
 
         return exons
 

@@ -249,11 +249,100 @@ def test_count_lof_vars_api_failure(mock_get_variant_from_range, strucvar_helper
             0,
             [MagicMock(altStartI=100, altEndI=150)],
         ),
+        # Multiple exons deletion from the start
+        (
+            [
+                MagicMock(altStartI=100, altEndI=150),
+                MagicMock(altStartI=200, altEndI=250),
+                MagicMock(altStartI=300, altEndI=350),
+            ],
+            GenomicStrand.Plus,
+            75,
+            0,
+            [MagicMock(altStartI=224, altEndI=250), MagicMock(altStartI=300, altEndI=350)],
+        ),
+        # Multiple exons deletion from the end
+        (
+            [
+                MagicMock(altStartI=100, altEndI=150),
+                MagicMock(altStartI=200, altEndI=250),
+                MagicMock(altStartI=300, altEndI=350),
+            ],
+            GenomicStrand.Plus,
+            0,
+            75,
+            [MagicMock(altStartI=100, altEndI=150), MagicMock(altStartI=200, altEndI=226)],
+        ),
+        # Standard functionality: removing UTRs from the end of one exon and start of another
+        (
+            [MagicMock(altStartI=100, altEndI=200), MagicMock(altStartI=300, altEndI=400)],
+            GenomicStrand.Minus,
+            50,
+            50,
+            [MagicMock(altStartI=150, altEndI=200), MagicMock(altStartI=300, altEndI=350)],
+        ),
+        # Boundary conditions: start or stop codon at the boundary
+        (
+            [MagicMock(altStartI=100, altEndI=200)],
+            GenomicStrand.Minus,
+            100,
+            100,
+            [MagicMock(altStartI=100, altEndI=100)],  # Minimal exon remains
+        ),
+        # Multiple exons with varying UTR removal
+        (
+            [MagicMock(altStartI=100, altEndI=150), MagicMock(altStartI=200, altEndI=250)],
+            GenomicStrand.Minus,
+            25,
+            25,
+            [MagicMock(altStartI=125, altEndI=150), MagicMock(altStartI=200, altEndI=225)],
+        ),
+        # Complete removal of UTRs results in no exon left
+        (
+            [MagicMock(altStartI=100, altEndI=150)],
+            GenomicStrand.Minus,
+            150,
+            150,
+            [],  # Exon completely removed
+        ),
+        # No UTRs
+        (
+            [MagicMock(altStartI=100, altEndI=150)],
+            GenomicStrand.Minus,
+            0,
+            0,
+            [MagicMock(altStartI=100, altEndI=150)],
+        ),
+        # Multiple exons deletion
+        (
+            [
+                MagicMock(altStartI=100, altEndI=150),
+                MagicMock(altStartI=200, altEndI=250),
+                MagicMock(altStartI=300, altEndI=350),
+            ],
+            GenomicStrand.Minus,
+            75,
+            0,
+            [MagicMock(altStartI=100, altEndI=150), MagicMock(altStartI=200, altEndI=226)],
+        ),
+        # Multiple exons deletion from the end
+        (
+            [
+                MagicMock(altStartI=100, altEndI=150),
+                MagicMock(altStartI=200, altEndI=250),
+                MagicMock(altStartI=300, altEndI=350),
+            ],
+            GenomicStrand.Minus,
+            0,
+            75,
+            [MagicMock(altStartI=224, altEndI=250), MagicMock(altStartI=300, altEndI=350)],
+        ),
     ],
 )
 def test_calc_cds(exons, strand, start_codon, stop_codon, expected, strucvar_helper):
     """Test the _calc_cds method."""
     result = strucvar_helper._calc_cds(exons, strand, start_codon, stop_codon)
+    print(result)
     for i, exon in enumerate(result):
         assert exon.altStartI == expected[i].altStartI
         assert exon.altEndI == expected[i].altEndI
