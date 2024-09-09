@@ -432,6 +432,8 @@ class AutoACMG:
             gene_transcript.genomeAlignments[0].strand
         )
         self.strucvar_result.data.exons = gene_transcript.genomeAlignments[0].exons
+        self.strucvar_result.data.start_cdn = gene_transcript.startCodon
+        self.strucvar_result.data.stop_cdn = gene_transcript.stopCodon
 
         return self.strucvar_result
 

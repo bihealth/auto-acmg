@@ -18,7 +18,7 @@ class Exon(BaseModel):
     altEndI: int
     altCdsStartI: int
     altCdsEndI: int
-    cigar: str
+    cigar: Optional[str] = None
     ord: Optional[int] = None
 
 
