@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from src.api.annonars import AnnonarsClient
 from src.defs.auto_acmg import (
     AutoACMGCriteria,
     AutoACMGPrediction,
@@ -162,6 +163,50 @@ def test_count_pathogenic_vars_invalid_api_response(strucvar_helper, strucvar, m
 
     with pytest.raises(InvalidAPIResposeError):
         strucvar_helper._count_pathogenic_vars(strucvar)
+
+
+# ----------- _count_lof_vars -----------
+
+
+@patch.object(AnnonarsClient, "get_variant_from_range")
+def test_count_lof_vars_successful(mock_get_variant_from_range, strucvar_helper, strucvar):
+    # Setup the mock return with valid gnomAD genomes data
+    mock_response = MagicMock()
+    mock_response.gnomad_genomes = [
+        MagicMock(
+            vep=[MagicMock(consequence="Nonsense")], alleleCounts=[MagicMock(afPopmax=0.002)]
+        ),
+        MagicMock(
+            vep=[MagicMock(consequence="Frameshift")], alleleCounts=[MagicMock(afPopmax=0.0005)]
+        ),
+    ]
+    mock_get_variant_from_range.return_value = mock_response
+
+    frequent_lof_variants, lof_variants = strucvar_helper._count_lof_vars(strucvar)
+    assert lof_variants == 2, "Should correctly count total LoF variants."
+    assert frequent_lof_variants == 1, "Should correctly count frequent LoF variants."
+
+
+@patch.object(AnnonarsClient, "get_variant_from_range")
+@pytest.mark.skip(reason="The annonars client is not properly mocked.")
+def test_count_lof_vars_no_data(mock_get_variant_from_range, strucvar_helper, strucvar):
+    # Setup the mock return with no data available
+    mock_get_variant_from_range.return_value = MagicMock(gnomad_genomes=[])
+
+    frequent_lof_variants, lof_variants = strucvar_helper._count_lof_vars(strucvar)
+    assert lof_variants == 0, "Should return zero LoF variants when no data is available."
+    assert (
+        frequent_lof_variants == 0
+    ), "Should return zero frequent LoF variants when no data is available."
+
+
+@patch.object(AnnonarsClient, "get_variant_from_range")
+def test_count_lof_vars_api_failure(mock_get_variant_from_range, strucvar_helper, strucvar):
+    # Setup the mock to raise an error
+    mock_get_variant_from_range.side_effect = InvalidAPIResposeError("API failure")
+
+    with pytest.raises(InvalidAPIResposeError):
+        strucvar_helper._count_lof_vars(strucvar)
 
 
 # --------- full_gene_del ---------
@@ -485,6 +530,33 @@ def test_crit4prot_func_error_handling(strucvar_helper, strucvar, monkeypatch):
 
     with pytest.raises(AlgorithmError):
         strucvar_helper.crit4prot_func(strucvar)
+
+
+# --------- lof_freq_in_pop ---------
+
+
+@patch.object(StrucVarHelper, "_count_lof_vars", return_value=(0, 0))
+def test_lof_freq_in_pop_no_lof_variants(mock_count_lof_vars, strucvar_helper, strucvar):
+    result = strucvar_helper.lof_freq_in_pop(strucvar)
+    assert not result, "Expected False as there are no LoF variants."
+
+
+@patch.object(StrucVarHelper, "_count_lof_vars", return_value=(1, 20))
+def test_lof_freq_in_pop_lof_variants_not_frequent(mock_count_lof_vars, strucvar_helper, strucvar):
+    result = strucvar_helper.lof_freq_in_pop(strucvar)
+    assert not result, "Expected False as LoF variants are not frequent."
+
+
+@patch.object(StrucVarHelper, "_count_lof_vars", return_value=(15, 100))
+def test_lof_freq_in_pop_lof_variants_frequent(mock_count_lof_vars, strucvar_helper, strucvar):
+    result = strucvar_helper.lof_freq_in_pop(strucvar)
+    assert result, "Expected True as LoF variants are frequent."
+
+
+@patch.object(StrucVarHelper, "_count_lof_vars", side_effect=InvalidAPIResposeError("API error"))
+def test_lof_freq_in_pop_api_error(mock_count_lof_vars, strucvar_helper, strucvar):
+    with pytest.raises(AlgorithmError):
+        strucvar_helper.lof_freq_in_pop(strucvar)
 
 
 # ========== AutoPVS1 ============

@@ -101,6 +101,62 @@ class StrucVarHelper(AutoACMGHelper):
         else:
             raise InvalidAPIResposeError("Failed to get variant from range. No ClinVar data.")
 
+    def _count_lof_vars(self, strucvar: StrucVar) -> Tuple[int, int]:
+        """
+        Counts Loss-of-Function (LoF) variants within the range of a structural variant.
+
+        The method retrieves variants from the range defined by the structural variant's start and
+        stop positions and iterates through the available data of each variant to count the number
+        of LoF variants and the number of frequent LoF variants, based on the gnomAD genomes data (
+        for the consequences of Nonsense and Frameshift variants) and the allele frequency (for the
+        frequency of the LoF variants in the general population).
+
+        Note:
+            A LoF variant is considered frequent if its occurrence in the general population exceeds
+            a threshold of 0.1%.
+
+        Args:
+            strucvar: The structural variant being analyzed.
+
+        Returns:
+            Tuple[int, int]: The number of frequent LoF variants and the total number of LoF variants.
+
+        Raises:
+            AlgorithmError: If the end position is less than the start position.
+            InvalidAPIResposeError: If the API response is invalid or cannot be processed.
+        """
+        logger.debug("Counting LoF variants from position {} to {}.", strucvar.start, strucvar.stop)
+        if strucvar.stop < strucvar.start:
+            raise AlgorithmError("End position is less than the start position.")
+
+        response = self.annonars_client.get_variant_from_range(
+            strucvar, strucvar.start, strucvar.stop
+        )
+        if response and response.gnomad_genomes:
+            frequent_lof_variants = 0
+            lof_variants = 0
+            for variant in response.gnomad_genomes:
+                if not variant.vep:
+                    continue
+                for vep in variant.vep:
+                    if vep.consequence in ["Nonsense", "Frameshift"]:
+                        lof_variants += 1
+                        if variant.alleleCounts:
+                            for allele in variant.alleleCounts:
+                                if allele.afPopmax and allele.afPopmax > 0.001:
+                                    frequent_lof_variants += 1
+                                    break
+            logger.debug(
+                "Frequent LoF variants: {}, Total LoF variants: {}",
+                frequent_lof_variants,
+                lof_variants,
+            )
+            return frequent_lof_variants, lof_variants
+        else:
+            raise InvalidAPIResposeError(
+                "Failed to get variant from range. No gnomAD genomes data."
+            )
+
     def full_gene_del(self, strucvar: StrucVar, exons: List[Exon]) -> bool:
         """
         Check if the variant is a full gene deletion.
@@ -330,10 +386,64 @@ class StrucVarHelper(AutoACMGHelper):
         except AutoAcmgBaseException as e:
             raise AlgorithmError("Failed to predict criticality for variant.") from e
 
-    @staticmethod
-    def lof_freq_in_pop() -> bool:
-        """Check if loss-of-function is frequent in the population."""
-        return False
+    def lof_freq_in_pop(self, strucvar: StrucVar) -> bool:
+        """
+        Checks if the Loss-of-Function (LoF) variants within the structural variant are frequent in
+        the general population.
+
+        This function determines the frequency of LoF variants within the range specified by the
+        structural variant and evaluates whether this frequency exceeds a defined threshold
+        indicative of common occurrence in the general population.
+
+        Implementation of the rule:
+        - Retrieving the number of LoF variants and frequent LoF variants in the range defined by
+        the structural variant.
+        - Considering the LoF variants frequent in the general population if the frequency of
+        "frequent" LoF variants exceeds 10%.
+
+        Note:
+        A LoF variant is considered frequent if its occurrence in the general population exceeds
+        some threshold. We use a threshold of 10% to determine if the LoF variant is frequent.
+
+        Args:
+            strucvar: The structural variant being analyzed.
+
+        Returns:
+            bool: True if the LoF variant frequency is greater than 10%, False otherwise.
+
+        Raises:
+            InvalidAPIResponseError: If the API response is invalid or cannot be processed.
+        """
+        logger.debug(
+            "Checking if LoF variants are frequent in the general population for "
+            "structural variants."
+        )
+
+        try:
+            frequent_lof_variants, lof_variants = self._count_lof_vars(strucvar)
+            self.comment_pvs1 += (
+                f"Found {frequent_lof_variants} frequent LoF variants from {lof_variants} total "
+                f"LoF variants in the range {strucvar.start} - {strucvar.stop}. "
+            )
+            if lof_variants == 0:  # Avoid division by zero
+                self.comment_pvs1 += "No LoF variants found. Predicted to be non-frequent."
+                return False
+            if frequent_lof_variants / lof_variants > 0.1:
+                self.comment_pvs1 += (
+                    "Frequency of frequent LoF variants "
+                    f"{frequent_lof_variants/lof_variants} exceeds 0.1%. "
+                    "Predicted to be frequent."
+                )
+                return True
+            else:
+                self.comment_pvs1 += (
+                    "Frequency of frequent LoF variants "
+                    f"{frequent_lof_variants/lof_variants} does not exceed 0.1%. "
+                    "Predicted to be non-frequent."
+                )
+                return False
+        except AutoAcmgBaseException as e:
+            raise AlgorithmError("Failed to predict LoF frequency for structural variant.") from e
 
     @staticmethod
     def lof_rm_gt_10pct_of_prot() -> bool:
@@ -401,7 +511,7 @@ class AutoPVS1(StrucVarHelper):
                     self.prediction_path = PVS1PredictionStrucVarPath.DEL4
                 else:
                     self.comment_pvs1 += " =>"
-                    if self.lof_freq_in_pop() or not self.in_bio_relevant_tsx(
+                    if self.lof_freq_in_pop(strucvar) or not self.in_bio_relevant_tsx(
                         var_data.transcript_tags
                     ):
                         self.prediction = PVS1Prediction.NotPVS1
@@ -421,7 +531,7 @@ class AutoPVS1(StrucVarHelper):
                     self.prediction_path = PVS1PredictionStrucVarPath.DEL8
                 else:
                     self.comment_pvs1 += " =>"
-                    if self.lof_freq_in_pop() or not self.in_bio_relevant_tsx(
+                    if self.lof_freq_in_pop(strucvar) or not self.in_bio_relevant_tsx(
                         var_data.transcript_tags
                     ):
                         self.prediction = PVS1Prediction.NotPVS1
