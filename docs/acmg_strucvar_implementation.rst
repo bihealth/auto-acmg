@@ -1,11 +1,11 @@
 .. _acmg_strucvar_implementation:
 
-===============================================================
-Implementation of different ACMG criteria for sequence variants
-===============================================================
+=================================================================
+Implementation of different ACMG criteria for structural variants
+=================================================================
 
 This section contains the internal building blocks for the
-implementation of the different ACMG criteria for sequence variants.
+implementation of the different ACMG criteria for structural variants.
 
 
 ----

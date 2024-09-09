@@ -1,6 +1,6 @@
 """Annonars API client."""
 
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import httpx
 from loguru import logger
@@ -13,6 +13,7 @@ from src.defs.annonars_range import AnnonarsCustomRangeResult, AnnonarsRangeResp
 from src.defs.annonars_variant import AnnonarsVariantResponse
 from src.defs.exceptions import AnnonarsException
 from src.defs.seqvar import SeqVar
+from src.defs.strucvar import StrucVar
 
 #: Annonars API base URL
 ANNONARS_API_BASE_URL = f"{settings.API_REEV_URL}/annonars"
@@ -28,12 +29,12 @@ class AnnonarsClient:
         self.cache = Cache()
 
     def _get_variant_from_range(
-        self, seqvar: SeqVar, start: int, stop: int
+        self, variant: Union[SeqVar, StrucVar], start: int, stop: int
     ) -> AnnonarsRangeResponse:
         """Pull all variants within a range.
 
         Args:
-            seqvar (SeqVar): Sequence variant.
+            variant (Union[SeqVar, StrucVar]): Sequence or structural variant.
             start (int): Start position.
             stop (int): Stop position.
 
@@ -43,10 +44,12 @@ class AnnonarsClient:
         if abs(stop - start) > 5000:
             raise AnnonarsException("Range is too large for a single request.")
 
+        gr = variant.genome_release.name.lower()
+        chromosome = variant.chrom
         url = (
             f"{self.api_base_url}/annos/range?"
-            f"genome_release={seqvar.genome_release.name.lower()}"
-            f"&chromosome={seqvar.chrom}"
+            f"genome_release={gr}"
+            f"&chromosome={chromosome}"
             f"&start={start}"
             f"&stop={stop}"
         )
@@ -76,12 +79,12 @@ class AnnonarsClient:
             raise AnnonarsException("Annonars returned non-validating data.") from e
 
     def get_variant_from_range(
-        self, seqvar: SeqVar, start: int, stop: int
+        self, variant: Union[SeqVar, StrucVar], start: int, stop: int
     ) -> AnnonarsCustomRangeResult:
         """A wrapper for _get_variant_from_range that handles ranges larger than 5000.
 
         Args:
-            seqvar (SeqVar): Sequence variant.
+            variant (Union[SeqVar, StrucVar]): Sequence or structural variant.
             start (int): Start position.
             stop (int): Stop position.
 
@@ -93,7 +96,7 @@ class AnnonarsClient:
         current_start = start
         while current_start < stop:
             current_stop = min(current_start + MAX_RANGE_SIZE - 1, stop)
-            response = self._get_variant_from_range(seqvar, current_start, current_stop)
+            response = self._get_variant_from_range(variant, current_start, current_stop)
             if res.gnomad_genomes is None:
                 res.gnomad_genomes = response.result.gnomad_genomes
             else:
