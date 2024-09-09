@@ -209,6 +209,151 @@ def test_count_lof_vars_api_failure(mock_get_variant_from_range, strucvar_helper
         strucvar_helper._count_lof_vars(strucvar)
 
 
+# --------- _calc_cds ---------
+
+
+@pytest.mark.parametrize(
+    "exons, strand, start_codon, stop_codon, expected",
+    [
+        # Basic functionality: proper removal of UTRs
+        (
+            [MagicMock(altStartI=100, altEndI=200), MagicMock(altStartI=300, altEndI=400)],
+            GenomicStrand.Plus,
+            50,
+            50,
+            [MagicMock(altStartI=150, altEndI=200), MagicMock(altStartI=300, altEndI=350)],
+        ),
+        # Edge cases: start or stop codon at the boundary
+        (
+            [MagicMock(altStartI=100, altEndI=200)],
+            GenomicStrand.Plus,
+            100,
+            100,
+            [
+                MagicMock(altStartI=200, altEndI=100)
+            ],  # Exon is inverted due to complete UTR trimming
+        ),
+        # Multiple exons with varying UTR positions
+        (
+            [MagicMock(altStartI=100, altEndI=150), MagicMock(altStartI=200, altEndI=250)],
+            GenomicStrand.Plus,
+            25,
+            25,
+            [MagicMock(altStartI=125, altEndI=150), MagicMock(altStartI=200, altEndI=225)],
+        ),
+        # No UTRs
+        (
+            [MagicMock(altStartI=100, altEndI=150)],
+            GenomicStrand.Plus,
+            0,
+            0,
+            [MagicMock(altStartI=100, altEndI=150)],
+        ),
+        # Multiple exons deletion from the start
+        (
+            [
+                MagicMock(altStartI=100, altEndI=150),
+                MagicMock(altStartI=200, altEndI=250),
+                MagicMock(altStartI=300, altEndI=350),
+            ],
+            GenomicStrand.Plus,
+            75,
+            0,
+            [MagicMock(altStartI=224, altEndI=250), MagicMock(altStartI=300, altEndI=350)],
+        ),
+        # Multiple exons deletion from the end
+        (
+            [
+                MagicMock(altStartI=100, altEndI=150),
+                MagicMock(altStartI=200, altEndI=250),
+                MagicMock(altStartI=300, altEndI=350),
+            ],
+            GenomicStrand.Plus,
+            0,
+            75,
+            [MagicMock(altStartI=100, altEndI=150), MagicMock(altStartI=200, altEndI=226)],
+        ),
+        # Standard functionality: removing UTRs from the end of one exon and start of another
+        (
+            [MagicMock(altStartI=100, altEndI=200), MagicMock(altStartI=300, altEndI=400)],
+            GenomicStrand.Minus,
+            50,
+            50,
+            [MagicMock(altStartI=150, altEndI=200), MagicMock(altStartI=300, altEndI=350)],
+        ),
+        # Boundary conditions: start or stop codon at the boundary
+        (
+            [MagicMock(altStartI=100, altEndI=200)],
+            GenomicStrand.Minus,
+            100,
+            100,
+            [MagicMock(altStartI=100, altEndI=100)],  # Minimal exon remains
+        ),
+        # Multiple exons with varying UTR removal
+        (
+            [MagicMock(altStartI=100, altEndI=150), MagicMock(altStartI=200, altEndI=250)],
+            GenomicStrand.Minus,
+            25,
+            25,
+            [MagicMock(altStartI=125, altEndI=150), MagicMock(altStartI=200, altEndI=225)],
+        ),
+        # Complete removal of UTRs results in no exon left
+        (
+            [MagicMock(altStartI=100, altEndI=150)],
+            GenomicStrand.Minus,
+            150,
+            150,
+            [],  # Exon completely removed
+        ),
+        # No UTRs
+        (
+            [MagicMock(altStartI=100, altEndI=150)],
+            GenomicStrand.Minus,
+            0,
+            0,
+            [MagicMock(altStartI=100, altEndI=150)],
+        ),
+        # Multiple exons deletion
+        (
+            [
+                MagicMock(altStartI=100, altEndI=150),
+                MagicMock(altStartI=200, altEndI=250),
+                MagicMock(altStartI=300, altEndI=350),
+            ],
+            GenomicStrand.Minus,
+            75,
+            0,
+            [MagicMock(altStartI=100, altEndI=150), MagicMock(altStartI=200, altEndI=226)],
+        ),
+        # Multiple exons deletion from the end
+        (
+            [
+                MagicMock(altStartI=100, altEndI=150),
+                MagicMock(altStartI=200, altEndI=250),
+                MagicMock(altStartI=300, altEndI=350),
+            ],
+            GenomicStrand.Minus,
+            0,
+            75,
+            [MagicMock(altStartI=224, altEndI=250), MagicMock(altStartI=300, altEndI=350)],
+        ),
+    ],
+)
+def test_calc_cds(exons, strand, start_codon, stop_codon, expected, strucvar_helper):
+    """Test the _calc_cds method."""
+    result = strucvar_helper._calc_cds(exons, strand, start_codon, stop_codon)
+    print(result)
+    for i, exon in enumerate(result):
+        assert exon.altStartI == expected[i].altStartI
+        assert exon.altEndI == expected[i].altEndI
+
+
+def test_calc_cds_error(strucvar_helper):
+    """Test error handling in _calc_cds."""
+    with pytest.raises(MissingDataError):
+        strucvar_helper._calc_cds([], GenomicStrand.NotSet, 0, 0)
+
+
 # --------- full_gene_del ---------
 
 
@@ -557,6 +702,42 @@ def test_lof_freq_in_pop_lof_variants_frequent(mock_count_lof_vars, strucvar_hel
 def test_lof_freq_in_pop_api_error(mock_count_lof_vars, strucvar_helper, strucvar):
     with pytest.raises(AlgorithmError):
         strucvar_helper.lof_freq_in_pop(strucvar)
+
+
+# --------- lof_rm_gt_10pct_of_prot ---------
+
+
+@pytest.mark.parametrize(
+    "strucvar_start, strucvar_stop, expected",
+    [
+        (100, 103, False),  # Partial small overlap with one exon
+        (100, 150, True),  # Partial big overlap with one exon
+        (50, 210, True),  # Full overlap including two exons
+        (10, 45, False),  # No overlap before exons
+        (220, 230, False),  # No overlap after exons
+        (151, 159, False),  # No overlap between exons
+        (50, 150, True),  # Exact boundary overlap
+        (160, 210, True),  # Overlapping second exon fully
+        (50, 500, True),  # Overlapping all exons excessively
+    ],
+)
+def test_lof_rm_gt_10pct_of_prot(
+    strucvar_helper, exons, strucvar_start, strucvar_stop, expected, monkeypatch
+):
+    """Test the lof_rm_gt_10pct_of_prot method."""
+    mock_calc_cds = MagicMock(return_value=exons)
+    monkeypatch.setattr(strucvar_helper, "_calc_cds", mock_calc_cds)
+    strucvar = StrucVar(
+        sv_type=StrucVarType.DEL,
+        genome_release=GenomeRelease.GRCh38,
+        chrom="1",
+        start=strucvar_start,
+        stop=strucvar_stop,
+    )
+    result = strucvar_helper.lof_rm_gt_10pct_of_prot(strucvar, exons, GenomicStrand.Plus, 0, 0)
+    assert (
+        result == expected
+    ), f"Expected {expected} for SV from {strucvar_start} to {strucvar_stop}"
 
 
 # ========== AutoPVS1 ============

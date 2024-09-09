@@ -119,7 +119,8 @@ class StrucVarHelper(AutoACMGHelper):
             strucvar: The structural variant being analyzed.
 
         Returns:
-            Tuple[int, int]: The number of frequent LoF variants and the total number of LoF variants.
+            Tuple[int, int]: The number of frequent LoF variants and the total number of LoF
+            variants.
 
         Raises:
             AlgorithmError: If the end position is less than the start position.
@@ -156,6 +157,87 @@ class StrucVarHelper(AutoACMGHelper):
             raise InvalidAPIResposeError(
                 "Failed to get variant from range. No gnomAD genomes data."
             )
+
+    def _calc_cds(
+        self, exons: List[Exon], strand: GenomicStrand, start_codon: int, stop_codon: int
+    ) -> List[Exon]:
+        """
+        Remove UTRs from exons.
+
+        Args:
+            exons: List of exons for the gene.
+            strand: The genomic strand of the gene.
+            start_codon: Position of the start codon.
+            stop_codon: Position of the stop codon.
+
+        Returns:
+            List[Exon]: List of exons without UTRs.
+
+        Raises:
+            MissingDataError: If the genomic strand is not set.
+        """
+        if strand == GenomicStrand.NotSet:
+            raise MissingDataError("Genomic strand is not set. Cannot remove UTRs.")
+
+        if strand == GenomicStrand.Plus:
+            # Remove 5' UTR
+            exons_remove = []
+            for i, exon in enumerate(exons):
+                if exon.altEndI - exon.altStartI + 1 > start_codon:
+                    exon.altStartI += start_codon
+                    break
+                else:
+                    exons_remove.append(i)
+                    start_codon -= exon.altEndI - exon.altStartI + 1
+
+            # Remove exons
+            for i in exons_remove[::-1]:
+                exons.pop(i)
+
+            exons_remove = []
+            # Remove 3' UTR
+            for i, exon in enumerate(exons[::-1]):
+                if exon.altEndI - exon.altStartI + 1 > stop_codon:
+                    exon.altEndI -= stop_codon
+                    break
+                else:
+                    exons_remove.append(i + 1)
+                    stop_codon -= exon.altEndI - exon.altStartI + 1
+
+            # Remove exons
+            for i in exons_remove[::-1]:
+                exons.pop(-i)
+
+        elif strand == GenomicStrand.Minus:
+            exons_remove = []
+            # Remove 3' UTR
+            for i, exon in enumerate(exons):
+                if exon.altEndI - exon.altStartI + 1 > stop_codon:
+                    exon.altStartI += stop_codon
+                    break
+                else:
+                    exons_remove.append(i)
+                    stop_codon -= exon.altEndI - exon.altStartI + 1
+
+            # Remove exons
+            for i in exons_remove[::-1]:
+                exons.pop(i)
+
+            exons_remove = []
+            # Remove 5' UTR
+            for i, exon in enumerate(exons[::-1]):
+                if exon.altEndI - exon.altStartI + 1 > start_codon:
+                    exon.altEndI -= start_codon
+                    break
+                else:
+                    exons_remove.append(i + 1)
+                    start_codon -= exon.altEndI - exon.altStartI + 1
+
+            # Remove exons
+            for i in exons_remove[::-1]:
+                exons.pop(-i)
+
+        return exons
 
     def full_gene_del(self, strucvar: StrucVar, exons: List[Exon]) -> bool:
         """
@@ -445,10 +527,53 @@ class StrucVarHelper(AutoACMGHelper):
         except AutoAcmgBaseException as e:
             raise AlgorithmError("Failed to predict LoF frequency for structural variant.") from e
 
-    @staticmethod
-    def lof_rm_gt_10pct_of_prot() -> bool:
-        """Check if the loss-of-function removes more than 10% of the protein."""
-        return False
+    def lof_rm_gt_10pct_of_prot(
+        self,
+        strucvar: StrucVar,
+        exons: List[Exon],
+        strand: GenomicStrand,
+        start_codon: int,
+        stop_codon: int,
+    ) -> bool:
+        """
+        Determine if the deletion removes more than 10% of the protein-coding sequence.
+
+        First remove the UTRs from the exons. Then iterate through the CDS exons and calculate the
+        total CDS length and the length of the deleted region. Return True if the deletion removes
+        more than 10% of the protein-coding sequence, False otherwise.
+
+        Args:
+            strucvar: The structural variant being analyzed.
+            exons: List of exons for the gene.
+            strand: The genomic strand of the gene.
+            start_codon: Position of the start codon.
+            stop_codon: Position of the stop codon.
+
+        Returns:
+            bool: True if the deletion removes more than 10% of the protein, False otherwise.
+        """
+        total_cds_length = 0
+        deleted_length = 0
+
+        cds = self._calc_cds(exons, strand, start_codon, stop_codon)
+
+        for exon in cds:
+            total_cds_length += exon.altEndI - exon.altStartI + 1
+
+            overlap_start = max(strucvar.start, exon.altStartI)
+            overlap_end = min(strucvar.stop, exon.altEndI)
+
+            if overlap_start <= overlap_end:  # Check if there is an overlap
+                overlap_length = overlap_end - overlap_start + 1
+                deleted_length += overlap_length
+
+        if total_cds_length == 0:
+            raise AlgorithmError(
+                "Total CDS length is zero. Cannot determine if deletion removes "
+                "more than 10% of the protein."
+            )
+        deletion_percentage = (deleted_length // 3) / (total_cds_length // 3)
+        return deletion_percentage > 0.1
 
     @staticmethod
     def dup_disrupt_rf() -> bool:
@@ -518,7 +643,13 @@ class AutoPVS1(StrucVarHelper):
                         self.prediction_path = PVS1PredictionStrucVarPath.DEL5_1
                     else:
                         self.comment_pvs1 += " =>"
-                        if self.lof_rm_gt_10pct_of_prot():
+                        if self.lof_rm_gt_10pct_of_prot(
+                            strucvar,
+                            var_data.exons,
+                            var_data.strand,
+                            var_data.start_cdn,
+                            var_data.stop_cdn,
+                        ):
                             self.prediction = PVS1Prediction.PVS1_Strong
                             self.prediction_path = PVS1PredictionStrucVarPath.DEL6_1
                         else:
@@ -538,7 +669,13 @@ class AutoPVS1(StrucVarHelper):
                         self.prediction_path = PVS1PredictionStrucVarPath.DEL5_2
                     else:
                         self.comment_pvs1 += " =>"
-                        if self.lof_rm_gt_10pct_of_prot():
+                        if self.lof_rm_gt_10pct_of_prot(
+                            strucvar,
+                            var_data.exons,
+                            var_data.strand,
+                            var_data.start_cdn,
+                            var_data.stop_cdn,
+                        ):
                             self.prediction = PVS1Prediction.PVS1_Strong
                             self.prediction_path = PVS1PredictionStrucVarPath.DEL6_2
                         else:
