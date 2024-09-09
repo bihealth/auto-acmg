@@ -11,7 +11,7 @@ from src.defs.auto_acmg import (
     GenomicStrand,
 )
 from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionStrucVarPath
-from src.defs.exceptions import AlgorithmError, MissingDataError
+from src.defs.exceptions import AlgorithmError, InvalidAPIResposeError, MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import Exon
 from src.defs.strucvar import StrucVar, StrucVarType
@@ -106,6 +106,62 @@ def test_minimal_deletion_non_deletion_variant(strucvar_helper, strucvar):
     exons = [MagicMock(altStartI=100, altEndI=200)]
     with pytest.raises(AlgorithmError):
         strucvar_helper._minimal_deletion(strucvar, exons)
+
+
+# ---------- _count_pathogenic_vars ----------
+
+
+def test_count_pathogenic_vars_valid_range(strucvar_helper, strucvar, monkeypatch):
+    """Test counting pathogenic variants within a valid range."""
+    mock_response = MagicMock()
+    mock_response.clinvar = [
+        MagicMock(
+            records=[
+                MagicMock(
+                    classifications=MagicMock(
+                        germlineClassification=MagicMock(description="Pathogenic")
+                    )
+                )
+            ]
+        ),
+        MagicMock(
+            records=[
+                MagicMock(
+                    classifications=MagicMock(
+                        germlineClassification=MagicMock(description="Likely pathogenic")
+                    )
+                )
+            ]
+        ),
+        MagicMock(
+            records=[
+                MagicMock(
+                    classifications=MagicMock(
+                        germlineClassification=MagicMock(description="Benign")
+                    )
+                )
+            ]
+        ),
+    ]
+    monkeypatch.setattr(
+        strucvar_helper.annonars_client, "get_variant_from_range", lambda x, y, z: mock_response
+    )
+
+    pathogenic, total = strucvar_helper._count_pathogenic_vars(strucvar)
+    assert pathogenic == 2
+    assert total == 3
+
+
+def test_count_pathogenic_vars_invalid_api_response(strucvar_helper, strucvar, monkeypatch):
+    """Test handling invalid API response."""
+    monkeypatch.setattr(
+        strucvar_helper.annonars_client,
+        "get_variant_from_range",
+        MagicMock(side_effect=InvalidAPIResposeError),
+    )
+
+    with pytest.raises(InvalidAPIResposeError):
+        strucvar_helper._count_pathogenic_vars(strucvar)
 
 
 # --------- full_gene_del ---------
@@ -393,6 +449,42 @@ def test_in_bio_relevant_tsx_multiple_mane_select(strucvar_helper):
     assert (
         strucvar_helper.in_bio_relevant_tsx(transcript_tags) is True
     ), "Transcript with multiple Mane tags should be identified as biologically relevant"
+
+
+# --------- crit4prot_func ---------
+
+
+@pytest.mark.parametrize(
+    "pathogenic_variants, total_variants, expected_result",
+    [
+        (10, 100, True),  # Pathogenic variants exceed the 5% threshold
+        (3, 100, False),  # Pathogenic variants do not exceed the 5% threshold
+        (0, 0, False),  # No variants found
+        (5, 100, False),  # Exactly 5%, considered non-critical
+        (10, 0, False),  # No total variants, handled by the no variants case
+    ],
+)
+def test_crit4prot_func(
+    strucvar_helper, strucvar, pathogenic_variants, total_variants, expected_result, monkeypatch
+):
+    """Test the crit4prot_func method."""
+    mock_count_pathogenic = MagicMock(return_value=(pathogenic_variants, total_variants))
+    monkeypatch.setattr(strucvar_helper, "_count_pathogenic_vars", mock_count_pathogenic)
+
+    result = strucvar_helper.crit4prot_func(strucvar)
+    assert result == expected_result
+
+
+def test_crit4prot_func_error_handling(strucvar_helper, strucvar, monkeypatch):
+    """Test error handling in crit4prot_func."""
+    monkeypatch.setattr(
+        strucvar_helper,
+        "_count_pathogenic_vars",
+        MagicMock(side_effect=AlgorithmError("Test error")),
+    )
+
+    with pytest.raises(AlgorithmError):
+        strucvar_helper.crit4prot_func(strucvar)
 
 
 # ========== AutoPVS1 ============
