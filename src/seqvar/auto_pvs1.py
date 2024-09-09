@@ -502,7 +502,7 @@ class SeqVarPVS1Helper(AutoACMGHelper):
 
         Note:
         A LoF variant is considered frequent if its occurrence in the general population
-        exceeds some threshold. We use a threshold of 0.1% to determine if the LoF variant is
+        exceeds some threshold. We use a threshold of 10% to determine if the LoF variant is
         frequent.
 
         Args:
@@ -511,7 +511,7 @@ class SeqVarPVS1Helper(AutoACMGHelper):
             strand: The genomic strand of the gene.
 
         Returns:
-            bool: True if the LoF variant frequency is greater than 0.1%, False otherwise.
+            bool: True if the LoF variant frequency is greater than 10%, False otherwise.
 
         Raises:
             InvalidAPIResponseError: If the API response is invalid or cannot be processed.
