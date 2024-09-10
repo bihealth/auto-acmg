@@ -141,38 +141,54 @@ def mock_thresholds():
 
 
 def test_verify_pp2bp1_mitochondrial(auto_pp2bp1, seqvar_mitochondrial, var_data_verify):
-    prediction, comment = auto_pp2bp1.verify_pp2bp1(seqvar_mitochondrial, var_data_verify)
-    assert not prediction.PP2 and not prediction.BP1
-    assert "Variant is in mitochondrial DNA." in comment
+    """Test verify_pp2bp1 with mitochondrial variant."""
+    result, comment = auto_pp2bp1.verify_pp2bp1(seqvar_mitochondrial, var_data_verify)
+    assert result.PP2 is False and result.BP1 is False
+    assert "mitochondrial DNA" in comment
 
 
 def test_verify_pp2bp1_non_missense(auto_pp2bp1, seqvar_non_mitochondrial, var_data_verify):
-    with patch.object(AutoPP2BP1, "_is_missense", return_value=False):
-        prediction, comment = auto_pp2bp1.verify_pp2bp1(seqvar_non_mitochondrial, var_data_verify)
-        assert not prediction.PP2 and not prediction.BP1
-        assert "Variant is not a missense variant." in comment
+    """Test verify_pp2bp1 with non-missense variant."""
+    with patch.object(auto_pp2bp1, "_is_missense", return_value=False):
+        result, comment = auto_pp2bp1.verify_pp2bp1(seqvar_non_mitochondrial, var_data_verify)
+        assert result.PP2 is False and result.BP1 is False
+        assert "not a missense variant" in comment
 
 
-@pytest.mark.skip(reason="Patch is not working properly")
-def test_verify_pp2bp1_missense_criteria(
+def test_verify_pp2bp1_with_misZ(
     auto_pp2bp1, seqvar_non_mitochondrial, var_data_verify, mock_thresholds
 ):
-    with patch.object(auto_pp2bp1, "_get_missense_vars", return_value=(30, 10, 100)):
-        prediction, comment = auto_pp2bp1.verify_pp2bp1(seqvar_non_mitochondrial, var_data_verify)
-        assert prediction.PP2
-        assert not prediction.BP1
-        assert "Pathogenic ratio is greater" in comment
-        assert "Benign ratio is less" in comment
+    """Test verify_pp2bp1 with misZ score."""
+    var_data_verify.scores = MagicMock(misZ=0.3)
+    var_data_verify.thresholds = mock_thresholds
+    result, comment = auto_pp2bp1.verify_pp2bp1(seqvar_non_mitochondrial, var_data_verify)
+    assert result.PP2 is True
+    assert "Z-score" in comment
 
 
-@pytest.mark.skip(reason="Patch is not working properly")
-def test_verify_pp2bp1_error_handling(auto_pp2bp1, seqvar_non_mitochondrial, var_data_verify):
+def test_verify_pp2bp1_without_misZ(
+    auto_pp2bp1, seqvar_non_mitochondrial, var_data_verify, mock_thresholds
+):
+    """Test verify_pp2bp1 without misZ score."""
+    var_data_verify.scores = MagicMock(misZ=None)
+    var_data_verify.thresholds = mock_thresholds
+    with patch.object(auto_pp2bp1, "_get_missense_vars", return_value=(14, 1, 15)):
+        result, comment = auto_pp2bp1.verify_pp2bp1(seqvar_non_mitochondrial, var_data_verify)
+        assert result.PP2 is True
+        assert result.BP1 is False
+        assert "Counting missense variants" in comment
+
+
+def test_verify_pp2bp1_error(auto_pp2bp1, seqvar_non_mitochondrial, var_data_verify):
+    """Test verify_pp2bp1 with error from _get_missense_vars method."""
+    var_data_verify.scores = MagicMock(misZ=None)
+    var_data_verify.thresholds = mock_thresholds
     with patch.object(
-        auto_pp2bp1, "_get_missense_vars", side_effect=AutoAcmgBaseException("API error")
+        auto_pp2bp1, "_get_missense_vars", side_effect=InvalidAPIResposeError("API Error")
     ):
-        prediction, comment = auto_pp2bp1.verify_pp2bp1(seqvar_non_mitochondrial, var_data_verify)
-        assert prediction is None
-        assert "Error occurred during PP2 and BP1 prediction." in comment
+        result, comment = auto_pp2bp1.verify_pp2bp1(seqvar_non_mitochondrial, var_data_verify)
+        assert result is None
+        assert "Error occurred" in comment
 
 
 # =============== predict_pp2bp1 ==================

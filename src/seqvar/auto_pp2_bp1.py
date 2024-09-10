@@ -108,7 +108,9 @@ class AutoPP2BP1(AutoACMGHelper):
     def verify_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[Optional[PP2BP1], str]:
-        """Predict PP2 and BP1 criteria."""
+        """Predict PP2 and BP1 criteria.
+        Use Z-score if available, otherwise count missense variants and calculate ratios.
+        """
         self.prediction_pp2bp1 = PP2BP1()
         self.comment_pp2bp1 = ""
         if seqvar.chrom == "MT":
