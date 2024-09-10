@@ -11,13 +11,17 @@ from src.defs.auto_acmg import (
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
-from src.vcep.von_willebrand_disease import VonWillebrandDiseasePredictor
+from src.vcep import VonWillebrandDiseasePredictor
 
 
 @pytest.fixture
 def seqvar():
     return SeqVar(
-        genome_release=GenomeRelease.GRCh37, chrom="12", pos=6135437, delete="A", insert="T"
+        genome_release=GenomeRelease.GRCh37,
+        chrom="12",
+        pos=6135437,
+        delete="A",
+        insert="T",
     )
 
 
@@ -157,7 +161,10 @@ def test_verify_pp3bp4_prediction_logic(
     """Test the prediction logic for PP3 and BP4."""
     mock_is_pathogenic_score.return_value = True
     mock_is_benign_score.return_value = False
-    mock_affect_spliceAI.side_effect = [True, False]  # First call True, second call False
+    mock_affect_spliceAI.side_effect = [
+        True,
+        False,
+    ]  # First call True, second call False
 
     prediction, comment = vwf_predictor.verify_pp3bp4(vwf_predictor.seqvar, auto_acmg_data)
 
@@ -229,7 +236,6 @@ def test_verify_pp3bp4_spliceai_thresholds(vwf_predictor, auto_acmg_data):
         patch.object(VonWillebrandDiseasePredictor, "_is_benign_score", return_value=False),
         patch.object(VonWillebrandDiseasePredictor, "_affect_spliceAI", return_value=False),
     ):
-
         vwf_predictor.verify_pp3bp4(vwf_predictor.seqvar, auto_acmg_data)
 
         # Check that thresholds were adjusted for BP4

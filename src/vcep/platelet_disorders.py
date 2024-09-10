@@ -28,7 +28,6 @@ SPEC: VcepSpec = VcepSpec(
 
 
 class PlateletDisordersPredictor(DefaultSeqVarPredictor):
-
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """
         Override PM1 prediction for Platelet Disorders to return a not met status for ITGA2B and
@@ -39,7 +38,7 @@ class PlateletDisordersPredictor(DefaultSeqVarPredictor):
         if var_data.hgnc_id in ["HGNC:6138", "HGNC:6156"]:
             return AutoACMGCriteria(
                 name="PM1",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.PathogenicSupporting,
                 summary="PM1 is not met for ITGA2B and ITGB3 due to genes being highly polymorphic.",
             )

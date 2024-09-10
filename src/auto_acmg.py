@@ -1,6 +1,6 @@
 """Implementations of the PVS1 algorithm."""
 
-from typing import Dict, Optional, Type, Union
+from typing import Optional, Type, Union
 
 from loguru import logger
 
@@ -13,14 +13,6 @@ from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import CdsPos, ProteinPos, TxPos
 from src.defs.seqvar import SeqVar, SeqVarResolver
 from src.defs.strucvar import StrucVar, StrucVarResolver
-from src.seqvar.auto_bp7 import AutoBP7
-from src.seqvar.auto_pm1 import AutoPM1
-from src.seqvar.auto_pm2_ba1_bs1_bs2 import AutoPM2BA1BS1BS2
-from src.seqvar.auto_pm4_bp3 import AutoPM4BP3
-from src.seqvar.auto_pp2_bp1 import AutoPP2BP1
-from src.seqvar.auto_pp3_bp4 import AutoPP3BP4
-from src.seqvar.auto_ps1_pm5 import AutoPS1PM5
-from src.seqvar.auto_pvs1 import AutoPVS1
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
 from src.strucvar.default_predictor import DefaultStrucVarPredictor
 from src.utils import SeqVarTranscriptsHelper, StrucVarTranscriptsHelper
@@ -86,7 +78,7 @@ VCEP_MAPPING = {
     "HGNC:129": CongenitalMyopathiesPredictor,  # ACTA1
     "HGNC:2974": CongenitalMyopathiesPredictor,  # DNM2
     "HGNC:7448": CongenitalMyopathiesPredictor,  # MTM1
-    "HGNC:10483": CongenitalMyopathiesPredictor,  # RYR1
+    # "HGNC:10483": CongenitalMyopathiesPredictor,  # RYR1
     "HGNC:17098": DICER1Predictor,  # DICER1
     "HGNC:1100": ENIGMAPredictor,  # BRCA1
     "HGNC:1101": ENIGMAPredictor,  # BRCA2
@@ -287,7 +279,7 @@ class AutoACMG:
                     self.variant_name, self.genome_release
                 )
                 return strucvar
-            except ParseError as e:
+            except ParseError:
                 logger.debug("Failed to resolve the structure variant")
                 return None
         except AutoAcmgBaseException as e:

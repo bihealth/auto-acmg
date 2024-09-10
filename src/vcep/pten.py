@@ -31,15 +31,12 @@ PM1_CLUSTER = {
     "HGNC:9588": {  # PTEN
         "residues":
         # catalytic motifs
-        list(range(90, 95))
-        + list(range(123, 131))
-        + list(range(166, 169)),
+        list(range(90, 95)) + list(range(123, 131)) + list(range(166, 169)),
     }
 }
 
 
 class PTENPredictor(DefaultSeqVarPredictor):
-
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override predict_pm1 to specify critical residues for PTEN."""
         logger.info("Predict PM1")
@@ -56,14 +53,14 @@ class PTENPredictor(DefaultSeqVarPredictor):
             )
             return AutoACMGCriteria(
                 name="PM1",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicModerate,
                 summary=comment,
             )
 
         return AutoACMGCriteria(
             name="PM1",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.PathogenicModerate,
             summary="Variant does not meet the PM1 criteria for PTEN.",
         )
@@ -98,7 +95,7 @@ class PTENPredictor(DefaultSeqVarPredictor):
                 self.prediction_pm4bp3.PM4 = True
             # In-frame deletions/insertions
             elif self.is_inframe_delins(var_data):
-                self.comment_pm4bp3 = f"Variant consequence is in-frame deletion/insertion. "
+                self.comment_pm4bp3 = "Variant consequence is in-frame deletion/insertion. "
 
                 # Check if the variant affects the catalytic motifs
                 if var_data.prot_pos in PM1_CLUSTER.get(var_data.hgnc_id, {}).get("residues", []):
@@ -127,9 +124,13 @@ class PTENPredictor(DefaultSeqVarPredictor):
         pred, comment = self.verify_pp2bp1(seqvar, var_data)
         if pred:
             pp2_pred = (
-                AutoACMGPrediction.Met
+                AutoACMGPrediction.Applicable
                 if pred.PP2
-                else (AutoACMGPrediction.NotMet if pred.PP2 is False else AutoACMGPrediction.Failed)
+                else (
+                    AutoACMGPrediction.NotApplicable
+                    if pred.PP2 is False
+                    else AutoACMGPrediction.Failed
+                )
             )
             pp2_strength = pred.PP2_strength
         else:

@@ -12,13 +12,17 @@ from src.defs.auto_acmg import (
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
-from src.vcep.tp53 import TP53Predictor
+from src.vcep import TP53Predictor
 
 
 @pytest.fixture
 def seqvar():
     return SeqVar(
-        genome_release=GenomeRelease.GRCh37, chrom="17", pos=7578406, delete="C", insert="T"
+        genome_release=GenomeRelease.GRCh37,
+        chrom="17",
+        pos=7578406,
+        delete="C",
+        insert="T",
     )
 
 
@@ -189,7 +193,7 @@ def test_predict_pm1_in_moderate_residue(tp53_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for critical residue variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -207,7 +211,7 @@ def test_predict_pm1_not_met(tp53_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met for non-critical residue variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -223,7 +227,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, tp53_predictor, auto_
     auto_acmg_data.hgnc_id = "HGNC:9999"  # Gene not in the TP53 VCEP
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default fallback for PM1.",
     )
@@ -231,7 +235,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, tp53_predictor, auto_
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met in the default fallback."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -355,7 +359,7 @@ def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, tp53_predictor,
     # Set the mock return value for the superclass's predict_bp7 method
     mock_super_predict_bp7.return_value = AutoACMGCriteria(
         name="BP7",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.BenignSupporting,
         summary="Default BP7 prediction fallback.",
     )
@@ -365,7 +369,9 @@ def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, tp53_predictor,
 
     # Verify the result and ensure the superclass method was called
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.NotMet, "BP7 should return NotMet as mocked."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
     assert (
         result.strength == AutoACMGStrength.BenignSupporting
     ), "The strength should be BenignSupporting."
@@ -400,7 +406,10 @@ def test_verify_pp3bp4_prediction_logic(
     """Test the prediction logic for PP3 and BP4."""
     mock_is_pathogenic_score.return_value = True
     mock_is_benign_score.return_value = False
-    mock_affect_spliceAI.side_effect = [True, False]  # First call True, second call False
+    mock_affect_spliceAI.side_effect = [
+        True,
+        False,
+    ]  # First call True, second call False
 
     prediction, comment = tp53_predictor.verify_pp3bp4(tp53_predictor.seqvar, auto_acmg_data)
 
@@ -412,9 +421,19 @@ def test_verify_pp3bp4_prediction_logic(
     "bayesDel_score, spliceAI_scores, expected_pp3, expected_bp4",
     [
         (0.2, [0.3, 0.3, 0.3, 0.3], True, False),  # High BayesDel score, high SpliceAI
-        (0.1, [0.05, 0.05, 0.05, 0.05], False, True),  # Low BayesDel score, low SpliceAI
+        (
+            0.1,
+            [0.05, 0.05, 0.05, 0.05],
+            False,
+            True,
+        ),  # Low BayesDel score, low SpliceAI
         # (0.16, [0.15, 0.15, 0.15, 0.15], False, False),  # Intermediate scores
-        (0.2, [0.05, 0.05, 0.05, 0.05], True, False),  # High BayesDel score, low SpliceAI
+        (
+            0.2,
+            [0.05, 0.05, 0.05, 0.05],
+            True,
+            False,
+        ),  # High BayesDel score, low SpliceAI
         (0.1, [0.3, 0.3, 0.3, 0.3], True, False),  # Low BayesDel score, high SpliceAI
     ],
 )
@@ -472,7 +491,6 @@ def test_verify_pp3bp4_spliceai_thresholds(tp53_predictor, auto_acmg_data):
         patch.object(TP53Predictor, "_is_benign_score", return_value=False),
         patch.object(TP53Predictor, "_affect_spliceAI", return_value=False),
     ):
-
         tp53_predictor.verify_pp3bp4(tp53_predictor.seqvar, auto_acmg_data)
 
         # Check that thresholds were adjusted for BP4

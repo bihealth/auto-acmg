@@ -1,4 +1,3 @@
-from enum import auto
 from typing import Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict
@@ -308,11 +307,10 @@ class AutoACMGPrediction(AutoAcmgBaseEnum):
     """ACMG criteria prediction enumeration."""
 
     NotSet = "not_set"
+    Applicable = "applicable"
     NotApplicable = "not_applicable"
     NotAutomated = "not_automated"
     Depricated = "depricated"
-    Met = "met"
-    NotMet = "not_met"
     Failed = "failed"
 
 
@@ -525,14 +523,12 @@ class AutoACMGCriteriaPred(AutoAcmgBaseModel):
 
 
 class AutoACMGConsequence(AutoAcmgBaseModel):
-
     mehari: List[str] = []
     cadd: str = ""
     cadd_consequence: str = ""
 
 
 class AutoACMGCADD(AutoAcmgBaseModel):
-
     phyloP100: Optional[float] = None
     gerp: Optional[float] = None
     spliceAI_acceptor_gain: Optional[float] = None
@@ -544,7 +540,6 @@ class AutoACMGCADD(AutoAcmgBaseModel):
 
 
 class AutoACMGDbnsfp(AutoAcmgBaseModel):
-
     alpha_missense: Optional[float] = None
     metaRNN: Optional[float] = None
     bayesDel_noAF: Optional[float] = None
@@ -561,7 +556,6 @@ class AutoACMGDbnsfp(AutoAcmgBaseModel):
 
 
 class AutoACMGDbscsnv(AutoAcmgBaseModel):
-
     ada: Optional[float] = None
     rf: Optional[float] = None
 
@@ -633,7 +627,6 @@ class AutoACMGSeqVarTresholds(AutoAcmgBaseModel):
 
 
 class AutoACMGSeqVarData(AutoAcmgBaseModel):
-
     consequence: AutoACMGConsequence = AutoACMGConsequence()
     gene_symbol: str = ""
     hgnc_id: str = ""
@@ -667,7 +660,6 @@ class AutoACMGSeqVarResult(AutoAcmgBaseModel):
 
 
 class AutoACMGStrucVarData(AutoAcmgBaseModel):
-
     gene_symbol: str = ""
     hgnc_id: str = ""
     transcript_id: str = ""
@@ -679,7 +671,6 @@ class AutoACMGStrucVarData(AutoAcmgBaseModel):
 
 
 class AutoACMGStrucVarPred(AutoAcmgBaseModel):
-
     pvs1: AutoACMGCriteria = AutoACMGCriteria(
         name="PVS1", strength=AutoACMGStrength.PathogenicVeryStrong
     )

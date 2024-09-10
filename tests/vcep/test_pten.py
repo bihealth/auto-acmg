@@ -11,7 +11,7 @@ from src.defs.auto_acmg import (
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
-from src.vcep.pten import PTENPredictor
+from src.vcep import PTENPredictor
 
 
 @pytest.fixture
@@ -38,7 +38,7 @@ def test_predict_pm1_in_catalytic_motifs(pten_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for a variant in the catalytic motif."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -56,7 +56,7 @@ def test_predict_pm1_outside_catalytic_motifs(pten_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met for a variant outside the catalytic motifs."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -72,7 +72,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, pten_predictor, auto_
     auto_acmg_data.hgnc_id = "HGNC:9999"  # Gene not in the PTEN VCEP
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default PM1 prediction fallback.",
     )
@@ -80,7 +80,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, pten_predictor, auto_
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met in the default fallback."
     assert (
         "Default PM1 prediction fallback." in result.summary
@@ -197,7 +197,7 @@ def test_predict_pp2bp1_pten(mock_verify, pten_predictor, seqvar, auto_acmg_data
 
     pp2, bp1 = pten_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
 
-    assert pp2.prediction == AutoACMGPrediction.Met, "PP2 should be Met for PTEN."
+    assert pp2.prediction == AutoACMGPrediction.Applicable, "PP2 should be Met for PTEN."
     assert (
         pp2.strength == AutoACMGStrength.PathogenicSupporting
     ), "PP2 strength should be PathogenicSupporting."
@@ -252,7 +252,7 @@ def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, pten_predictor,
     # Set the mock return value for the superclass's predict_bp7 method
     mock_super_predict_bp7.return_value = AutoACMGCriteria(
         name="BP7",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.BenignSupporting,
         summary="Default BP7 prediction fallback.",
     )
@@ -262,7 +262,9 @@ def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, pten_predictor,
 
     # Verify the result and ensure the superclass method was called
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.NotMet, "BP7 should return NotMet as mocked."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
     assert (
         result.strength == AutoACMGStrength.BenignSupporting
     ), "The strength should be BenignSupporting."
@@ -301,7 +303,10 @@ def test_verify_pp3bp4_prediction_logic(
     """Test the prediction logic for PP3 and BP4."""
     mock_is_pathogenic_score.return_value = True
     mock_is_benign_score.return_value = False
-    mock_affect_spliceAI.side_effect = [True, False]  # First call True, second call False
+    mock_affect_spliceAI.side_effect = [
+        True,
+        False,
+    ]  # First call True, second call False
     mock_is_synonymous_variant.return_value = False
     mock_is_intronic.return_value = False
 
@@ -314,15 +319,64 @@ def test_verify_pp3bp4_prediction_logic(
 @pytest.mark.parametrize(
     "revel_score, spliceAI_scores, is_synonymous, is_intronic, expected_pp3, expected_bp4",
     [
-        (0.8, [0.6, 0.6, 0.6, 0.6], False, False, True, False),  # High REVEL score, high SpliceAI
-        (0.4, [0.1, 0.1, 0.1, 0.1], False, False, False, True),  # Low REVEL score, low SpliceAI
+        (
+            0.8,
+            [0.6, 0.6, 0.6, 0.6],
+            False,
+            False,
+            True,
+            False,
+        ),  # High REVEL score, high SpliceAI
+        (
+            0.4,
+            [0.1, 0.1, 0.1, 0.1],
+            False,
+            False,
+            False,
+            True,
+        ),  # Low REVEL score, low SpliceAI
         (0.6, [0.3, 0.3, 0.3, 0.3], False, False, False, False),  # Intermediate scores
-        (0.8, [0.1, 0.1, 0.1, 0.1], False, False, True, False),  # High REVEL score, low SpliceAI
+        (
+            0.8,
+            [0.1, 0.1, 0.1, 0.1],
+            False,
+            False,
+            True,
+            False,
+        ),  # High REVEL score, low SpliceAI
         # (0.4, [0.6, 0.6, 0.6, 0.6], False, False, True, False),  # Low REVEL score, high SpliceAI
-        (0.4, [0.1, 0.1, 0.1, 0.1], True, False, False, True),  # Synonymous variant, low SpliceAI
-        (0.4, [0.1, 0.1, 0.1, 0.1], False, True, False, True),  # Intronic variant, low SpliceAI
-        (0.4, [0.3, 0.3, 0.3, 0.3], True, False, False, False),  # Synonymous variant, high SpliceAI
-        (0.4, [0.3, 0.3, 0.3, 0.3], False, True, False, False),  # Intronic variant, high SpliceAI
+        (
+            0.4,
+            [0.1, 0.1, 0.1, 0.1],
+            True,
+            False,
+            False,
+            True,
+        ),  # Synonymous variant, low SpliceAI
+        (
+            0.4,
+            [0.1, 0.1, 0.1, 0.1],
+            False,
+            True,
+            False,
+            True,
+        ),  # Intronic variant, low SpliceAI
+        (
+            0.4,
+            [0.3, 0.3, 0.3, 0.3],
+            True,
+            False,
+            False,
+            False,
+        ),  # Synonymous variant, high SpliceAI
+        (
+            0.4,
+            [0.3, 0.3, 0.3, 0.3],
+            False,
+            True,
+            False,
+            False,
+        ),  # Intronic variant, high SpliceAI
     ],
 )
 def test_verify_pp3bp4_various_scenarios(
@@ -346,7 +400,6 @@ def test_verify_pp3bp4_various_scenarios(
         patch.object(PTENPredictor, "_is_synonymous_variant", return_value=is_synonymous),
         patch.object(PTENPredictor, "_is_intronic", return_value=is_intronic),
     ):
-
         prediction, _ = pten_predictor.verify_pp3bp4(pten_predictor.seqvar, auto_acmg_data)
 
         assert prediction.PP3 == expected_pp3
@@ -388,7 +441,6 @@ def test_verify_pp3bp4_spliceai_thresholds(pten_predictor, auto_acmg_data):
         patch.object(PTENPredictor, "_is_synonymous_variant", return_value=True),
         patch.object(PTENPredictor, "_is_intronic", return_value=False),
     ):
-
         pten_predictor.verify_pp3bp4(pten_predictor.seqvar, auto_acmg_data)
 
         # Check that thresholds were adjusted for synonymous variants

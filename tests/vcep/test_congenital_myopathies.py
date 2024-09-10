@@ -60,7 +60,7 @@ def test_predict_pvs1_not_applicable_for_specific_gene(
     "predict_pvs1",
     return_value=AutoACMGCriteria(
         name="PVS1",
-        prediction=AutoACMGPrediction.Met,
+        prediction=AutoACMGPrediction.Applicable,
         strength=AutoACMGStrength.PathogenicVeryStrong,
         summary="Superclass default behavior.",
     ),
@@ -76,7 +76,7 @@ def test_predict_pvs1_calls_superclass_when_not_specific_gene(
     mock_super_predict_pvs1.assert_called_once_with(seqvar, auto_acmg_data)
     # Check the response from the superclass method
     assert result.name == "PVS1"
-    assert result.prediction == AutoACMGPrediction.Met
+    assert result.prediction == AutoACMGPrediction.Applicable
     assert result.strength == AutoACMGStrength.PathogenicVeryStrong
     assert result.summary == "Superclass default behavior."
 
@@ -91,7 +91,7 @@ def test_predict_pm1_in_critical_domain(congenital_myopathies_predictor, auto_ac
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for a variant in a critical domain."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -111,7 +111,7 @@ def test_predict_pm1_outside_critical_domain(congenital_myopathies_predictor, au
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met for a variant outside any critical domain."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -144,7 +144,7 @@ def test_predict_pm1_fallback_to_default(
     auto_acmg_data.hgnc_id = "HGNC:99999"  # Not in the PM1_CLUSTER mapping
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default PM1 prediction fallback.",
     )
@@ -154,7 +154,7 @@ def test_predict_pm1_fallback_to_default(
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met in the default fallback."
     assert (
         "Default PM1 prediction fallback." in result.summary
@@ -170,7 +170,7 @@ def test_predict_pm1_edge_case_start_boundary(congenital_myopathies_predictor, a
     )
 
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met when on the start boundary of a critical domain."
     assert (
         "falls within a critical domain" in result.summary
@@ -186,7 +186,7 @@ def test_predict_pm1_edge_case_end_boundary(congenital_myopathies_predictor, aut
     )
 
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met when on the end boundary of a critical domain."
     assert (
         "falls within a critical domain" in result.summary
@@ -260,7 +260,7 @@ def test_predict_pp2bp1_missense(congenital_myopathies_predictor, seqvar, auto_a
         pp2_result, AutoACMGCriteria
     ), "The PP2 result should be of type AutoACMGCriteria."
     assert (
-        pp2_result.prediction == AutoACMGPrediction.Met
+        pp2_result.prediction == AutoACMGPrediction.Applicable
     ), "PP2 should be Met for a missense variant in a relevant gene."
     assert "PP2 is met for HGNC:129 as the variant is a missense change." in pp2_result.summary
 
@@ -287,7 +287,7 @@ def test_predict_pp2bp1_not_missense(congenital_myopathies_predictor, seqvar, au
         pp2_result, AutoACMGCriteria
     ), "The PP2 result should be of type AutoACMGCriteria."
     assert (
-        pp2_result.prediction == AutoACMGPrediction.NotMet
+        pp2_result.prediction == AutoACMGPrediction.NotApplicable
     ), "PP2 should not be met for a non-missense variant in a relevant gene."
     assert (
         "PP2 is not met for HGNC:129 as the variant is not a missense change." in pp2_result.summary
@@ -322,7 +322,11 @@ def test_verify_pp3bp4_revel_thresholds(congenital_myopathies_predictor, auto_ac
     ],
 )
 def test_verify_pp3bp4_revel_scenarios(
-    congenital_myopathies_predictor, auto_acmg_data, revel_score, expected_pp3, expected_bp4
+    congenital_myopathies_predictor,
+    auto_acmg_data,
+    revel_score,
+    expected_pp3,
+    expected_bp4,
 ):
     auto_acmg_data.scores.dbnsfp.revel = revel_score
 
@@ -345,8 +349,8 @@ def test_verify_pp3bp4_splicing(
         congenital_myopathies_predictor.seqvar, auto_acmg_data
     )
 
-    assert prediction.PP3 == True
-    assert prediction.BP4 == False
+    assert prediction.PP3 is True
+    assert prediction.BP4 is False
 
 
 @patch.object(CongenitalMyopathiesPredictor, "_affect_spliceAI")
@@ -361,8 +365,8 @@ def test_verify_pp3bp4_no_splicing_effect(
         congenital_myopathies_predictor.seqvar, auto_acmg_data
     )
 
-    assert prediction.PP3 == False
-    assert prediction.BP4 == True
+    assert prediction.PP3 is False
+    assert prediction.BP4 is True
 
 
 @pytest.mark.skip("Fix it")

@@ -4,7 +4,7 @@ from loguru import logger
 
 from src.api.annonars import AnnonarsClient
 from src.core.config import Config
-from src.defs.auto_acmg import AutoACMGSeqVarData, AutoACMGSeqVarResult
+from src.defs.auto_acmg import AutoACMGSeqVarResult
 from src.defs.auto_pvs1 import PVS1Prediction
 from src.defs.seqvar import SeqVar
 from src.seqvar.auto_bp7 import AutoBP7

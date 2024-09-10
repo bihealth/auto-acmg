@@ -37,7 +37,7 @@ def test_predict_pm1_in_critical_region(acadvl_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for critical region variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -54,7 +54,7 @@ def test_predict_pm1_outside_critical_region(acadvl_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met for non-critical region variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -70,7 +70,7 @@ def test_predict_pm1_edge_case_start_boundary(acadvl_predictor, auto_acmg_data):
     result = acadvl_predictor.predict_pm1(acadvl_predictor.seqvar, auto_acmg_data)
 
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met when on the start boundary of a critical region."
     assert (
         "falls within a critical region" in result.summary
@@ -83,7 +83,7 @@ def test_predict_pm1_edge_case_end_boundary(acadvl_predictor, auto_acmg_data):
     result = acadvl_predictor.predict_pm1(acadvl_predictor.seqvar, auto_acmg_data)
 
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met when on the end boundary of a critical region."
     assert (
         "falls within a critical region" in result.summary
@@ -170,8 +170,8 @@ def test_predict_pp3bp4_missense(acadvl_predictor, seqvar, auto_acmg_data):
 
     pp3, bp4 = acadvl_predictor.predict_pp3bp4(seqvar, auto_acmg_data)
 
-    assert pp3.prediction == AutoACMGPrediction.Met
-    assert bp4.prediction == AutoACMGPrediction.NotMet
+    assert pp3.prediction == AutoACMGPrediction.Applicable
+    assert bp4.prediction == AutoACMGPrediction.NotApplicable
     assert "REVEL score 0.8 > 0.75, PP3 met" in pp3.summary
 
 
@@ -182,8 +182,8 @@ def test_predict_pp3bp4_missense_low_revel(acadvl_predictor, seqvar, auto_acmg_d
 
     pp3, bp4 = acadvl_predictor.predict_pp3bp4(seqvar, auto_acmg_data)
 
-    assert pp3.prediction == AutoACMGPrediction.NotMet
-    assert bp4.prediction == AutoACMGPrediction.Met
+    assert pp3.prediction == AutoACMGPrediction.NotApplicable
+    assert bp4.prediction == AutoACMGPrediction.Applicable
     assert "REVEL score 0.4 < 0.5, BP4 met" in bp4.summary
 
 
@@ -195,8 +195,8 @@ def test_predict_pp3bp4_inframe_indel(acadvl_predictor, seqvar, auto_acmg_data):
 
     pp3, bp4 = acadvl_predictor.predict_pp3bp4(seqvar, auto_acmg_data)
 
-    assert pp3.prediction == AutoACMGPrediction.Met
-    assert bp4.prediction == AutoACMGPrediction.NotMet
+    assert pp3.prediction == AutoACMGPrediction.Applicable
+    assert bp4.prediction == AutoACMGPrediction.NotApplicable
 
 
 @pytest.mark.skip(reason="Need to fix")
@@ -212,8 +212,8 @@ def test_predict_pp3bp4_splice(acadvl_predictor, seqvar, auto_acmg_data):
 
     pp3, bp4 = acadvl_predictor.predict_pp3bp4(seqvar, auto_acmg_data)
 
-    assert pp3.prediction == AutoACMGPrediction.Met
-    assert bp4.prediction == AutoACMGPrediction.NotMet
+    assert pp3.prediction == AutoACMGPrediction.Applicable
+    assert bp4.prediction == AutoACMGPrediction.NotApplicable
 
 
 def test_predict_pp3bp4_other(acadvl_predictor, seqvar, auto_acmg_data):
@@ -221,8 +221,8 @@ def test_predict_pp3bp4_other(acadvl_predictor, seqvar, auto_acmg_data):
     auto_acmg_data.consequence = MagicMock(cadd={}, mehari=["other_variant"])
     pp3, bp4 = acadvl_predictor.predict_pp3bp4(seqvar, auto_acmg_data)
 
-    assert pp3.prediction == AutoACMGPrediction.NotMet
-    assert bp4.prediction == AutoACMGPrediction.NotMet
+    assert pp3.prediction == AutoACMGPrediction.NotApplicable
+    assert bp4.prediction == AutoACMGPrediction.NotApplicable
 
 
 @patch.object(ACADVLPredictor, "_is_pathogenic_splicing")
@@ -247,5 +247,5 @@ def test_predict_pp3bp4_splice_methods(
 
     mock_pathogenic.assert_called_once()
     mock_benign.assert_called_once()
-    assert pp3.prediction == AutoACMGPrediction.Met
-    assert bp4.prediction == AutoACMGPrediction.NotMet
+    assert pp3.prediction == AutoACMGPrediction.Applicable
+    assert bp4.prediction == AutoACMGPrediction.NotApplicable

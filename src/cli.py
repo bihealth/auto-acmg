@@ -14,7 +14,13 @@ app = typer.Typer()
 #: Allowed genome releases
 ALLOWED_GENOME_RELEASES = ["GRCh37", "GRCh38", "hg19", "hg38", "grch37", "grch38"]
 #: Allowed sequence variant formats
-ALLOWED_SEQVAR_FORMATS = ["Canonical SPDI", "gnomAD", "relaxed SPDI", "dbSNP", "ClinVar"]
+ALLOWED_SEQVAR_FORMATS = [
+    "Canonical SPDI",
+    "gnomAD",
+    "relaxed SPDI",
+    "dbSNP",
+    "ClinVar",
+]
 #: Allowed structural variant formats
 ALLOWED_STRUCVAR_FORMATS = ["Colon-separated", "Hyphen-separated"]
 

@@ -46,7 +46,6 @@ PM1_CLUSTER = {
 
 
 class MalignantHyperthermiaPredictor(DefaultSeqVarPredictor):
-
     def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """PVS1 is not applicable."""
         logger.info("Predict PVS1")
@@ -74,7 +73,7 @@ class MalignantHyperthermiaPredictor(DefaultSeqVarPredictor):
                 )
                 return AutoACMGCriteria(
                     name="PM1",
-                    prediction=AutoACMGPrediction.Met,
+                    prediction=AutoACMGPrediction.Applicable,
                     strength=AutoACMGStrength.PathogenicModerate,
                     summary=comment,
                 )
@@ -88,7 +87,7 @@ class MalignantHyperthermiaPredictor(DefaultSeqVarPredictor):
                 )
                 return AutoACMGCriteria(
                     name="PM1",
-                    prediction=AutoACMGPrediction.Met,
+                    prediction=AutoACMGPrediction.Applicable,
                     strength=AutoACMGStrength.PathogenicSupporting,
                     summary=comment,
                 )
@@ -96,7 +95,7 @@ class MalignantHyperthermiaPredictor(DefaultSeqVarPredictor):
         # If no criteria match
         return AutoACMGCriteria(
             name="PM1",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.PathogenicModerate,
             summary="Variant does not meet the PM1 criteria for Malignant Hyperthermia Susceptibility.",
         )

@@ -13,7 +13,6 @@ from src.defs.auto_acmg import (
     AutoACMGCriteria,
     AutoACMGPrediction,
     AutoACMGSeqVarData,
-    AutoACMGSeqVarResult,
     AutoACMGStrength,
     VcepSpec,
 )
@@ -36,7 +35,6 @@ PM1_CLUSTER = [
 
 
 class ACADVLPredictor(DefaultSeqVarPredictor):
-
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override predict_pm1 to return a not applicable status for PM1."""
         logger.info("Predict PM1")
@@ -49,14 +47,14 @@ class ACADVLPredictor(DefaultSeqVarPredictor):
                 )
                 return AutoACMGCriteria(
                     name="PM1",
-                    prediction=AutoACMGPrediction.Met,
+                    prediction=AutoACMGPrediction.Applicable,
                     strength=AutoACMGStrength.PathogenicModerate,
                     summary=comment,
                 )
 
         return AutoACMGCriteria(
             name="PM1",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.PathogenicModerate,
             summary="Variant does not fall within any critical region for ACADVL. PM1 is not met.",
         )
@@ -143,13 +141,17 @@ class ACADVLPredictor(DefaultSeqVarPredictor):
         # Set criteria results
         pp3_result = AutoACMGCriteria(
             name="PP3",
-            prediction=AutoACMGPrediction.Met if pp3_met else AutoACMGPrediction.NotMet,
+            prediction=(
+                AutoACMGPrediction.Applicable if pp3_met else AutoACMGPrediction.NotApplicable
+            ),
             strength=AutoACMGStrength.PathogenicSupporting,
             summary=" | ".join(comments) if pp3_met else "PP3 criteria not met.",
         )
         bp4_result = AutoACMGCriteria(
             name="BP4",
-            prediction=AutoACMGPrediction.Met if bp4_met else AutoACMGPrediction.NotMet,
+            prediction=(
+                AutoACMGPrediction.Applicable if bp4_met else AutoACMGPrediction.NotApplicable
+            ),
             strength=AutoACMGStrength.BenignSupporting,
             summary=" | ".join(comments) if bp4_met else "BP4 criteria not met.",
         )

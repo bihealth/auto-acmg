@@ -53,7 +53,7 @@ def test_predict_ps1pm5_not_applicable(cdh1_predictor, seqvar, auto_acmg_data):
 
     # Check PM5
     assert pm5.name == "PM5"
-    assert pm5.prediction == AutoACMGPrediction.Met
+    assert pm5.prediction == AutoACMGPrediction.Applicable
     assert pm5.strength == AutoACMGStrength.PathogenicSupporting
     assert "Nonsense or frameshift variant predicted to undergo NMD. PM5 is met." in pm5.summary
 
@@ -73,7 +73,7 @@ def test_predict_ps1pm5_not_met(cdh1_predictor, seqvar, auto_acmg_data):
     ps1, pm5 = cdh1_predictor.predict_ps1pm5(seqvar, auto_acmg_data)
 
     # Check PM5 not met
-    assert pm5.prediction == AutoACMGPrediction.NotMet
+    assert pm5.prediction == AutoACMGPrediction.NotApplicable
     assert (
         "Consequence is not frameshift or nonsense or variant is not predicted to undergo NMD. PM5 is not met."
         in pm5.summary
@@ -113,7 +113,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, cdh1_predictor, auto_
     """Test fallback to the default PM1 prediction method (if implemented)."""
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default PM1 prediction fallback.",
     )
@@ -174,7 +174,7 @@ def test_predict_pm4bp3_cdh1(mock_verify_pm4bp3, cdh1_predictor, seqvar, auto_ac
     assert isinstance(
         pm4_result, AutoACMGCriteria
     ), "The PM4 result should be of type AutoACMGCriteria."
-    assert pm4_result.prediction == AutoACMGPrediction.Met, "PM4 should be Met."
+    assert pm4_result.prediction == AutoACMGPrediction.Applicable, "PM4 should be Met."
     assert (
         pm4_result.strength == AutoACMGStrength.PathogenicSupporting
     ), "PM4 strength should be PathogenicSupporting."
@@ -272,7 +272,7 @@ def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, cdh1_predictor,
     # Set the mock return value for the superclass's predict_bp7 method
     mock_super_predict_bp7.return_value = AutoACMGCriteria(
         name="BP7",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.BenignSupporting,
         summary="Default BP7 prediction fallback.",
     )
@@ -282,7 +282,9 @@ def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, cdh1_predictor,
 
     # Verify the result and ensure the superclass method was called
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.NotMet, "BP7 should return NotMet as mocked."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
     assert (
         result.strength == AutoACMGStrength.BenignSupporting
     ), "The strength should be BenignSupporting."
@@ -296,9 +298,9 @@ def test_predict_pp3bp4_exclusion_last_nucleotide_exon_3(cdh1_predictor, auto_ac
     cdh1_predictor.seqvar.pos = 387
     pp3, bp4 = cdh1_predictor.predict_pp3bp4(cdh1_predictor.seqvar, auto_acmg_data)
 
-    assert pp3.prediction == AutoACMGPrediction.NotMet
+    assert pp3.prediction == AutoACMGPrediction.NotApplicable
     assert "Exclusion: PP3 does not apply to the last nucleotide of exon 3 (c.387G)." in pp3.summary
-    assert bp4.prediction == AutoACMGPrediction.NotMet
+    assert bp4.prediction == AutoACMGPrediction.NotApplicable
 
 
 @patch.object(CDH1Predictor, "_is_splice_variant")
@@ -306,16 +308,16 @@ def test_predict_pp3bp4_splice_variant(mock_is_splice_variant, cdh1_predictor, a
     mock_is_splice_variant.return_value = True
     pp3, bp4 = cdh1_predictor.predict_pp3bp4(cdh1_predictor.seqvar, auto_acmg_data)
 
-    assert pp3.prediction == AutoACMGPrediction.NotMet
+    assert pp3.prediction == AutoACMGPrediction.NotApplicable
     assert "PP3 cannot be applied for canonical splice sites." in pp3.summary
-    assert bp4.prediction == AutoACMGPrediction.NotMet
+    assert bp4.prediction == AutoACMGPrediction.NotApplicable
 
 
 @pytest.mark.parametrize(
     "spliceai_affect, expected_pp3, expected_bp4",
     [
-        (True, AutoACMGPrediction.Met, AutoACMGPrediction.NotMet),
-        (False, AutoACMGPrediction.NotMet, AutoACMGPrediction.Met),
+        (True, AutoACMGPrediction.Applicable, AutoACMGPrediction.NotApplicable),
+        (False, AutoACMGPrediction.NotApplicable, AutoACMGPrediction.Applicable),
     ],
 )
 @patch.object(CDH1Predictor, "_is_splice_variant")
@@ -371,7 +373,7 @@ def test_predict_pp3bp4_no_criteria_met(cdh1_predictor, auto_acmg_data):
     ):
         pp3, bp4 = cdh1_predictor.predict_pp3bp4(cdh1_predictor.seqvar, auto_acmg_data)
 
-    assert pp3.prediction == AutoACMGPrediction.NotMet
+    assert pp3.prediction == AutoACMGPrediction.NotApplicable
     assert "PP3 criteria not met." in pp3.summary
-    assert bp4.prediction == AutoACMGPrediction.Met
+    assert bp4.prediction == AutoACMGPrediction.Applicable
     assert "Does not affect splicing according to spliceAI. BP4 is met." in bp4.summary

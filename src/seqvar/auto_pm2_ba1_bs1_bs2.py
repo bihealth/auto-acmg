@@ -4,7 +4,7 @@ from typing import Optional, Tuple
 
 from loguru import logger
 
-from src.defs.annonars_variant import AlleleCount, GnomadExomes, GnomadMtDna
+from src.defs.annonars_variant import AlleleCount
 from src.defs.auto_acmg import (
     BA1_ESCEPTION_LIST,
     PM2BA1BS1BS2,
@@ -16,7 +16,6 @@ from src.defs.auto_acmg import (
     ClingenDosageMap,
 )
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
-from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.utils import AutoACMGHelper, SeqVarTranscriptsHelper
 
@@ -360,13 +359,13 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
                 if not af:
                     self.comment_pm2ba1bs1bs2 = "No allele frequency data found. "
                 elif af <= 0.00002:
-                    self.comment_pm2ba1bs1bs2 = f"Allele frequency <= 0.002%: PM2 is met. "
+                    self.comment_pm2ba1bs1bs2 = "Allele frequency <= 0.002%: PM2 is met. "
                     self.prediction_pm2ba1bs1bs2.PM2 = True
                 elif af > 0.01:
-                    self.comment_pm2ba1bs1bs2 = f"Allele frequency > 1%: BA1 is met. "
+                    self.comment_pm2ba1bs1bs2 = "Allele frequency > 1%: BA1 is met. "
                     self.prediction_pm2ba1bs1bs2.BA1 = True
                 elif af > 0.005:
-                    self.comment_pm2ba1bs1bs2 = f"Allele frequency > 0.5%: BS1 is met. "
+                    self.comment_pm2ba1bs1bs2 = "Allele frequency > 0.5%: BS1 is met. "
                     self.prediction_pm2ba1bs1bs2.BS1 = True
                 return self.prediction_pm2ba1bs1bs2, self.comment_pm2ba1bs1bs2
 
@@ -424,24 +423,40 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
         pred, comment = self.verify_pm2ba1bs1bs2(seqvar, var_data)
         if pred:
             pm2_pred = (
-                AutoACMGPrediction.Met
+                AutoACMGPrediction.Applicable
                 if pred.PM2
-                else (AutoACMGPrediction.NotMet if pred.PM2 is False else AutoACMGPrediction.Failed)
+                else (
+                    AutoACMGPrediction.NotApplicable
+                    if pred.PM2 is False
+                    else AutoACMGPrediction.Failed
+                )
             )
             ba1_pred = (
-                AutoACMGPrediction.Met
+                AutoACMGPrediction.Applicable
                 if pred.BA1
-                else (AutoACMGPrediction.NotMet if pred.BA1 is False else AutoACMGPrediction.Failed)
+                else (
+                    AutoACMGPrediction.NotApplicable
+                    if pred.BA1 is False
+                    else AutoACMGPrediction.Failed
+                )
             )
             bs1_pred = (
-                AutoACMGPrediction.Met
+                AutoACMGPrediction.Applicable
                 if pred.BS1
-                else (AutoACMGPrediction.NotMet if pred.BS1 is False else AutoACMGPrediction.Failed)
+                else (
+                    AutoACMGPrediction.NotApplicable
+                    if pred.BS1 is False
+                    else AutoACMGPrediction.Failed
+                )
             )
             bs2_pred = (
-                AutoACMGPrediction.Met
+                AutoACMGPrediction.Applicable
                 if pred.BS2
-                else (AutoACMGPrediction.NotMet if pred.BS2 is False else AutoACMGPrediction.Failed)
+                else (
+                    AutoACMGPrediction.NotApplicable
+                    if pred.BS2 is False
+                    else AutoACMGPrediction.Failed
+                )
             )
             pm2_strength = pred.PM2_strength
             ba1_strength = pred.BA1_strength

@@ -552,27 +552,36 @@ def create_pred_object(pm2=False, ba1=False, bs1=False, bs2=False):
 
 @patch.object(AutoPM2BA1BS1BS2, "verify_pm2ba1bs1bs2")
 def test_all_criteria_met(mock_verify, auto_pm2ba1bs1bs2, seqvar, var_data):
-    mock_verify.return_value = (create_pred_object(True, True, True, True), "All criteria met.")
+    mock_verify.return_value = (
+        create_pred_object(True, True, True, True),
+        "All criteria met.",
+    )
     results = auto_pm2ba1bs1bs2.predict_pm2ba1bs1bs2(seqvar, var_data)
-    assert all([r.prediction == AutoACMGPrediction.Met for r in results])
+    assert all([r.prediction == AutoACMGPrediction.Applicable for r in results])
     assert all(["All criteria met." in r.summary for r in results])
 
 
 @patch.object(AutoPM2BA1BS1BS2, "verify_pm2ba1bs1bs2")
 def test_mixed_conditions(mock_verify, auto_pm2ba1bs1bs2, seqvar, var_data):
-    mock_verify.return_value = (create_pred_object(True, False, True, False), "Mixed conditions.")
+    mock_verify.return_value = (
+        create_pred_object(True, False, True, False),
+        "Mixed conditions.",
+    )
     results = auto_pm2ba1bs1bs2.predict_pm2ba1bs1bs2(seqvar, var_data)
-    assert results[0].prediction == AutoACMGPrediction.Met
-    assert results[1].prediction == AutoACMGPrediction.NotMet
-    assert results[2].prediction == AutoACMGPrediction.Met
-    assert results[3].prediction == AutoACMGPrediction.NotMet
+    assert results[0].prediction == AutoACMGPrediction.Applicable
+    assert results[1].prediction == AutoACMGPrediction.NotApplicable
+    assert results[2].prediction == AutoACMGPrediction.Applicable
+    assert results[3].prediction == AutoACMGPrediction.NotApplicable
 
 
 @patch.object(AutoPM2BA1BS1BS2, "verify_pm2ba1bs1bs2")
 def test_all_criteria_not_met(mock_verify, auto_pm2ba1bs1bs2, seqvar, var_data):
-    mock_verify.return_value = (create_pred_object(False, False, False, False), "No criteria met.")
+    mock_verify.return_value = (
+        create_pred_object(False, False, False, False),
+        "No criteria met.",
+    )
     results = auto_pm2ba1bs1bs2.predict_pm2ba1bs1bs2(seqvar, var_data)
-    assert all([r.prediction == AutoACMGPrediction.NotMet for r in results])
+    assert all([r.prediction == AutoACMGPrediction.NotApplicable for r in results])
 
 
 @patch.object(AutoPM2BA1BS1BS2, "verify_pm2ba1bs1bs2")

@@ -66,7 +66,7 @@ class PulmonaryHypertensionPredictor(DefaultSeqVarPredictor):
             )
             return AutoACMGCriteria(
                 name="PM1",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicStrong,
                 summary=comment,
             )
@@ -74,7 +74,7 @@ class PulmonaryHypertensionPredictor(DefaultSeqVarPredictor):
         # Check if the variant falls within the moderate level critical residues
         if (
             var_data.prot_pos in gene_cluster["moderate"] and
-            not var_data.prot_pos in gene_cluster["non_critical"]
+            var_data.prot_pos not in gene_cluster["non_critical"]
         ):
             comment = (
                 f"Variant affects a residue in BMPR2 at position {var_data.prot_pos} "
@@ -82,7 +82,7 @@ class PulmonaryHypertensionPredictor(DefaultSeqVarPredictor):
             )
             return AutoACMGCriteria(
                 name="PM1",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicModerate,
                 summary=comment,
             )
@@ -91,7 +91,7 @@ class PulmonaryHypertensionPredictor(DefaultSeqVarPredictor):
         if var_data.prot_pos in gene_cluster["non_critical"]:
             return AutoACMGCriteria(
                 name="PM1",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.PathogenicSupporting,
                 summary=(
                     f"Variant affects a residue at position {var_data.prot_pos} in BMPR2, "
@@ -101,7 +101,7 @@ class PulmonaryHypertensionPredictor(DefaultSeqVarPredictor):
 
         return AutoACMGCriteria(
             name="PM1",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.PathogenicModerate,
             summary="Variant does not meet the PM1 criteria for BMPR2.",
         )

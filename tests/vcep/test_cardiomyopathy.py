@@ -57,7 +57,7 @@ def test_predict_pvs1_not_applicable(
     "predict_pvs1",
     return_value=AutoACMGCriteria(
         name="PVS1",
-        prediction=AutoACMGPrediction.Met,
+        prediction=AutoACMGPrediction.Applicable,
         strength=AutoACMGStrength.PathogenicVeryStrong,
         summary="Default behavior.",
     ),
@@ -73,7 +73,7 @@ def test_predict_pvs1_calls_superclass(
     mock_super_predict_pvs1.assert_called_once_with(seqvar, auto_acmg_data)
     # Check the response from the superclass method
     assert result.name == "PVS1"
-    assert result.prediction == AutoACMGPrediction.Met
+    assert result.prediction == AutoACMGPrediction.Applicable
     assert result.strength == AutoACMGStrength.PathogenicVeryStrong
     assert result.summary == "Default behavior."
 
@@ -85,7 +85,7 @@ def test_predict_pm1_in_critical_domain(cardiomyopathy_predictor, auto_acmg_data
     result = cardiomyopathy_predictor.predict_pm1(cardiomyopathy_predictor.seqvar, auto_acmg_data)
 
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for a variant in a critical domain."
     assert (
         "falls within a critical domain" in result.summary
@@ -99,7 +99,7 @@ def test_predict_pm1_outside_critical_domain(cardiomyopathy_predictor, auto_acmg
     result = cardiomyopathy_predictor.predict_pm1(cardiomyopathy_predictor.seqvar, auto_acmg_data)
 
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met for a variant outside any critical domain."
     assert (
         "does not fall within any critical domain" in result.summary
@@ -128,7 +128,7 @@ def test_predict_pm1_fallback_to_default(
     auto_acmg_data.hgnc_id = "HGNC:111111111111111"  # Not in the PM1_CLUSTER mapping
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default PM1 prediction fallback.",
     )
@@ -136,7 +136,7 @@ def test_predict_pm1_fallback_to_default(
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met in the default fallback."
     assert (
         result.summary == "Default PM1 prediction fallback."
@@ -150,7 +150,7 @@ def test_predict_pm1_edge_case_start_boundary(cardiomyopathy_predictor, auto_acm
     result = cardiomyopathy_predictor.predict_pm1(cardiomyopathy_predictor.seqvar, auto_acmg_data)
 
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met when on the start boundary of a critical domain."
     assert (
         "falls within a critical domain" in result.summary
@@ -164,7 +164,7 @@ def test_predict_pm1_edge_case_end_boundary(cardiomyopathy_predictor, auto_acmg_
     result = cardiomyopathy_predictor.predict_pm1(cardiomyopathy_predictor.seqvar, auto_acmg_data)
 
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met when on the end boundary of a critical domain."
     assert (
         "falls within a critical domain" in result.summary
@@ -310,7 +310,7 @@ def test_predict_bp7_fallback_to_default(
     # Set the mock return value for the superclass's predict_bp7 method
     mock_super_predict_bp7.return_value = AutoACMGCriteria(
         name="BP7",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.BenignSupporting,
         summary="Default BP7 prediction fallback.",
     )
@@ -320,7 +320,9 @@ def test_predict_bp7_fallback_to_default(
 
     # Verify the result and ensure the superclass method was called
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.NotMet, "BP7 should return NotMet as mocked."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
     assert (
         result.strength == AutoACMGStrength.BenignSupporting
     ), "The strength should be BenignSupporting."
@@ -346,8 +348,8 @@ def test_predict_pp3bp4_calls_superclass(
     mock_super_predict_pp3bp4, cardiomyopathy_predictor, auto_acmg_data
 ):
     mock_super_predict_pp3bp4.return_value = (
-        AutoACMGCriteria(name="PP3", prediction=AutoACMGPrediction.Met),
-        AutoACMGCriteria(name="BP4", prediction=AutoACMGPrediction.NotMet),
+        AutoACMGCriteria(name="PP3", prediction=AutoACMGPrediction.Applicable),
+        AutoACMGCriteria(name="BP4", prediction=AutoACMGPrediction.NotApplicable),
     )
 
     pp3, bp4 = cardiomyopathy_predictor.predict_pp3bp4(
@@ -364,9 +366,9 @@ def test_predict_pp3bp4_calls_superclass(
 @pytest.mark.parametrize(
     "revel_score, expected_pp3, expected_bp4",
     [
-        (0.8, AutoACMGPrediction.Met, AutoACMGPrediction.NotMet),
-        (0.5, AutoACMGPrediction.NotMet, AutoACMGPrediction.NotMet),
-        (0.3, AutoACMGPrediction.NotMet, AutoACMGPrediction.Met),
+        (0.8, AutoACMGPrediction.Applicable, AutoACMGPrediction.NotApplicable),
+        (0.5, AutoACMGPrediction.NotApplicable, AutoACMGPrediction.NotApplicable),
+        (0.3, AutoACMGPrediction.NotApplicable, AutoACMGPrediction.Applicable),
     ],
 )
 def test_predict_pp3bp4_revel_scenarios(
@@ -394,10 +396,14 @@ def test_predict_pp3bp4_revel_details(cardiomyopathy_predictor, auto_acmg_data):
     with patch.object(DefaultSeqVarPredictor, "predict_pp3bp4") as mock_super:
         mock_super.return_value = (
             AutoACMGCriteria(
-                name="PP3", prediction=AutoACMGPrediction.Met, summary="REVEL score: 0.75"
+                name="PP3",
+                prediction=AutoACMGPrediction.Applicable,
+                summary="REVEL score: 0.75",
             ),
             AutoACMGCriteria(
-                name="BP4", prediction=AutoACMGPrediction.NotMet, summary="REVEL score: 0.75"
+                name="BP4",
+                prediction=AutoACMGPrediction.NotApplicable,
+                summary="REVEL score: 0.75",
             ),
         )
 
@@ -416,12 +422,12 @@ def test_predict_pp3bp4_strength(
     mock_super_predict_pp3bp4.return_value = (
         AutoACMGCriteria(
             name="PP3",
-            prediction=AutoACMGPrediction.Met,
+            prediction=AutoACMGPrediction.Applicable,
             strength=AutoACMGStrength.PathogenicSupporting,
         ),
         AutoACMGCriteria(
             name="BP4",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.BenignSupporting,
         ),
     )

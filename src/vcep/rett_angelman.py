@@ -16,7 +16,7 @@ https://cspec.genome.network/cspec/ui/svi/doc/GN036
 https://cspec.genome.network/cspec/ui/svi/doc/GN037
 """
 
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 from loguru import logger
 
@@ -113,7 +113,7 @@ class RettAngelmanPredictor(DefaultSeqVarPredictor):
                 name="PM1",
                 prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.PathogenicModerate,
-                summary=f"PM1 is not applicable for SLC9A6.",
+                summary="PM1 is not applicable for SLC9A6.",
             )
 
         gene_info = PM1_CLUSTER.get(var_data.hgnc_id, None)
@@ -129,14 +129,14 @@ class RettAngelmanPredictor(DefaultSeqVarPredictor):
                 )
                 return AutoACMGCriteria(
                     name="PM1",
-                    prediction=AutoACMGPrediction.Met,
+                    prediction=AutoACMGPrediction.Applicable,
                     strength=AutoACMGStrength.PathogenicModerate,
                     summary=comment,
                 )
 
         return AutoACMGCriteria(
             name="PM1",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.PathogenicModerate,
             summary=f"Variant does not meet the PM1 criteria for {var_data.hgnc_id}.",
         )
@@ -232,7 +232,7 @@ class RettAngelmanPredictor(DefaultSeqVarPredictor):
                 self.prediction_pm4bp3.BP3 = False
             # In-frame deletions/insertions
             elif self.is_inframe_delins(var_data):
-                self.comment_pm4bp3 = f"Variant consequence is in-frame deletion/insertion. "
+                self.comment_pm4bp3 = "Variant consequence is in-frame deletion/insertion. "
                 if not self._in_repeat_region(seqvar) and not self._exclude_pm4(seqvar, var_data):
                     self.comment_pm4bp3 += (
                         "Variant is not in a repeat region or a conserved domain. PM4 is met."

@@ -51,7 +51,6 @@ PM1_CLUSTER = {
 
 
 class LysosomalDiseasesPredictor(DefaultSeqVarPredictor):
-
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override predict_pm1 to specify critical domains for Lysosomal Diseases."""
         logger.info("Predict PM1")
@@ -67,14 +66,14 @@ class LysosomalDiseasesPredictor(DefaultSeqVarPredictor):
             )
             return AutoACMGCriteria(
                 name="PM1",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicModerate,
                 summary=comment,
             )
 
         return AutoACMGCriteria(
             name="PM1",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.PathogenicModerate,
             summary="Variant does not meet the PM1 criteria for Lysosomal Diseases.",
         )

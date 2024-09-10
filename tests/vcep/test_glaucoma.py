@@ -365,7 +365,7 @@ def test_predict_bp7_fallback_to_default(
     # Set the mock return value for the superclass's predict_bp7 method
     mock_super_predict_bp7.return_value = AutoACMGCriteria(
         name="BP7",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.BenignSupporting,
         summary="Default BP7 prediction fallback.",
     )
@@ -375,7 +375,9 @@ def test_predict_bp7_fallback_to_default(
 
     # Verify the result and ensure the superclass method was called
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.NotMet, "BP7 should return NotMet as mocked."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
     assert (
         result.strength == AutoACMGStrength.BenignSupporting
     ), "The strength should be BenignSupporting."
@@ -413,7 +415,12 @@ def test_verify_pp3bp4_spliceai_thresholds(glaucoma_predictor, auto_acmg_data):
     ],
 )
 def test_verify_pp3bp4_scenarios(
-    glaucoma_predictor, auto_acmg_data, revel_score, spliceai_score, expected_pp3, expected_bp4
+    glaucoma_predictor,
+    auto_acmg_data,
+    revel_score,
+    spliceai_score,
+    expected_pp3,
+    expected_bp4,
 ):
     """Test different REVEL and SpliceAI score scenarios."""
     auto_acmg_data.scores.dbnsfp.revel = revel_score
@@ -423,11 +430,12 @@ def test_verify_pp3bp4_scenarios(
         patch.object(GlaucomaPredictor, "_is_pathogenic_score", return_value=revel_score >= 0.7),
         patch.object(GlaucomaPredictor, "_is_benign_score", return_value=revel_score <= 0.15),
         patch.object(
-            GlaucomaPredictor, "_is_pathogenic_splicing", return_value=spliceai_score >= 0.2
+            GlaucomaPredictor,
+            "_is_pathogenic_splicing",
+            return_value=spliceai_score >= 0.2,
         ),
         patch.object(GlaucomaPredictor, "_affect_spliceAI", return_value=spliceai_score >= 0.2),
     ):
-
         prediction, comment = glaucoma_predictor.verify_pp3bp4(
             glaucoma_predictor.seqvar, auto_acmg_data
         )
@@ -447,13 +455,12 @@ def test_verify_pp3bp4_revel_only(glaucoma_predictor, auto_acmg_data):
         patch.object(GlaucomaPredictor, "_is_pathogenic_splicing", return_value=False),
         patch.object(GlaucomaPredictor, "_affect_spliceAI", return_value=False),
     ):
-
         prediction, comment = glaucoma_predictor.verify_pp3bp4(
             glaucoma_predictor.seqvar, auto_acmg_data
         )
 
-        assert prediction.PP3 == True
-        assert prediction.BP4 == False
+        assert prediction.PP3 is True
+        assert prediction.BP4 is False
 
 
 def test_verify_pp3bp4_spliceai_only(glaucoma_predictor, auto_acmg_data):
@@ -467,13 +474,12 @@ def test_verify_pp3bp4_spliceai_only(glaucoma_predictor, auto_acmg_data):
         patch.object(GlaucomaPredictor, "_is_pathogenic_splicing", return_value=True),
         patch.object(GlaucomaPredictor, "_affect_spliceAI", return_value=True),
     ):
-
         prediction, comment = glaucoma_predictor.verify_pp3bp4(
             glaucoma_predictor.seqvar, auto_acmg_data
         )
 
-        assert prediction.PP3 == True
-        assert prediction.BP4 == False
+        assert prediction.PP3 is True
+        assert prediction.BP4 is False
 
 
 def test_verify_pp3bp4_no_prediction(glaucoma_predictor, auto_acmg_data):
@@ -487,19 +493,20 @@ def test_verify_pp3bp4_no_prediction(glaucoma_predictor, auto_acmg_data):
         patch.object(GlaucomaPredictor, "_is_pathogenic_splicing", return_value=False),
         patch.object(GlaucomaPredictor, "_affect_spliceAI", return_value=False),
     ):
-
         prediction, comment = glaucoma_predictor.verify_pp3bp4(
             glaucoma_predictor.seqvar, auto_acmg_data
         )
 
-        assert prediction.PP3 == False
-        assert prediction.BP4 == False
+        assert prediction.PP3 is False
+        assert prediction.BP4 is False
 
 
 def test_verify_pp3bp4_error_handling(glaucoma_predictor, auto_acmg_data):
     """Test error handling in verify_pp3bp4 method."""
     with patch.object(
-        GlaucomaPredictor, "_is_pathogenic_score", side_effect=AutoAcmgBaseException("Test error")
+        GlaucomaPredictor,
+        "_is_pathogenic_score",
+        side_effect=AutoAcmgBaseException("Test error"),
     ):
         prediction, comment = glaucoma_predictor.verify_pp3bp4(
             glaucoma_predictor.seqvar, auto_acmg_data
@@ -519,8 +526,8 @@ def test_verify_pp3bp4_missing_data(glaucoma_predictor, auto_acmg_data):
         glaucoma_predictor.seqvar, auto_acmg_data
     )
 
-    assert prediction.PP3 == False
-    assert prediction.BP4 == False
+    assert prediction.PP3 is False
+    assert prediction.BP4 is False
 
 
 @pytest.mark.skip(reason="Fix it")

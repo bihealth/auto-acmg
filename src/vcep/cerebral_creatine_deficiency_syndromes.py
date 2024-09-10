@@ -45,7 +45,6 @@ SPECs: List[VcepSpec] = [
 
 
 class CerebralCreatineDeficiencySyndromesPredictor(DefaultSeqVarPredictor):
-
     def verify_ps1pm5(
         self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[Optional[PS1PM5], str]:
@@ -200,13 +199,17 @@ class CerebralCreatineDeficiencySyndromesPredictor(DefaultSeqVarPredictor):
         # Compile PP3 and BP4 results
         pp3_result = AutoACMGCriteria(
             name="PP3",
-            prediction=AutoACMGPrediction.Met if pp3_met else AutoACMGPrediction.NotMet,
+            prediction=(
+                AutoACMGPrediction.Applicable if pp3_met else AutoACMGPrediction.NotApplicable
+            ),
             strength=AutoACMGStrength.PathogenicSupporting,
             summary=" | ".join(comments_pp3),
         )
         bp4_result = AutoACMGCriteria(
             name="BP4",
-            prediction=AutoACMGPrediction.Met if bp4_met else AutoACMGPrediction.NotMet,
+            prediction=(
+                AutoACMGPrediction.Applicable if bp4_met else AutoACMGPrediction.NotApplicable
+            ),
             strength=AutoACMGStrength.BenignSupporting,
             summary=" | ".join(comments_bp4),
         )

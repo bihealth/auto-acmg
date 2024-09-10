@@ -69,7 +69,13 @@ def test_validate_strucvar_valid(strucvar_resolver):
     "sv_type, genome_release, chrom, start, stop",
     [
         (StrucVarType.DEL, GenomeRelease.GRCh37, "1", 0, 100),  # Position 0 is invalid
-        (StrucVarType.DEL, GenomeRelease.GRCh37, "1", -1, 100),  # Negative position is invalid
+        (
+            StrucVarType.DEL,
+            GenomeRelease.GRCh37,
+            "1",
+            -1,
+            100,
+        ),  # Negative position is invalid
         (
             StrucVarType.DEL,
             GenomeRelease.GRCh37,
@@ -89,7 +95,10 @@ def test_validate_strucvar_invalid(strucvar_resolver, sv_type, genome_release, c
 @pytest.mark.parametrize(
     "input_str,expected_output",
     [
-        ("DEL-GRCh38-1-100-200", StrucVar(StrucVarType.DEL, GenomeRelease.GRCh38, "1", 100, 200)),
+        (
+            "DEL-GRCh38-1-100-200",
+            StrucVar(StrucVarType.DEL, GenomeRelease.GRCh38, "1", 100, 200),
+        ),
         (
             "DUP:GRCh37:chrX:1000:1500",
             StrucVar(StrucVarType.DUP, GenomeRelease.GRCh37, "X", 1000, 1500),
@@ -124,7 +133,10 @@ def test_parse_separated_strucvar_failure(strucvar_resolver, input_str):
 @pytest.mark.parametrize(
     "input_str,expected_output",
     [
-        ("DEL:GRCh38:1:100:200", StrucVar(StrucVarType.DEL, GenomeRelease.GRCh38, "1", 100, 200)),
+        (
+            "DEL:GRCh38:1:100:200",
+            StrucVar(StrucVarType.DEL, GenomeRelease.GRCh38, "1", 100, 200),
+        ),
         (
             "DUP:GRCh37:chrX:1000:1500",
             StrucVar(StrucVarType.DUP, GenomeRelease.GRCh37, "X", 1000, 1500),

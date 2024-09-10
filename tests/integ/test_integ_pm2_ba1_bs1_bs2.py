@@ -1,13 +1,10 @@
 """Integration tests for `PM2`, `BA1`, `BS1`, `BS2` criteria using upstream server."""
 
-from typing import Tuple
-
 import pytest
 
 from src.auto_acmg import VCEP_MAPPING, AutoACMG
 from src.core.config import Config
-from src.defs.annonars_variant import AnnonarsVariantResponse
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGSeqVarResult
+from src.defs.auto_acmg import AutoACMGSeqVarResult
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.auto_pm2_ba1_bs1_bs2 import AutoPM2BA1BS1BS2

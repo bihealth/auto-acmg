@@ -14,7 +14,7 @@ from src.defs.exceptions import MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
-from src.vcep.pku import PKUPredictor
+from src.vcep import PKUPredictor
 
 
 @pytest.fixture
@@ -40,7 +40,9 @@ def test_predict_pm1_residue_critical_for_pku(pku_predictor, auto_acmg_data):
     result = pku_predictor.predict_pm1(pku_predictor.seqvar, auto_acmg_data)
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.Met, "PM1 should be met for critical residues."
+    assert (
+        result.prediction == AutoACMGPrediction.Applicable
+    ), "PM1 should be met for critical residues."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
     ), "The strength should be PathogenicModerate."
@@ -55,7 +57,7 @@ def test_predict_pm1_residue_not_critical_for_pku(pku_predictor, auto_acmg_data)
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met for non-critical residues."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -71,7 +73,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, pku_predictor, auto_a
     auto_acmg_data.hgnc_id = "HGNC:9999"  # Gene not in the PM1_CLUSTER_PKU
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default PM1 prediction fallback.",
     )
@@ -79,7 +81,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, pku_predictor, auto_a
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met in the default fallback."
     assert (
         "Default PM1 prediction fallback." in result.summary
@@ -106,7 +108,7 @@ def test_check_zyg_homozygous_positive(
     auto_acmg_data,
 ):
     pku_predictor.comment_pm2ba1bs1bs2 = ""
-    assert pku_predictor._check_zyg(seqvar, auto_acmg_data) == True
+    assert pku_predictor._check_zyg(seqvar, auto_acmg_data) is True
     assert (
         "The variant is in a recessive (homozygous) disorder." in pku_predictor.comment_pm2ba1bs1bs2
     )
@@ -132,7 +134,7 @@ def test_check_zyg_homozygous_negative(
     auto_acmg_data,
 ):
     pku_predictor.comment_pm2ba1bs1bs2 = ""
-    assert pku_predictor._check_zyg(seqvar, auto_acmg_data) == False
+    assert pku_predictor._check_zyg(seqvar, auto_acmg_data) is False
 
 
 @patch.object(
@@ -276,7 +278,7 @@ def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, pku_predictor, 
     # Set the mock return value for the superclass's predict_bp7 method
     mock_super_predict_bp7.return_value = AutoACMGCriteria(
         name="BP7",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.BenignSupporting,
         summary="Default BP7 prediction fallback.",
     )
@@ -286,7 +288,9 @@ def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, pku_predictor, 
 
     # Verify the result and ensure the superclass method was called
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.NotMet, "BP7 should return NotMet as mocked."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
     assert (
         result.strength == AutoACMGStrength.BenignSupporting
     ), "The strength should be BenignSupporting."
@@ -321,7 +325,10 @@ def test_verify_pp3bp4_prediction_logic(
     """Test the prediction logic for PP3 and BP4."""
     mock_is_pathogenic_score.return_value = True
     mock_is_benign_score.return_value = False
-    mock_affect_spliceAI.side_effect = [True, False]  # First call True, second call False
+    mock_affect_spliceAI.side_effect = [
+        True,
+        False,
+    ]  # First call True, second call False
 
     prediction, comment = pku_predictor.verify_pp3bp4(pku_predictor.seqvar, auto_acmg_data)
 
@@ -393,7 +400,6 @@ def test_verify_pp3bp4_spliceai_thresholds(pku_predictor, auto_acmg_data):
         patch.object(PKUPredictor, "_is_benign_score", return_value=False),
         patch.object(PKUPredictor, "_affect_spliceAI", return_value=False),
     ):
-
         pku_predictor.verify_pp3bp4(pku_predictor.seqvar, auto_acmg_data)
 
         # Check that thresholds were adjusted for BP4

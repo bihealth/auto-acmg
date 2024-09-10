@@ -26,7 +26,10 @@ def seqvar():
 def var_data_splice():
     consequence = MagicMock(
         cadd={"splice": True},  # Simulates CADD indicating a splice variant
-        mehari=["splice", "other_effect"],  # Simulates other tools also indicating a splice variant
+        mehari=[
+            "splice",
+            "other_effect",
+        ],  # Simulates other tools also indicating a splice variant
     )
     return MagicMock(consequence=consequence)
 
@@ -955,10 +958,10 @@ def test_predict_pp3bp4_met(mock_verify, auto_pp3bp4, seqvar, var_data, pp3bp4_r
     """Test predict_pp3bp4 where PP3 criterion is met."""
     mock_verify.return_value = pp3bp4_result_met
     pp3, bp4 = auto_pp3bp4.predict_pp3bp4(seqvar, var_data)
-    assert pp3.prediction == AutoACMGPrediction.Met
+    assert pp3.prediction == AutoACMGPrediction.Applicable
     assert pp3.strength == AutoACMGStrength.PathogenicSupporting
     assert "PP3 criteria met" in pp3.summary
-    assert bp4.prediction == AutoACMGPrediction.NotMet
+    assert bp4.prediction == AutoACMGPrediction.NotApplicable
     assert bp4.strength == AutoACMGStrength.BenignSupporting
     assert "PP3 criteria met" in bp4.summary
 
@@ -968,10 +971,10 @@ def test_predict_pp3bp4_not_met(mock_verify, auto_pp3bp4, seqvar, var_data, pp3b
     """Test predict_pp3bp4 where BP4 criterion is met."""
     mock_verify.return_value = pp3bp4_result_not_met
     pp3, bp4 = auto_pp3bp4.predict_pp3bp4(seqvar, var_data)
-    assert pp3.prediction == AutoACMGPrediction.NotMet
+    assert pp3.prediction == AutoACMGPrediction.NotApplicable
     assert pp3.strength == AutoACMGStrength.PathogenicSupporting
     assert "BP4 criteria met" in pp3.summary
-    assert bp4.prediction == AutoACMGPrediction.Met
+    assert bp4.prediction == AutoACMGPrediction.Applicable
     assert bp4.strength == AutoACMGStrength.BenignSupporting
     assert "BP4 criteria met" in bp4.summary
 

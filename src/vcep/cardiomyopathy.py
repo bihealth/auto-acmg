@@ -101,7 +101,6 @@ PM1_CLUSTER = {
 
 
 class CardiomyopathyPredictor(DefaultSeqVarPredictor):
-
     def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """PVS1 is not applicable."""
         if var_data.hgnc_id in [
@@ -138,13 +137,13 @@ class CardiomyopathyPredictor(DefaultSeqVarPredictor):
                     )
                     return AutoACMGCriteria(
                         name="PM1",
-                        prediction=AutoACMGPrediction.Met,
+                        prediction=AutoACMGPrediction.Applicable,
                         strength=AutoACMGStrength.PathogenicModerate,
                         summary=comment,
                     )
             return AutoACMGCriteria(
                 name="PM1",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.PathogenicModerate,
                 summary=(
                     "Variant does not fall within any critical domain for the specified gene. "

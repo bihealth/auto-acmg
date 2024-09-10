@@ -54,7 +54,6 @@ class AutoPP2BP1(AutoACMGHelper):
 
         response = self.annonars_client.get_variant_from_range(seqvar, start_pos, end_pos)
         if response and response.clinvar:
-
             pathogenic_variants = [
                 v
                 for v in response.clinvar
@@ -146,8 +145,9 @@ class AutoPP2BP1(AutoACMGHelper):
                         self.prediction_pp2bp1.BP1 = True
                 else:
                     self.comment_pp2bp1 = "No missense Z-score found. Counting missense variants. "
-                    start_pos, end_pos = min(var_data.cds_start, var_data.cds_end), max(
-                        var_data.cds_start, var_data.cds_end
+                    start_pos, end_pos = (
+                        min(var_data.cds_start, var_data.cds_end),
+                        max(var_data.cds_start, var_data.cds_end),
                     )
                     pathogenic_count, benign_count, total_count = self._get_missense_vars(
                         seqvar, start_pos, end_pos
@@ -202,14 +202,22 @@ class AutoPP2BP1(AutoACMGHelper):
         pred, comment = self.verify_pp2bp1(seqvar, var_data)
         if pred:
             pp2_pred = (
-                AutoACMGPrediction.Met
+                AutoACMGPrediction.Applicable
                 if pred.PP2
-                else (AutoACMGPrediction.NotMet if pred.PP2 is False else AutoACMGPrediction.Failed)
+                else (
+                    AutoACMGPrediction.NotApplicable
+                    if pred.PP2 is False
+                    else AutoACMGPrediction.Failed
+                )
             )
             bp1_pred = (
-                AutoACMGPrediction.Met
+                AutoACMGPrediction.Applicable
                 if pred.BP1
-                else (AutoACMGPrediction.NotMet if pred.BP1 is False else AutoACMGPrediction.Failed)
+                else (
+                    AutoACMGPrediction.NotApplicable
+                    if pred.BP1 is False
+                    else AutoACMGPrediction.Failed
+                )
             )
             pp2_strength = pred.PP2_strength
             bp1_strength = pred.BP1_strength

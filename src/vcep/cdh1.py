@@ -26,7 +26,6 @@ SPEC: VcepSpec = VcepSpec(
 
 
 class CDH1Predictor(DefaultSeqVarPredictor):
-
     def predict_ps1pm5(
         self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
@@ -44,14 +43,14 @@ class CDH1Predictor(DefaultSeqVarPredictor):
         ):
             pm5 = AutoACMGCriteria(
                 name="PM5",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicSupporting,
                 summary="Nonsense or frameshift variant predicted to undergo NMD. PM5 is met.",
             )
         else:
             pm5 = AutoACMGCriteria(
                 name="PM5",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.PathogenicSupporting,
                 summary=(
                     "Consequence is not frameshift or nonsense or variant is not predicted to "
@@ -88,9 +87,13 @@ class CDH1Predictor(DefaultSeqVarPredictor):
         pred, comment = super().verify_pm4bp3(seqvar, var_data)
         if pred:
             pm4 = (
-                AutoACMGPrediction.Met
+                AutoACMGPrediction.Applicable
                 if pred.PM4
-                else (AutoACMGPrediction.NotMet if pred.PM4 is False else AutoACMGPrediction.Failed)
+                else (
+                    AutoACMGPrediction.NotApplicable
+                    if pred.PM4 is False
+                    else AutoACMGPrediction.Failed
+                )
             )
         else:
             pm4 = AutoACMGPrediction.Failed
@@ -160,7 +163,9 @@ class CDH1Predictor(DefaultSeqVarPredictor):
         # PP3 results configuration
         pp3_result = AutoACMGCriteria(
             name="PP3",
-            prediction=AutoACMGPrediction.Met if pp3_met else AutoACMGPrediction.NotMet,
+            prediction=(
+                AutoACMGPrediction.Applicable if pp3_met else AutoACMGPrediction.NotApplicable
+            ),
             strength=AutoACMGStrength.PathogenicSupporting,
             summary=" | ".join(comments) if comments else "PP3 criteria not met.",
         )
@@ -168,7 +173,9 @@ class CDH1Predictor(DefaultSeqVarPredictor):
         # BP4 results configuration
         bp4_result = AutoACMGCriteria(
             name="BP4",
-            prediction=AutoACMGPrediction.Met if bp4_met else AutoACMGPrediction.NotMet,
+            prediction=(
+                AutoACMGPrediction.Applicable if bp4_met else AutoACMGPrediction.NotApplicable
+            ),
             strength=AutoACMGStrength.BenignSupporting,
             summary=" | ".join(comments) if comments else "BP4 criteria not met.",
         )

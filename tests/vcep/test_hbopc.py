@@ -3,14 +3,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.defs.auto_acmg import (
-    PP3BP4,
     PS1PM5,
     AutoACMGCriteria,
     AutoACMGPrediction,
     AutoACMGSeqVarData,
     AutoACMGStrength,
 )
-from src.defs.exceptions import AutoAcmgBaseException
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
@@ -189,7 +187,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, hbopc_predictor, auto
     auto_acmg_data.hgnc_id = "HGNC:111111"  # Gene not in the specific logic
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default PM1 prediction fallback.",
     )
@@ -197,7 +195,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, hbopc_predictor, auto
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met if the gene is not ATM or PALB2."
     assert (
         "Default PM1 prediction fallback." in result.summary
@@ -289,7 +287,7 @@ def test_predict_pm4bp3_atm(mock_verify_pm4bp3, hbopc_predictor, seqvar, auto_ac
     assert isinstance(
         pm4_result, AutoACMGCriteria
     ), "The PM4 result should be of type AutoACMGCriteria."
-    assert pm4_result.prediction == AutoACMGPrediction.Met, "PM4 should be Met for ATM."
+    assert pm4_result.prediction == AutoACMGPrediction.Applicable, "PM4 should be Met for ATM."
     assert (
         pm4_result.strength == AutoACMGStrength.PathogenicSupporting
     ), "PM4 strength should be PathogenicSupporting."
@@ -370,7 +368,9 @@ def test_predict_pm4bp3_fallback(
     assert isinstance(
         pm4_result, AutoACMGCriteria
     ), "The PM4 result should be of type AutoACMGCriteria."
-    assert pm4_result.prediction == AutoACMGPrediction.Met, "PM4 should be Met for fallback gene."
+    assert (
+        pm4_result.prediction == AutoACMGPrediction.Applicable
+    ), "PM4 should be Met for fallback gene."
     assert (
         "PM4 is met for fallback" in pm4_result.summary
     ), "The summary should indicate PM4 is met for fallback gene."
@@ -380,7 +380,7 @@ def test_predict_pm4bp3_fallback(
         bp3_result, AutoACMGCriteria
     ), "The BP3 result should be of type AutoACMGCriteria."
     assert (
-        bp3_result.prediction == AutoACMGPrediction.NotMet
+        bp3_result.prediction == AutoACMGPrediction.NotApplicable
     ), "BP3 should be NotMet for fallback gene."
     assert (
         "PM4 is met for fallback" in bp3_result.summary
@@ -398,7 +398,7 @@ def test_predict_pp2bp1_palb2_missense(mock_predict, hbopc_predictor, seqvar, au
         MagicMock(name="PP2", prediction=AutoACMGPrediction.NotApplicable),
         MagicMock(
             name="BP1",
-            prediction=AutoACMGPrediction.Met,
+            prediction=AutoACMGPrediction.Applicable,
             summary="Variant is missense. BP1 is met.",
         ),
     )
@@ -409,7 +409,7 @@ def test_predict_pp2bp1_palb2_missense(mock_predict, hbopc_predictor, seqvar, au
         pp2.prediction == AutoACMGPrediction.NotApplicable
     ), "PP2 should be NotApplicable for PALB2."
     assert (
-        bp1.prediction == AutoACMGPrediction.Met
+        bp1.prediction == AutoACMGPrediction.Applicable
     ), "BP1 should be Met for missense variant in PALB2."
     assert "missense" in bp1.summary, "Summary should confirm the missense nature."
 
@@ -422,7 +422,7 @@ def test_predict_pp2bp1_atm_non_missense(mock_predict, hbopc_predictor, seqvar, 
         MagicMock(name="PP2", prediction=AutoACMGPrediction.NotApplicable),
         MagicMock(
             name="BP1",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             summary="Variant is not missense. BP1 is not met.",
         ),
     )
@@ -433,7 +433,7 @@ def test_predict_pp2bp1_atm_non_missense(mock_predict, hbopc_predictor, seqvar, 
         pp2.prediction == AutoACMGPrediction.NotApplicable
     ), "PP2 should be NotApplicable for ATM."
     assert (
-        bp1.prediction == AutoACMGPrediction.NotMet
+        bp1.prediction == AutoACMGPrediction.NotApplicable
     ), "BP1 should not be Met for non-missense variant in ATM."
     assert "not missense" in bp1.summary, "Summary should confirm the non-missense nature."
 
@@ -487,7 +487,7 @@ def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, hbopc_predictor
     # Set the mock return value for the superclass's predict_bp7 method
     mock_super_predict_bp7.return_value = AutoACMGCriteria(
         name="BP7",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.BenignSupporting,
         summary="Default BP7 prediction fallback.",
     )
@@ -497,7 +497,9 @@ def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, hbopc_predictor
 
     # Verify the result and ensure the superclass method was called
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.NotMet, "BP7 should return NotMet as mocked."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
     assert (
         result.strength == AutoACMGStrength.BenignSupporting
     ), "The strength should be BenignSupporting."
@@ -516,7 +518,7 @@ def test_predict_bp7_fallback_to_default_for_palb2(
     # Set the mock return value for the superclass's predict_bp7 method
     mock_super_predict_bp7.return_value = AutoACMGCriteria(
         name="BP7",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.BenignSupporting,
         summary="Default BP7 prediction fallback.",
     )
@@ -526,7 +528,9 @@ def test_predict_bp7_fallback_to_default_for_palb2(
 
     # Verify the result and ensure the superclass method was called
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.NotMet, "BP7 should return NotMet as mocked."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
     assert (
         result.strength == AutoACMGStrength.BenignSupporting
     ), "The strength should be BenignSupporting."
@@ -552,12 +556,12 @@ def test_predict_pp3bp4_calls_superclass(
     mock_super_predict_pp3bp4.return_value = (
         AutoACMGCriteria(
             name="PP3",
-            prediction=AutoACMGPrediction.Met,
+            prediction=AutoACMGPrediction.Applicable,
             strength=AutoACMGStrength.PathogenicSupporting,
         ),
         AutoACMGCriteria(
             name="BP4",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.BenignSupporting,
         ),
     )
@@ -565,8 +569,8 @@ def test_predict_pp3bp4_calls_superclass(
     pp3_result, bp4_result = hbopc_predictor.predict_pp3bp4(hbopc_predictor.seqvar, auto_acmg_data)
 
     mock_super_predict_pp3bp4.assert_called_once_with(hbopc_predictor.seqvar, auto_acmg_data)
-    assert pp3_result.prediction == AutoACMGPrediction.Met
-    assert bp4_result.prediction == AutoACMGPrediction.NotMet
+    assert pp3_result.prediction == AutoACMGPrediction.Applicable
+    assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
 
 
 @pytest.mark.parametrize(
@@ -575,38 +579,38 @@ def test_predict_pp3bp4_calls_superclass(
         (
             "HGNC:795",
             0.9,
-            AutoACMGPrediction.Met,
-            AutoACMGPrediction.NotMet,
+            AutoACMGPrediction.Applicable,
+            AutoACMGPrediction.NotApplicable,
         ),  # ATM, high REVEL score
         (
             "HGNC:795",
             0.5,
-            AutoACMGPrediction.NotMet,
-            AutoACMGPrediction.NotMet,
+            AutoACMGPrediction.NotApplicable,
+            AutoACMGPrediction.NotApplicable,
         ),  # ATM, intermediate REVEL score
         (
             "HGNC:795",
             0.1,
-            AutoACMGPrediction.NotMet,
-            AutoACMGPrediction.Met,
+            AutoACMGPrediction.NotApplicable,
+            AutoACMGPrediction.Applicable,
         ),  # ATM, low REVEL score
         (
             "HGNC:26144",
             0.9,
-            AutoACMGPrediction.NotMet,
-            AutoACMGPrediction.NotMet,
+            AutoACMGPrediction.NotApplicable,
+            AutoACMGPrediction.NotApplicable,
         ),  # PALB2, high REVEL score
         (
             "HGNC:26144",
             0.5,
-            AutoACMGPrediction.NotMet,
-            AutoACMGPrediction.NotMet,
+            AutoACMGPrediction.NotApplicable,
+            AutoACMGPrediction.NotApplicable,
         ),  # PALB2, intermediate REVEL score
         (
             "HGNC:26144",
             0.1,
-            AutoACMGPrediction.NotMet,
-            AutoACMGPrediction.NotMet,
+            AutoACMGPrediction.NotApplicable,
+            AutoACMGPrediction.NotApplicable,
         ),  # PALB2, low REVEL score
     ],
 )
@@ -620,10 +624,14 @@ def test_predict_pp3bp4_revel_scenarios(
     with patch("src.vcep.hbopc.DefaultSeqVarPredictor.predict_pp3bp4") as mock_super_predict_pp3bp4:
         mock_super_predict_pp3bp4.return_value = (
             AutoACMGCriteria(
-                name="PP3", prediction=expected_pp3, strength=AutoACMGStrength.PathogenicSupporting
+                name="PP3",
+                prediction=expected_pp3,
+                strength=AutoACMGStrength.PathogenicSupporting,
             ),
             AutoACMGCriteria(
-                name="BP4", prediction=expected_bp4, strength=AutoACMGStrength.BenignSupporting
+                name="BP4",
+                prediction=expected_bp4,
+                strength=AutoACMGStrength.BenignSupporting,
             ),
         )
 
@@ -641,12 +649,12 @@ def test_predict_pp3bp4_strength(hbopc_predictor, auto_acmg_data):
         mock_super_predict_pp3bp4.return_value = (
             AutoACMGCriteria(
                 name="PP3",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicSupporting,
             ),
             AutoACMGCriteria(
                 name="BP4",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.BenignSupporting,
             ),
         )
@@ -667,12 +675,12 @@ def test_predict_pp3bp4_no_revel_score(hbopc_predictor, auto_acmg_data):
         mock_super_predict_pp3bp4.return_value = (
             AutoACMGCriteria(
                 name="PP3",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.PathogenicSupporting,
             ),
             AutoACMGCriteria(
                 name="BP4",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.BenignSupporting,
             ),
         )
@@ -681,8 +689,8 @@ def test_predict_pp3bp4_no_revel_score(hbopc_predictor, auto_acmg_data):
             hbopc_predictor.seqvar, auto_acmg_data
         )
 
-        assert pp3_result.prediction == AutoACMGPrediction.NotMet
-        assert bp4_result.prediction == AutoACMGPrediction.NotMet
+        assert pp3_result.prediction == AutoACMGPrediction.NotApplicable
+        assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
 
 
 def test_predict_pp3bp4_error_handling(hbopc_predictor, auto_acmg_data):

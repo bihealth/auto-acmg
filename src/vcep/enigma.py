@@ -53,7 +53,6 @@ BP7_IMPORTANT_DOMAINS = {
 
 
 class ENIGMAPredictor(DefaultSeqVarPredictor):
-
     def verify_ps1pm5(
         self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[Optional[PS1PM5], str]:
@@ -213,7 +212,9 @@ class ENIGMAPredictor(DefaultSeqVarPredictor):
             ),
             AutoACMGCriteria(
                 name="BP1",
-                prediction=AutoACMGPrediction.Met if bp1 else AutoACMGPrediction.NotMet,
+                prediction=(
+                    AutoACMGPrediction.Applicable if bp1 else AutoACMGPrediction.NotApplicable
+                ),
                 strength=AutoACMGStrength.PathogenicStrong,
                 summary=comment,
             ),
@@ -235,7 +236,8 @@ class ENIGMAPredictor(DefaultSeqVarPredictor):
             var_data.thresholds.bayesDel_noAF_pathogenic = 0.28
             var_data.thresholds.bayesDel_noAF_benign = 0.15
             if self._in_important_domain(var_data) and self._is_pathogenic_score(
-                var_data, ("bayesDel_noAF", var_data.thresholds.bayesDel_noAF_pathogenic)
+                var_data,
+                ("bayesDel_noAF", var_data.thresholds.bayesDel_noAF_pathogenic),
             ):
                 pp3_met = True
                 comments.append(
@@ -244,7 +246,8 @@ class ENIGMAPredictor(DefaultSeqVarPredictor):
             if (
                 self._in_important_domain(var_data)
                 and self._is_benign_score(
-                    var_data, ("bayesDel_noAF", var_data.thresholds.bayesDel_noAF_benign)
+                    var_data,
+                    ("bayesDel_noAF", var_data.thresholds.bayesDel_noAF_benign),
                 )
                 and not self._affect_spliceAI(var_data)
             ):
@@ -281,13 +284,17 @@ class ENIGMAPredictor(DefaultSeqVarPredictor):
         # Set criteria results
         pp3_result = AutoACMGCriteria(
             name="PP3",
-            prediction=AutoACMGPrediction.Met if pp3_met else AutoACMGPrediction.NotMet,
+            prediction=(
+                AutoACMGPrediction.Applicable if pp3_met else AutoACMGPrediction.NotApplicable
+            ),
             strength=AutoACMGStrength.PathogenicSupporting,
             summary=" | ".join(comments) if pp3_met else "PP3 criteria not met.",
         )
         bp4_result = AutoACMGCriteria(
             name="BP4",
-            prediction=AutoACMGPrediction.Met if bp4_met else AutoACMGPrediction.NotMet,
+            prediction=(
+                AutoACMGPrediction.Applicable if bp4_met else AutoACMGPrediction.NotApplicable
+            ),
             strength=AutoACMGStrength.BenignSupporting,
             summary=" | ".join(comments) if bp4_met else "BP4 criteria not met.",
         )

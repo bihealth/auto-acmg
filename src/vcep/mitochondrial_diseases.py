@@ -39,7 +39,6 @@ SPECs: List[VcepSpec] = [
 
 
 class MitochondrialDiseasesPredictor(DefaultSeqVarPredictor):
-
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """
         Override predict_pm1 to return not applicable status for ETHE1, PDHA1, POLG, and SLC19A3.

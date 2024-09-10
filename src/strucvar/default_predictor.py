@@ -10,7 +10,6 @@ from src.strucvar.auto_pvs1 import AutoPVS1
 
 
 class DefaultStrucVarPredictor(AutoPVS1):
-
     def __init__(self, strucvar: StrucVar, result: AutoACMGStrucVarResult, config: Config):
         #: Configuration to use.
         self.config = config or Config()

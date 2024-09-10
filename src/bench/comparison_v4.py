@@ -59,7 +59,11 @@ with open(path, "rt") as inputf:
         if record["variant"].startswith("#"):
             continue
         variants.append(
-            (record["variant"], record["expected_criteria"].split(";"), record["comment"])
+            (
+                record["variant"],
+                record["expected_criteria"].split(";"),
+                record["comment"],
+            )
         )
 print(f"Number of variants: {len(variants)}")
 # ========================================
@@ -154,7 +158,7 @@ def eval_autoacmg(pred: Optional[AutoACMGSeqVarResult], expected: List[str]):
         return [], [], expected, []
     crit_met: List[str] = []
     for crit in pred.criteria:
-        if crit[1].prediction == AutoACMGPrediction.Met:
+        if crit[1].prediction == AutoACMGPrediction.Applicable:
             crit_met.append(crit[1].name)
     tp = list(set(expected) & set(crit_met))
     fn = list(set(expected) - set(crit_met))

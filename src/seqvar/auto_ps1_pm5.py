@@ -43,7 +43,7 @@ class AutoPS1PM5(AutoACMGHelper):
         """
         try:
             return self.annonars_client.get_variant_info(seqvar)
-        except AutoAcmgBaseException as e:
+        except AutoAcmgBaseException:
             return None
 
     def _parse_HGVSp(self, pHGVSp: str) -> Optional[AminoAcid]:
@@ -239,14 +239,22 @@ class AutoPS1PM5(AutoACMGHelper):
         pred, comment = self.verify_ps1pm5(seqvar, var_data)
         if pred:
             ps1_pred = (
-                AutoACMGPrediction.Met
+                AutoACMGPrediction.Applicable
                 if pred.PS1
-                else (AutoACMGPrediction.NotMet if pred.PS1 is False else AutoACMGPrediction.Failed)
+                else (
+                    AutoACMGPrediction.NotApplicable
+                    if pred.PS1 is False
+                    else AutoACMGPrediction.Failed
+                )
             )
             pm5_pred = (
-                AutoACMGPrediction.Met
+                AutoACMGPrediction.Applicable
                 if pred.PM5
-                else (AutoACMGPrediction.NotMet if pred.PM5 is False else AutoACMGPrediction.Failed)
+                else (
+                    AutoACMGPrediction.NotApplicable
+                    if pred.PM5 is False
+                    else AutoACMGPrediction.Failed
+                )
             )
             ps1_strength = pred.PS1_strength
             pm5_strength = pred.PM5_strength

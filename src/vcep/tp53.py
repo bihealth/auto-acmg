@@ -37,7 +37,6 @@ PM1_CLUSTER = {
 
 
 class TP53Predictor(DefaultSeqVarPredictor):
-
     def verify_ps1pm5(
         self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[Optional[PS1PM5], str]:
@@ -70,7 +69,7 @@ class TP53Predictor(DefaultSeqVarPredictor):
         if var_data.prot_pos in gene_cluster["residues"]:
             return AutoACMGCriteria(
                 name="PM1",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicModerate,
                 summary=f"Variant affects a critical residue in TP53 at position {var_data.prot_pos}. "
                 f"PM1 is met at the Moderate level.",
@@ -78,7 +77,7 @@ class TP53Predictor(DefaultSeqVarPredictor):
 
         return AutoACMGCriteria(
             name="PM1",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.PathogenicModerate,
             summary="Variant does not meet the PM1 criteria for TP53.",
         )

@@ -11,7 +11,7 @@ from src.defs.auto_acmg import (
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
-from src.vcep.monogenic_diabetes import MonogenicDiabetesPredictor
+from src.vcep import MonogenicDiabetesPredictor
 
 
 @pytest.fixture
@@ -46,7 +46,9 @@ def test_predict_pm1_moderate_criteria_hnf1a(monogenic_diabetes_predictor, auto_
     )
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.Met, "PM1 should be met for critical residues."
+    assert (
+        result.prediction == AutoACMGPrediction.Applicable
+    ), "PM1 should be met for critical residues."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
     ), "The strength should be PathogenicModerate."
@@ -64,7 +66,9 @@ def test_predict_pm1_supporting_criteria_hnf4a_domain(monogenic_diabetes_predict
     )
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.Met, "PM1 should be met for critical domains."
+    assert (
+        result.prediction == AutoACMGPrediction.Applicable
+    ), "PM1 should be met for critical domains."
     assert (
         result.strength == AutoACMGStrength.PathogenicSupporting
     ), "The strength should be PathogenicSupporting."
@@ -85,7 +89,7 @@ def test_predict_pm1_supporting_criteria_hnf4a_promoter(
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for critical promoter regions."
     assert (
         result.strength == AutoACMGStrength.PathogenicSupporting
@@ -104,7 +108,9 @@ def test_predict_pm1_moderate_criteria_gck(monogenic_diabetes_predictor, auto_ac
     )
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.Met, "PM1 should be met for critical residues."
+    assert (
+        result.prediction == AutoACMGPrediction.Applicable
+    ), "PM1 should be met for critical residues."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
     ), "The strength should be PathogenicModerate."
@@ -123,7 +129,7 @@ def test_predict_pm1_not_met(monogenic_diabetes_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met for non-critical residues."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -141,7 +147,7 @@ def test_predict_pm1_fallback_to_default(
     auto_acmg_data.hgnc_id = "HGNC:9999"  # Gene not in the PM1_CLUSTER
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default PM1 prediction fallback.",
     )
@@ -151,7 +157,7 @@ def test_predict_pm1_fallback_to_default(
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met in the default fallback."
     assert (
         "Default PM1 prediction fallback." in result.summary
@@ -173,7 +179,12 @@ def test_predict_pm1_fallback_to_default(
     [(None, 0.000033), ("HGNC:4195", 0.00004)],  # Default case  # GCK specific case
 )
 def test_predict_pm2ba1bs1bs2_adjustments(
-    mock_super_method, monogenic_diabetes_predictor, auto_acmg_data, seqvar, hgnc_id, expected_bs1
+    mock_super_method,
+    monogenic_diabetes_predictor,
+    auto_acmg_data,
+    seqvar,
+    hgnc_id,
+    expected_bs1,
 ):
     # Setup
     auto_acmg_data.hgnc_id = hgnc_id
@@ -208,7 +219,7 @@ def test_predict_pp2bp1_gck_missense(
     pp2, bp1 = monogenic_diabetes_predictor.predict_pp2bp1(seqvar, auto_acmg_data_gck)
 
     assert (
-        pp2.prediction == AutoACMGPrediction.Met
+        pp2.prediction == AutoACMGPrediction.Applicable
     ), "PP2 should be Met for a missense variant in GCK."
     assert (
         pp2.strength == AutoACMGStrength.PathogenicSupporting
@@ -228,7 +239,7 @@ def test_predict_pp2bp1_gck_non_missense(
     pp2, bp1 = monogenic_diabetes_predictor.predict_pp2bp1(seqvar, auto_acmg_data_gck)
 
     assert (
-        pp2.prediction == AutoACMGPrediction.NotMet
+        pp2.prediction == AutoACMGPrediction.NotApplicable
     ), "PP2 should be NotMet for non-missense variants in GCK."
     assert (
         "not a missense variant" in pp2.summary
@@ -281,7 +292,7 @@ def test_predict_bp7_fallback_to_default(
     # Set the mock return value for the superclass's predict_bp7 method
     mock_super_predict_bp7.return_value = AutoACMGCriteria(
         name="BP7",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.BenignSupporting,
         summary="Default BP7 prediction fallback.",
     )
@@ -293,7 +304,9 @@ def test_predict_bp7_fallback_to_default(
 
     # Verify the result and ensure the superclass method was called
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.NotMet, "BP7 should return NotMet as mocked."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
     assert (
         result.strength == AutoACMGStrength.BenignSupporting
     ), "The strength should be BenignSupporting."
@@ -347,13 +360,55 @@ def test_verify_pp3bp4_prediction_logic(
 @pytest.mark.parametrize(
     "revel_score, spliceAI_scores, is_splice, is_synonymous, expected_pp3, expected_bp4",
     [
-        (0.8, [0.3, 0.3, 0.3, 0.3], False, False, True, False),  # High REVEL score, high SpliceAI
-        (0.1, [0.1, 0.1, 0.1, 0.1], False, False, False, True),  # Low REVEL score, low SpliceAI
-        (0.5, [0.15, 0.15, 0.15, 0.15], False, False, False, False),  # Intermediate scores
-        (0.8, [0.1, 0.1, 0.1, 0.1], False, False, True, False),  # High REVEL score, low SpliceAI
+        (
+            0.8,
+            [0.3, 0.3, 0.3, 0.3],
+            False,
+            False,
+            True,
+            False,
+        ),  # High REVEL score, high SpliceAI
+        (
+            0.1,
+            [0.1, 0.1, 0.1, 0.1],
+            False,
+            False,
+            False,
+            True,
+        ),  # Low REVEL score, low SpliceAI
+        (
+            0.5,
+            [0.15, 0.15, 0.15, 0.15],
+            False,
+            False,
+            False,
+            False,
+        ),  # Intermediate scores
+        (
+            0.8,
+            [0.1, 0.1, 0.1, 0.1],
+            False,
+            False,
+            True,
+            False,
+        ),  # High REVEL score, low SpliceAI
         # (0.1, [0.3, 0.3, 0.3, 0.3], False, False, True, False),  # Low REVEL score, high SpliceAI
-        (0.1, [0.1, 0.1, 0.1, 0.1], True, False, False, True),  # Splice variant, low SpliceAI
-        (0.1, [0.1, 0.1, 0.1, 0.1], False, True, False, True),  # Synonymous variant, low SpliceAI
+        (
+            0.1,
+            [0.1, 0.1, 0.1, 0.1],
+            True,
+            False,
+            False,
+            True,
+        ),  # Splice variant, low SpliceAI
+        (
+            0.1,
+            [0.1, 0.1, 0.1, 0.1],
+            False,
+            True,
+            False,
+            True,
+        ),  # Synonymous variant, low SpliceAI
     ],
 )
 def test_verify_pp3bp4_various_scenarios(
@@ -377,7 +432,6 @@ def test_verify_pp3bp4_various_scenarios(
         patch.object(MonogenicDiabetesPredictor, "_is_splice_variant", return_value=is_splice),
         patch.object(MonogenicDiabetesPredictor, "_is_synonymous", return_value=is_synonymous),
     ):
-
         prediction, _ = monogenic_diabetes_predictor.verify_pp3bp4(
             monogenic_diabetes_predictor.seqvar, auto_acmg_data
         )
@@ -425,7 +479,6 @@ def test_verify_pp3bp4_spliceai_thresholds(monogenic_diabetes_predictor, auto_ac
         patch.object(MonogenicDiabetesPredictor, "_is_splice_variant", return_value=False),
         patch.object(MonogenicDiabetesPredictor, "_is_synonymous", return_value=False),
     ):
-
         monogenic_diabetes_predictor.verify_pp3bp4(
             monogenic_diabetes_predictor.seqvar, auto_acmg_data
         )

@@ -2,8 +2,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.defs.auto_acmg import PP2BP1, AutoACMGPrediction, AutoACMGSeqVarData, AutoACMGStrength
-from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, InvalidAPIResposeError
+from src.defs.auto_acmg import PP2BP1, AutoACMGPrediction, AutoACMGStrength
+from src.defs.exceptions import AlgorithmError, InvalidAPIResposeError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.auto_pp2_bp1 import AutoPP2BP1
@@ -120,7 +120,13 @@ def test_is_missense_false(var_data_non_missense):
 
 @pytest.fixture
 def seqvar_mitochondrial():
-    return SeqVar(genome_release=GenomeRelease.GRCh37, chrom="MT", pos=1000, delete="A", insert="G")
+    return SeqVar(
+        genome_release=GenomeRelease.GRCh37,
+        chrom="MT",
+        pos=1000,
+        delete="A",
+        insert="G",
+    )
 
 
 @pytest.fixture
@@ -184,7 +190,9 @@ def test_verify_pp2bp1_error(auto_pp2bp1, seqvar_non_mitochondrial, var_data_ver
     var_data_verify.scores = MagicMock(misZ=None)
     var_data_verify.thresholds = mock_thresholds
     with patch.object(
-        auto_pp2bp1, "_get_missense_vars", side_effect=InvalidAPIResposeError("API Error")
+        auto_pp2bp1,
+        "_get_missense_vars",
+        side_effect=InvalidAPIResposeError("API Error"),
     ):
         result, comment = auto_pp2bp1.verify_pp2bp1(seqvar_non_mitochondrial, var_data_verify)
         assert result is None
@@ -248,10 +256,10 @@ def test_predict_pp2bp1_met(mock_verify, auto_pp2bp1, seqvar, var_data_pp2bp1, p
     """Test predict_pp2bp1 where both criteria are correctly met."""
     mock_verify.return_value = pp2bp1_result_met
     result = auto_pp2bp1.predict_pp2bp1(seqvar, var_data_pp2bp1)
-    assert result[0].prediction == AutoACMGPrediction.Met
+    assert result[0].prediction == AutoACMGPrediction.Applicable
     assert result[0].strength == AutoACMGStrength.PathogenicSupporting
     assert "PP2 criteria met" in result[0].summary
-    assert result[1].prediction == AutoACMGPrediction.NotMet
+    assert result[1].prediction == AutoACMGPrediction.NotApplicable
     assert result[1].strength == AutoACMGStrength.BenignSupporting
     assert "PP2 criteria met" in result[1].summary
 
@@ -263,10 +271,10 @@ def test_predict_pp2bp1_not_met(
     """Test predict_pp2bp1 where the criteria are not met."""
     mock_verify.return_value = pp2bp1_result_not_met
     result = auto_pp2bp1.predict_pp2bp1(seqvar, var_data_pp2bp1)
-    assert result[0].prediction == AutoACMGPrediction.NotMet
+    assert result[0].prediction == AutoACMGPrediction.NotApplicable
     assert result[0].strength == AutoACMGStrength.PathogenicSupporting
     assert "BP1 criteria not met" in result[0].summary
-    assert result[1].prediction == AutoACMGPrediction.Met
+    assert result[1].prediction == AutoACMGPrediction.Applicable
     assert result[1].strength == AutoACMGStrength.BenignSupporting
     assert "BP1 criteria not met" in result[1].summary
 

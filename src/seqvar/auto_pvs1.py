@@ -947,7 +947,7 @@ class AutoPVS1(SeqVarPVS1Helper):
         return AutoACMGCriteria(
             name="PVS1",
             prediction=(
-                AutoACMGPrediction.Met
+                AutoACMGPrediction.Applicable
                 if pred
                 in [
                     PVS1Prediction.PVS1,
@@ -955,7 +955,7 @@ class AutoPVS1(SeqVarPVS1Helper):
                     PVS1Prediction.PVS1_Moderate,
                     PVS1Prediction.PVS1_Supporting,
                 ]
-                else AutoACMGPrediction.NotMet
+                else AutoACMGPrediction.NotApplicable
             ),
             strength=evidence_strength_mapping[pred],
             summary=comment,

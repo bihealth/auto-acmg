@@ -11,7 +11,7 @@ from src.defs.auto_acmg import (
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
-from src.vcep.rasopathy import RASopathyPredictor
+from src.vcep import RASopathyPredictor
 
 
 @pytest.fixture
@@ -35,7 +35,7 @@ def auto_acmg_data():
     "predict_pvs1",
     return_value=AutoACMGCriteria(
         name="PVS1",
-        prediction=AutoACMGPrediction.Met,
+        prediction=AutoACMGPrediction.Applicable,
         strength=AutoACMGStrength.PathogenicVeryStrong,
         summary="Superclass not applicable.",
     ),
@@ -58,7 +58,7 @@ def test_predict_pvs1_not_applicable(mock_super, rasopathy_predictor, seqvar, au
     "predict_pvs1",
     return_value=AutoACMGCriteria(
         name="PVS1",
-        prediction=AutoACMGPrediction.Met,
+        prediction=AutoACMGPrediction.Applicable,
         strength=AutoACMGStrength.PathogenicVeryStrong,
         summary="Superclass applicable.",
     ),
@@ -71,7 +71,7 @@ def test_predict_pvs1_applicable_lztr1(mock_super, rasopathy_predictor, seqvar, 
     # Assertions to ensure the superclass method behaves as expected
     mock_super.assert_called_once_with(seqvar, auto_acmg_data)
     assert result.name == "PVS1"
-    assert result.prediction == AutoACMGPrediction.Met
+    assert result.prediction == AutoACMGPrediction.Applicable
     assert result.strength == AutoACMGStrength.PathogenicVeryStrong
     assert result.summary == "Superclass applicable."
 
@@ -84,7 +84,7 @@ def test_predict_pm1_in_critical_region(rasopathy_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for critical region variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -103,7 +103,7 @@ def test_predict_pm1_in_critical_exon(rasopathy_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for critical exon variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -132,7 +132,7 @@ def test_predict_pm1_outside_critical_region(rasopathy_predictor, auto_acmg_data
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met for non-critical region variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -148,7 +148,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, rasopathy_predictor, 
     auto_acmg_data.hgnc_id = "HGNC:9999"  # Gene not in the RASopathy VCEP
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default PM1 prediction fallback.",
     )
@@ -156,7 +156,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, rasopathy_predictor, 
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met in the default fallback."
     assert (
         "Default PM1 prediction fallback." in result.summary
@@ -204,7 +204,7 @@ def test_predict_pp2bp1_ptpn11_missense(
     pp2, bp1 = rasopathy_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
 
     assert (
-        pp2.prediction == AutoACMGPrediction.NotMet
+        pp2.prediction == AutoACMGPrediction.NotApplicable
     ), "PP2 should be Met for a missense variant in PTPN11."
     assert (
         pp2.strength == AutoACMGStrength.PathogenicSupporting
@@ -222,7 +222,7 @@ def test_predict_map2k1_missense(mock_is_missense, rasopathy_predictor, seqvar, 
     pp2, bp1 = rasopathy_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
 
     assert (
-        pp2.prediction == AutoACMGPrediction.Met
+        pp2.prediction == AutoACMGPrediction.Applicable
     ), "PP2 should be Met for a missense variant in MAP2K1."
     assert (
         pp2.strength == AutoACMGStrength.PathogenicSupporting
@@ -242,7 +242,7 @@ def test_predict_pp2bp1_map2k1_non_missense(
     pp2, bp1 = rasopathy_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
 
     assert (
-        pp2.prediction == AutoACMGPrediction.NotMet
+        pp2.prediction == AutoACMGPrediction.NotApplicable
     ), "PP2 should not be Met for non-missense variants in MAP2K1."
     assert "not a missense" in pp2.summary, "PP2 summary should confirm the non-missense nature."
     assert (
@@ -269,12 +269,12 @@ def test_predict_pp3bp4_calls_superclass(
     mock_super_predict_pp3bp4.return_value = (
         AutoACMGCriteria(
             name="PP3",
-            prediction=AutoACMGPrediction.Met,
+            prediction=AutoACMGPrediction.Applicable,
             strength=AutoACMGStrength.PathogenicSupporting,
         ),
         AutoACMGCriteria(
             name="BP4",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.BenignSupporting,
         ),
     )
@@ -284,16 +284,28 @@ def test_predict_pp3bp4_calls_superclass(
     )
 
     mock_super_predict_pp3bp4.assert_called_once_with(rasopathy_predictor.seqvar, auto_acmg_data)
-    assert pp3_result.prediction == AutoACMGPrediction.Met
-    assert bp4_result.prediction == AutoACMGPrediction.NotMet
+    assert pp3_result.prediction == AutoACMGPrediction.Applicable
+    assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
 
 
 @pytest.mark.parametrize(
     "revel_score, expected_pp3, expected_bp4",
     [
-        (0.8, AutoACMGPrediction.Met, AutoACMGPrediction.NotMet),  # High REVEL score
-        (0.5, AutoACMGPrediction.NotMet, AutoACMGPrediction.NotMet),  # Intermediate REVEL score
-        (0.2, AutoACMGPrediction.NotMet, AutoACMGPrediction.Met),  # Low REVEL score
+        (
+            0.8,
+            AutoACMGPrediction.Applicable,
+            AutoACMGPrediction.NotApplicable,
+        ),  # High REVEL score
+        (
+            0.5,
+            AutoACMGPrediction.NotApplicable,
+            AutoACMGPrediction.NotApplicable,
+        ),  # Intermediate REVEL score
+        (
+            0.2,
+            AutoACMGPrediction.NotApplicable,
+            AutoACMGPrediction.Applicable,
+        ),  # Low REVEL score
     ],
 )
 def test_predict_pp3bp4_revel_scenarios(
@@ -307,10 +319,14 @@ def test_predict_pp3bp4_revel_scenarios(
     ) as mock_super_predict_pp3bp4:
         mock_super_predict_pp3bp4.return_value = (
             AutoACMGCriteria(
-                name="PP3", prediction=expected_pp3, strength=AutoACMGStrength.PathogenicSupporting
+                name="PP3",
+                prediction=expected_pp3,
+                strength=AutoACMGStrength.PathogenicSupporting,
             ),
             AutoACMGCriteria(
-                name="BP4", prediction=expected_bp4, strength=AutoACMGStrength.BenignSupporting
+                name="BP4",
+                prediction=expected_bp4,
+                strength=AutoACMGStrength.BenignSupporting,
             ),
         )
 
@@ -330,12 +346,12 @@ def test_predict_pp3bp4_strength(rasopathy_predictor, auto_acmg_data):
         mock_super_predict_pp3bp4.return_value = (
             AutoACMGCriteria(
                 name="PP3",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicSupporting,
             ),
             AutoACMGCriteria(
                 name="BP4",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.BenignSupporting,
             ),
         )
@@ -358,12 +374,12 @@ def test_predict_pp3bp4_no_revel_score(rasopathy_predictor, auto_acmg_data):
         mock_super_predict_pp3bp4.return_value = (
             AutoACMGCriteria(
                 name="PP3",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.PathogenicSupporting,
             ),
             AutoACMGCriteria(
                 name="BP4",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.BenignSupporting,
             ),
         )
@@ -372,8 +388,8 @@ def test_predict_pp3bp4_no_revel_score(rasopathy_predictor, auto_acmg_data):
             rasopathy_predictor.seqvar, auto_acmg_data
         )
 
-        assert pp3_result.prediction == AutoACMGPrediction.NotMet
-        assert bp4_result.prediction == AutoACMGPrediction.NotMet
+        assert pp3_result.prediction == AutoACMGPrediction.NotApplicable
+        assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
 
 
 def test_predict_pp3bp4_error_handling(rasopathy_predictor, auto_acmg_data):

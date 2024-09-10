@@ -14,7 +14,6 @@ from typing import Optional, Tuple
 from loguru import logger
 
 from src.defs.auto_acmg import (
-    BP7,
     PM2BA1BS1BS2,
     AutoACMGCriteria,
     AutoACMGPrediction,
@@ -55,7 +54,6 @@ PM1_CLUSTER = {
 
 
 class BrainMalformationsPredictor(DefaultSeqVarPredictor):
-
     def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """PVS1 is not applicable."""
         logger.info("Predict PVS1")
@@ -82,13 +80,13 @@ class BrainMalformationsPredictor(DefaultSeqVarPredictor):
                     )
                     return AutoACMGCriteria(
                         name="PM1",
-                        prediction=AutoACMGPrediction.Met,
+                        prediction=AutoACMGPrediction.Applicable,
                         strength=AutoACMGStrength.PathogenicSupporting,
                         summary=comment,
                     )
             return AutoACMGCriteria(
                 name="PM1",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.PathogenicSupporting,
                 summary=(
                     "Variant does not fall within any critical domain for the specified gene. "
@@ -195,7 +193,9 @@ class BrainMalformationsPredictor(DefaultSeqVarPredictor):
         return (
             AutoACMGCriteria(
                 name="PP2",
-                prediction=AutoACMGPrediction.Met if pp2 else AutoACMGPrediction.NotMet,
+                prediction=(
+                    AutoACMGPrediction.Applicable if pp2 else AutoACMGPrediction.NotApplicable
+                ),
                 strength=AutoACMGStrength.PathogenicSupporting,
                 summary=comment,
             ),
@@ -253,7 +253,9 @@ class BrainMalformationsPredictor(DefaultSeqVarPredictor):
 
         bp4_result = AutoACMGCriteria(
             name="BP4",
-            prediction=AutoACMGPrediction.Met if bp4_met else AutoACMGPrediction.NotMet,
+            prediction=(
+                AutoACMGPrediction.Applicable if bp4_met else AutoACMGPrediction.NotApplicable
+            ),
             strength=AutoACMGStrength.BenignSupporting,
             summary=" | ".join(comments),
         )

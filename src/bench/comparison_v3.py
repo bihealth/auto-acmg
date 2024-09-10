@@ -58,7 +58,11 @@ with open(path, "rt") as inputf:
         if record["variant"].startswith("#"):
             continue
         variants.append(
-            (record["variant"], record["expected_criteria"].split(";"), record["comment"])
+            (
+                record["variant"],
+                record["expected_criteria"].split(";"),
+                record["comment"],
+            )
         )
 print(f"Number of variants: {len(variants)}")
 # ========================================

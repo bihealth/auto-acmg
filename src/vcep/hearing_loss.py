@@ -29,7 +29,6 @@ from src.defs.auto_acmg import (
     AutoACMGStrength,
     VcepSpec,
 )
-from src.defs.exceptions import AlgorithmError
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
@@ -55,7 +54,6 @@ PM1_CLUSTER = {
 
 
 class HearingLossPredictor(DefaultSeqVarPredictor):
-
     def verify_ps1pm5(
         self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[Optional[PS1PM5], str]:
@@ -108,7 +106,7 @@ class HearingLossPredictor(DefaultSeqVarPredictor):
                 )
                 return AutoACMGCriteria(
                     name="PM1",
-                    prediction=AutoACMGPrediction.Met,
+                    prediction=AutoACMGPrediction.Applicable,
                     strength=AutoACMGStrength.PathogenicStrong,
                     summary=comment,
                 )
@@ -116,7 +114,7 @@ class HearingLossPredictor(DefaultSeqVarPredictor):
         # If no criteria match
         return AutoACMGCriteria(
             name="PM1",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.PathogenicModerate,
             summary="Variant does not meet the PM1 criteria for KCNQ4.",
         )

@@ -6,12 +6,7 @@ import pytest
 
 from src.auto_acmg import VCEP_MAPPING, AutoACMG
 from src.core.config import Config
-from src.defs.auto_acmg import (
-    AutoACMGCriteria,
-    AutoACMGPrediction,
-    AutoACMGSeqVarResult,
-    AutoACMGStrength,
-)
+from src.defs.auto_acmg import AutoACMGPrediction, AutoACMGSeqVarResult, AutoACMGStrength
 from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionSeqVarPath
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
@@ -71,7 +66,9 @@ def test_pvs1(
         auto_pvs1 = AutoPVS1()
         pvs1 = auto_pvs1.predict_pvs1(seqvar, auto_acmg_result.data)
     expected_pred = (
-        AutoACMGPrediction.Met if expected_prediction in met_pred else AutoACMGPrediction.NotMet
+        AutoACMGPrediction.Applicable
+        if expected_prediction in met_pred
+        else AutoACMGPrediction.NotApplicable
     )
     assert pvs1.name == "PVS1"
     assert pvs1.prediction == expected_pred

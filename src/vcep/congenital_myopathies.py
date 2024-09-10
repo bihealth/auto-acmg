@@ -62,7 +62,6 @@ PM1_CLUSTER = {
 
 
 class CongenitalMyopathiesPredictor(DefaultSeqVarPredictor):
-
     def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """PVS1 is not applicable."""
         if var_data.hgnc_id == "HGNC:2974":
@@ -97,7 +96,7 @@ class CongenitalMyopathiesPredictor(DefaultSeqVarPredictor):
                     )
                     return AutoACMGCriteria(
                         name="PM1",
-                        prediction=AutoACMGPrediction.Met,
+                        prediction=AutoACMGPrediction.Applicable,
                         strength=AutoACMGStrength.PathogenicModerate,
                         summary=comment,
                     )
@@ -106,7 +105,7 @@ class CongenitalMyopathiesPredictor(DefaultSeqVarPredictor):
 
         return AutoACMGCriteria(
             name="PM1",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.PathogenicModerate,
             summary="Variant does not fall within a critical domain.",
         )
@@ -156,7 +155,9 @@ class CongenitalMyopathiesPredictor(DefaultSeqVarPredictor):
         return (
             AutoACMGCriteria(
                 name="PP2",
-                prediction=AutoACMGPrediction.Met if pp2 else AutoACMGPrediction.NotMet,
+                prediction=(
+                    AutoACMGPrediction.Applicable if pp2 else AutoACMGPrediction.NotApplicable
+                ),
                 strength=AutoACMGStrength.PathogenicSupporting,
                 summary=comment,
             ),

@@ -49,7 +49,13 @@ class MockExon:
 #: Mock the CdsInfo class
 class MockCdsInfo:
     def __init__(
-        self, start_codon, stop_codon, cds_start, cds_end, exons, cds_strand=GenomicStrand.Plus
+        self,
+        start_codon,
+        stop_codon,
+        cds_start,
+        cds_end,
+        exons,
+        cds_strand=GenomicStrand.Plus,
     ):
         self.start_codon = start_codon
         self.stop_codon = stop_codon
@@ -135,7 +141,10 @@ def test_splicing_prediction_init(
     assert (
         splicing_prediction.maxent_foldchange == 1.00
     ), "Initial maxent_foldchange should be set correctly."
-    mock_initialize_maxentscore.assert_called_once(), "MaxEntScan initialization should be called."
+    (
+        mock_initialize_maxentscore.assert_called_once(),
+        "MaxEntScan initialization should be called.",
+    )
 
 
 @pytest.mark.parametrize(
@@ -212,13 +221,17 @@ def test_initialize_maxentscore(
     # Asserts
     assert mock_find_reference_sequence.call_count == 2
     assert mock_generate_alt_sequence.call_count == 2
-    mock_generate_alt_sequence.assert_called_with(
-        "ATGCGTACG", 90
-    ), "The method _generate_alt_sequence should be called with the correct parameters."
+    (
+        mock_generate_alt_sequence.assert_called_with("ATGCGTACG", 90),
+        "The method _generate_alt_sequence should be called with the correct parameters.",
+    )
     assert mock_calculate_maxentscore.call_count == 2
-    mock_calculate_maxentscore.assert_called_with(
-        "ATGCGTACG", "ATGCGTACG", splicing_prediction.splice_type
-    ), "The method _calculate_maxentscore should be called with the correct parameters."
+    (
+        mock_calculate_maxentscore.assert_called_with(
+            "ATGCGTACG", "ATGCGTACG", splicing_prediction.splice_type
+        ),
+        "The method _calculate_maxentscore should be called with the correct parameters.",
+    )
 
     assert (
         splicing_prediction.maxentscore_ref == 5.0
@@ -681,7 +694,7 @@ def test_initialize_seqvar_failure(
     assert ts_helper.gene_ts_info == []
     assert ts_helper.seqvar_ts_info == []
     assert ts_helper.gene_ts_info == []
-    assert ts_helper.HGNC_id is ""
+    assert ts_helper.HGNC_id == ""
     assert len(ts_helper.HGVSs) == 0
 
 
@@ -691,10 +704,10 @@ def test_initialize_seqvar_no_transcripts(
     mock_get_gene_transcripts, mock_get_seqvar_transcripts, ts_helper
 ):
     # Mock the MehariClient methods for CI
-    mock_get_gene_transcripts, mock_get_seqvar_transcripts = MagicMock(), MagicMock()
+    _mock_get_gene_transcripts, _mock_get_seqvar_transcripts = MagicMock(), MagicMock()
     ts_helper.initialize()
     assert ts_helper.gene_ts_info == []
-    assert ts_helper.HGNC_id is ""
+    assert ts_helper.HGNC_id == ""
     assert len(ts_helper.HGVSs) == 0
 
 
@@ -783,7 +796,7 @@ def test_choose_transcript_seqvar_invalid(hgvss, gene_ts_file, seqvar_ts_file, t
     seqvar_ts, gene_ts = ts_helper._choose_transcript(
         hgvss, ts_helper.seqvar_ts_info, ts_helper.gene_ts_info
     )
-    assert seqvar_ts == None
+    assert seqvar_ts is None
 
 
 # === StrucVarTranscriptsHelper ===
@@ -846,17 +859,13 @@ def test_get_ts_info_strucvar_success(strucvar_ts_helper):
     )
     strucvar_ts_helper.strucvar_transcript = TranscriptsStrucVar.model_validate(
         get_json_object("mehari/KRTAP9-2_strucvar.json")
-    ).result[
-        0
-    ]  # assuming the first result is the most relevant
+    ).result[0]  # assuming the first result is the most relevant
     strucvar_ts_helper.gene_ts_info = GeneTranscripts.model_validate(
         get_json_object("mehari/HAL_gene.json")
     )
     strucvar_ts_helper.gene_transcript = GeneTranscripts.model_validate(
         get_json_object("mehari/HAL_gene.json")
-    ).transcripts[
-        0
-    ]  # assuming the first transcript is the most relevant
+    ).transcripts[0]  # assuming the first transcript is the most relevant
 
     strucvar_transcript, gene_transcript, strucvar_ts_info, gene_ts_info = (
         strucvar_ts_helper.get_ts_info()
@@ -905,7 +914,10 @@ def test_initialize_strucvar_success(
 @patch.object(MehariClient, "get_strucvar_transcripts")
 @patch.object(MehariClient, "get_gene_transcripts")
 def test_initialize_strucvar_failure(
-    mock_get_gene_transcripts, mock_get_strucvar_transcripts, strucvar, strucvar_ts_helper
+    mock_get_gene_transcripts,
+    mock_get_strucvar_transcripts,
+    strucvar,
+    strucvar_ts_helper,
 ):
     """Test initialize method with a failed response."""
     # Mock failed responses

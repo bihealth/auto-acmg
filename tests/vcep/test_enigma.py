@@ -159,7 +159,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, enigma_predictor, aut
     auto_acmg_data.hgnc_id = "HGNC:99999"  # Gene not BRCA1 or BRCA2
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default PM1 prediction fallback.",
     )
@@ -167,7 +167,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, enigma_predictor, aut
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met for genes other than BRCA1 and BRCA2."
     assert (
         "Default PM1 prediction fallback." in result.summary
@@ -273,7 +273,7 @@ def test_predict_pp2bp1_missense_not_in_domain_not_splice_affecting(
 
     assert pp2.prediction == AutoACMGPrediction.NotApplicable, "PP2 should be NotApplicable."
     assert (
-        bp1.prediction == AutoACMGPrediction.Met
+        bp1.prediction == AutoACMGPrediction.Applicable
     ), "BP1 should be Met as the criteria are satisfied."
     assert (
         bp1.strength == AutoACMGStrength.PathogenicStrong
@@ -293,7 +293,7 @@ def test_predict_pp2bp1_missense_in_important_domain(enigma_predictor, seqvar, a
 
     assert pp2.prediction == AutoACMGPrediction.NotApplicable, "PP2 should be NotApplicable."
     assert (
-        bp1.prediction == AutoACMGPrediction.NotMet
+        bp1.prediction == AutoACMGPrediction.NotApplicable
     ), "BP1 should not be Met as the variant is in an important domain."
 
 
@@ -307,7 +307,7 @@ def test_predict_pp2bp1_synonymous_splice_affecting(enigma_predictor, seqvar, au
 
     assert pp2.prediction == AutoACMGPrediction.NotApplicable, "PP2 should be NotApplicable."
     assert (
-        bp1.prediction == AutoACMGPrediction.NotMet
+        bp1.prediction == AutoACMGPrediction.NotApplicable
     ), "BP1 should not be Met as the variant is predicted to affect splicing."
 
 
@@ -322,7 +322,7 @@ def test_predict_pp2bp1_inframe_deletion_not_in_important_domain_not_splice_affe
 
     assert pp2.prediction == AutoACMGPrediction.NotApplicable, "PP2 should be NotApplicable."
     assert (
-        bp1.prediction == AutoACMGPrediction.Met
+        bp1.prediction == AutoACMGPrediction.Applicable
     ), "BP1 should be Met as the criteria are satisfied."
     assert (
         "not in an important domain" in bp1.summary
@@ -338,7 +338,7 @@ def test_predict_pp2bp1_non_relevant_variant_type(enigma_predictor, seqvar, auto
 
     assert pp2.prediction == AutoACMGPrediction.NotApplicable, "PP2 should be NotApplicable."
     assert (
-        bp1.prediction == AutoACMGPrediction.NotMet
+        bp1.prediction == AutoACMGPrediction.NotApplicable
     ), "BP1 should not be Met due to variant type being not relevant."
     assert (
         "not synonymous, missense or inframe indel" in bp1.summary
@@ -446,8 +446,22 @@ def test_predict_pp3bp4_thresholds(enigma_predictor, auto_acmg_data):
 @pytest.mark.parametrize(
     "is_missense, is_in_domain, bayesdel_score, spliceai_score, expected_pp3, expected_bp4",
     [
-        (True, True, 0.3, 0.1, True, False),  # Missense in domain, high BayesDel, low SpliceAI
-        (True, True, 0.1, 0.1, False, True),  # Missense in domain, low BayesDel, low SpliceAI
+        (
+            True,
+            True,
+            0.3,
+            0.1,
+            True,
+            False,
+        ),  # Missense in domain, high BayesDel, low SpliceAI
+        (
+            True,
+            True,
+            0.1,
+            0.1,
+            False,
+            True,
+        ),  # Missense in domain, low BayesDel, low SpliceAI
         (True, False, 0.3, 0.1, False, False),  # Missense not in domain, high BayesDel
         (False, False, 0.1, 0.3, True, False),  # Non-missense, high SpliceAI
         (False, False, 0.1, 0.05, False, True),  # Non-missense, low SpliceAI
@@ -470,7 +484,6 @@ def test_predict_pp3bp4_scenarios(
         patch.object(ENIGMAPredictor, "_is_intronic", return_value=not is_missense),
         patch.object(ENIGMAPredictor, "_is_synonymous_variant", return_value=not is_missense),
     ):
-
         auto_acmg_data.scores.dbnsfp.bayesDel_noAF = bayesdel_score
         auto_acmg_data.scores.cadd.spliceAI_acceptor_gain = spliceai_score
 
@@ -479,10 +492,10 @@ def test_predict_pp3bp4_scenarios(
         )
 
         assert pp3_result.prediction == (
-            AutoACMGPrediction.Met if expected_pp3 else AutoACMGPrediction.NotMet
+            AutoACMGPrediction.Applicable if expected_pp3 else AutoACMGPrediction.NotApplicable
         )
         assert bp4_result.prediction == (
-            AutoACMGPrediction.Met if expected_bp4 else AutoACMGPrediction.NotMet
+            AutoACMGPrediction.Applicable if expected_bp4 else AutoACMGPrediction.NotApplicable
         )
 
 
@@ -492,14 +505,13 @@ def test_predict_pp3bp4_missense_in_domain_high_bayesdel(enigma_predictor, auto_
         patch.object(ENIGMAPredictor, "_in_important_domain", return_value=True),
         patch.object(ENIGMAPredictor, "_is_pathogenic_score", return_value=True),
     ):
-
         pp3_result, bp4_result = enigma_predictor.predict_pp3bp4(
             enigma_predictor.seqvar, auto_acmg_data
         )
 
-        assert pp3_result.prediction == AutoACMGPrediction.Met
+        assert pp3_result.prediction == AutoACMGPrediction.Applicable
         assert "BayesDel_noAF score" in pp3_result.summary
-        assert bp4_result.prediction == AutoACMGPrediction.NotMet
+        assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
 
 
 def test_predict_pp3bp4_missense_in_domain_low_bayesdel_no_splice(enigma_predictor, auto_acmg_data):
@@ -509,13 +521,12 @@ def test_predict_pp3bp4_missense_in_domain_low_bayesdel_no_splice(enigma_predict
         patch.object(ENIGMAPredictor, "_is_benign_score", return_value=True),
         patch.object(ENIGMAPredictor, "_affect_spliceAI", return_value=False),
     ):
-
         pp3_result, bp4_result = enigma_predictor.predict_pp3bp4(
             enigma_predictor.seqvar, auto_acmg_data
         )
 
-        assert pp3_result.prediction == AutoACMGPrediction.NotMet
-        assert bp4_result.prediction == AutoACMGPrediction.Met
+        assert pp3_result.prediction == AutoACMGPrediction.NotApplicable
+        assert bp4_result.prediction == AutoACMGPrediction.Applicable
         assert "BayesDel_noAF score" in bp4_result.summary
 
 
@@ -524,14 +535,13 @@ def test_predict_pp3bp4_splice_effect(enigma_predictor, auto_acmg_data):
         patch.object(ENIGMAPredictor, "_is_missense_variant", return_value=True),
         patch.object(ENIGMAPredictor, "_affect_spliceAI", return_value=True),
     ):
-
         pp3_result, bp4_result = enigma_predictor.predict_pp3bp4(
             enigma_predictor.seqvar, auto_acmg_data
         )
 
-        assert pp3_result.prediction == AutoACMGPrediction.Met
+        assert pp3_result.prediction == AutoACMGPrediction.Applicable
         assert "SpliceAI ≥0.2" in pp3_result.summary
-        assert bp4_result.prediction == AutoACMGPrediction.NotMet
+        assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
 
 
 def test_predict_pp3bp4_intronic_no_splice_effect(enigma_predictor, auto_acmg_data):
@@ -539,13 +549,12 @@ def test_predict_pp3bp4_intronic_no_splice_effect(enigma_predictor, auto_acmg_da
         patch.object(ENIGMAPredictor, "_is_intronic", return_value=True),
         patch.object(ENIGMAPredictor, "_affect_spliceAI", return_value=False),
     ):
-
         pp3_result, bp4_result = enigma_predictor.predict_pp3bp4(
             enigma_predictor.seqvar, auto_acmg_data
         )
 
-        assert pp3_result.prediction == AutoACMGPrediction.NotMet
-        assert bp4_result.prediction == AutoACMGPrediction.Met
+        assert pp3_result.prediction == AutoACMGPrediction.NotApplicable
+        assert bp4_result.prediction == AutoACMGPrediction.Applicable
         assert "SpliceAI ≥0.2" in bp4_result.summary
 
 
@@ -565,12 +574,11 @@ def test_predict_pp3bp4_no_criteria_met(enigma_predictor, auto_acmg_data):
         patch.object(ENIGMAPredictor, "_is_synonymous_variant", return_value=False),
         patch.object(ENIGMAPredictor, "_affect_spliceAI", return_value=False),
     ):
-
         pp3_result, bp4_result = enigma_predictor.predict_pp3bp4(
             enigma_predictor.seqvar, auto_acmg_data
         )
 
-        assert pp3_result.prediction == AutoACMGPrediction.NotMet
-        assert bp4_result.prediction == AutoACMGPrediction.NotMet
+        assert pp3_result.prediction == AutoACMGPrediction.NotApplicable
+        assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
         assert "PP3 criteria not met." in pp3_result.summary
         assert "BP4 criteria not met." in bp4_result.summary

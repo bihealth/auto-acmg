@@ -55,7 +55,7 @@ def test_predict_pm1_in_critical_domain(brain_malformations_predictor, auto_acmg
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for critical domain variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicSupporting
@@ -75,7 +75,7 @@ def test_predict_pm1_outside_critical_domain(brain_malformations_predictor, auto
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met for non-critical domain variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicSupporting
@@ -94,7 +94,7 @@ def test_predict_pm1_edge_case_start_boundary(brain_malformations_predictor, aut
     )
 
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met when on the start boundary of a critical domain."
     assert (
         "falls within a critical domain" in result.summary
@@ -110,7 +110,7 @@ def test_predict_pm1_edge_case_end_boundary(brain_malformations_predictor, auto_
     )
 
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met when on the end boundary of a critical domain."
     assert (
         "falls within a critical domain" in result.summary
@@ -127,7 +127,7 @@ def test_predict_pm1_fallback_to_default(
     # Set the mock return value for the superclass's predict_pm1 method
     mock_super_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default PM1 prediction fallback.",
     )
@@ -138,7 +138,7 @@ def test_predict_pm1_fallback_to_default(
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met if no specific cluster mapping is found."
     assert mock_super_predict_pm1.called, "super().predict_pm1 should have been called."
 
@@ -146,7 +146,11 @@ def test_predict_pm1_fallback_to_default(
 @patch.object(BrainMalformationsPredictor, "_get_af", return_value=0.1)
 @patch.object(BrainMalformationsPredictor, "_ba1_exception", return_value=False)
 def test_verify_pm2ba1bs1bs2(
-    mock_get_af, mock_ba1_exception, brain_malformations_predictor, auto_acmg_data, seqvar
+    mock_get_af,
+    mock_ba1_exception,
+    brain_malformations_predictor,
+    auto_acmg_data,
+    seqvar,
 ):
     # Setup: Adjusting the thresholds to test under different conditions
     auto_acmg_data.thresholds.ba1_benign = 0.05
@@ -210,7 +214,7 @@ def test_predict_pp2bp1_missense(brain_malformations_predictor, seqvar, auto_acm
         pp2_result, AutoACMGCriteria
     ), "The PP2 result should be of type AutoACMGCriteria."
     assert (
-        pp2_result.prediction == AutoACMGPrediction.Met
+        pp2_result.prediction == AutoACMGPrediction.Applicable
     ), "PP2 should be Met for a missense variant in a relevant gene."
     assert "PP2 is met for HGNC:393 as the variant is a missense change." in pp2_result.summary
 
@@ -237,7 +241,7 @@ def test_predict_pp2bp1_not_missense(brain_malformations_predictor, seqvar, auto
         pp2_result, AutoACMGCriteria
     ), "The PP2 result should be of type AutoACMGCriteria."
     assert (
-        pp2_result.prediction == AutoACMGPrediction.NotMet
+        pp2_result.prediction == AutoACMGPrediction.NotApplicable
     ), "PP2 should not be met for a non-missense variant in a relevant gene."
     assert (
         "PP2 is not met for HGNC:393 as the variant is not a missense change." in pp2_result.summary
@@ -279,7 +283,7 @@ def test_predict_bp7_fallback_to_default(
     # Set the mock return value for the superclass's predict_bp7 method
     mock_super_predict_bp7.return_value = AutoACMGCriteria(
         name="BP7",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.BenignSupporting,
         summary="Default BP7 prediction fallback.",
     )
@@ -291,7 +295,9 @@ def test_predict_bp7_fallback_to_default(
 
     # Verify the result and ensure the superclass method was called
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.NotMet, "BP7 should return NotMet as mocked."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
     assert (
         result.strength == AutoACMGStrength.BenignSupporting
     ), "The strength should be BenignSupporting."
@@ -315,15 +321,19 @@ def test_predict_pp3bp4_pp3_not_applicable(brain_malformations_predictor, auto_a
 @pytest.mark.parametrize(
     "variant_type, spliceai_scores, expected_bp4",
     [
-        ("synonymous_variant", [0.0, 0.0, 0.0, 0.0], AutoACMGPrediction.Met),
-        ("intron_variant", [0.0, 0.0, 0.0, 0.0], AutoACMGPrediction.Met),
-        ("5_prime_UTR_variant", [0.0, 0.0, 0.0, 0.0], AutoACMGPrediction.Met),
-        ("synonymous_variant", [0.5, 0.0, 0.0, 0.0], AutoACMGPrediction.NotMet),
+        ("synonymous_variant", [0.0, 0.0, 0.0, 0.0], AutoACMGPrediction.Applicable),
+        ("intron_variant", [0.0, 0.0, 0.0, 0.0], AutoACMGPrediction.Applicable),
+        ("5_prime_UTR_variant", [0.0, 0.0, 0.0, 0.0], AutoACMGPrediction.Applicable),
+        ("synonymous_variant", [0.5, 0.0, 0.0, 0.0], AutoACMGPrediction.NotApplicable),
         # ("missense_variant", [0.0, 0.0, 0.0, 0.0], AutoACMGPrediction.NotMet),
     ],
 )
 def test_predict_pp3bp4_bp4_scenarios(
-    brain_malformations_predictor, auto_acmg_data, variant_type, spliceai_scores, expected_bp4
+    brain_malformations_predictor,
+    auto_acmg_data,
+    variant_type,
+    spliceai_scores,
+    expected_bp4,
 ):
     auto_acmg_data.consequence = MagicMock(mehari=[variant_type])
     auto_acmg_data.scores.cadd.spliceAI_acceptor_gain = spliceai_scores[0]
@@ -363,7 +373,7 @@ def test_predict_pp3bp4_bp4_non_qualifying_variant(brain_malformations_predictor
         brain_malformations_predictor.seqvar, auto_acmg_data
     )
 
-    assert bp4.prediction == AutoACMGPrediction.NotMet
+    assert bp4.prediction == AutoACMGPrediction.NotApplicable
     assert "Variant type does not qualify for BP4 evaluation" in bp4.summary
 
 

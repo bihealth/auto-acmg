@@ -13,7 +13,7 @@ from src.defs.auto_acmg import (
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
-from src.vcep.leber_congenital_amaurosis import LeberCongenitalAmaurosisPredictor
+from src.vcep import LeberCongenitalAmaurosisPredictor
 
 
 @pytest.fixture
@@ -194,7 +194,7 @@ def test_predict_pm1_met_for_critical_residue(leber_congenital_amaurosis_predict
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for critical residue variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -214,7 +214,7 @@ def test_predict_pm1_met_for_residues_range(leber_congenital_amaurosis_predictor
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for residues within the specified range."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -234,7 +234,7 @@ def test_predict_pm1_not_met(leber_congenital_amaurosis_predictor, auto_acmg_dat
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met for non-critical residue variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -252,7 +252,7 @@ def test_predict_pm1_fallback_to_default(
     auto_acmg_data.hgnc_id = "HGNC:9999"  # Gene not in the specific logic
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default PM1 prediction fallback.",
     )
@@ -262,7 +262,7 @@ def test_predict_pm1_fallback_to_default(
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met in the default fallback."
     assert (
         "Default PM1 prediction fallback." in result.summary
@@ -272,7 +272,11 @@ def test_predict_pm1_fallback_to_default(
 @patch.object(LeberCongenitalAmaurosisPredictor, "_get_af", return_value=0.1)
 @patch.object(LeberCongenitalAmaurosisPredictor, "_ba1_exception", return_value=False)
 def test_verify_pm2ba1bs1bs2(
-    mock_get_af, mock_ba1_exception, leber_congenital_amaurosis_predictor, auto_acmg_data, seqvar
+    mock_get_af,
+    mock_ba1_exception,
+    leber_congenital_amaurosis_predictor,
+    auto_acmg_data,
+    seqvar,
 ):
     # Setup: Adjusting the thresholds to test under different conditions
     auto_acmg_data.thresholds.ba1_benign = 0.05
@@ -399,7 +403,7 @@ def test_predict_bp7_fallback_to_default(
     # Set the mock return value for the superclass's predict_bp7 method
     mock_super_predict_bp7.return_value = AutoACMGCriteria(
         name="BP7",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.BenignSupporting,
         summary="Default BP7 prediction fallback.",
     )
@@ -411,7 +415,9 @@ def test_predict_bp7_fallback_to_default(
 
     # Verify the result and ensure the superclass method was called
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.NotMet, "BP7 should return NotMet as mocked."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
     assert (
         result.strength == AutoACMGStrength.BenignSupporting
     ), "The strength should be BenignSupporting."
@@ -448,7 +454,10 @@ def test_verify_pp3bp4_prediction_logic(
     """Test the prediction logic for PP3 and BP4."""
     mock_is_pathogenic_score.return_value = True
     mock_is_benign_score.return_value = False
-    mock_affect_spliceAI.side_effect = [True, False]  # First call True, second call False
+    mock_affect_spliceAI.side_effect = [
+        True,
+        False,
+    ]  # First call True, second call False
 
     prediction, comment = leber_congenital_amaurosis_predictor.verify_pp3bp4(
         leber_congenital_amaurosis_predictor.seqvar, auto_acmg_data
@@ -524,11 +533,14 @@ def test_verify_pp3bp4_error_handling(leber_congenital_amaurosis_predictor, auto
 def test_verify_pp3bp4_spliceai_thresholds(leber_congenital_amaurosis_predictor, auto_acmg_data):
     """Test that SpliceAI thresholds are correctly adjusted during PP3/BP4 prediction."""
     with (
-        patch.object(LeberCongenitalAmaurosisPredictor, "_is_pathogenic_score", return_value=False),
+        patch.object(
+            LeberCongenitalAmaurosisPredictor,
+            "_is_pathogenic_score",
+            return_value=False,
+        ),
         patch.object(LeberCongenitalAmaurosisPredictor, "_is_benign_score", return_value=False),
         patch.object(LeberCongenitalAmaurosisPredictor, "_affect_spliceAI", return_value=False),
     ):
-
         leber_congenital_amaurosis_predictor.verify_pp3bp4(
             leber_congenital_amaurosis_predictor.seqvar, auto_acmg_data
         )

@@ -146,7 +146,9 @@ def test_predict_pm1_kcnq4_strong(hearing_loss_predictor, auto_acmg_data):
     result = hearing_loss_predictor.predict_pm1(hearing_loss_predictor.seqvar, auto_acmg_data)
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.Met, "PM1 should be met at the Strong level."
+    assert (
+        result.prediction == AutoACMGPrediction.Applicable
+    ), "PM1 should be met at the Strong level."
     assert (
         result.strength == AutoACMGStrength.PathogenicStrong
     ), "The strength should be PathogenicStrong."
@@ -179,7 +181,7 @@ def test_predict_pm1_not_met(hearing_loss_predictor, auto_acmg_data):
     result = hearing_loss_predictor.predict_pm1(hearing_loss_predictor.seqvar, auto_acmg_data)
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.NotMet, "PM1 should not be met for KCNQ4."
+    assert result.prediction == AutoACMGPrediction.NotApplicable, "PM1 should not be met for KCNQ4."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
     ), "The strength should be PathogenicModerate."
@@ -194,7 +196,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, hearing_loss_predicto
     auto_acmg_data.hgnc_id = "HGNC:111111"  # Gene not in the specific logic
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default PM1 prediction fallback.",
     )
@@ -202,7 +204,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, hearing_loss_predicto
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met in the default fallback."
     assert (
         "Default PM1 prediction fallback." in result.summary
@@ -217,7 +219,9 @@ def test_predict_pm1_edge_case_start_boundary(hearing_loss_predictor, auto_acmg_
     )
     result = hearing_loss_predictor.predict_pm1(hearing_loss_predictor.seqvar, auto_acmg_data)
 
-    assert result.prediction == AutoACMGPrediction.Met, "PM1 should be met on the start boundary."
+    assert (
+        result.prediction == AutoACMGPrediction.Applicable
+    ), "PM1 should be met on the start boundary."
     assert (
         "critical pore-forming intramembrane region" in result.summary
     ), "The summary should indicate the critical region."
@@ -229,7 +233,9 @@ def test_predict_pm1_edge_case_end_boundary(hearing_loss_predictor, auto_acmg_da
     auto_acmg_data.prot_pos = 292  # End boundary of the critical pore-forming intramembrane region
     result = hearing_loss_predictor.predict_pm1(hearing_loss_predictor.seqvar, auto_acmg_data)
 
-    assert result.prediction == AutoACMGPrediction.Met, "PM1 should be met on the end boundary."
+    assert (
+        result.prediction == AutoACMGPrediction.Applicable
+    ), "PM1 should be met on the end boundary."
     assert (
         "critical pore-forming intramembrane region" in result.summary
     ), "The summary should indicate the critical region."
@@ -319,12 +325,12 @@ def test_predict_pp3bp4_calls_superclass(
     mock_super_predict_pp3bp4.return_value = (
         AutoACMGCriteria(
             name="PP3",
-            prediction=AutoACMGPrediction.Met,
+            prediction=AutoACMGPrediction.Applicable,
             strength=AutoACMGStrength.PathogenicSupporting,
         ),
         AutoACMGCriteria(
             name="BP4",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.BenignSupporting,
         ),
     )
@@ -334,16 +340,28 @@ def test_predict_pp3bp4_calls_superclass(
     )
 
     mock_super_predict_pp3bp4.assert_called_once_with(hearing_loss_predictor.seqvar, auto_acmg_data)
-    assert pp3_result.prediction == AutoACMGPrediction.Met
-    assert bp4_result.prediction == AutoACMGPrediction.NotMet
+    assert pp3_result.prediction == AutoACMGPrediction.Applicable
+    assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
 
 
 @pytest.mark.parametrize(
     "revel_score, expected_pp3, expected_bp4",
     [
-        (0.8, AutoACMGPrediction.Met, AutoACMGPrediction.NotMet),  # High REVEL score
-        (0.5, AutoACMGPrediction.NotMet, AutoACMGPrediction.NotMet),  # Intermediate REVEL score
-        (0.1, AutoACMGPrediction.NotMet, AutoACMGPrediction.Met),  # Low REVEL score
+        (
+            0.8,
+            AutoACMGPrediction.Applicable,
+            AutoACMGPrediction.NotApplicable,
+        ),  # High REVEL score
+        (
+            0.5,
+            AutoACMGPrediction.NotApplicable,
+            AutoACMGPrediction.NotApplicable,
+        ),  # Intermediate REVEL score
+        (
+            0.1,
+            AutoACMGPrediction.NotApplicable,
+            AutoACMGPrediction.Applicable,
+        ),  # Low REVEL score
     ],
 )
 def test_predict_pp3bp4_revel_scenarios(
@@ -357,10 +375,14 @@ def test_predict_pp3bp4_revel_scenarios(
     ) as mock_super_predict_pp3bp4:
         mock_super_predict_pp3bp4.return_value = (
             AutoACMGCriteria(
-                name="PP3", prediction=expected_pp3, strength=AutoACMGStrength.PathogenicSupporting
+                name="PP3",
+                prediction=expected_pp3,
+                strength=AutoACMGStrength.PathogenicSupporting,
             ),
             AutoACMGCriteria(
-                name="BP4", prediction=expected_bp4, strength=AutoACMGStrength.BenignSupporting
+                name="BP4",
+                prediction=expected_bp4,
+                strength=AutoACMGStrength.BenignSupporting,
             ),
         )
 
@@ -380,12 +402,12 @@ def test_predict_pp3bp4_strength(hearing_loss_predictor, auto_acmg_data):
         mock_super_predict_pp3bp4.return_value = (
             AutoACMGCriteria(
                 name="PP3",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicSupporting,
             ),
             AutoACMGCriteria(
                 name="BP4",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.BenignSupporting,
             ),
         )
@@ -408,12 +430,12 @@ def test_predict_pp3bp4_no_revel_score(hearing_loss_predictor, auto_acmg_data):
         mock_super_predict_pp3bp4.return_value = (
             AutoACMGCriteria(
                 name="PP3",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.PathogenicSupporting,
             ),
             AutoACMGCriteria(
                 name="BP4",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.BenignSupporting,
             ),
         )
@@ -422,8 +444,8 @@ def test_predict_pp3bp4_no_revel_score(hearing_loss_predictor, auto_acmg_data):
             hearing_loss_predictor.seqvar, auto_acmg_data
         )
 
-        assert pp3_result.prediction == AutoACMGPrediction.NotMet
-        assert bp4_result.prediction == AutoACMGPrediction.NotMet
+        assert pp3_result.prediction == AutoACMGPrediction.NotApplicable
+        assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
 
 
 def test_predict_pp3bp4_error_handling(hearing_loss_predictor, auto_acmg_data):
@@ -446,13 +468,13 @@ def test_predict_pp3bp4_summary(hearing_loss_predictor, auto_acmg_data):
         mock_super_predict_pp3bp4.return_value = (
             AutoACMGCriteria(
                 name="PP3",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicSupporting,
                 summary="REVEL score indicates pathogenicity",
             ),
             AutoACMGCriteria(
                 name="BP4",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.BenignSupporting,
                 summary="REVEL score does not indicate benign",
             ),
@@ -478,14 +500,18 @@ def test_predict_pp3bp4_edge_cases(hearing_loss_predictor, auto_acmg_data):
                 AutoACMGCriteria(
                     name="PP3",
                     prediction=(
-                        AutoACMGPrediction.Met if score >= 0.7 else AutoACMGPrediction.NotMet
+                        AutoACMGPrediction.Applicable
+                        if score >= 0.7
+                        else AutoACMGPrediction.NotApplicable
                     ),
                     strength=AutoACMGStrength.PathogenicSupporting,
                 ),
                 AutoACMGCriteria(
                     name="BP4",
                     prediction=(
-                        AutoACMGPrediction.Met if score <= 0.15 else AutoACMGPrediction.NotMet
+                        AutoACMGPrediction.Applicable
+                        if score <= 0.15
+                        else AutoACMGPrediction.NotApplicable
                     ),
                     strength=AutoACMGStrength.BenignSupporting,
                 ),
@@ -496,8 +522,8 @@ def test_predict_pp3bp4_edge_cases(hearing_loss_predictor, auto_acmg_data):
             )
 
             if score == 0.7:
-                assert pp3_result.prediction == AutoACMGPrediction.Met
-                assert bp4_result.prediction == AutoACMGPrediction.NotMet
+                assert pp3_result.prediction == AutoACMGPrediction.Applicable
+                assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
             elif score == 0.15:
-                assert pp3_result.prediction == AutoACMGPrediction.NotMet
-                assert bp4_result.prediction == AutoACMGPrediction.Met
+                assert pp3_result.prediction == AutoACMGPrediction.NotApplicable
+                assert bp4_result.prediction == AutoACMGPrediction.Applicable
