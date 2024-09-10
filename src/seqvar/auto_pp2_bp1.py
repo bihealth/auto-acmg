@@ -108,7 +108,9 @@ class AutoPP2BP1(AutoACMGHelper):
     def verify_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[Optional[PP2BP1], str]:
-        """Predict PP2 and BP1 criteria."""
+        """Predict PP2 and BP1 criteria.
+        Use Z-score if available, otherwise count missense variants and calculate ratios.
+        """
         self.prediction_pp2bp1 = PP2BP1()
         self.comment_pp2bp1 = ""
         if seqvar.chrom == "MT":
@@ -126,44 +128,62 @@ class AutoPP2BP1(AutoACMGHelper):
                     self.prediction_pp2bp1.BP1 = False
                     return self.prediction_pp2bp1, self.comment_pp2bp1
 
-                start_pos, end_pos = min(var_data.cds_start, var_data.cds_end), max(
-                    var_data.cds_start, var_data.cds_end
-                )
-                pathogenic_count, benign_count, total_count = self._get_missense_vars(
-                    seqvar, start_pos, end_pos
-                )
-                pathogenic_ratio = pathogenic_count / total_count
-                benign_ratio = benign_count / total_count
-                self.comment_pp2bp1 = (
-                    f"Found pathogenic missense variants: {pathogenic_count}, "
-                    f"benign missense variants: {benign_count}, "
-                    f"total missense variants: {total_count} "
-                    f"in the range {start_pos}-{end_pos}. "
-                    f"Pathogenic ratio: {pathogenic_ratio}, Benign ratio: {benign_ratio}. "
-                )
+                if var_data.scores.misZ:
+                    self.comment_pp2bp1 = (
+                        f"PP2&BP1 prediction based on missense Z-score: {var_data.scores.misZ}. "
+                    )
+                    if var_data.scores.misZ > var_data.thresholds.pp2bp1_pathogenic:
+                        self.comment_pp2bp1 += (
+                            f"Z-score is greater than {var_data.thresholds.pp2bp1_pathogenic}. "
+                            "PP2 is met. "
+                        )
+                        self.prediction_pp2bp1.PP2 = True
+                    elif var_data.scores.misZ < var_data.thresholds.pp2bp1_benign:
+                        self.comment_pp2bp1 += (
+                            f"Z-score is less than {var_data.thresholds.pp2bp1_benign}. "
+                            "BP1 is met."
+                        )
+                        self.prediction_pp2bp1.BP1 = True
+                else:
+                    self.comment_pp2bp1 = "No missense Z-score found. Counting missense variants. "
+                    start_pos, end_pos = min(var_data.cds_start, var_data.cds_end), max(
+                        var_data.cds_start, var_data.cds_end
+                    )
+                    pathogenic_count, benign_count, total_count = self._get_missense_vars(
+                        seqvar, start_pos, end_pos
+                    )
+                    pathogenic_ratio = pathogenic_count / total_count
+                    benign_ratio = benign_count / total_count
+                    self.comment_pp2bp1 += (
+                        f"Found pathogenic missense variants: {pathogenic_count}, "
+                        f"benign missense variants: {benign_count}, "
+                        f"total missense variants: {total_count} "
+                        f"in the range {start_pos}-{end_pos}. "
+                        f"Pathogenic ratio: {pathogenic_ratio}, Benign ratio: {benign_ratio}. "
+                    )
 
-                if pathogenic_ratio > var_data.thresholds.pp2bp1_pathogenic:
-                    self.comment_pp2bp1 += (
-                        f"Pathogenic ratio is greater than {var_data.thresholds.pp2bp1_pathogenic}. "
-                        "PP2 is met. "
-                    )
-                    self.prediction_pp2bp1.PP2 = True
-                else:
-                    self.comment_pp2bp1 += (
-                        f"Pathogenic ratio is less than {var_data.thresholds.pp2bp1_pathogenic}. "
-                        "PP2 is not met. "
-                    )
-                if benign_ratio > var_data.thresholds.pp2bp1_benign:
-                    self.comment_pp2bp1 += (
-                        f"Benign ratio is greater than {var_data.thresholds.pp2bp1_benign}. "
-                        "BP1 is met."
-                    )
-                    self.prediction_pp2bp1.BP1 = True
-                else:
-                    self.comment_pp2bp1 += (
-                        f"Benign ratio is less than {var_data.thresholds.pp2bp1_benign}. "
-                        "BP1 is not met."
-                    )
+                    if pathogenic_ratio > var_data.thresholds.pp2bp1_pathogenic:
+                        self.comment_pp2bp1 += (
+                            f"Pathogenic ratio is greater than {var_data.thresholds.pp2bp1_pathogenic}. "
+                            "PP2 is met. "
+                        )
+                        self.prediction_pp2bp1.PP2 = True
+                    else:
+                        self.comment_pp2bp1 += (
+                            f"Pathogenic ratio is less than {var_data.thresholds.pp2bp1_pathogenic}. "
+                            "PP2 is not met. "
+                        )
+                    if benign_ratio > var_data.thresholds.pp2bp1_benign:
+                        self.comment_pp2bp1 += (
+                            f"Benign ratio is greater than {var_data.thresholds.pp2bp1_benign}. "
+                            "BP1 is met."
+                        )
+                        self.prediction_pp2bp1.BP1 = True
+                    else:
+                        self.comment_pp2bp1 += (
+                            f"Benign ratio is less than {var_data.thresholds.pp2bp1_benign}. "
+                            "BP1 is not met."
+                        )
 
             except AutoAcmgBaseException as e:
                 self.comment_pp2bp1 = f"Error occurred during PP2 and BP1 prediction. Error: {e}"
