@@ -610,9 +610,9 @@ class AutoACMGSeqVarTresholds(AutoAcmgBaseModel):
     revel_benign: float = 0.016
     #: CADD benign threshold
     cadd_benign: float = 10.0
-    #: PP2 and BP1 pathogenic threshold
+    #: PP2 and BP1 pathogenic threshold  (from VarSome)
     pp2bp1_pathogenic: float = 0.808
-    #: PP2 and BP1 benign threshold
+    #: PP2 and BP1 benign threshold  (from VarSome)
     pp2bp1_benign: float = 0.569
     #: PM1 variants count threshold
     pm1_pathogenic: float = 8
