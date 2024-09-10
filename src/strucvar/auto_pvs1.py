@@ -4,6 +4,7 @@ from typing import Dict, List, Tuple
 
 from loguru import logger
 
+from src.core.config import settings
 from src.defs.auto_acmg import (
     AutoACMGCriteria,
     AutoACMGPrediction,
@@ -577,17 +578,26 @@ class StrucVarHelper(AutoACMGHelper):
 
     @staticmethod
     def dup_disrupt_rf() -> bool:
-        """Check if the duplication disrupts the reading frame."""
+        """
+        Check if the duplication disrupts the reading frame.
+        NOT IMPLEMENTED!
+        """
         return False
 
     @staticmethod
     def proven_in_tandem() -> bool:
-        """Check if the duplication is proven in tandem."""
+        """
+        Check if the duplication is proven in tandem.
+        NOT IMPLEMENTED!
+        """
         return False
 
     @staticmethod
     def presumed_in_tandem() -> bool:
-        """Check if the duplication is presumed in tandem."""
+        """
+        Check if the duplication is presumed in tandem.
+        NOT IMPLEMENTED!
+        """
         return False
 
 
@@ -683,31 +693,51 @@ class AutoPVS1(StrucVarHelper):
                             self.prediction_path = PVS1PredictionStrucVarPath.DEL7_2
 
         elif strucvar.sv_type == StrucVarType.DUP:
-            self.comment_pvs1 = "Analysing the duplication variant. => "
-            if self.proven_in_tandem():
-                self.comment_pvs1 += " =>"
-                if self.dup_disrupt_rf() and self.undergo_nmd(
-                    strucvar, var_data.exons, var_data.strand
-                ):
-                    self.prediction = PVS1Prediction.PVS1
-                    self.prediction_path = PVS1PredictionStrucVarPath.DUP1
-                else:
-                    self.prediction = PVS1Prediction.NotPVS1
-                    self.prediction_path = PVS1PredictionStrucVarPath.DUP2_1
-            elif self.presumed_in_tandem():
-                self.comment_pvs1 += " =>"
-                if self.dup_disrupt_rf() and self.undergo_nmd(
-                    strucvar, var_data.exons, var_data.strand
-                ):
-                    self.prediction = PVS1Prediction.PVS1_Strong
-                    self.prediction_path = PVS1PredictionStrucVarPath.DUP3
-                else:
-                    self.prediction = PVS1Prediction.NotPVS1
-                    self.prediction_path = PVS1PredictionStrucVarPath.DUP2_2
+            self.comment_pvs1 = (
+                "THE CRITERIA RELY ON THE DUPLICATION_TANDEM SETTING. "
+                "Please, specify the entry in CLI or API. Per default, the criteria is set to "
+                "False (Not PVS1). "
+            )
+            self.comment_pvs1 += "Analysing the duplication variant. => "
 
+            if settings.DUPLICATION_TANDEM:
+                self.comment_pvs1 += (
+                    "The duplication is in tandem AND disrupts reading frame AND undergoes NMD. "
+                )
+                self.prediction = PVS1Prediction.PVS1
+                self.prediction_path = PVS1PredictionStrucVarPath.DUP1
             else:
+                self.comment_pvs1 += (
+                    "The duplication is not in tandem OR does not disrupt reading frame OR "
+                    "does not undergo NMD."
+                )
                 self.prediction = PVS1Prediction.NotPVS1
-                self.prediction_path = PVS1PredictionStrucVarPath.DUP4
+                self.prediction_path = PVS1PredictionStrucVarPath.DUP3
+
+            # if self.proven_in_tandem():
+            #     self.comment_pvs1 += " =>"
+            #     if self.dup_disrupt_rf() and self.undergo_nmd(
+            #         strucvar, var_data.exons, var_data.strand
+            #     ):
+            #         self.prediction = PVS1Prediction.PVS1
+            #         self.prediction_path = PVS1PredictionStrucVarPath.DUP1
+            #     else:
+            #         self.prediction = PVS1Prediction.NotPVS1
+            #         self.prediction_path = PVS1PredictionStrucVarPath.DUP2_1
+            # elif self.presumed_in_tandem():
+            #     self.comment_pvs1 += " =>"
+            #     if self.dup_disrupt_rf() and self.undergo_nmd(
+            #         strucvar, var_data.exons, var_data.strand
+            #     ):
+            #         self.prediction = PVS1Prediction.PVS1_Strong
+            #         self.prediction_path = PVS1PredictionStrucVarPath.DUP3
+            #     else:
+            #         self.prediction = PVS1Prediction.NotPVS1
+            #         self.prediction_path = PVS1PredictionStrucVarPath.DUP2_2
+
+            # else:
+            #     self.prediction = PVS1Prediction.NotPVS1
+            #     self.prediction_path = PVS1PredictionStrucVarPath.DUP4
 
         else:
             self.prediction = PVS1Prediction.NotSet

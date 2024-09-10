@@ -5,6 +5,7 @@ from loguru import logger
 from typing_extensions import Annotated
 
 from src.auto_acmg import AutoACMG
+from src.core.config import settings
 from src.defs.exceptions import AutoAcmgBaseException, InvalidGenomeBuild
 from src.defs.genome_builds import GenomeRelease
 
@@ -38,6 +39,17 @@ def classify(
             help=f"Accepted genome Releases: {', '.join(ALLOWED_GENOME_RELEASES)}",
         ),
     ] = "GRCh38",
+    duplication_tandem: Annotated[
+        bool,
+        typer.Option(
+            "--duplication-tandem",
+            "-dt",
+            help=(
+                "Flag to indicate if the duplication is in tandem AND disrupts reading frame AND "
+                "undergoes NMD."
+            ),
+        ),
+    ] = False,
 ):
     """
     Classify sequence variant on the ACMG guidelines.
@@ -52,7 +64,8 @@ def classify(
                 )
             )
             raise InvalidGenomeBuild("Invalid genome release")
-
+        # Temporary save the duplication tandem flag in the settings
+        settings.DUPLICATION_TANDEM = duplication_tandem
         auto_acmg = AutoACMG(variant, genome_release_enum)
         prediction = auto_acmg.predict()
         prediction.save_to_file() if prediction else logger.error("No prediction was made.")

@@ -488,7 +488,7 @@ class AutoACMG:
             predictor_class = self.select_predictor(self.seqvar_result.data.hgnc_id)
             predictor = predictor_class(self.seqvar, self.seqvar_result, self.config)
             seqvar_prediction = predictor.predict()
-            logger.info("Prediction: {}", seqvar_prediction)
+            # logger.info("Prediction: {}", seqvar_prediction)
             return seqvar_prediction
 
         elif isinstance(self.strucvar, StrucVar):
@@ -501,7 +501,7 @@ class AutoACMG:
             # ====== Predict ======
             sp = DefaultStrucVarPredictor(self.strucvar, self.strucvar_result, self.config)
             strucvar_prediction = sp.predict()
-            # logger.info("Prediction: {}", strucvar_prediction)
+            logger.info("Prediction: {}", strucvar_prediction)
             return strucvar_prediction
 
         else:
