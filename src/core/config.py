@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     #: Username for genebe
     GENEBE_USERNAME: str = ""
 
+    # ==== Temporary settings ===
+
+    #: Flag to indicate if the duplication is in tandem AND disrupts reading frame AND undergoes NMD
+    DUPLICATION_TANDEM: bool = False
+
     #: Path to the root directory
     @property
     def PATH_TO_ROOT(self) -> str:
