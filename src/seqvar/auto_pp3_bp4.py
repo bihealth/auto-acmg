@@ -106,7 +106,7 @@ class AutoPP3BP4(AutoACMGHelper):
         Returns:
             bool: True if the variant is an UTR variant, False otherwise.
         """
-        if (x in var_data.consequence.cadd for x in ["UTR", "utr"]):
+        if "UTR" in var_data.consequence.cadd or "utr" in var_data.consequence.cadd:
             return True
         if any("utr" in cons for cons in var_data.consequence.mehari) or any(
             "UTR" in cons for cons in var_data.consequence.mehari

@@ -30,6 +30,9 @@ def auto_acmg_data():
     return AutoACMGSeqVarData()
 
 
+# -------------- PM1 --------------
+
+
 def test_predict_pm1_not_applicable_ethe1(mitochondrial_diseases_predictor, auto_acmg_data):
     """Test when PM1 is not applicable for ETHE1."""
     auto_acmg_data.hgnc_id = "HGNC:23287"  # ETHE1 gene
@@ -119,6 +122,9 @@ def test_predict_pm1_fallback_to_default(
     ), "The summary should indicate the default fallback."
 
 
+# -------------- PM2, BA1, BS1, BS2 --------------
+
+
 @patch.object(
     DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
@@ -153,6 +159,9 @@ def test_predict_pm2ba1bs1bs2(
     ), "Unexpected criteria names returned"
 
 
+# -------------- PP2 & BP1 --------------
+
+
 def test_predict_pp2bp1(mitochondrial_diseases_predictor, seqvar, auto_acmg_data):
     """Test predict_pp2bp1 for Mitochondrial Diseases predictor."""
 
@@ -180,6 +189,9 @@ def test_predict_pp2bp1(mitochondrial_diseases_predictor, seqvar, auto_acmg_data
     assert (
         bp1_result.summary == "BP1 is not applicable for the gene."
     ), "The summary should indicate BP1 is not applicable."
+
+
+# -------------- PP3 & BP4 --------------
 
 
 def test_predict_pp3bp4_revel_strategy(mitochondrial_diseases_predictor, auto_acmg_data):

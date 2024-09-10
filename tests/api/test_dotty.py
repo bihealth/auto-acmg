@@ -6,6 +6,8 @@ from src.defs.dotty import DottySpdiResponse
 from src.defs.genome_builds import GenomeRelease
 from tests.utils import get_json_object
 
+# -------- to_spdi ---------
+
 
 @pytest.mark.asyncio
 async def test_to_spdi_success(httpx_mock: HTTPXMock):

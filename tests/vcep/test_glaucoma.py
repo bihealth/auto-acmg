@@ -33,6 +33,9 @@ def auto_acmg_data():
     return AutoACMGSeqVarData()
 
 
+# ---------------- PVS1 ----------------
+
+
 def test_predict_pvs1_not_applicable(glaucoma_predictor, seqvar, auto_acmg_data):
     result = glaucoma_predictor.predict_pvs1(seqvar, auto_acmg_data)
 
@@ -41,6 +44,9 @@ def test_predict_pvs1_not_applicable(glaucoma_predictor, seqvar, auto_acmg_data)
     assert result.prediction == AutoACMGPrediction.NotApplicable
     assert result.strength == AutoACMGStrength.PathogenicVeryStrong
     assert result.summary == "PVS1 is not applicable for the gene."
+
+
+# ---------------- PS1 & PM5 ----------------
 
 
 @patch.object(DefaultSeqVarPredictor, "verify_ps1pm5")
@@ -191,6 +197,9 @@ def test_verify_ps1pm5_exception_handling(
     assert "Test exception" in str(exc_info.value), "Should raise the original exception"
 
 
+# ---------------- PM1 ----------------
+
+
 def test_predict_pm1_not_applicable(glaucoma_predictor, auto_acmg_data):
     """Test when PM1 is not applicable for MYOC in Glaucoma."""
     auto_acmg_data.hgnc_id = "HGNC:7610"  # MYOC gene
@@ -224,6 +233,9 @@ def test_predict_pm1_name(glaucoma_predictor, auto_acmg_data):
     result = glaucoma_predictor.predict_pm1(glaucoma_predictor.seqvar, auto_acmg_data)
 
     assert result.name == "PM1", "The name of the criteria should be 'PM1'."
+
+
+# ---------------- PM2, BA1, BS1, BS2 ----------------
 
 
 def test_bs2_not_applicable(glaucoma_predictor, auto_acmg_data):
@@ -264,10 +276,16 @@ def test_predict_pm2ba1bs1bs2(mock_super_method, glaucoma_predictor, auto_acmg_d
     ), "Unexpected criteria names returned"
 
 
+# ---------------- PM4 & BP3 ----------------
+
+
 def test_bp3_not_applicable(glaucoma_predictor, seqvar, auto_acmg_data):
     """Test BP3 is not applicable for ACADVL as overridden."""
     result = glaucoma_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
     assert result is True, "BP3 should always be not applicable"
+
+
+# ---------------- PP2 & BP1 ----------------
 
 
 def test_is_conserved_with_valid_gerp_score(glaucoma_predictor, auto_acmg_data):
@@ -329,62 +347,7 @@ def test_predict_pp2bp1(glaucoma_predictor, seqvar, auto_acmg_data):
     ), "The summary should indicate BP1 is not applicable."
 
 
-def test_predict_bp7_threshold_adjustment(glaucoma_predictor, auto_acmg_data):
-    """Test that the BP7 spliceAI thresholds are correctly adjusted for Glaucoma VCEP."""
-    auto_acmg_data.thresholds.spliceAI_acceptor_gain = 0.05  # Initial threshold value
-    auto_acmg_data.thresholds.spliceAI_acceptor_loss = 0.05  # Initial threshold value
-    auto_acmg_data.thresholds.spliceAI_donor_gain = 0.05  # Initial threshold value
-    auto_acmg_data.thresholds.spliceAI_donor_loss = 0.05  # Initial threshold value
-
-    # Call predict_bp7 method
-    result = glaucoma_predictor.predict_bp7(glaucoma_predictor.seqvar, auto_acmg_data)
-
-    # Check that the thresholds were adjusted
-    assert (
-        auto_acmg_data.thresholds.spliceAI_acceptor_gain == 0.2
-    ), "The BP7 acceptor gain threshold should be adjusted to 0.2."
-    assert (
-        auto_acmg_data.thresholds.spliceAI_acceptor_loss == 0.2
-    ), "The BP7 acceptor loss threshold should be adjusted to 0.2."
-    assert (
-        auto_acmg_data.thresholds.spliceAI_donor_gain == 0.2
-    ), "The BP7 donor gain threshold should be adjusted to 0.2."
-    assert (
-        auto_acmg_data.thresholds.spliceAI_donor_loss == 0.2
-    ), "The BP7 donor loss threshold should be adjusted to 0.2."
-
-    # Check that the superclass's predict_bp7 method was called and returned a result
-    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-
-
-@patch.object(GlaucomaPredictor, "predict_bp7", autospec=True)
-def test_predict_bp7_fallback_to_default(
-    mock_super_predict_bp7, glaucoma_predictor, auto_acmg_data
-):
-    """Test fallback to default BP7 prediction after threshold adjustment."""
-    # Set the mock return value for the superclass's predict_bp7 method
-    mock_super_predict_bp7.return_value = AutoACMGCriteria(
-        name="BP7",
-        prediction=AutoACMGPrediction.NotApplicable,
-        strength=AutoACMGStrength.BenignSupporting,
-        summary="Default BP7 prediction fallback.",
-    )
-
-    # Call predict_bp7 method
-    result = glaucoma_predictor.predict_bp7(glaucoma_predictor.seqvar, auto_acmg_data)
-
-    # Verify the result and ensure the superclass method was called
-    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert (
-        result.prediction == AutoACMGPrediction.NotApplicable
-    ), "BP7 should return NotMet as mocked."
-    assert (
-        result.strength == AutoACMGStrength.BenignSupporting
-    ), "The strength should be BenignSupporting."
-    assert (
-        "Default BP7 prediction fallback." in result.summary
-    ), "The summary should indicate the fallback."
-    assert mock_super_predict_bp7.called, "super().predict_bp7 should have been called."
+# ------------- PP3 & BP4 -------------
 
 
 def test_verify_pp3bp4_revel_thresholds(glaucoma_predictor, auto_acmg_data):
@@ -539,3 +502,64 @@ def test_verify_pp3bp4_return_type(glaucoma_predictor, auto_acmg_data):
 
     assert isinstance(prediction, PP3BP4)
     assert isinstance(comment, str)
+
+
+# ---------------- BP7 ----------------
+
+
+def test_predict_bp7_threshold_adjustment(glaucoma_predictor, auto_acmg_data):
+    """Test that the BP7 spliceAI thresholds are correctly adjusted for Glaucoma VCEP."""
+    auto_acmg_data.thresholds.spliceAI_acceptor_gain = 0.05  # Initial threshold value
+    auto_acmg_data.thresholds.spliceAI_acceptor_loss = 0.05  # Initial threshold value
+    auto_acmg_data.thresholds.spliceAI_donor_gain = 0.05  # Initial threshold value
+    auto_acmg_data.thresholds.spliceAI_donor_loss = 0.05  # Initial threshold value
+
+    # Call predict_bp7 method
+    result = glaucoma_predictor.predict_bp7(glaucoma_predictor.seqvar, auto_acmg_data)
+
+    # Check that the thresholds were adjusted
+    assert (
+        auto_acmg_data.thresholds.spliceAI_acceptor_gain == 0.2
+    ), "The BP7 acceptor gain threshold should be adjusted to 0.2."
+    assert (
+        auto_acmg_data.thresholds.spliceAI_acceptor_loss == 0.2
+    ), "The BP7 acceptor loss threshold should be adjusted to 0.2."
+    assert (
+        auto_acmg_data.thresholds.spliceAI_donor_gain == 0.2
+    ), "The BP7 donor gain threshold should be adjusted to 0.2."
+    assert (
+        auto_acmg_data.thresholds.spliceAI_donor_loss == 0.2
+    ), "The BP7 donor loss threshold should be adjusted to 0.2."
+
+    # Check that the superclass's predict_bp7 method was called and returned a result
+    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
+
+
+@patch.object(GlaucomaPredictor, "predict_bp7", autospec=True)
+def test_predict_bp7_fallback_to_default(
+    mock_super_predict_bp7, glaucoma_predictor, auto_acmg_data
+):
+    """Test fallback to default BP7 prediction after threshold adjustment."""
+    # Set the mock return value for the superclass's predict_bp7 method
+    mock_super_predict_bp7.return_value = AutoACMGCriteria(
+        name="BP7",
+        prediction=AutoACMGPrediction.NotApplicable,
+        strength=AutoACMGStrength.BenignSupporting,
+        summary="Default BP7 prediction fallback.",
+    )
+
+    # Call predict_bp7 method
+    result = glaucoma_predictor.predict_bp7(glaucoma_predictor.seqvar, auto_acmg_data)
+
+    # Verify the result and ensure the superclass method was called
+    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
+    assert (
+        result.strength == AutoACMGStrength.BenignSupporting
+    ), "The strength should be BenignSupporting."
+    assert (
+        "Default BP7 prediction fallback." in result.summary
+    ), "The summary should indicate the fallback."
+    assert mock_super_predict_bp7.called, "super().predict_bp7 should have been called."

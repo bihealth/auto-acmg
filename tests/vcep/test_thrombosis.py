@@ -30,6 +30,9 @@ def auto_acmg_data():
     return AutoACMGSeqVarData()
 
 
+# ---------------- PM1 ----------------
+
+
 def test_predict_pm1_in_cysteine_residue(thrombosis_predictor, auto_acmg_data):
     """Test when the variant affects a critical cysteine residue in SERPINC1."""
     auto_acmg_data.hgnc_id = "HGNC:775"  # SERPINC1 gene
@@ -123,6 +126,9 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, thrombosis_predictor,
     ), "The summary should indicate the default fallback."
 
 
+# ---------------- PM2, BA1, BS1, BS2 ----------------
+
+
 @patch.object(
     DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
@@ -155,10 +161,16 @@ def test_predict_pm2ba1bs1bs2(mock_super_method, thrombosis_predictor, auto_acmg
     ), "Unexpected criteria names returned"
 
 
+# ---------------- PM4 & BP3 ----------------
+
+
 def test_bp3_not_applicable(thrombosis_predictor, seqvar, auto_acmg_data):
     """Test BP3 is not applicable for ACADVL as overridden."""
     result = thrombosis_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
     assert result is True, "BP3 should always be not applicable"
+
+
+# ---------------- PP2 & BP1 ----------------
 
 
 def test_predict_pp2bp1(thrombosis_predictor, seqvar, auto_acmg_data):
@@ -188,6 +200,9 @@ def test_predict_pp2bp1(thrombosis_predictor, seqvar, auto_acmg_data):
     assert (
         bp1_result.summary == "BP1 is not applicable for the gene."
     ), "The summary should indicate BP1 is not applicable."
+
+
+# ---------------- PP3 & BP4 ----------------
 
 
 def test_verify_pp3bp4_thresholds(thrombosis_predictor, auto_acmg_data):

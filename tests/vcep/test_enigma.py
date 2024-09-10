@@ -32,6 +32,9 @@ def auto_acmg_data():
     return AutoACMGSeqVarData()
 
 
+# --------------- PS1 & PM5 ---------------
+
+
 @patch.object(DefaultSeqVarPredictor, "verify_ps1pm5")
 def test_verify_ps1pm5_overrides(mock_super_verify, enigma_predictor, seqvar, auto_acmg_data):
     """Test that the overridden verify_ps1pm5 method in ENIGMAPredictor works correctly."""
@@ -125,6 +128,9 @@ def test_verify_ps1pm5_non_missense(mock_super_verify, enigma_predictor, seqvar,
     mock_super_verify.assert_called_once_with(seqvar, auto_acmg_data)
 
 
+# --------------- PM1 ---------------
+
+
 def test_predict_pm1_not_applicable_brca1(enigma_predictor, auto_acmg_data):
     """Test when PM1 is not applicable for BRCA1."""
     auto_acmg_data.hgnc_id = "HGNC:1100"  # BRCA1 gene
@@ -192,6 +198,9 @@ def test_predict_pm1_strength(enigma_predictor, auto_acmg_data):
     ), "The strength should be PathogenicModerate for ENIGMA."
 
 
+# --------------- PM2, BA1, BS1, BS2 ---------------
+
+
 @patch.object(ENIGMAPredictor, "_get_af", return_value=0.1)
 @patch.object(ENIGMAPredictor, "_ba1_exception", return_value=False)
 def test_verify_pm2ba1bs1bs2(
@@ -215,6 +224,9 @@ def test_verify_pm2ba1bs1bs2(
     assert (
         auto_acmg_data.thresholds.bs1_benign == 0.00002
     ), "BS1 threshold should be adjusted to 0.00002"
+
+
+# --------------- PM4 & BP3 ---------------
 
 
 def test_predict_pm4bp3_not_applicable(enigma_predictor, seqvar, auto_acmg_data):
@@ -244,6 +256,9 @@ def test_predict_pm4bp3_not_applicable(enigma_predictor, seqvar, auto_acmg_data)
     assert (
         "BP3 is not applicable" in bp3_result.summary
     ), "The summary should indicate BP3 is not applicable."
+
+
+# --------------- PP2 & BP1 ---------------
 
 
 def test_in_important_domain(enigma_predictor, auto_acmg_data):
@@ -345,90 +360,7 @@ def test_predict_pp2bp1_non_relevant_variant_type(enigma_predictor, seqvar, auto
     ), "The summary should indicate the variant type."
 
 
-@patch.object(ENIGMAPredictor, "_in_important_domain", return_value=True)
-@patch.object(ENIGMAPredictor, "_is_synonymous", return_value=True)
-@patch.object(ENIGMAPredictor, "_is_intronic", return_value=False)
-@patch.object(ENIGMAPredictor, "_affect_canonical_ss", return_value=False)
-@patch.object(ENIGMAPredictor, "_is_conserved", return_value=False)
-def test_verify_bp7_met(
-    mock_is_conserved,
-    mock_affect_canonical_ss,
-    mock_is_intronic,
-    mock_is_synonymous,
-    mock_in_important_domain,
-    enigma_predictor,
-    auto_acmg_data,
-):
-    """Test that BP7 is met when conditions are satisfied."""
-    auto_acmg_data.hgnc_id = "HGNC:1100"  # BRCA1 gene
-
-    prediction_bp7, comment_bp7 = enigma_predictor.verify_bp7(
-        enigma_predictor.seqvar, auto_acmg_data
-    )
-
-    assert prediction_bp7.BP7, "BP7 should be met when the conditions are satisfied."
-    assert "BP7 is met" in comment_bp7, "The comment should indicate that BP7 is met."
-
-
-@patch.object(ENIGMAPredictor, "_in_important_domain", return_value=False)
-@patch.object(ENIGMAPredictor, "_is_synonymous", return_value=True)
-@patch.object(ENIGMAPredictor, "_is_intronic", return_value=False)
-@patch.object(ENIGMAPredictor, "_affect_canonical_ss", return_value=False)
-@patch.object(ENIGMAPredictor, "_is_conserved", return_value=False)
-def test_verify_bp7_not_met(
-    mock_is_conserved,
-    mock_affect_canonical_ss,
-    mock_is_intronic,
-    mock_is_synonymous,
-    mock_in_important_domain,
-    enigma_predictor,
-    auto_acmg_data,
-):
-    """Test that BP7 is not met when the conditions are not satisfied."""
-    auto_acmg_data.hgnc_id = "HGNC:1100"  # BRCA1 gene
-
-    prediction_bp7, comment_bp7 = enigma_predictor.verify_bp7(
-        enigma_predictor.seqvar, auto_acmg_data
-    )
-
-    assert not prediction_bp7.BP7, "BP7 should not be met when the conditions are not satisfied."
-    assert "BP7 is not met" in comment_bp7, "The comment should indicate that BP7 is not met."
-
-
-@patch.object(ENIGMAPredictor, "_in_important_domain", side_effect=AutoAcmgBaseException("Error"))
-@patch.object(ENIGMAPredictor, "_is_synonymous", return_value=True)
-def test_verify_bp7_exception_handling(
-    mock_in_important_domain, mock_is_synonymous, enigma_predictor, auto_acmg_data
-):
-    """Test that BP7 prediction handles exceptions properly."""
-    auto_acmg_data.hgnc_id = "HGNC:1100"  # BRCA1 gene
-
-    prediction_bp7, comment_bp7 = enigma_predictor.verify_bp7(
-        enigma_predictor.seqvar, auto_acmg_data
-    )
-
-    assert prediction_bp7 is None, "BP7 prediction should be None when an exception occurs."
-    assert (
-        "Failed to predict BP7 criterion" in comment_bp7
-    ), "The comment should indicate a failure."
-
-
-def test_verify_bp7_threshold_adjustment(enigma_predictor, auto_acmg_data):
-    """Test that the BP7 donor and acceptor thresholds are correctly adjusted for BRCA1 and BRCA2."""
-    auto_acmg_data.thresholds.bp7_donor = 1  # Initial donor threshold value
-    auto_acmg_data.thresholds.bp7_acceptor = 2  # Initial acceptor threshold value
-
-    auto_acmg_data.hgnc_id = "HGNC:1100"  # BRCA1 gene
-
-    enigma_predictor.verify_bp7(enigma_predictor.seqvar, auto_acmg_data)
-
-    # Check that the thresholds were adjusted
-    assert (
-        auto_acmg_data.thresholds.bp7_donor == 7
-    ), "The BP7 donor threshold should be adjusted to 7."
-    assert (
-        auto_acmg_data.thresholds.bp7_acceptor == 21
-    ), "The BP7 acceptor threshold should be adjusted to 21."
+# --------------- PP3 & BP4 ---------------
 
 
 def test_predict_pp3bp4_thresholds(enigma_predictor, auto_acmg_data):
@@ -582,3 +514,92 @@ def test_predict_pp3bp4_no_criteria_met(enigma_predictor, auto_acmg_data):
         assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
         assert "PP3 criteria not met." in pp3_result.summary
         assert "BP4 criteria not met." in bp4_result.summary
+
+
+# -------------- BP7 --------------
+
+
+@patch.object(ENIGMAPredictor, "_in_important_domain", return_value=True)
+@patch.object(ENIGMAPredictor, "_is_synonymous", return_value=True)
+@patch.object(ENIGMAPredictor, "_is_intronic", return_value=False)
+@patch.object(ENIGMAPredictor, "_affect_canonical_ss", return_value=False)
+@patch.object(ENIGMAPredictor, "_is_conserved", return_value=False)
+def test_verify_bp7_met(
+    mock_is_conserved,
+    mock_affect_canonical_ss,
+    mock_is_intronic,
+    mock_is_synonymous,
+    mock_in_important_domain,
+    enigma_predictor,
+    auto_acmg_data,
+):
+    """Test that BP7 is met when conditions are satisfied."""
+    auto_acmg_data.hgnc_id = "HGNC:1100"  # BRCA1 gene
+
+    prediction_bp7, comment_bp7 = enigma_predictor.verify_bp7(
+        enigma_predictor.seqvar, auto_acmg_data
+    )
+
+    assert prediction_bp7.BP7, "BP7 should be met when the conditions are satisfied."
+    assert "BP7 is met" in comment_bp7, "The comment should indicate that BP7 is met."
+
+
+@patch.object(ENIGMAPredictor, "_in_important_domain", return_value=False)
+@patch.object(ENIGMAPredictor, "_is_synonymous", return_value=True)
+@patch.object(ENIGMAPredictor, "_is_intronic", return_value=False)
+@patch.object(ENIGMAPredictor, "_affect_canonical_ss", return_value=False)
+@patch.object(ENIGMAPredictor, "_is_conserved", return_value=False)
+def test_verify_bp7_not_met(
+    mock_is_conserved,
+    mock_affect_canonical_ss,
+    mock_is_intronic,
+    mock_is_synonymous,
+    mock_in_important_domain,
+    enigma_predictor,
+    auto_acmg_data,
+):
+    """Test that BP7 is not met when the conditions are not satisfied."""
+    auto_acmg_data.hgnc_id = "HGNC:1100"  # BRCA1 gene
+
+    prediction_bp7, comment_bp7 = enigma_predictor.verify_bp7(
+        enigma_predictor.seqvar, auto_acmg_data
+    )
+
+    assert not prediction_bp7.BP7, "BP7 should not be met when the conditions are not satisfied."
+    assert "BP7 is not met" in comment_bp7, "The comment should indicate that BP7 is not met."
+
+
+@patch.object(ENIGMAPredictor, "_in_important_domain", side_effect=AutoAcmgBaseException("Error"))
+@patch.object(ENIGMAPredictor, "_is_synonymous", return_value=True)
+def test_verify_bp7_exception_handling(
+    mock_in_important_domain, mock_is_synonymous, enigma_predictor, auto_acmg_data
+):
+    """Test that BP7 prediction handles exceptions properly."""
+    auto_acmg_data.hgnc_id = "HGNC:1100"  # BRCA1 gene
+
+    prediction_bp7, comment_bp7 = enigma_predictor.verify_bp7(
+        enigma_predictor.seqvar, auto_acmg_data
+    )
+
+    assert prediction_bp7 is None, "BP7 prediction should be None when an exception occurs."
+    assert (
+        "Failed to predict BP7 criterion" in comment_bp7
+    ), "The comment should indicate a failure."
+
+
+def test_verify_bp7_threshold_adjustment(enigma_predictor, auto_acmg_data):
+    """Test that the BP7 donor and acceptor thresholds are correctly adjusted for BRCA1 and BRCA2."""
+    auto_acmg_data.thresholds.bp7_donor = 1  # Initial donor threshold value
+    auto_acmg_data.thresholds.bp7_acceptor = 2  # Initial acceptor threshold value
+
+    auto_acmg_data.hgnc_id = "HGNC:1100"  # BRCA1 gene
+
+    enigma_predictor.verify_bp7(enigma_predictor.seqvar, auto_acmg_data)
+
+    # Check that the thresholds were adjusted
+    assert (
+        auto_acmg_data.thresholds.bp7_donor == 7
+    ), "The BP7 donor threshold should be adjusted to 7."
+    assert (
+        auto_acmg_data.thresholds.bp7_acceptor == 21
+    ), "The BP7 acceptor threshold should be adjusted to 21."

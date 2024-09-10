@@ -346,8 +346,7 @@ def test_utr_variant_positive(auto_pp3bp4: AutoPP3BP4, var_data_utr: MagicMock):
     ), "Should return True when UTR variant indicators are present in the data."
 
 
-@pytest.mark.skip(reason="Should work but doesn't")
-def test_utr_variant_negative(auto_pp3bp4: AutoPP3BP4, var_data_not_utr: MagicMock):
+def test_not_utr_variant(auto_pp3bp4: AutoPP3BP4, var_data_not_utr: MagicMock):
     """Test that _is_utr_variant correctly identifies non-UTR variants."""
     assert (
         auto_pp3bp4._is_utr_variant(var_data_not_utr) is False

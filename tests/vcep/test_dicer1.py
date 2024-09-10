@@ -37,6 +37,9 @@ def variant_result():
     return VariantResult()
 
 
+# ----------- PS1 & PM5 -----------
+
+
 def test_is_pathogenic_with_pathogenic_variant(dicer1_predictor, variant_result):
     """Test _is_pathogenic method with a pathogenic variant."""
     # Create a mock ClinvarRecord with a pathogenic classification
@@ -116,6 +119,9 @@ def test_verify_ps1pm5_overrides(mock_super_verify, dicer1_predictor, seqvar, au
 
     # Ensure that the mock of the superclass method is called to simulate the inherited behavior
     mock_super_verify.assert_called_once_with(seqvar, auto_acmg_data)
+
+
+# ----------- PM1 -----------
 
 
 def test_predict_pm1_moderate_criteria_residue(dicer1_predictor, auto_acmg_data):
@@ -216,6 +222,9 @@ def test_predict_pm1_edge_case_end_boundary_supporting(dicer1_predictor, auto_ac
     ), "The summary should indicate the RNase IIIb domain."
 
 
+# ----------- PM2, BA1, BS1, BS2 -----------
+
+
 @patch.object(
     DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
@@ -248,6 +257,18 @@ def test_predict_pm2ba1bs1bs2(mock_super_method, dicer1_predictor, auto_acmg_dat
     ), "Unexpected criteria names returned"
 
 
+# ----------- PM4 & BP3 -----------
+
+
+def test_bp3_not_applicable(dicer1_predictor, seqvar, auto_acmg_data):
+    """Test BP3 is not applicable for ACADVL as overridden."""
+    result = dicer1_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
+    assert result is True, "BP3 should always be not applicable"
+
+
+# ----------- PP2 & BP1 -----------
+
+
 def test_predict_pp2bp1(dicer1_predictor, seqvar, auto_acmg_data):
     """Test predict_pp2bp1 for DICER1 predictor."""
 
@@ -277,58 +298,7 @@ def test_predict_pp2bp1(dicer1_predictor, seqvar, auto_acmg_data):
     ), "The summary should indicate BP1 is not applicable."
 
 
-def test_bp3_not_applicable(dicer1_predictor, seqvar, auto_acmg_data):
-    """Test BP3 is not applicable for ACADVL as overridden."""
-    result = dicer1_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
-    assert result is True, "BP3 should always be not applicable"
-
-
-def test_predict_bp7_threshold_adjustment(dicer1_predictor, auto_acmg_data):
-    """Test that the BP7 donor and acceptor thresholds are correctly adjusted."""
-    auto_acmg_data.thresholds.bp7_donor = 1  # Initial donor threshold value
-    auto_acmg_data.thresholds.bp7_acceptor = 2  # Initial acceptor threshold value
-
-    # Call predict_bp7 method
-    result = dicer1_predictor.predict_bp7(dicer1_predictor.seqvar, auto_acmg_data)
-
-    # Check that the thresholds were adjusted
-    assert (
-        auto_acmg_data.thresholds.bp7_donor == 7
-    ), "The BP7 donor threshold should be adjusted to 7."
-    assert (
-        auto_acmg_data.thresholds.bp7_acceptor == 21
-    ), "The BP7 acceptor threshold should be adjusted to 4."
-
-    # Check that the superclass's predict_bp7 method was called and returned a result
-    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-
-
-@patch.object(DefaultSeqVarPredictor, "predict_bp7")
-def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, dicer1_predictor, auto_acmg_data):
-    """Test fallback to default BP7 prediction after threshold adjustment."""
-    # Set the mock return value for the superclass's predict_bp7 method
-    mock_super_predict_bp7.return_value = AutoACMGCriteria(
-        name="BP7",
-        prediction=AutoACMGPrediction.NotApplicable,
-        strength=AutoACMGStrength.BenignSupporting,
-        summary="Default BP7 prediction fallback.",
-    )
-
-    # Call predict_bp7 method
-    result = dicer1_predictor.predict_bp7(dicer1_predictor.seqvar, auto_acmg_data)
-
-    # Verify the result and ensure the superclass method was called
-    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert (
-        result.prediction == AutoACMGPrediction.NotApplicable
-    ), "BP7 should return NotMet as mocked."
-    assert (
-        result.strength == AutoACMGStrength.BenignSupporting
-    ), "The strength should be BenignSupporting."
-    assert (
-        "Default BP7 prediction fallback." in result.summary
-    ), "The summary should indicate the fallback."
-    assert mock_super_predict_bp7.called, "super().predict_bp7 should have been called."
+# ----------- PP3 & BP4 -----------
 
 
 def test_predict_pp3bp4_revel_thresholds(dicer1_predictor, auto_acmg_data):
@@ -444,3 +414,54 @@ def test_predict_pp3bp4_superclass_call(
     mock_super_predict_pp3bp4.assert_called_once_with(dicer1_predictor.seqvar, auto_acmg_data)
     assert pp3_result.prediction == AutoACMGPrediction.Applicable
     assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
+
+
+# ----------- BP7 -----------
+
+
+def test_predict_bp7_threshold_adjustment(dicer1_predictor, auto_acmg_data):
+    """Test that the BP7 donor and acceptor thresholds are correctly adjusted."""
+    auto_acmg_data.thresholds.bp7_donor = 1  # Initial donor threshold value
+    auto_acmg_data.thresholds.bp7_acceptor = 2  # Initial acceptor threshold value
+
+    # Call predict_bp7 method
+    result = dicer1_predictor.predict_bp7(dicer1_predictor.seqvar, auto_acmg_data)
+
+    # Check that the thresholds were adjusted
+    assert (
+        auto_acmg_data.thresholds.bp7_donor == 7
+    ), "The BP7 donor threshold should be adjusted to 7."
+    assert (
+        auto_acmg_data.thresholds.bp7_acceptor == 21
+    ), "The BP7 acceptor threshold should be adjusted to 4."
+
+    # Check that the superclass's predict_bp7 method was called and returned a result
+    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
+
+
+@patch.object(DefaultSeqVarPredictor, "predict_bp7")
+def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, dicer1_predictor, auto_acmg_data):
+    """Test fallback to default BP7 prediction after threshold adjustment."""
+    # Set the mock return value for the superclass's predict_bp7 method
+    mock_super_predict_bp7.return_value = AutoACMGCriteria(
+        name="BP7",
+        prediction=AutoACMGPrediction.NotApplicable,
+        strength=AutoACMGStrength.BenignSupporting,
+        summary="Default BP7 prediction fallback.",
+    )
+
+    # Call predict_bp7 method
+    result = dicer1_predictor.predict_bp7(dicer1_predictor.seqvar, auto_acmg_data)
+
+    # Verify the result and ensure the superclass method was called
+    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
+    assert (
+        result.strength == AutoACMGStrength.BenignSupporting
+    ), "The strength should be BenignSupporting."
+    assert (
+        "Default BP7 prediction fallback." in result.summary
+    ), "The summary should indicate the fallback."
+    assert mock_super_predict_bp7.called, "super().predict_bp7 should have been called."

@@ -30,6 +30,9 @@ def auto_acmg_data():
     return AutoACMGSeqVarData()
 
 
+# ----------- PM1 -----------
+
+
 def test_predict_pm1_not_applicable_scn1b(epilepsy_sodium_channel_predictor, auto_acmg_data):
     """Test when PM1 is not applicable for SCN1B."""
     auto_acmg_data.hgnc_id = "HGNC:10586"  # SCN1B gene
@@ -140,6 +143,9 @@ def test_predict_pm1_edge_case_end_boundary(epilepsy_sodium_channel_predictor, a
     ), "The summary should indicate the critical region."
 
 
+# ----------- PM2, BA1, BS1, BS2 -----------
+
+
 @patch.object(
     DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
@@ -189,6 +195,9 @@ def test_predict_pm2ba1bs1bs2_with_varied_thresholds(
     mock_super_method.reset_mock()
 
 
+# ----------- PP2 & BP1 -----------
+
+
 def test_predict_pp2bp1(epilepsy_sodium_channel_predictor, seqvar, auto_acmg_data):
     """Test predict_pp2bp1 for Epilepsy Sodium Channel predictor."""
     # Call the method under test
@@ -217,6 +226,9 @@ def test_predict_pp2bp1(epilepsy_sodium_channel_predictor, seqvar, auto_acmg_dat
     assert (
         bp1_result.summary == "BP1 is not applicable for the gene."
     ), "The summary should indicate BP1 is not applicable."
+
+
+# ----------- PP3 & BP4 -----------
 
 
 def test_predict_pp3bp4_revel_strategy(epilepsy_sodium_channel_predictor, auto_acmg_data):

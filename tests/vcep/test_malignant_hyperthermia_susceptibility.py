@@ -29,6 +29,9 @@ def auto_acmg_data():
     return AutoACMGSeqVarData()
 
 
+# ------------- PVS1 -------------
+
+
 def test_predict_pvs1_not_applicable(malignant_hyperthermia_predictor, seqvar, auto_acmg_data):
     result = malignant_hyperthermia_predictor.predict_pvs1(seqvar, auto_acmg_data)
 
@@ -37,6 +40,9 @@ def test_predict_pvs1_not_applicable(malignant_hyperthermia_predictor, seqvar, a
     assert result.prediction == AutoACMGPrediction.NotApplicable
     assert result.strength == AutoACMGStrength.PathogenicVeryStrong
     assert result.summary == "PVS1 is not applicable for the gene."
+
+
+# ------------- PM1 -------------
 
 
 def test_predict_pm1_met_for_moderate_region(malignant_hyperthermia_predictor, auto_acmg_data):
@@ -126,6 +132,9 @@ def test_predict_pm1_fallback_to_default(
     ), "The summary should indicate the default fallback."
 
 
+# ------------- PM2, BA1, BS1, BS2 -------------
+
+
 @patch.object(MalignantHyperthermiaPredictor, "_get_af", return_value=0.1)
 @patch.object(MalignantHyperthermiaPredictor, "_ba1_exception", return_value=False)
 def test_verify_pm2ba1bs1bs2(
@@ -160,6 +169,9 @@ def test_verify_pm2ba1bs1bs2(
     assert "PM2 is not applicable" in comment, "The comment should indicate PM2 is not applicable."
 
 
+# ------------- PP2 & BP1 -------------
+
+
 def test_predict_pp2bp1(malignant_hyperthermia_predictor, seqvar, auto_acmg_data):
     """Test predict_pp2bp1 for Malignant Hyperthermia Susceptibility."""
 
@@ -187,6 +199,9 @@ def test_predict_pp2bp1(malignant_hyperthermia_predictor, seqvar, auto_acmg_data
     assert (
         bp1_result.summary == "BP1 is not applicable for the gene."
     ), "The summary should indicate BP1 is not applicable."
+
+
+# ------------- PP3 & BP4 -------------
 
 
 def test_predict_pp3bp4_revel_strategy(malignant_hyperthermia_predictor, auto_acmg_data):

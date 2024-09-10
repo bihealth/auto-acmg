@@ -31,6 +31,9 @@ def auto_acmg_data():
     return AutoACMGSeqVarData()
 
 
+# ---------------- PS1 & PM5 ----------------
+
+
 @patch.object(DefaultSeqVarPredictor, "verify_ps1pm5")
 def test_verify_ps1pm5_overrides(mock_super_verify, hearing_loss_predictor, seqvar, auto_acmg_data):
     """Test that the overridden verify_ps1pm5 method in HearingLossPredictor works correctly."""
@@ -139,6 +142,9 @@ def test_verify_ps1pm5_exception_handling(
     assert "Test exception" in str(exc_info.value), "Should raise the original exception"
 
 
+# ---------------- PM1 ----------------
+
+
 def test_predict_pm1_kcnq4_strong(hearing_loss_predictor, auto_acmg_data):
     """Test when PM1 is met at the Strong level for a variant in KCNQ4."""
     auto_acmg_data.hgnc_id = "HGNC:6298"  # KCNQ4 gene
@@ -241,6 +247,9 @@ def test_predict_pm1_edge_case_end_boundary(hearing_loss_predictor, auto_acmg_da
     ), "The summary should indicate the critical region."
 
 
+# ---------------- PM2, BA1, BS1, BS2 ----------------
+
+
 @patch.object(
     DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
@@ -273,6 +282,9 @@ def test_predict_pm2ba1bs1bs2(mock_super_method, hearing_loss_predictor, auto_ac
     ), "Unexpected criteria names returned"
 
 
+# ---------------- PP2 & BP1 ----------------
+
+
 def test_predict_pp2bp1(hearing_loss_predictor, seqvar, auto_acmg_data):
     """Test predict_pp2bp1 for Hearing Loss predictor."""
 
@@ -300,6 +312,9 @@ def test_predict_pp2bp1(hearing_loss_predictor, seqvar, auto_acmg_data):
     assert (
         bp1_result.summary == "BP1 is not applicable for the gene."
     ), "The summary should indicate BP1 is not applicable."
+
+
+# ---------------- PP3 & BP4 ----------------
 
 
 def test_predict_pp3bp4_revel_strategy(hearing_loss_predictor, auto_acmg_data):

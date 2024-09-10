@@ -31,6 +31,9 @@ def auto_acmg_data():
     return AutoACMGSeqVarData()
 
 
+# ------------- PM1 -------------------
+
+
 def test_predict_pm1_strong_criteria(pulmonary_hypertension_predictor, auto_acmg_data):
     """Test when the variant falls within strong criteria for BMPR2."""
     auto_acmg_data.hgnc_id = "HGNC:1078"  # BMPR2 gene
@@ -116,6 +119,9 @@ def test_predict_pm1_fallback_to_default(
     ), "The summary should indicate the default fallback."
 
 
+# -------------- PM2, BA1, BS1, BS2 -------------------
+
+
 @patch.object(
     DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
@@ -150,6 +156,9 @@ def test_predict_pm2ba1bs1bs2(
     ), "Unexpected criteria names returned"
 
 
+# -------------- PP2 & BP1 -------------------
+
+
 def test_predict_pp2bp1(pulmonary_hypertension_predictor, seqvar, auto_acmg_data):
     """Test predict_pp2bp1 for Pulmonary Hypertension."""
 
@@ -179,40 +188,7 @@ def test_predict_pp2bp1(pulmonary_hypertension_predictor, seqvar, auto_acmg_data
     ), "The summary should indicate BP1 is not applicable."
 
 
-def test_is_bp7_exception_first_base_of_exon(pulmonary_hypertension_predictor, auto_acmg_data):
-    """Test that the BP7 exception is detected for a synonymous variant at the first base of an exon."""
-    auto_acmg_data.exons = [
-        MagicMock(altStartI=100, altEndI=200)
-    ]  # Exon with start at position 100
-    auto_acmg_data.strand = GenomicStrand.Plus
-
-    assert pulmonary_hypertension_predictor._is_bp7_exception(
-        pulmonary_hypertension_predictor.seqvar, auto_acmg_data
-    ), "The variant should be detected as a BP7 exception at the first base of an exon."
-
-
-def test_is_bp7_exception_last_three_bases_of_exon(
-    pulmonary_hypertension_predictor, auto_acmg_data
-):
-    """Test that the BP7 exception is detected for a synonymous variant in the last 3 bases of an exon."""
-    auto_acmg_data.exons = [MagicMock(altStartI=100, altEndI=200)]  # Exon with end at position 200
-    auto_acmg_data.strand = GenomicStrand.Plus
-    pulmonary_hypertension_predictor.seqvar.pos = 198  # Position within the last 3 bases
-
-    assert pulmonary_hypertension_predictor._is_bp7_exception(
-        pulmonary_hypertension_predictor.seqvar, auto_acmg_data
-    ), "The variant should be detected as a BP7 exception in the last 3 bases of an exon."
-
-
-def test_is_bp7_exception_no_exception(pulmonary_hypertension_predictor, auto_acmg_data):
-    """Test that no BP7 exception is detected when the variant is outside the first base or last 3 bases of an exon."""
-    auto_acmg_data.exons = [MagicMock(altStartI=100, altEndI=200)]  # Exon with end at position 200
-    auto_acmg_data.strand = GenomicStrand.Plus
-    pulmonary_hypertension_predictor.seqvar.pos = 150  # Position not at the boundary
-
-    assert not pulmonary_hypertension_predictor._is_bp7_exception(
-        pulmonary_hypertension_predictor.seqvar, auto_acmg_data
-    ), "The variant should not be detected as a BP7 exception."
+# -------------- PP3 & BP4 -------------------
 
 
 def test_verify_pp3bp4_thresholds(pulmonary_hypertension_predictor, auto_acmg_data):
@@ -360,3 +336,42 @@ def test_verify_pp3bp4_spliceai_thresholds(pulmonary_hypertension_predictor, aut
         assert auto_acmg_data.thresholds.spliceAI_acceptor_loss == 0.1
         assert auto_acmg_data.thresholds.spliceAI_donor_gain == 0.1
         assert auto_acmg_data.thresholds.spliceAI_donor_loss == 0.1
+
+
+# --------------- BP7 -------------------
+
+
+def test_is_bp7_exception_first_base_of_exon(pulmonary_hypertension_predictor, auto_acmg_data):
+    """Test that the BP7 exception is detected for a synonymous variant at the first base of an exon."""
+    auto_acmg_data.exons = [
+        MagicMock(altStartI=100, altEndI=200)
+    ]  # Exon with start at position 100
+    auto_acmg_data.strand = GenomicStrand.Plus
+
+    assert pulmonary_hypertension_predictor._is_bp7_exception(
+        pulmonary_hypertension_predictor.seqvar, auto_acmg_data
+    ), "The variant should be detected as a BP7 exception at the first base of an exon."
+
+
+def test_is_bp7_exception_last_three_bases_of_exon(
+    pulmonary_hypertension_predictor, auto_acmg_data
+):
+    """Test that the BP7 exception is detected for a synonymous variant in the last 3 bases of an exon."""
+    auto_acmg_data.exons = [MagicMock(altStartI=100, altEndI=200)]  # Exon with end at position 200
+    auto_acmg_data.strand = GenomicStrand.Plus
+    pulmonary_hypertension_predictor.seqvar.pos = 198  # Position within the last 3 bases
+
+    assert pulmonary_hypertension_predictor._is_bp7_exception(
+        pulmonary_hypertension_predictor.seqvar, auto_acmg_data
+    ), "The variant should be detected as a BP7 exception in the last 3 bases of an exon."
+
+
+def test_is_bp7_exception_no_exception(pulmonary_hypertension_predictor, auto_acmg_data):
+    """Test that no BP7 exception is detected when the variant is outside the first base or last 3 bases of an exon."""
+    auto_acmg_data.exons = [MagicMock(altStartI=100, altEndI=200)]  # Exon with end at position 200
+    auto_acmg_data.strand = GenomicStrand.Plus
+    pulmonary_hypertension_predictor.seqvar.pos = 150  # Position not at the boundary
+
+    assert not pulmonary_hypertension_predictor._is_bp7_exception(
+        pulmonary_hypertension_predictor.seqvar, auto_acmg_data
+    ), "The variant should not be detected as a BP7 exception."

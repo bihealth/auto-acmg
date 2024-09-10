@@ -30,6 +30,9 @@ def auto_acmg_data():
     return AutoACMGSeqVarData()
 
 
+# ---------------- PM1 ----------------
+
+
 def test_predict_pm1_not_met_for_itga2b(platelet_disorders_predictor, auto_acmg_data):
     """Test when the variant is in the ITGA2B gene and PM1 is not met."""
     auto_acmg_data.hgnc_id = "HGNC:6138"  # ITGA2B gene
@@ -91,6 +94,9 @@ def test_predict_pm1_fallback_to_default(
     ), "The summary should indicate the default fallback."
 
 
+# ---------------- PM2, BA1, BS1, BS2 ----------------
+
+
 @patch.object(
     DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
@@ -125,6 +131,9 @@ def test_predict_pm2ba1bs1bs2(
     ), "Unexpected criteria names returned"
 
 
+# ---------------- PP2 & BP1 ----------------
+
+
 def test_predict_pp2bp1(platelet_disorders_predictor, seqvar, auto_acmg_data):
     """Test predict_pp2bp1 for Platelet Disorders."""
 
@@ -152,6 +161,9 @@ def test_predict_pp2bp1(platelet_disorders_predictor, seqvar, auto_acmg_data):
     assert (
         bp1_result.summary == "BP1 is not applicable for the gene."
     ), "The summary should indicate BP1 is not applicable."
+
+
+# ---------------- PP3 & BP4 ----------------
 
 
 def test_predict_pp3bp4_revel_strategy(platelet_disorders_predictor, auto_acmg_data):

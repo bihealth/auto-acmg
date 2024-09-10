@@ -30,6 +30,9 @@ def auto_acmg_data():
     return AutoACMGSeqVarData()
 
 
+# ----------- PM1 -------------
+
+
 def test_predict_pm1_in_critical_residue(familial_hypercholesterolemia_predictor, auto_acmg_data):
     """Test when variant affects a critical residue in LDLR."""
     auto_acmg_data.hgnc_id = "HGNC:6547"  # LDLR gene
@@ -145,6 +148,9 @@ def test_predict_pm1_edge_case_end_boundary(
     ), "The summary should indicate the critical residue."
 
 
+# ----------- PM2, BA1, BS1, BS2 -------------
+
+
 @patch.object(
     DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
@@ -179,10 +185,16 @@ def test_predict_pm2ba1bs1bs2(
     ), "Unexpected criteria names returned"
 
 
+# ----------- PM4 & BP3 -------------
+
+
 def test_bp3_not_applicable(familial_hypercholesterolemia_predictor, seqvar, auto_acmg_data):
     """Test BP3 is not applicable for ACADVL as overridden."""
     result = familial_hypercholesterolemia_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
     assert result is True, "BP3 should always be not applicable"
+
+
+# ----------- PP2 & BP1 -------------
 
 
 def test_predict_pp2bp1(familial_hypercholesterolemia_predictor, seqvar, auto_acmg_data):
@@ -214,6 +226,9 @@ def test_predict_pp2bp1(familial_hypercholesterolemia_predictor, seqvar, auto_ac
     assert (
         bp1_result.summary == "BP1 is not applicable for the gene."
     ), "The summary should indicate BP1 is not applicable."
+
+
+# ----------- PP3 & BP4 -------------
 
 
 def test_predict_pp3bp4_revel_strategy(familial_hypercholesterolemia_predictor, auto_acmg_data):

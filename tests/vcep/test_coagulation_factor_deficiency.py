@@ -44,6 +44,9 @@ def auto_acmg_data():
     return data
 
 
+# ----------- PS1 & PM5 ------------
+
+
 @patch.object(DefaultSeqVarPredictor, "verify_ps1pm5")
 def test_verify_ps1pm5_overrides(mock_super_verify, coagulation_predictor, seqvar, auto_acmg_data):
     # Set up the mock to return PS1 and PM5 as applicable initially
@@ -71,6 +74,9 @@ def test_verify_ps1pm5_overrides(mock_super_verify, coagulation_predictor, seqva
 
     # Ensure that the mock of the superclass method is called to simulate the inherited behavior
     mock_super_verify.assert_called_once_with(seqvar, auto_acmg_data)
+
+
+# ----------- PM1 ------------
 
 
 def test_predict_pm1_strong_criteria(coagulation_predictor, auto_acmg_data):
@@ -167,6 +173,9 @@ def test_predict_pm1_invalid_strand(coagulation_predictor, auto_acmg_data):
         coagulation_predictor._get_affected_exon(auto_acmg_data, coagulation_predictor.seqvar)
 
 
+# ----------- PM2, BA1, BS1, BS2 ------------
+
+
 @patch.object(
     CoagulationFactorDeficiencyPredictor,
     "_get_any_af",
@@ -239,10 +248,16 @@ def test_verify_pm2ba1bs1bs2_ba1(
     assert result.BS1 is False, "BS1 should not be met with high BA1 met"
 
 
+# -----------PM4 & BP3 ------------
+
+
 def test_bp3_not_applicable(coagulation_predictor, seqvar, auto_acmg_data):
     """Test BP3 is not applicable for ACADVL as overridden."""
     result = coagulation_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
     assert result is True, "BP3 should always be not applicable"
+
+
+# ----------- PP2 & BP1 ------------
 
 
 def test_predict_pp2bp1(coagulation_predictor, seqvar, auto_acmg_data):
@@ -408,6 +423,9 @@ def test_verify_pp3bp4_benign_spliceai_thresholds(coagulation_predictor, auto_ac
     assert auto_acmg_data.thresholds.spliceAI_acceptor_loss == 0.01
     assert auto_acmg_data.thresholds.spliceAI_donor_gain == 0.01
     assert auto_acmg_data.thresholds.spliceAI_donor_loss == 0.01
+
+
+# ----------- BP7 ------------
 
 
 def test_predict_bp7_threshold_adjustment_for_hgnc_3546(coagulation_predictor, auto_acmg_data):

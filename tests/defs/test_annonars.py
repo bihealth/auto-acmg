@@ -4,6 +4,8 @@ from src.defs.annonars_range import AnnonarsRangeResponse
 from src.defs.annonars_variant import AnnonarsVariantResponse
 from tests.utils import get_json_object
 
+# ----------- annoanrs_range.py -----------
+
 
 @pytest.mark.parametrize(
     "json_file",
@@ -19,6 +21,9 @@ def test_annonars_range_response_model(json_file):
     """Test AnnonarsRangeResponse model for various example responses."""
     annonars_response = get_json_object(json_file)
     assert AnnonarsRangeResponse.model_validate(annonars_response)
+
+
+# ----------- annonars_variant.py -----------
 
 
 @pytest.mark.parametrize(

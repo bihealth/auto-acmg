@@ -30,6 +30,9 @@ def acadvl_predictor(seqvar, auto_acmg_data):
     return ACADVLPredictor(seqvar=seqvar, result=result, config=MagicMock())
 
 
+# ------ PM1 ------
+
+
 def test_predict_pm1_in_critical_region(acadvl_predictor, auto_acmg_data):
     """Test when variant falls within a critical region for ACADVL."""
     auto_acmg_data.prot_pos = 220  # Set protein position within a critical region (214-223)
@@ -90,6 +93,9 @@ def test_predict_pm1_edge_case_end_boundary(acadvl_predictor, auto_acmg_data):
     ), "The summary should indicate the critical region."
 
 
+# ------ PM2, BA1, BS1, BS2 ------
+
+
 def test_bs2_not_applicable_acadvl(acadvl_predictor, auto_acmg_data):
     """Test BS2 is not applicable for ACADVL as overridden."""
     result = acadvl_predictor._bs2_not_applicable(auto_acmg_data)
@@ -128,10 +134,16 @@ def test_predict_pm2ba1bs1bs2(mock_super_method, acadvl_predictor, auto_acmg_dat
     ), "Unexpected criteria names returned"
 
 
+# ------ PM4 & BP3 ------
+
+
 def test_bp3_not_applicable_acadvl(acadvl_predictor, seqvar, auto_acmg_data):
     """Test BP3 is not applicable for ACADVL as overridden."""
     result = acadvl_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
     assert result is True, "BP3 should always be not applicable for ACADVL."
+
+
+# ------ PP2 & BP1 ------
 
 
 def test_predict_pp2bp1(acadvl_predictor, seqvar, auto_acmg_data):
@@ -161,6 +173,9 @@ def test_predict_pp2bp1(acadvl_predictor, seqvar, auto_acmg_data):
     assert (
         bp1_result.summary == "BP1 is not applicable for the gene."
     ), "The summary should indicate BP1 is not applicable."
+
+
+# ------ PP3 & BP4 ------
 
 
 def test_predict_pp3bp4_missense(acadvl_predictor, seqvar, auto_acmg_data):

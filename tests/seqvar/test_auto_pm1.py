@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import tabix
 
+from src.api.annonars import AnnonarsClient
 from src.defs.auto_acmg import (
     PM1,
     AutoACMGPrediction,
@@ -57,14 +58,6 @@ def mock_response():
 
 
 @pytest.fixture
-def auto_pm1_mocked():
-    with patch("src.api.annonars.AnnonarsClient") as mocked_annonars:
-        pm1_instance = AutoPM1()
-        mocked_annonars.return_value.get_variant_from_range.return_value = MagicMock()
-        yield pm1_instance, mocked_annonars
-
-
-@pytest.fixture
 def auto_acmg_data_plus():
     exons = [
         MagicMock(altStartI=10000, altEndI=20000),
@@ -90,91 +83,89 @@ def auto_acmg_data_minus():
     return data
 
 
-def test_get_affected_exon_plus_strand_in_exon(seqvar, auto_acmg_data_plus):
+def test_get_affected_exon_plus_strand_in_exon(seqvar, auto_pm1, auto_acmg_data_plus):
     """Test for a variant within an exon on the plus strand."""
     seqvar.pos = 35000  # Position within the second exon
-    result = AutoPM1._get_affected_exon(auto_acmg_data_plus, seqvar)
+    result = auto_pm1._get_affected_exon(auto_acmg_data_plus, seqvar)
     assert result == 2, "Exon number should be 2 for a position within the second exon."
 
 
-def test_get_affected_exon_plus_strand_before_exon(seqvar, auto_acmg_data_plus):
+def test_get_affected_exon_plus_strand_before_exon(seqvar, auto_pm1, auto_acmg_data_plus):
     """Test for a variant before any exon on the plus strand."""
     seqvar.pos = 9000  # Position before the first exon
-    result = AutoPM1._get_affected_exon(auto_acmg_data_plus, seqvar)
+    result = auto_pm1._get_affected_exon(auto_acmg_data_plus, seqvar)
     assert result == 0, "Exon number should be 0 for a position before any exon."
 
 
-def test_get_affected_exon_plus_strand_after_exon(seqvar, auto_acmg_data_plus):
+def test_get_affected_exon_plus_strand_after_exon(seqvar, auto_pm1, auto_acmg_data_plus):
     """Test for a variant after the last exon on the plus strand."""
     seqvar.pos = 70000  # Position after the last exon
-    result = AutoPM1._get_affected_exon(auto_acmg_data_plus, seqvar)
+    result = auto_pm1._get_affected_exon(auto_acmg_data_plus, seqvar)
     assert result == 3, "Exon number should be 3 for a position after the last exon."
 
 
-def test_get_affected_exon_minus_strand_in_exon(seqvar, auto_acmg_data_minus):
+def test_get_affected_exon_minus_strand_in_exon(seqvar, auto_pm1, auto_acmg_data_minus):
     """Test for a variant within an exon on the minus strand."""
     seqvar.pos = 35000  # Position within the second exon (reverse order for minus strand)
-    result = AutoPM1._get_affected_exon(auto_acmg_data_minus, seqvar)
+    result = auto_pm1._get_affected_exon(auto_acmg_data_minus, seqvar)
     assert (
         result == 2
     ), "Exon number should be 2 for a position within the second exon (minus strand)."
 
 
-def test_get_affected_exon_minus_strand_before_exon(seqvar, auto_acmg_data_minus):
+def test_get_affected_exon_minus_strand_before_exon(seqvar, auto_pm1, auto_acmg_data_minus):
     """Test for a variant before any exon on the minus strand."""
     seqvar.pos = 65000  # Position before the first exon (reverse order for minus strand)
-    result = AutoPM1._get_affected_exon(auto_acmg_data_minus, seqvar)
+    result = auto_pm1._get_affected_exon(auto_acmg_data_minus, seqvar)
     assert result == 0, "Exon number should be 0 for a position before any exon (minus strand)."
 
 
-def test_get_affected_exon_minus_strand_after_exon(seqvar, auto_acmg_data_minus):
+def test_get_affected_exon_minus_strand_after_exon(seqvar, auto_pm1, auto_acmg_data_minus):
     """Test for a variant after the last exon on the minus strand."""
     seqvar.pos = 5000  # Position after the last exon (reverse order for minus strand)
-    result = AutoPM1._get_affected_exon(auto_acmg_data_minus, seqvar)
+    result = auto_pm1._get_affected_exon(auto_acmg_data_minus, seqvar)
     assert result == 3, "Exon number should be 3 for a position after the last exon (minus strand)."
 
 
-def test_get_affected_exon_not_set_strand(seqvar, auto_acmg_data_plus):
+def test_get_affected_exon_not_set_strand(seqvar, auto_pm1, auto_acmg_data_plus):
     """Test for an invalid strand scenario."""
     auto_acmg_data_plus.strand = GenomicStrand.NotSet
     with pytest.raises(AlgorithmError):
-        AutoPM1._get_affected_exon(auto_acmg_data_plus, seqvar)
+        auto_pm1._get_affected_exon(auto_acmg_data_plus, seqvar)
 
 
-@pytest.mark.skip(reason="Annonars is not mocked properly")
-def test_count_vars_success(auto_pm1_mocked, seqvar, mock_response):
+@patch.object(AnnonarsClient, "get_variant_from_range")
+def test_count_vars_success(mock_get_variant_from_range, auto_pm1, seqvar, mock_response):
     """Test counting pathogenic and benign variants successfully."""
-    pm1_instance, mocked_annonars = auto_pm1_mocked
-    mocked_annonars.get_variant_from_range.return_value = mock_response
-    pathogenic, benign = pm1_instance._count_vars(seqvar, 75, 125)
+    mock_get_variant_from_range.return_value = mock_response
+    pathogenic, benign = auto_pm1._count_vars(seqvar, 75, 125)
     assert pathogenic == 1
     assert benign == 1
 
 
-def test_count_vars_invalid_range(auto_pm1_mocked, seqvar):
+def test_count_vars_invalid_range(auto_pm1, seqvar):
     """Test error handling when the end position is less than the start position."""
-    pm1_instance, _ = auto_pm1_mocked
     with pytest.raises(AlgorithmError) as excinfo:
-        pm1_instance._count_vars(seqvar, 150, 100)
+        auto_pm1._count_vars(seqvar, 150, 100)
     assert "End position is less than the start position" in str(excinfo.value)
 
 
-def test_count_vars_api_failure(auto_pm1_mocked, seqvar):
+@patch.object(AnnonarsClient, "get_variant_from_range")
+def test_count_vars_api_failure(mock_get_variant_from_range, auto_pm1, seqvar):
     """Test handling API response failures."""
-    pm1_instance, mocked_annonars = auto_pm1_mocked
-    mocked_annonars.get_variant_from_range.return_value = None
+    mock_get_variant_from_range.return_value = None
     with pytest.raises(InvalidAPIResposeError) as excinfo:
-        pm1_instance._count_vars(seqvar, 75, 125)
+        auto_pm1._count_vars(seqvar, 75, 125)
     assert "Failed to get variant from range. No ClinVar data." in str(excinfo.value)
 
 
-def test_count_vars_no_clinvar_data(auto_pm1_mocked, seqvar):
+@patch.object(AnnonarsClient, "get_variant_from_range")
+def test_count_vars_no_clinvar_data(mock_get_variant_from_range, auto_pm1, seqvar):
     """Test handling missing ClinVar data in the response."""
-    pm1_instance, mocked_annonars = auto_pm1_mocked
     response = MagicMock(clinvar=[])
-    mocked_annonars.get_variant_from_range.return_value = response
+    mock_get_variant_from_range.return_value = response
     with pytest.raises(InvalidAPIResposeError) as excinfo:
-        pm1_instance._count_vars(seqvar, 75, 125)
+        auto_pm1._count_vars(seqvar, 75, 125)
     assert "Failed to get variant from range. No ClinVar data." in str(excinfo.value)
 
 

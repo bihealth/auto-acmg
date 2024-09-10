@@ -29,6 +29,9 @@ def auto_acmg_data():
     return AutoACMGSeqVarData()
 
 
+# --------------------- PM1 ---------------------
+
+
 def test_predict_pm1_in_critical_region(rett_angelman_predictor, auto_acmg_data):
     """Test when the variant falls within a critical region for a Rett and Angelman-like Disorder gene."""
     auto_acmg_data.hgnc_id = "HGNC:11634"  # TCF4 gene
@@ -98,6 +101,9 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, rett_angelman_predict
     ), "The summary should indicate the default fallback."
 
 
+# ----------------- PM2, BA1, BS1, BS2 -----------------
+
+
 @patch.object(RettAngelmanPredictor, "_get_af", return_value=0.1)
 @patch.object(RettAngelmanPredictor, "_ba1_exception", return_value=False)
 def test_verify_pm2ba1bs1bs2(
@@ -121,6 +127,9 @@ def test_verify_pm2ba1bs1bs2(
     assert (
         auto_acmg_data.thresholds.bs1_benign == 0.00008
     ), "BS1 threshold should be adjusted to 0.00008"
+
+
+# --------------------- PM4 & BP3 ---------------------
 
 
 def test_exclude_pm4_true(rett_angelman_predictor, auto_acmg_data, seqvar):
@@ -229,6 +238,9 @@ def test_verify_pm4bp3_bp3_for_foxg1(
     assert "Variant is in the BP3 region for FOXG1." in comment
 
 
+# --------------------- PP2 & BP1 ---------------------
+
+
 def test_predict_pp2bp1(rett_angelman_predictor, seqvar, auto_acmg_data):
     """Test predict_pp2bp1 for Retts and Angelman-like Disorders predictor."""
 
@@ -258,50 +270,7 @@ def test_predict_pp2bp1(rett_angelman_predictor, seqvar, auto_acmg_data):
     ), "The summary should indicate BP1 is not applicable."
 
 
-def test_predict_bp7_threshold_adjustment(rett_angelman_predictor, auto_acmg_data):
-    """Test that the BP7 thresholds are correctly adjusted for Rett and Angelman-like Disorders."""
-    auto_acmg_data.thresholds.phyloP100 = 1.0  # Initial phyloP100 threshold value
-
-    # Call predict_bp7 method
-    result = rett_angelman_predictor.predict_bp7(rett_angelman_predictor.seqvar, auto_acmg_data)
-
-    # Check that the thresholds were adjusted
-    assert (
-        auto_acmg_data.thresholds.phyloP100 == 0.1
-    ), "The phyloP100 threshold should be adjusted to 0.1."
-
-    # Check that the superclass's predict_bp7 method was called and returned a result
-    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-
-
-@patch.object(RettAngelmanPredictor, "predict_bp7", autospec=True)
-def test_predict_bp7_fallback_to_default(
-    mock_super_predict_bp7, rett_angelman_predictor, auto_acmg_data
-):
-    """Test fallback to default BP7 prediction after threshold adjustment."""
-    # Set the mock return value for the superclass's predict_bp7 method
-    mock_super_predict_bp7.return_value = AutoACMGCriteria(
-        name="BP7",
-        prediction=AutoACMGPrediction.NotApplicable,
-        strength=AutoACMGStrength.BenignSupporting,
-        summary="Default BP7 prediction fallback.",
-    )
-
-    # Call predict_bp7 method
-    result = rett_angelman_predictor.predict_bp7(rett_angelman_predictor.seqvar, auto_acmg_data)
-
-    # Verify the result and ensure the superclass method was called
-    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert (
-        result.prediction == AutoACMGPrediction.NotApplicable
-    ), "BP7 should return NotMet as mocked."
-    assert (
-        result.strength == AutoACMGStrength.BenignSupporting
-    ), "The strength should be BenignSupporting."
-    assert (
-        "Default BP7 prediction fallback." in result.summary
-    ), "The summary should indicate the fallback."
-    assert mock_super_predict_bp7.called, "super().predict_bp7 should have been called."
+# ------------------- PP3 & BP4 -------------------
 
 
 def test_predict_pp3bp4_revel_strategy(rett_angelman_predictor, auto_acmg_data):
@@ -458,3 +427,52 @@ def test_predict_pp3bp4_error_handling(rett_angelman_predictor, auto_acmg_data):
             rett_angelman_predictor.predict_pp3bp4(rett_angelman_predictor.seqvar, auto_acmg_data)
 
         assert str(exc_info.value) == "Test error"
+
+
+# --------------------- BP7 ---------------------
+
+
+def test_predict_bp7_threshold_adjustment(rett_angelman_predictor, auto_acmg_data):
+    """Test that the BP7 thresholds are correctly adjusted for Rett and Angelman-like Disorders."""
+    auto_acmg_data.thresholds.phyloP100 = 1.0  # Initial phyloP100 threshold value
+
+    # Call predict_bp7 method
+    result = rett_angelman_predictor.predict_bp7(rett_angelman_predictor.seqvar, auto_acmg_data)
+
+    # Check that the thresholds were adjusted
+    assert (
+        auto_acmg_data.thresholds.phyloP100 == 0.1
+    ), "The phyloP100 threshold should be adjusted to 0.1."
+
+    # Check that the superclass's predict_bp7 method was called and returned a result
+    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
+
+
+@patch.object(RettAngelmanPredictor, "predict_bp7", autospec=True)
+def test_predict_bp7_fallback_to_default(
+    mock_super_predict_bp7, rett_angelman_predictor, auto_acmg_data
+):
+    """Test fallback to default BP7 prediction after threshold adjustment."""
+    # Set the mock return value for the superclass's predict_bp7 method
+    mock_super_predict_bp7.return_value = AutoACMGCriteria(
+        name="BP7",
+        prediction=AutoACMGPrediction.NotApplicable,
+        strength=AutoACMGStrength.BenignSupporting,
+        summary="Default BP7 prediction fallback.",
+    )
+
+    # Call predict_bp7 method
+    result = rett_angelman_predictor.predict_bp7(rett_angelman_predictor.seqvar, auto_acmg_data)
+
+    # Verify the result and ensure the superclass method was called
+    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
+    assert (
+        result.strength == AutoACMGStrength.BenignSupporting
+    ), "The strength should be BenignSupporting."
+    assert (
+        "Default BP7 prediction fallback." in result.summary
+    ), "The summary should indicate the fallback."
+    assert mock_super_predict_bp7.called, "super().predict_bp7 should have been called."

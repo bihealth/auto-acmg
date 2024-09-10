@@ -33,6 +33,9 @@ example_strucvar = StrucVar(
 example_hgnc_id = "HGNC:1234"
 
 
+# ---------- get_seqvar_transcripts ----------------
+
+
 @pytest.mark.asyncio
 async def test_get_seqvar_transcripts_success(httpx_mock: HTTPXMock):
     """Test get_transcripts method with a successful response."""
@@ -79,6 +82,9 @@ async def test_get_seqvar_transcripts_500(httpx_mock: HTTPXMock):
         client.get_seqvar_transcripts(example_seqvar)
 
 
+# ---------- get_strucvar_transcripts ----------------
+
+
 @pytest.mark.asyncio
 async def test_get_strucvar_transcripts_success(httpx_mock: HTTPXMock):
     """Test get_strucvar_transcripts method with a successful response."""
@@ -123,6 +129,9 @@ async def test_get_strucvar_transcripts_500(httpx_mock: HTTPXMock):
     client = MehariClient(api_base_url="https://example.com/mehari")
     with pytest.raises(MehariException):
         client.get_strucvar_transcripts(example_strucvar)
+
+
+# ---------- get_gene_transcripts ----------------
 
 
 @pytest.mark.asyncio
