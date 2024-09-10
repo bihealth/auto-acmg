@@ -2,14 +2,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.api.annonars import AnnonarsClient
-from src.defs.annonars_variant import AnnonarsVariantResponse
 from src.defs.auto_acmg import PS1PM5, AminoAcid, AutoACMGPrediction, AutoACMGStrength
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.auto_ps1_pm5 import AutoPS1PM5
-from tests.utils import get_json_object
 
 
 @pytest.fixture
@@ -384,7 +381,8 @@ def test_verify_ps1pm5_not_missense(
     mock_is_missense, auto_ps1pm5, seqvar, var_data_not_missense_verify
 ):
     with pytest.raises(
-        AlgorithmError, match="Variant is not a missense variant. PS1/PM5 not applicable."
+        AlgorithmError,
+        match="Variant is not a missense variant. PS1/PM5 not applicable.",
     ):
         auto_ps1pm5.verify_ps1pm5(seqvar, var_data_not_missense_verify)
 
@@ -396,7 +394,8 @@ def test_verify_ps1pm5_no_valid_aa_change(
     mock_parse_HGVSp, mock_is_missense, auto_ps1pm5, seqvar, var_data_missense
 ):
     with pytest.raises(
-        AlgorithmError, match="No valid primary amino acid change for PS1/PM5 prediction."
+        AlgorithmError,
+        match="No valid primary amino acid change for PS1/PM5 prediction.",
     ):
         auto_ps1pm5.verify_ps1pm5(seqvar, var_data_missense)
 
@@ -405,7 +404,12 @@ def test_verify_ps1pm5_no_valid_aa_change(
 @patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._parse_HGVSp", return_value=AminoAcid.Ala)
 @patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._get_var_info", return_value=None)
 def test_verify_ps1pm5_missing_var_info(
-    mock_get_var_info, mock_parse_HGVSp, mock_is_missense, auto_ps1pm5, seqvar, var_data_missense
+    mock_get_var_info,
+    mock_parse_HGVSp,
+    mock_is_missense,
+    auto_ps1pm5,
+    seqvar,
+    var_data_missense,
 ):
     prediction, comment = auto_ps1pm5.verify_ps1pm5(seqvar, var_data_missense)
     assert prediction.PS1 is False
@@ -501,10 +505,10 @@ def test_predict_ps1pm5_met(mock_verify, auto_ps1pm5, seqvar, var_data, ps1pm5_r
     """Test predict_ps1pm5 where PS1 criterion is met."""
     mock_verify.return_value = ps1pm5_result_met
     result = auto_ps1pm5.predict_ps1pm5(seqvar, var_data)
-    assert result[0].prediction == AutoACMGPrediction.Met
+    assert result[0].prediction == AutoACMGPrediction.Applicable
     assert result[0].strength == AutoACMGStrength.PathogenicStrong
     assert "PS1 criteria met" in result[0].summary
-    assert result[1].prediction == AutoACMGPrediction.NotMet
+    assert result[1].prediction == AutoACMGPrediction.NotApplicable
     assert result[1].strength == AutoACMGStrength.PathogenicModerate
 
 
@@ -513,9 +517,9 @@ def test_predict_ps1pm5_pm5_met(mock_verify, auto_ps1pm5, seqvar, var_data, ps1p
     """Test predict_ps1pm5 where PM5 criterion is met."""
     mock_verify.return_value = ps1pm5_result_pm5_met
     result = auto_ps1pm5.predict_ps1pm5(seqvar, var_data)
-    assert result[0].prediction == AutoACMGPrediction.NotMet
+    assert result[0].prediction == AutoACMGPrediction.NotApplicable
     assert result[0].strength == AutoACMGStrength.PathogenicStrong
-    assert result[1].prediction == AutoACMGPrediction.Met
+    assert result[1].prediction == AutoACMGPrediction.Applicable
     assert result[1].strength == AutoACMGStrength.PathogenicModerate
     assert "PM5 criteria met" in result[1].summary
 

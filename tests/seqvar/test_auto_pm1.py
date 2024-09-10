@@ -284,7 +284,7 @@ def test_predict_pm1_met(mock_verify_pm1, auto_pm1, seqvar, var_data_predict):
         "Criterion met.",
     )
     result = auto_pm1.predict_pm1(seqvar, var_data_predict)
-    assert result.prediction == AutoACMGPrediction.Met
+    assert result.prediction == AutoACMGPrediction.Applicable
     assert result.strength == AutoACMGStrength.PathogenicModerate
     assert "Criterion met." in result.summary
 
@@ -297,7 +297,7 @@ def test_predict_pm1_not_met(mock_verify_pm1, auto_pm1, seqvar, var_data_predict
         "Criterion not met.",
     )
     result = auto_pm1.predict_pm1(seqvar, var_data_predict)
-    assert result.prediction == AutoACMGPrediction.NotMet
+    assert result.prediction == AutoACMGPrediction.NotApplicable
     assert result.strength == AutoACMGStrength.PathogenicModerate
     assert "Criterion not met." in result.summary
 

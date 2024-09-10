@@ -39,7 +39,9 @@ def test_predict_pm1_acvrl1_moderate(hht_predictor, auto_acmg_data):
     result = hht_predictor.predict_pm1(hht_predictor.seqvar, auto_acmg_data)
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.Met, "PM1 should be met at the Moderate level."
+    assert (
+        result.prediction == AutoACMGPrediction.Applicable
+    ), "PM1 should be met at the Moderate level."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
     ), "The strength should be PathogenicModerate."
@@ -55,7 +57,9 @@ def test_predict_pm1_eng_moderate(hht_predictor, auto_acmg_data):
     result = hht_predictor.predict_pm1(hht_predictor.seqvar, auto_acmg_data)
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.Met, "PM1 should be met at the Moderate level."
+    assert (
+        result.prediction == AutoACMGPrediction.Applicable
+    ), "PM1 should be met at the Moderate level."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
     ), "The strength should be PathogenicModerate."
@@ -71,7 +75,9 @@ def test_predict_pm1_not_met(hht_predictor, auto_acmg_data):
     result = hht_predictor.predict_pm1(hht_predictor.seqvar, auto_acmg_data)
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.NotMet, "PM1 should not be met for ACVRL1."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "PM1 should not be met for ACVRL1."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
     ), "The strength should be PathogenicModerate."
@@ -86,7 +92,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, hht_predictor, auto_a
     auto_acmg_data.hgnc_id = "HGNC:111111"  # Gene not in the specific logic
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default PM1 prediction fallback.",
     )
@@ -94,7 +100,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, hht_predictor, auto_a
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met in the default fallback."
     assert (
         "Default PM1 prediction fallback." in result.summary
@@ -107,7 +113,9 @@ def test_predict_pm1_edge_case_start_boundary_acvrl1(hht_predictor, auto_acmg_da
     auto_acmg_data.prot_pos = 209  # Start boundary of the glycine-rich loop (209-216)
     result = hht_predictor.predict_pm1(hht_predictor.seqvar, auto_acmg_data)
 
-    assert result.prediction == AutoACMGPrediction.Met, "PM1 should be met on the start boundary."
+    assert (
+        result.prediction == AutoACMGPrediction.Applicable
+    ), "PM1 should be met on the start boundary."
     assert (
         "critical residue for HGNC:175" in result.summary
     ), "The summary should indicate the critical region."
@@ -119,7 +127,9 @@ def test_predict_pm1_edge_case_end_boundary_eng(hht_predictor, auto_acmg_data):
     auto_acmg_data.prot_pos = 412  # End boundary of the critical cysteine residues
     result = hht_predictor.predict_pm1(hht_predictor.seqvar, auto_acmg_data)
 
-    assert result.prediction == AutoACMGPrediction.Met, "PM1 should be met on the end boundary."
+    assert (
+        result.prediction == AutoACMGPrediction.Applicable
+    ), "PM1 should be met on the end boundary."
     assert (
         "critical residue for HGNC:3349" in result.summary
     ), "The summary should indicate the critical region."
@@ -222,7 +232,13 @@ def test_verify_pp3bp4_spliceai_thresholds(hht_predictor, auto_acmg_data):
     "is_missense, revel_score, spliceai_score, expected_pp3, expected_bp4",
     [
         (True, 0.7, 0.1, True, False),  # Missense, high REVEL score, low SpliceAI score
-        (True, 0.5, 0.3, True, False),  # Missense, medium REVEL score, high SpliceAI score
+        (
+            True,
+            0.5,
+            0.3,
+            True,
+            False,
+        ),  # Missense, medium REVEL score, high SpliceAI score
         # (True, 0.1, 0.1, False, True),  # Missense, low REVEL score, low SpliceAI score
         (False, 0.7, 0.3, True, False),  # Non-missense, high SpliceAI score
         # (False, 0.7, 0.005, False, True),  # Non-missense, low SpliceAI score
@@ -246,7 +262,6 @@ def test_verify_pp3bp4_scenarios(
         patch.object(HHTPredictor, "_is_synonymous_variant", return_value=not is_missense),
         patch.object(HHTPredictor, "_is_intron_variant", return_value=not is_missense),
     ):
-
         prediction, comment = hht_predictor.verify_pp3bp4(hht_predictor.seqvar, auto_acmg_data)
 
         assert prediction.PP3 == expected_pp3
@@ -261,8 +276,8 @@ def test_verify_pp3bp4_missense_revel_only(hht_predictor, auto_acmg_data):
     with patch.object(HHTPredictor, "_is_missense", return_value=True):
         prediction, comment = hht_predictor.verify_pp3bp4(hht_predictor.seqvar, auto_acmg_data)
 
-        assert prediction.PP3 == True
-        assert prediction.BP4 == False
+        assert prediction.PP3 is True
+        assert prediction.BP4 is False
 
 
 def test_verify_pp3bp4_non_missense_spliceai_only(hht_predictor, auto_acmg_data):
@@ -273,11 +288,10 @@ def test_verify_pp3bp4_non_missense_spliceai_only(hht_predictor, auto_acmg_data)
         patch.object(HHTPredictor, "_is_missense", return_value=False),
         patch.object(HHTPredictor, "_is_synonymous_variant", return_value=True),
     ):
-
         prediction, comment = hht_predictor.verify_pp3bp4(hht_predictor.seqvar, auto_acmg_data)
 
-        assert prediction.PP3 == True
-        assert prediction.BP4 == False
+        assert prediction.PP3 is True
+        assert prediction.BP4 is False
 
 
 def test_verify_pp3bp4_no_prediction(hht_predictor, auto_acmg_data):
@@ -288,8 +302,8 @@ def test_verify_pp3bp4_no_prediction(hht_predictor, auto_acmg_data):
     with patch.object(HHTPredictor, "_is_missense", return_value=True):
         prediction, comment = hht_predictor.verify_pp3bp4(hht_predictor.seqvar, auto_acmg_data)
 
-        assert prediction.PP3 == False
-        assert prediction.BP4 == False
+        assert prediction.PP3 is False
+        assert prediction.BP4 is False
 
 
 def test_verify_pp3bp4_error_handling(hht_predictor, auto_acmg_data):
@@ -311,8 +325,8 @@ def test_verify_pp3bp4_missing_data(hht_predictor, auto_acmg_data):
     with patch.object(HHTPredictor, "_is_missense", return_value=True):
         prediction, comment = hht_predictor.verify_pp3bp4(hht_predictor.seqvar, auto_acmg_data)
 
-        assert prediction.PP3 == False
-        assert prediction.BP4 == False
+        assert prediction.PP3 is False
+        assert prediction.BP4 is False
 
 
 def test_verify_pp3bp4_return_type(hht_predictor, auto_acmg_data):

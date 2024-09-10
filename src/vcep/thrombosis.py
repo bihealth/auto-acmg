@@ -55,14 +55,14 @@ class ThrombosisPredictor(DefaultSeqVarPredictor):
         if var_data.prot_pos in gene_cluster["residues"]:
             return AutoACMGCriteria(
                 name="PM1",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicModerate,
                 summary="Variant meets the PM1 criteria for SERPINC1.",
             )
 
         return AutoACMGCriteria(
             name="PM1",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.PathogenicModerate,
             summary="Variant does not meet the PM1 criteria for SERPINC1.",
         )

@@ -137,7 +137,6 @@ PM1_CLUSTER = {
 
 
 class EpilepsySodiumChannelPredictor(DefaultSeqVarPredictor):
-
     def predict_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """Override predict_pm1 to iclude domains for Epilepsy Sodium Channel genes."""
         logger.info("Predict PM1")
@@ -164,7 +163,7 @@ class EpilepsySodiumChannelPredictor(DefaultSeqVarPredictor):
                 )
                 return AutoACMGCriteria(
                     name="PM1",
-                    prediction=AutoACMGPrediction.Met,
+                    prediction=AutoACMGPrediction.Applicable,
                     strength=AutoACMGStrength.PathogenicModerate,
                     summary=comment,
                 )
@@ -172,7 +171,7 @@ class EpilepsySodiumChannelPredictor(DefaultSeqVarPredictor):
         # If no criteria match
         return AutoACMGCriteria(
             name="PM1",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.PathogenicModerate,
             summary=f"Variant does not meet the PM1 criteria for {var_data.hgnc_id}.",
         )
@@ -185,7 +184,11 @@ class EpilepsySodiumChannelPredictor(DefaultSeqVarPredictor):
         if var_data.hgnc_id == "HGNC:10585":  # SCN1A
             var_data.thresholds.ba1_benign = 0.0002
             var_data.thresholds.bs1_benign = 0.000004
-        elif var_data.hgnc_id in ["HGNC:10588", "HGNC:10590", "HGNC:10596"]:  # SCN2A, SCN3A, SCN8A
+        elif var_data.hgnc_id in [
+            "HGNC:10588",
+            "HGNC:10590",
+            "HGNC:10596",
+        ]:  # SCN2A, SCN3A, SCN8A
             var_data.thresholds.ba1_benign = 0.0001
             var_data.thresholds.bs1_benign = 0.000002
         elif var_data.hgnc_id == "HGNC:10586":  # SCN1B

@@ -29,7 +29,6 @@ SPEC = VcepSpec(
 
 
 class GlaucomaPredictor(DefaultSeqVarPredictor):
-
     def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
         """PVS1 is not applicable."""
         logger.info("Predict PVS1")

@@ -279,14 +279,22 @@ class AutoPP3BP4(AutoACMGHelper):
         pred, comment = self.verify_pp3bp4(seqvar, var_data)
         if pred:
             pp3_pred = (
-                AutoACMGPrediction.Met
+                AutoACMGPrediction.Applicable
                 if pred.PP3
-                else (AutoACMGPrediction.NotMet if pred.PP3 is False else AutoACMGPrediction.Failed)
+                else (
+                    AutoACMGPrediction.NotApplicable
+                    if pred.PP3 is False
+                    else AutoACMGPrediction.Failed
+                )
             )
             bp4_pred = (
-                AutoACMGPrediction.Met
+                AutoACMGPrediction.Applicable
                 if pred.BP4
-                else (AutoACMGPrediction.NotMet if pred.BP4 is False else AutoACMGPrediction.Failed)
+                else (
+                    AutoACMGPrediction.NotApplicable
+                    if pred.BP4 is False
+                    else AutoACMGPrediction.Failed
+                )
             )
             pp3_strength = pred.PP3_strength
             bp4_strength = pred.BP4_strength

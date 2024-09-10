@@ -132,7 +132,7 @@ def test_predict_pm1_strong_residue(fbn1_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for a variant affecting a strong critical residue."
     assert (
         result.strength == AutoACMGStrength.PathogenicStrong
@@ -150,7 +150,7 @@ def test_predict_pm1_moderate_residue(fbn1_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for a variant affecting a moderate critical residue."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -168,7 +168,7 @@ def test_predict_pm1_outside_critical_residues(fbn1_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met for a variant outside critical residues."
     assert (
         "Variant does not meet the PM1 criteria for FBN1" in result.summary
@@ -181,7 +181,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, fbn1_predictor, auto_
     auto_acmg_data.hgnc_id = "HGNC:99999"  # Gene not in PM1_CLUSTER
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default PM1 prediction fallback.",
     )
@@ -189,7 +189,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, fbn1_predictor, auto_
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met if the gene is not in the PM1_CLUSTER."
     assert (
         "Default PM1 prediction fallback." in result.summary
@@ -203,7 +203,7 @@ def test_predict_pm1_edge_case_strong_boundary(fbn1_predictor, auto_acmg_data):
     result = fbn1_predictor.predict_pm1(fbn1_predictor.seqvar, auto_acmg_data)
 
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met when on the boundary of a strong critical residue."
     assert (
         result.strength == AutoACMGStrength.PathogenicStrong
@@ -220,7 +220,7 @@ def test_predict_pm1_edge_case_moderate_boundary(fbn1_predictor, auto_acmg_data)
     result = fbn1_predictor.predict_pm1(fbn1_predictor.seqvar, auto_acmg_data)
 
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met when on the boundary of a moderate critical residue."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -283,7 +283,7 @@ def test_predict_pp2bp1_applicable(mock_verify, fbn1_predictor, seqvar, auto_acm
     )
     pp2, bp1 = fbn1_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
 
-    assert pp2.prediction == AutoACMGPrediction.Met, "PP2 should be Met."
+    assert pp2.prediction == AutoACMGPrediction.Applicable, "PP2 should be Met."
     assert (
         pp2.strength == AutoACMGStrength.PathogenicModerate
     ), "PP2 strength should be PathogenicModerate."
@@ -300,7 +300,7 @@ def test_predict_pp2bp1_not_applicable(mock_verify, fbn1_predictor, seqvar, auto
     )
     pp2, bp1 = fbn1_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
 
-    assert pp2.prediction == AutoACMGPrediction.NotMet, "PP2 should be NotMet."
+    assert pp2.prediction == AutoACMGPrediction.NotApplicable, "PP2 should be NotMet."
     assert "PP2 not applicable." in pp2.summary, "The summary should confirm PP2 non-applicability."
     assert bp1.prediction == AutoACMGPrediction.NotApplicable, "BP1 should be NotApplicable."
 
@@ -346,12 +346,12 @@ def test_predict_pp3bp4_calls_superclass(mock_super_predict_pp3bp4, fbn1_predict
     mock_super_predict_pp3bp4.return_value = (
         AutoACMGCriteria(
             name="PP3",
-            prediction=AutoACMGPrediction.Met,
+            prediction=AutoACMGPrediction.Applicable,
             strength=AutoACMGStrength.PathogenicSupporting,
         ),
         AutoACMGCriteria(
             name="BP4",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.BenignSupporting,
         ),
     )
@@ -359,16 +359,28 @@ def test_predict_pp3bp4_calls_superclass(mock_super_predict_pp3bp4, fbn1_predict
     pp3_result, bp4_result = fbn1_predictor.predict_pp3bp4(fbn1_predictor.seqvar, auto_acmg_data)
 
     mock_super_predict_pp3bp4.assert_called_once_with(fbn1_predictor.seqvar, auto_acmg_data)
-    assert pp3_result.prediction == AutoACMGPrediction.Met
-    assert bp4_result.prediction == AutoACMGPrediction.NotMet
+    assert pp3_result.prediction == AutoACMGPrediction.Applicable
+    assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
 
 
 @pytest.mark.parametrize(
     "revel_score, expected_pp3, expected_bp4",
     [
-        (0.8, AutoACMGPrediction.Met, AutoACMGPrediction.NotMet),  # High REVEL score
-        (0.5, AutoACMGPrediction.NotMet, AutoACMGPrediction.NotMet),  # Intermediate REVEL score
-        (0.3, AutoACMGPrediction.NotMet, AutoACMGPrediction.Met),  # Low REVEL score
+        (
+            0.8,
+            AutoACMGPrediction.Applicable,
+            AutoACMGPrediction.NotApplicable,
+        ),  # High REVEL score
+        (
+            0.5,
+            AutoACMGPrediction.NotApplicable,
+            AutoACMGPrediction.NotApplicable,
+        ),  # Intermediate REVEL score
+        (
+            0.3,
+            AutoACMGPrediction.NotApplicable,
+            AutoACMGPrediction.Applicable,
+        ),  # Low REVEL score
     ],
 )
 def test_predict_pp3bp4_revel_scenarios(
@@ -380,10 +392,14 @@ def test_predict_pp3bp4_revel_scenarios(
     with patch("src.vcep.fbn1.DefaultSeqVarPredictor.predict_pp3bp4") as mock_super_predict_pp3bp4:
         mock_super_predict_pp3bp4.return_value = (
             AutoACMGCriteria(
-                name="PP3", prediction=expected_pp3, strength=AutoACMGStrength.PathogenicSupporting
+                name="PP3",
+                prediction=expected_pp3,
+                strength=AutoACMGStrength.PathogenicSupporting,
             ),
             AutoACMGCriteria(
-                name="BP4", prediction=expected_bp4, strength=AutoACMGStrength.BenignSupporting
+                name="BP4",
+                prediction=expected_bp4,
+                strength=AutoACMGStrength.BenignSupporting,
             ),
         )
 
@@ -401,12 +417,12 @@ def test_predict_pp3bp4_strength(fbn1_predictor, auto_acmg_data):
         mock_super_predict_pp3bp4.return_value = (
             AutoACMGCriteria(
                 name="PP3",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicSupporting,
             ),
             AutoACMGCriteria(
                 name="BP4",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.BenignSupporting,
             ),
         )
@@ -427,12 +443,12 @@ def test_predict_pp3bp4_no_revel_score(fbn1_predictor, auto_acmg_data):
         mock_super_predict_pp3bp4.return_value = (
             AutoACMGCriteria(
                 name="PP3",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.PathogenicSupporting,
             ),
             AutoACMGCriteria(
                 name="BP4",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.BenignSupporting,
             ),
         )
@@ -441,14 +457,15 @@ def test_predict_pp3bp4_no_revel_score(fbn1_predictor, auto_acmg_data):
             fbn1_predictor.seqvar, auto_acmg_data
         )
 
-        assert pp3_result.prediction == AutoACMGPrediction.NotMet
-        assert bp4_result.prediction == AutoACMGPrediction.NotMet
+        assert pp3_result.prediction == AutoACMGPrediction.NotApplicable
+        assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
 
 
 def test_predict_pp3bp4_error_handling(fbn1_predictor, auto_acmg_data):
     """Test error handling in predict_pp3bp4 method."""
     with patch(
-        "src.vcep.fbn1.DefaultSeqVarPredictor.predict_pp3bp4", side_effect=Exception("Test error")
+        "src.vcep.fbn1.DefaultSeqVarPredictor.predict_pp3bp4",
+        side_effect=Exception("Test error"),
     ):
         with pytest.raises(Exception) as exc_info:
             fbn1_predictor.predict_pp3bp4(fbn1_predictor.seqvar, auto_acmg_data)
@@ -462,13 +479,13 @@ def test_predict_pp3bp4_summary(fbn1_predictor, auto_acmg_data):
         mock_super_predict_pp3bp4.return_value = (
             AutoACMGCriteria(
                 name="PP3",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicSupporting,
                 summary="REVEL score indicates pathogenicity",
             ),
             AutoACMGCriteria(
                 name="BP4",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.BenignSupporting,
                 summary="REVEL score does not indicate benign",
             ),
@@ -494,14 +511,18 @@ def test_predict_pp3bp4_edge_cases(fbn1_predictor, auto_acmg_data):
                 AutoACMGCriteria(
                     name="PP3",
                     prediction=(
-                        AutoACMGPrediction.Met if score >= 0.75 else AutoACMGPrediction.NotMet
+                        AutoACMGPrediction.Applicable
+                        if score >= 0.75
+                        else AutoACMGPrediction.NotApplicable
                     ),
                     strength=AutoACMGStrength.PathogenicSupporting,
                 ),
                 AutoACMGCriteria(
                     name="BP4",
                     prediction=(
-                        AutoACMGPrediction.Met if score <= 0.326 else AutoACMGPrediction.NotMet
+                        AutoACMGPrediction.Applicable
+                        if score <= 0.326
+                        else AutoACMGPrediction.NotApplicable
                     ),
                     strength=AutoACMGStrength.BenignSupporting,
                 ),
@@ -512,8 +533,8 @@ def test_predict_pp3bp4_edge_cases(fbn1_predictor, auto_acmg_data):
             )
 
             if score == 0.75:
-                assert pp3_result.prediction == AutoACMGPrediction.Met
-                assert bp4_result.prediction == AutoACMGPrediction.NotMet
+                assert pp3_result.prediction == AutoACMGPrediction.Applicable
+                assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
             elif score == 0.326:
-                assert pp3_result.prediction == AutoACMGPrediction.NotMet
-                assert bp4_result.prediction == AutoACMGPrediction.Met
+                assert pp3_result.prediction == AutoACMGPrediction.NotApplicable
+                assert bp4_result.prediction == AutoACMGPrediction.Applicable

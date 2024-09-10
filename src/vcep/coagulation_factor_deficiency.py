@@ -12,7 +12,6 @@ from typing import Dict, List, Optional, Tuple
 
 from loguru import logger
 
-from src.defs.annonars_variant import GnomadExomes
 from src.defs.auto_acmg import (
     PM2BA1BS1BS2,
     PP3BP4,
@@ -25,7 +24,6 @@ from src.defs.auto_acmg import (
 )
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, MissingDataError
 from src.defs.seqvar import SeqVar
-from src.seqvar.auto_ps1_pm5 import DNA_BASES
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 #: VCEP specifications for Coagulation Factor Deficiency.
@@ -76,7 +74,6 @@ PM1_CLUSTER: Dict[str, Dict[str, Dict[str, List]]] = {
 
 
 class CoagulationFactorDeficiencyPredictor(DefaultSeqVarPredictor):
-
     def verify_ps1pm5(
         self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[Optional[PS1PM5], str]:
@@ -113,7 +110,7 @@ class CoagulationFactorDeficiencyPredictor(DefaultSeqVarPredictor):
                 )
                 return AutoACMGCriteria(
                     name="PM1",
-                    prediction=AutoACMGPrediction.Met,
+                    prediction=AutoACMGPrediction.Applicable,
                     strength=AutoACMGStrength.PathogenicStrong,
                     summary=comment,
                 )
@@ -127,7 +124,7 @@ class CoagulationFactorDeficiencyPredictor(DefaultSeqVarPredictor):
                 )
                 return AutoACMGCriteria(
                     name="PM1",
-                    prediction=AutoACMGPrediction.Met,
+                    prediction=AutoACMGPrediction.Applicable,
                     strength=AutoACMGStrength.PathogenicModerate,
                     summary=comment,
                 )
@@ -143,7 +140,7 @@ class CoagulationFactorDeficiencyPredictor(DefaultSeqVarPredictor):
                     )
                     return AutoACMGCriteria(
                         name="PM1",
-                        prediction=AutoACMGPrediction.Met,
+                        prediction=AutoACMGPrediction.Applicable,
                         strength=AutoACMGStrength.PathogenicModerate,
                         summary=comment,
                     )
@@ -157,7 +154,7 @@ class CoagulationFactorDeficiencyPredictor(DefaultSeqVarPredictor):
             )
             return AutoACMGCriteria(
                 name="PM1",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicModerate,
                 summary=comment,
             )
@@ -165,7 +162,7 @@ class CoagulationFactorDeficiencyPredictor(DefaultSeqVarPredictor):
         # If no criteria match
         return AutoACMGCriteria(
             name="PM1",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.PathogenicModerate,
             summary=f"Variant does not meet the PM1 criteria for {var_data.hgnc_id}.",
         )

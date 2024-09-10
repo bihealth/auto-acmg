@@ -10,7 +10,7 @@ from src.defs.auto_acmg import (
 )
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
-from src.vcep.malignant_hyperthermia_susceptibility import MalignantHyperthermiaPredictor
+from src.vcep import MalignantHyperthermiaPredictor
 
 
 @pytest.fixture
@@ -49,7 +49,7 @@ def test_predict_pm1_met_for_moderate_region(malignant_hyperthermia_predictor, a
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for variants in moderate regions."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -69,7 +69,7 @@ def test_predict_pm1_met_for_supporting_region(malignant_hyperthermia_predictor,
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for variants in supporting regions."
     assert (
         result.strength == AutoACMGStrength.PathogenicSupporting
@@ -90,7 +90,7 @@ def test_predict_pm1_not_met(malignant_hyperthermia_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met for non-critical region variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -109,7 +109,7 @@ def test_predict_pm1_fallback_to_default(
     auto_acmg_data.hgnc_id = "HGNC:9999"  # Gene not in the specific logic
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default PM1 prediction fallback.",
     )
@@ -119,7 +119,7 @@ def test_predict_pm1_fallback_to_default(
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met in the default fallback."
     assert (
         "Default PM1 prediction fallback." in result.summary
@@ -129,7 +129,11 @@ def test_predict_pm1_fallback_to_default(
 @patch.object(MalignantHyperthermiaPredictor, "_get_af", return_value=0.1)
 @patch.object(MalignantHyperthermiaPredictor, "_ba1_exception", return_value=False)
 def test_verify_pm2ba1bs1bs2(
-    mock_get_af, mock_ba1_exception, malignant_hyperthermia_predictor, auto_acmg_data, seqvar
+    mock_get_af,
+    mock_ba1_exception,
+    malignant_hyperthermia_predictor,
+    auto_acmg_data,
+    seqvar,
 ):
     # Setup: Adjusting the thresholds to test under different conditions
     auto_acmg_data.thresholds.ba1_benign = 0.05
@@ -204,12 +208,12 @@ def test_predict_pp3bp4_calls_superclass(
     mock_super_predict_pp3bp4.return_value = (
         AutoACMGCriteria(
             name="PP3",
-            prediction=AutoACMGPrediction.Met,
+            prediction=AutoACMGPrediction.Applicable,
             strength=AutoACMGStrength.PathogenicSupporting,
         ),
         AutoACMGCriteria(
             name="BP4",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.BenignSupporting,
         ),
     )
@@ -221,20 +225,36 @@ def test_predict_pp3bp4_calls_superclass(
     mock_super_predict_pp3bp4.assert_called_once_with(
         malignant_hyperthermia_predictor.seqvar, auto_acmg_data
     )
-    assert pp3_result.prediction == AutoACMGPrediction.Met
-    assert bp4_result.prediction == AutoACMGPrediction.NotMet
+    assert pp3_result.prediction == AutoACMGPrediction.Applicable
+    assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
 
 
 @pytest.mark.parametrize(
     "revel_score, expected_pp3, expected_bp4",
     [
-        (0.9, AutoACMGPrediction.Met, AutoACMGPrediction.NotMet),  # High REVEL score
-        (0.7, AutoACMGPrediction.NotMet, AutoACMGPrediction.NotMet),  # Intermediate REVEL score
-        (0.4, AutoACMGPrediction.NotMet, AutoACMGPrediction.Met),  # Low REVEL score
+        (
+            0.9,
+            AutoACMGPrediction.Applicable,
+            AutoACMGPrediction.NotApplicable,
+        ),  # High REVEL score
+        (
+            0.7,
+            AutoACMGPrediction.NotApplicable,
+            AutoACMGPrediction.NotApplicable,
+        ),  # Intermediate REVEL score
+        (
+            0.4,
+            AutoACMGPrediction.NotApplicable,
+            AutoACMGPrediction.Applicable,
+        ),  # Low REVEL score
     ],
 )
 def test_predict_pp3bp4_revel_scenarios(
-    malignant_hyperthermia_predictor, auto_acmg_data, revel_score, expected_pp3, expected_bp4
+    malignant_hyperthermia_predictor,
+    auto_acmg_data,
+    revel_score,
+    expected_pp3,
+    expected_bp4,
 ):
     """Test different REVEL score scenarios."""
     auto_acmg_data.scores.dbnsfp.revel = revel_score
@@ -244,10 +264,14 @@ def test_predict_pp3bp4_revel_scenarios(
     ) as mock_super_predict_pp3bp4:
         mock_super_predict_pp3bp4.return_value = (
             AutoACMGCriteria(
-                name="PP3", prediction=expected_pp3, strength=AutoACMGStrength.PathogenicSupporting
+                name="PP3",
+                prediction=expected_pp3,
+                strength=AutoACMGStrength.PathogenicSupporting,
             ),
             AutoACMGCriteria(
-                name="BP4", prediction=expected_bp4, strength=AutoACMGStrength.BenignSupporting
+                name="BP4",
+                prediction=expected_bp4,
+                strength=AutoACMGStrength.BenignSupporting,
             ),
         )
 
@@ -267,12 +291,12 @@ def test_predict_pp3bp4_strength(malignant_hyperthermia_predictor, auto_acmg_dat
         mock_super_predict_pp3bp4.return_value = (
             AutoACMGCriteria(
                 name="PP3",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicSupporting,
             ),
             AutoACMGCriteria(
                 name="BP4",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.BenignSupporting,
             ),
         )
@@ -295,12 +319,12 @@ def test_predict_pp3bp4_no_revel_score(malignant_hyperthermia_predictor, auto_ac
         mock_super_predict_pp3bp4.return_value = (
             AutoACMGCriteria(
                 name="PP3",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.PathogenicSupporting,
             ),
             AutoACMGCriteria(
                 name="BP4",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.BenignSupporting,
             ),
         )
@@ -309,8 +333,8 @@ def test_predict_pp3bp4_no_revel_score(malignant_hyperthermia_predictor, auto_ac
             malignant_hyperthermia_predictor.seqvar, auto_acmg_data
         )
 
-        assert pp3_result.prediction == AutoACMGPrediction.NotMet
-        assert bp4_result.prediction == AutoACMGPrediction.NotMet
+        assert pp3_result.prediction == AutoACMGPrediction.NotApplicable
+        assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
 
 
 def test_predict_pp3bp4_error_handling(malignant_hyperthermia_predictor, auto_acmg_data):

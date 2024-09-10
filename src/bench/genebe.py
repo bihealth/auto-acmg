@@ -26,17 +26,26 @@ with open(path, "rt") as inputf:
         if record["variant"].startswith("#"):
             continue
         variants.append(
-            (record["variant"], record["expected_criteria"].split(";"), record["comment"])
+            (
+                record["variant"],
+                record["expected_criteria"].split(";"),
+                record["comment"],
+            )
         )
 print(f"Number of variants: {len(variants)}")
 # ========================================
 
 # =========== Run the benchmark ===========
 list_of_variants = gnb.parse_hgvs(
-    [variant[0] for variant in variants], username=genebe_username, api_key=genebe_api_key
+    [variant[0] for variant in variants],
+    username=genebe_username,
+    api_key=genebe_api_key,
 )
 df = gnb.annotate_variants_list_to_dataframe(
-    list_of_variants, flatten_consequences=True, username=genebe_username, api_key=genebe_api_key
+    list_of_variants,
+    flatten_consequences=True,
+    username=genebe_username,
+    api_key=genebe_api_key,
 )
 
 # Export the dataframe to a csv file

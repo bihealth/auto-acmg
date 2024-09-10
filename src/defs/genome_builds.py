@@ -1,7 +1,5 @@
 """Genome build information and operations."""
 
-from enum import auto
-
 from src.defs.core import AutoAcmgBaseEnum
 from src.defs.exceptions import MappingError
 

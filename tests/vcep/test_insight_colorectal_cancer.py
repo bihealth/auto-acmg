@@ -12,7 +12,7 @@ from src.defs.auto_acmg import (
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
-from src.vcep.insight_colorectal_cancer import InsightColorectalCancerPredictor
+from src.vcep import InsightColorectalCancerPredictor
 
 
 @pytest.fixture
@@ -296,7 +296,7 @@ def test_predict_pm1_fallback_to_default(
     auto_acmg_data.hgnc_id = "HGNC:9999"  # Gene not in the specific logic
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default PM1 prediction fallback.",
     )
@@ -306,7 +306,7 @@ def test_predict_pm1_fallback_to_default(
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met in the default fallback."
     assert (
         "Default PM1 prediction fallback." in result.summary
@@ -406,7 +406,9 @@ def test_predict_pp2bp1_apc_missense_high_benign_ratio(
     pp2, bp1 = insight_colorectal_cancer_predictor.predict_pp2bp1(seqvar, auto_acmg_data_apc)
 
     assert pp2.prediction == AutoACMGPrediction.NotApplicable, "PP2 should be NotApplicable."
-    assert bp1.prediction == AutoACMGPrediction.Met, "BP1 should be Met due to high benign ratio."
+    assert (
+        bp1.prediction == AutoACMGPrediction.Applicable
+    ), "BP1 should be Met due to high benign ratio."
     assert (
         "Benign ratio" in bp1.summary and "is met" in bp1.summary
     ), "BP1 summary should confirm criteria met due to benign ratio."
@@ -429,7 +431,7 @@ def test_predict_pp2bp1_apc_missense_low_benign_ratio(
 
     assert pp2.prediction == AutoACMGPrediction.NotApplicable, "PP2 should be NotApplicable."
     assert (
-        bp1.prediction == AutoACMGPrediction.NotMet
+        bp1.prediction == AutoACMGPrediction.NotApplicable
     ), "BP1 should not be Met due to low benign ratio."
     assert (
         "Benign ratio" in bp1.summary and "is not met" in bp1.summary
@@ -466,7 +468,7 @@ def test_predict_bp7_fallback_to_default(
     # Set the mock return value for the superclass's predict_bp7 method
     mock_super_predict_bp7.return_value = AutoACMGCriteria(
         name="BP7",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.BenignSupporting,
         summary="Default BP7 prediction fallback.",
     )
@@ -478,7 +480,9 @@ def test_predict_bp7_fallback_to_default(
 
     # Verify the result and ensure the superclass method was called
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.NotMet, "BP7 should return NotMet as mocked."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
     assert (
         result.strength == AutoACMGStrength.BenignSupporting
     ), "The strength should be BenignSupporting."
@@ -513,7 +517,10 @@ def test_verify_pp3bp4_prediction_logic(
     """Test the prediction logic for PP3 and BP4."""
     mock_is_pathogenic_score.return_value = True
     mock_is_benign_score.return_value = False
-    mock_affect_spliceAI.side_effect = [True, False]  # First call True, second call False
+    mock_affect_spliceAI.side_effect = [
+        True,
+        False,
+    ]  # First call True, second call False
 
     prediction, comment = insight_colorectal_cancer_predictor.verify_pp3bp4(
         insight_colorectal_cancer_predictor.seqvar, auto_acmg_data

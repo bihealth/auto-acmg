@@ -240,9 +240,13 @@ class AutoBP7(AutoACMGHelper):
         pred, comment = self.verify_bp7(seqvar, var_data)
         if pred:
             pred_bp7 = (
-                AutoACMGPrediction.Met
+                AutoACMGPrediction.Applicable
                 if pred.BP7
-                else (AutoACMGPrediction.NotMet if pred.BP7 is False else AutoACMGPrediction.Failed)
+                else (
+                    AutoACMGPrediction.NotApplicable
+                    if pred.BP7 is False
+                    else AutoACMGPrediction.Failed
+                )
             )
             strength_bp7 = pred.BP7_strength
         else:

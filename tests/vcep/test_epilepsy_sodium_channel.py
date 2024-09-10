@@ -56,7 +56,7 @@ def test_predict_pm1_in_critical_region(epilepsy_sodium_channel_predictor, auto_
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for a variant in a critical region."
     assert (
         result.summary
@@ -74,7 +74,7 @@ def test_predict_pm1_outside_critical_region(epilepsy_sodium_channel_predictor, 
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met for a variant outside any critical region."
     assert (
         result.summary == "Variant does not meet the PM1 criteria for HGNC:10585."
@@ -89,7 +89,7 @@ def test_predict_pm1_fallback_to_default(
     auto_acmg_data.hgnc_id = "HGNC:99999"  # Gene not in PM1_CLUSTER
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default PM1 prediction fallback.",
     )
@@ -99,7 +99,7 @@ def test_predict_pm1_fallback_to_default(
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met if the gene is not in the PM1_CLUSTER."
     assert (
         "Default PM1 prediction fallback." in result.summary
@@ -115,7 +115,7 @@ def test_predict_pm1_edge_case_start_boundary(epilepsy_sodium_channel_predictor,
     )
 
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met when on the start boundary of a critical region."
     assert (
         result.summary
@@ -132,7 +132,7 @@ def test_predict_pm1_edge_case_end_boundary(epilepsy_sodium_channel_predictor, a
     )
 
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met when on the end boundary of a critical region."
     assert (
         result.summary
@@ -236,12 +236,12 @@ def test_predict_pp3bp4_calls_superclass(
     mock_super_predict_pp3bp4.return_value = (
         AutoACMGCriteria(
             name="PP3",
-            prediction=AutoACMGPrediction.Met,
+            prediction=AutoACMGPrediction.Applicable,
             strength=AutoACMGStrength.PathogenicSupporting,
         ),
         AutoACMGCriteria(
             name="BP4",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.BenignSupporting,
         ),
     )
@@ -253,20 +253,36 @@ def test_predict_pp3bp4_calls_superclass(
     mock_super_predict_pp3bp4.assert_called_once_with(
         epilepsy_sodium_channel_predictor.seqvar, auto_acmg_data
     )
-    assert pp3_result.prediction == AutoACMGPrediction.Met
-    assert bp4_result.prediction == AutoACMGPrediction.NotMet
+    assert pp3_result.prediction == AutoACMGPrediction.Applicable
+    assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
 
 
 @pytest.mark.parametrize(
     "revel_score, expected_pp3, expected_bp4",
     [
-        (0.9, AutoACMGPrediction.Met, AutoACMGPrediction.NotMet),  # High REVEL score
-        (0.5, AutoACMGPrediction.NotMet, AutoACMGPrediction.NotMet),  # Intermediate REVEL score
-        (0.1, AutoACMGPrediction.NotMet, AutoACMGPrediction.Met),  # Low REVEL score
+        (
+            0.9,
+            AutoACMGPrediction.Applicable,
+            AutoACMGPrediction.NotApplicable,
+        ),  # High REVEL score
+        (
+            0.5,
+            AutoACMGPrediction.NotApplicable,
+            AutoACMGPrediction.NotApplicable,
+        ),  # Intermediate REVEL score
+        (
+            0.1,
+            AutoACMGPrediction.NotApplicable,
+            AutoACMGPrediction.Applicable,
+        ),  # Low REVEL score
     ],
 )
 def test_predict_pp3bp4_revel_scenarios(
-    epilepsy_sodium_channel_predictor, auto_acmg_data, revel_score, expected_pp3, expected_bp4
+    epilepsy_sodium_channel_predictor,
+    auto_acmg_data,
+    revel_score,
+    expected_pp3,
+    expected_bp4,
 ):
     """Test different REVEL score scenarios."""
     auto_acmg_data.scores.dbnsfp.revel = revel_score
@@ -276,10 +292,14 @@ def test_predict_pp3bp4_revel_scenarios(
     ) as mock_super_predict_pp3bp4:
         mock_super_predict_pp3bp4.return_value = (
             AutoACMGCriteria(
-                name="PP3", prediction=expected_pp3, strength=AutoACMGStrength.PathogenicSupporting
+                name="PP3",
+                prediction=expected_pp3,
+                strength=AutoACMGStrength.PathogenicSupporting,
             ),
             AutoACMGCriteria(
-                name="BP4", prediction=expected_bp4, strength=AutoACMGStrength.BenignSupporting
+                name="BP4",
+                prediction=expected_bp4,
+                strength=AutoACMGStrength.BenignSupporting,
             ),
         )
 
@@ -299,12 +319,12 @@ def test_predict_pp3bp4_strength(epilepsy_sodium_channel_predictor, auto_acmg_da
         mock_super_predict_pp3bp4.return_value = (
             AutoACMGCriteria(
                 name="PP3",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicSupporting,
             ),
             AutoACMGCriteria(
                 name="BP4",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.BenignSupporting,
             ),
         )
@@ -327,12 +347,12 @@ def test_predict_pp3bp4_no_revel_score(epilepsy_sodium_channel_predictor, auto_a
         mock_super_predict_pp3bp4.return_value = (
             AutoACMGCriteria(
                 name="PP3",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.PathogenicSupporting,
             ),
             AutoACMGCriteria(
                 name="BP4",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.BenignSupporting,
             ),
         )
@@ -341,8 +361,8 @@ def test_predict_pp3bp4_no_revel_score(epilepsy_sodium_channel_predictor, auto_a
             epilepsy_sodium_channel_predictor.seqvar, auto_acmg_data
         )
 
-        assert pp3_result.prediction == AutoACMGPrediction.NotMet
-        assert bp4_result.prediction == AutoACMGPrediction.NotMet
+        assert pp3_result.prediction == AutoACMGPrediction.NotApplicable
+        assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
 
 
 def test_predict_pp3bp4_error_handling(epilepsy_sodium_channel_predictor, auto_acmg_data):

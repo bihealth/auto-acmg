@@ -31,7 +31,15 @@ PM1_CLUSTER: Dict[str, Dict[str, Dict[str, List]]] = {
     # DICER1
     "HGNC:17098": {
         "moderate": {
-            "residues": [1344, 1705, 1709, 1713, 1809, 1810, 1813],  # Metal ion-binding residues
+            "residues": [
+                1344,
+                1705,
+                1709,
+                1713,
+                1809,
+                1810,
+                1813,
+            ],  # Metal ion-binding residues
         },
         "supporting": {
             "domains": [(1682, 1846)],  # RNase IIIb domain excluding the metal ion-binding residues
@@ -41,7 +49,6 @@ PM1_CLUSTER: Dict[str, Dict[str, Dict[str, List]]] = {
 
 
 class DICER1Predictor(DefaultSeqVarPredictor):
-
     def _is_pathogenic(self, variant_info: VariantResult) -> bool:
         """Override _is_pathogenic for DICER1."""
         if variant_info.clinvar and variant_info.clinvar.records:
@@ -78,7 +85,7 @@ class DICER1Predictor(DefaultSeqVarPredictor):
         if not gene_cluster:
             return AutoACMGCriteria(
                 name="PM1",
-                prediction=AutoACMGPrediction.NotMet,
+                prediction=AutoACMGPrediction.NotApplicable,
                 strength=AutoACMGStrength.PathogenicModerate,
                 summary="Variant does not affect a critical domain for DICER1.",
             )
@@ -91,7 +98,7 @@ class DICER1Predictor(DefaultSeqVarPredictor):
             )
             return AutoACMGCriteria(
                 name="PM1",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicModerate,
                 summary=comment,
             )
@@ -106,7 +113,7 @@ class DICER1Predictor(DefaultSeqVarPredictor):
                 )
                 return AutoACMGCriteria(
                     name="PM1",
-                    prediction=AutoACMGPrediction.Met,
+                    prediction=AutoACMGPrediction.Applicable,
                     strength=AutoACMGStrength.PathogenicSupporting,
                     summary=comment,
                 )
@@ -114,7 +121,7 @@ class DICER1Predictor(DefaultSeqVarPredictor):
         # If no criteria match
         return AutoACMGCriteria(
             name="PM1",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.PathogenicModerate,
             summary="Variant does not affect a critical domain for DICER1.",
         )

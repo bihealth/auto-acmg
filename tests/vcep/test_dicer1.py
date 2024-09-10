@@ -126,7 +126,7 @@ def test_predict_pm1_moderate_criteria_residue(dicer1_predictor, auto_acmg_data)
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for metal ion-binding residues."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -146,7 +146,7 @@ def test_predict_pm1_supporting_criteria_domain(dicer1_predictor, auto_acmg_data
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for residues within the RNase IIIb domain."
     assert (
         result.strength == AutoACMGStrength.PathogenicSupporting
@@ -164,7 +164,7 @@ def test_predict_pm1_outside_critical_region(dicer1_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met for non-critical regions."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -181,7 +181,7 @@ def test_predict_pm1_not_applicable_gene(dicer1_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met if gene is not in PM1_CLUSTER."
     assert (
         "does not affect a critical domain for DICER1" in result.summary
@@ -195,7 +195,7 @@ def test_predict_pm1_edge_case_start_boundary_moderate(dicer1_predictor, auto_ac
     result = dicer1_predictor.predict_pm1(dicer1_predictor.seqvar, auto_acmg_data)
 
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for the start boundary of a metal ion-binding residue."
     assert (
         "affects a metal ion-binding residue" in result.summary
@@ -209,7 +209,7 @@ def test_predict_pm1_edge_case_end_boundary_supporting(dicer1_predictor, auto_ac
     result = dicer1_predictor.predict_pm1(dicer1_predictor.seqvar, auto_acmg_data)
 
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for the end boundary of the RNase IIIb domain."
     assert (
         "affects a residue in the RNase IIIb domain" in result.summary
@@ -309,7 +309,7 @@ def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, dicer1_predicto
     # Set the mock return value for the superclass's predict_bp7 method
     mock_super_predict_bp7.return_value = AutoACMGCriteria(
         name="BP7",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.BenignSupporting,
         summary="Default BP7 prediction fallback.",
     )
@@ -319,7 +319,9 @@ def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, dicer1_predicto
 
     # Verify the result and ensure the superclass method was called
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.NotMet, "BP7 should return NotMet as mocked."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
     assert (
         result.strength == AutoACMGStrength.BenignSupporting
     ), "The strength should be BenignSupporting."
@@ -343,9 +345,9 @@ def test_predict_pp3bp4_revel_thresholds(dicer1_predictor, auto_acmg_data):
 @pytest.mark.parametrize(
     "revel_score, expected_pp3, expected_bp4",
     [
-        (0.8, AutoACMGPrediction.Met, AutoACMGPrediction.NotMet),
-        (0.6, AutoACMGPrediction.NotMet, AutoACMGPrediction.NotMet),
-        (0.4, AutoACMGPrediction.NotMet, AutoACMGPrediction.Met),
+        (0.8, AutoACMGPrediction.Applicable, AutoACMGPrediction.NotApplicable),
+        (0.6, AutoACMGPrediction.NotApplicable, AutoACMGPrediction.NotApplicable),
+        (0.4, AutoACMGPrediction.NotApplicable, AutoACMGPrediction.Applicable),
     ],
 )
 @pytest.mark.skip(reason="Fix it")
@@ -372,8 +374,8 @@ def test_predict_pp3bp4_splicing(mock_affect_splicing, dicer1_predictor, auto_ac
         dicer1_predictor.seqvar, auto_acmg_data
     )
 
-    assert pp3_result.prediction == AutoACMGPrediction.Met
-    assert bp4_result.prediction == AutoACMGPrediction.NotMet
+    assert pp3_result.prediction == AutoACMGPrediction.Applicable
+    assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
 
 
 @patch.object(DICER1Predictor, "_affect_splicing")
@@ -386,8 +388,8 @@ def test_predict_pp3bp4_no_splicing_effect(mock_affect_splicing, dicer1_predicto
         dicer1_predictor.seqvar, auto_acmg_data
     )
 
-    assert pp3_result.prediction == AutoACMGPrediction.NotMet
-    assert bp4_result.prediction == AutoACMGPrediction.NotMet
+    assert pp3_result.prediction == AutoACMGPrediction.NotApplicable
+    assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
 
 
 @pytest.mark.skip(reason="Fix it")
@@ -399,8 +401,8 @@ def test_predict_pp3bp4_error_handling(dicer1_predictor, auto_acmg_data):
         dicer1_predictor.seqvar, auto_acmg_data
     )
 
-    assert pp3_result.prediction == AutoACMGPrediction.NotMet
-    assert bp4_result.prediction == AutoACMGPrediction.NotMet
+    assert pp3_result.prediction == AutoACMGPrediction.NotApplicable
+    assert bp4_result.prediction == AutoACMGPrediction.NotApplicable
     assert "Error in predicting PP3/BP4" in pp3_result.summary
     assert "Error in predicting PP3/BP4" in bp4_result.summary
 
@@ -431,8 +433,8 @@ def test_predict_pp3bp4_superclass_call(
     mock_super_predict_pp3bp4, dicer1_predictor, auto_acmg_data
 ):
     mock_super_predict_pp3bp4.return_value = (
-        AutoACMGCriteria(name="PP3", prediction=AutoACMGPrediction.Met),
-        AutoACMGCriteria(name="BP4", prediction=AutoACMGPrediction.NotMet),
+        AutoACMGCriteria(name="PP3", prediction=AutoACMGPrediction.Applicable),
+        AutoACMGCriteria(name="BP4", prediction=AutoACMGPrediction.NotApplicable),
     )
 
     pp3_result, bp4_result = dicer1_predictor.predict_pp3bp4(
@@ -440,5 +442,5 @@ def test_predict_pp3bp4_superclass_call(
     )
 
     mock_super_predict_pp3bp4.assert_called_once_with(dicer1_predictor.seqvar, auto_acmg_data)
-    assert pp3_result.prediction == AutoACMGPrediction.Met
-    assert bp4_result.prediction == AutoACMGPrediction.NotMet
+    assert pp3_result.prediction == AutoACMGPrediction.Applicable
+    assert bp4_result.prediction == AutoACMGPrediction.NotApplicable

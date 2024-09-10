@@ -4,7 +4,7 @@ import pytest
 
 from src.auto_acmg import VCEP_MAPPING, AutoACMG
 from src.core.config import Config
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGPrediction, AutoACMGSeqVarResult
+from src.defs.auto_acmg import AutoACMGPrediction, AutoACMGSeqVarResult
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.auto_bp7 import AutoBP7
@@ -21,17 +21,61 @@ from src.seqvar.auto_bp7 import AutoBP7
         # ("NM_000314.6(PTEN):c.1104T>C", GenomeRelease.GRCh37, True),
         # ("NM_000314.6(PTEN):c.360A>C", GenomeRelease.GRCh37, True),
         # ("NM_000314.6(PTEN):c.18A>G", GenomeRelease.GRCh37, True),
-        ("NM_000257.3(MYH7):c.3036C>T", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        ("NM_000156.6(GAMT):c.279C>T", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        ("NM_004700.3(KCNQ4):c.720C>G", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        ("NM_004985.4(KRAS):c.451-14T>C", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        ("NM_005343.3(HRAS):c.510G>A", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        ("NM_004333.4(BRAF):c.111G>A", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        ("NM_000152.5(GAA):c.1332T>C", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        ("NM_001754.4(RUNX1):c.1317C>T", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        ("NM_001754.4(RUNX1):c.36G>A", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        ("NM_001754.4(RUNX1):c.843C>T", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
-        ("NM_005633.3(SOS1):c.1230G>A", GenomeRelease.GRCh37, AutoACMGPrediction.Met),
+        (
+            "NM_000257.3(MYH7):c.3036C>T",
+            GenomeRelease.GRCh37,
+            AutoACMGPrediction.Applicable,
+        ),
+        (
+            "NM_000156.6(GAMT):c.279C>T",
+            GenomeRelease.GRCh37,
+            AutoACMGPrediction.Applicable,
+        ),
+        (
+            "NM_004700.3(KCNQ4):c.720C>G",
+            GenomeRelease.GRCh37,
+            AutoACMGPrediction.Applicable,
+        ),
+        (
+            "NM_004985.4(KRAS):c.451-14T>C",
+            GenomeRelease.GRCh37,
+            AutoACMGPrediction.Applicable,
+        ),
+        (
+            "NM_005343.3(HRAS):c.510G>A",
+            GenomeRelease.GRCh37,
+            AutoACMGPrediction.Applicable,
+        ),
+        (
+            "NM_004333.4(BRAF):c.111G>A",
+            GenomeRelease.GRCh37,
+            AutoACMGPrediction.Applicable,
+        ),
+        (
+            "NM_000152.5(GAA):c.1332T>C",
+            GenomeRelease.GRCh37,
+            AutoACMGPrediction.Applicable,
+        ),
+        (
+            "NM_001754.4(RUNX1):c.1317C>T",
+            GenomeRelease.GRCh37,
+            AutoACMGPrediction.Applicable,
+        ),
+        (
+            "NM_001754.4(RUNX1):c.36G>A",
+            GenomeRelease.GRCh37,
+            AutoACMGPrediction.Applicable,
+        ),
+        (
+            "NM_001754.4(RUNX1):c.843C>T",
+            GenomeRelease.GRCh37,
+            AutoACMGPrediction.Applicable,
+        ),
+        (
+            "NM_005633.3(SOS1):c.1230G>A",
+            GenomeRelease.GRCh37,
+            AutoACMGPrediction.Applicable,
+        ),
     ],
 )
 def test_bp7(

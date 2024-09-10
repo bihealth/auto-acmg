@@ -6,8 +6,7 @@ import pytest
 
 from src.auto_acmg import VCEP_MAPPING, AutoACMG
 from src.core.config import Config
-from src.defs.annonars_variant import AnnonarsVariantResponse
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGSeqVarResult
+from src.defs.auto_acmg import AutoACMGSeqVarResult
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.auto_pp2_bp1 import AutoPP2BP1

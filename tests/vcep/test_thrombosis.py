@@ -11,7 +11,7 @@ from src.defs.auto_acmg import (
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
-from src.vcep.thrombosis import ThrombosisPredictor
+from src.vcep import ThrombosisPredictor
 
 
 @pytest.fixture
@@ -38,7 +38,7 @@ def test_predict_pm1_in_cysteine_residue(thrombosis_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for cysteine residue variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -56,7 +56,7 @@ def test_predict_pm1_in_heparin_binding_residue(thrombosis_predictor, auto_acmg_
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for heparin binding site variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -74,7 +74,7 @@ def test_predict_pm1_in_reactive_site_residue(thrombosis_predictor, auto_acmg_da
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for reactive site variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -92,7 +92,7 @@ def test_predict_pm1_not_met(thrombosis_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met for non-critical residue variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -108,7 +108,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, thrombosis_predictor,
     auto_acmg_data.hgnc_id = "HGNC:9999"  # Gene not in the Thrombosis VCEP
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default fallback for PM1.",
     )
@@ -116,7 +116,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, thrombosis_predictor,
     result = thrombosis_predictor.predict_pm1(thrombosis_predictor.seqvar, auto_acmg_data)
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met in the default fallback."
     assert (
         "Default fallback for PM1." in result.summary
@@ -211,7 +211,10 @@ def test_verify_pp3bp4_prediction_logic(
     """Test the prediction logic for PP3 and BP4."""
     mock_is_pathogenic_score.return_value = True
     mock_is_benign_score.return_value = False
-    mock_affect_spliceAI.side_effect = [True, False]  # First call True, second call False
+    mock_affect_spliceAI.side_effect = [
+        True,
+        False,
+    ]  # First call True, second call False
 
     prediction, comment = thrombosis_predictor.verify_pp3bp4(
         thrombosis_predictor.seqvar, auto_acmg_data
@@ -289,7 +292,6 @@ def test_verify_pp3bp4_spliceai_thresholds(thrombosis_predictor, auto_acmg_data)
         patch.object(ThrombosisPredictor, "_is_benign_score", return_value=False),
         patch.object(ThrombosisPredictor, "_affect_spliceAI", return_value=False),
     ):
-
         thrombosis_predictor.verify_pp3bp4(thrombosis_predictor.seqvar, auto_acmg_data)
 
         # Check that default SpliceAI thresholds are used

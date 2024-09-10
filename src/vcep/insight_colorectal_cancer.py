@@ -57,7 +57,6 @@ SPECs: List[VcepSpec] = [
 
 
 class InsightColorectalCancerPredictor(DefaultSeqVarPredictor):
-
     def verify_ps1pm5(
         self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[Optional[PS1PM5], str]:
@@ -157,8 +156,9 @@ class InsightColorectalCancerPredictor(DefaultSeqVarPredictor):
         comment = "BP1 is not applicable for the gene."
         if var_data.hgnc_id == "HGNC:583":  # APC
             if self._is_missense(var_data):
-                start_pos, end_pos = min(var_data.cds_start, var_data.cds_end), max(
-                    var_data.cds_start, var_data.cds_end
+                start_pos, end_pos = (
+                    min(var_data.cds_start, var_data.cds_end),
+                    max(var_data.cds_start, var_data.cds_end),
                 )
                 _, benign_count, total_count = self._get_missense_vars(seqvar, start_pos, end_pos)
                 benign_ratio = benign_count / total_count
@@ -193,7 +193,9 @@ class InsightColorectalCancerPredictor(DefaultSeqVarPredictor):
             ),
             AutoACMGCriteria(
                 name="BP1",
-                prediction=AutoACMGPrediction.Met if bp1 else AutoACMGPrediction.NotMet,
+                prediction=(
+                    AutoACMGPrediction.Applicable if bp1 else AutoACMGPrediction.NotApplicable
+                ),
                 strength=AutoACMGStrength.BenignSupporting,
                 summary=comment,
             ),

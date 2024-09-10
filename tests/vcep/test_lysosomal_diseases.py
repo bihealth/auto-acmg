@@ -11,7 +11,7 @@ from src.defs.auto_acmg import (
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
-from src.vcep.lysosomal_diseases import LysosomalDiseasesPredictor
+from src.vcep import LysosomalDiseasesPredictor
 
 
 @pytest.fixture
@@ -40,7 +40,7 @@ def test_predict_pm1_met_for_critical_residue(lysosomal_diseases_predictor, auto
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for critical residue variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -60,7 +60,7 @@ def test_predict_pm1_not_met(lysosomal_diseases_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met for non-critical residue variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -78,7 +78,7 @@ def test_predict_pm1_fallback_to_default(
     auto_acmg_data.hgnc_id = "HGNC:9999"  # Gene not in the specific logic
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default PM1 prediction fallback.",
     )
@@ -88,7 +88,7 @@ def test_predict_pm1_fallback_to_default(
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met in the default fallback."
     assert (
         "Default PM1 prediction fallback." in result.summary
@@ -189,7 +189,10 @@ def test_verify_pp3bp4_prediction_logic(
     """Test the prediction logic for PP3 and BP4."""
     mock_is_pathogenic_score.return_value = True
     mock_is_benign_score.return_value = False
-    mock_affect_spliceAI.side_effect = [True, False]  # First call True, second call False
+    mock_affect_spliceAI.side_effect = [
+        True,
+        False,
+    ]  # First call True, second call False
 
     prediction, comment = lysosomal_diseases_predictor.verify_pp3bp4(
         lysosomal_diseases_predictor.seqvar, auto_acmg_data
@@ -269,7 +272,6 @@ def test_verify_pp3bp4_spliceai_thresholds(lysosomal_diseases_predictor, auto_ac
         patch.object(LysosomalDiseasesPredictor, "_is_benign_score", return_value=False),
         patch.object(LysosomalDiseasesPredictor, "_affect_spliceAI", return_value=False),
     ):
-
         lysosomal_diseases_predictor.verify_pp3bp4(
             lysosomal_diseases_predictor.seqvar, auto_acmg_data
         )

@@ -23,7 +23,8 @@ REGEX_GNOMAD_VARIANT = re.compile(
 )
 #: Regular expression for canonical SPDI variant representation
 REGEX_CANONICAL_SPDI = re.compile(
-    r"^(?P<sequence>NC_(?:\d{6}\.\d+)):(?P<pos>\d+):(?P<delete>[ACGT]+):(?P<insert>[ACGT]+)$", re.I
+    r"^(?P<sequence>NC_(?:\d{6}\.\d+)):(?P<pos>\d+):(?P<delete>[ACGT]+):(?P<insert>[ACGT]+)$",
+    re.I,
 )
 #: Regular expression for "relaxed" SPDI variant representation
 REGEX_RELAXED_SPDI = re.compile(

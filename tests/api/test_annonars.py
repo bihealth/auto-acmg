@@ -191,7 +191,7 @@ async def test_get_gene_info_success(httpx_mock: HTTPXMock):
     mock_response = get_json_object("annonars/BRCA1_gene.json")
     httpx_mock.add_response(
         method="GET",
-        url=f"https://example.com/annonars/genes/info?hgnc_id=HGNC:1100",
+        url="https://example.com/annonars/genes/info?hgnc_id=HGNC:1100",
         json=mock_response,
         status_code=200,
     )
@@ -207,7 +207,7 @@ async def test_get_gene_info_failure(httpx_mock: HTTPXMock):
     mock_response = get_json_object("annonars/gene_failure.json")
     httpx_mock.add_response(
         method="GET",
-        url=f"https://example.com/annonars/genes/info?hgnc_id=HGNC:1100",
+        url="https://example.com/annonars/genes/info?hgnc_id=HGNC:1100",
         json=mock_response,
         status_code=200,
     )
@@ -223,7 +223,7 @@ async def test_get_gene_info_500(httpx_mock: HTTPXMock):
     """Test get_gene_info method with a 500 response."""
     httpx_mock.add_response(
         method="GET",
-        url=f"https://example.com/annonars/genes/info?hgnc_id=HGNC:1100",
+        url="https://example.com/annonars/genes/info?hgnc_id=HGNC:1100",
         status_code=500,
     )
 

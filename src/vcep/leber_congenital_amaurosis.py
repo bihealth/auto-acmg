@@ -37,7 +37,6 @@ PM1_CLUSTER = {
 
 
 class LeberCongenitalAmaurosisPredictor(DefaultSeqVarPredictor):
-
     def verify_ps1pm5(
         self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[Optional[PS1PM5], str]:
@@ -74,19 +73,19 @@ class LeberCongenitalAmaurosisPredictor(DefaultSeqVarPredictor):
             )
             return AutoACMGCriteria(
                 name="PM1",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicModerate,
                 summary=comment,
             )
 
         # If no criteria are met, return Not Met
         comment = (
-            f"Variant does not meet the PM1 criteria for Leber Congenital Amaurosis/early onset "
+            "Variant does not meet the PM1 criteria for Leber Congenital Amaurosis/early onset "
             "Retinal Dystrophy."
         )
         return AutoACMGCriteria(
             name="PM1",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.PathogenicModerate,
             summary=comment,
         )

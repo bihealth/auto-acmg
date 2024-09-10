@@ -110,7 +110,13 @@ def test_predict_seqvar(
     """Test the full prediction flow of AutoACMG."""
     mock_resolve_seqvar.return_value = seqvar
     mock_get_variant_info.return_value = mock_variant_result
-    mock_get_ts_info.return_value = (mock_seqvar_transcript, mock_seqvar_transcript, None, [], None)
+    mock_get_ts_info.return_value = (
+        mock_seqvar_transcript,
+        mock_seqvar_transcript,
+        None,
+        [],
+        None,
+    )
     mock_parse_data.return_value = MagicMock()
     mock_predict.return_value = MagicMock(spec=AutoACMGSeqVarResult)
 
@@ -124,7 +130,11 @@ def test_predict_seqvar(
 @patch("src.auto_acmg.AutoACMG.parse_strucvar_data")
 @patch("src.auto_acmg.StrucVarResolver.resolve_strucvar")
 def test_predict_strucvar(
-    mock_resolve_strucvar, mock_parse_data, mock_predict, auto_acmg: AutoACMG, strucvar: StrucVar
+    mock_resolve_strucvar,
+    mock_parse_data,
+    mock_predict,
+    auto_acmg: AutoACMG,
+    strucvar: StrucVar,
 ):
     """Test the prediction flow for structural variants."""
     # Setup the mocks
@@ -151,7 +161,8 @@ def test_predict_strucvar(
 
 
 @patch(
-    "src.auto_acmg.SeqVarResolver.resolve_seqvar", side_effect=AutoAcmgBaseException("ParseError")
+    "src.auto_acmg.SeqVarResolver.resolve_seqvar",
+    side_effect=AutoAcmgBaseException("ParseError"),
 )
 def test_resolve_variant_exception(mock_resolve_seqvar, auto_acmg: AutoACMG):
     """Test handling of exceptions during variant resolution."""
@@ -217,7 +228,10 @@ def test_convert_score_val(mock_convert_score_val, auto_acmg: AutoACMG):
 
 @patch("src.auto_acmg.AnnonarsClient.get_variant_info")
 def test_get_variant_info(
-    mock_get_variant_info, auto_acmg: AutoACMG, seqvar: SeqVar, mock_variant_result: MagicMock
+    mock_get_variant_info,
+    auto_acmg: AutoACMG,
+    seqvar: SeqVar,
+    mock_variant_result: MagicMock,
 ):
     """Test _get_variant_info method."""
     mock_get_variant_info.return_value.result = mock_variant_result

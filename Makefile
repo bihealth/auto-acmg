@@ -33,35 +33,46 @@ ci-docs-deps:
 
 .PHONY: format
 format:	\
-	format-black \
+	format-ruff \
 	format-isort
+
+.PHONY: format-ruff
+format-ruff:
+	pipenv run ruff format --line-length 100 $(DIRS_PYTHON)
 
 .PHONY: format-isort
 format-isort:
 	pipenv run isort --profile=black --line-length 100 $(DIRS_PYTHON)
 
-.PHONY: format-black
-format-black:
-	pipenv run black --line-length 100 $(DIRS_PYTHON)
+# .PHONY: format-black
+# format-black:
+# 	pipenv run black --line-length 100 $(DIRS_PYTHON)
+
+# .PHONY: format-autoflake
+# format-autoflake:
+# 	pipenv run autoflake --remove-all-unused-imports -i -r $(DIRS_PYTHON)
 
 .PHONY: lint
 lint: \
-	lint-black \
+	lint-ruff \
 	lint-isort \
-	lint-flake8 \
 	lint-mypy
+
+.PHONY: lint-ruff
+lint-ruff:
+	pipenv run ruff check --line-length 100 $(DIRS_PYTHON)
 
 .PHONY: lint-isort
 lint-isort:
 	pipenv run isort --profile=black --line-length 100 --check-only --diff $(DIRS_PYTHON)
 
-.PHONY: lint-black
-lint-black:
-	pipenv run black --check --line-length 100 --diff $(DIRS_PYTHON)
+# .PHONY: lint-black
+# lint-black:
+# 	pipenv run black --check --line-length 100 --diff $(DIRS_PYTHON)
 
-.PHONY: lint-flake8
-flake8:
-	pipenv run flake8 --max-line-length 100 $(DIRS_PYTHON)
+# .PHONY: lint-flake8
+# flake8:
+# 	pipenv run flake8 --max-line-length 100 $(DIRS_PYTHON)
 
 .PHONY: lint-mypy
 lint-mypy:

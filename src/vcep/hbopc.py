@@ -13,7 +13,6 @@ from typing import List, Optional, Tuple
 from loguru import logger
 
 from src.defs.auto_acmg import (
-    PP3BP4,
     PS1PM5,
     AutoACMGCriteria,
     AutoACMGPrediction,
@@ -40,7 +39,6 @@ SPECs: List[VcepSpec] = [
 
 
 class HBOPCPredictor(DefaultSeqVarPredictor):
-
     def _is_nonsense(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the variant is a nonsense/frameshift variant.
@@ -84,7 +82,10 @@ class HBOPCPredictor(DefaultSeqVarPredictor):
                     self.prediction_ps1pm5.PM5
                     and var_data.prot_pos < 3047
                     and self.undergo_nmd(
-                        var_data.tx_pos_utr, var_data.hgnc_id, var_data.strand, var_data.exons
+                        var_data.tx_pos_utr,
+                        var_data.hgnc_id,
+                        var_data.strand,
+                        var_data.exons,
                     )
                 ):
                     self.comment_ps1pm5 += (
@@ -107,7 +108,10 @@ class HBOPCPredictor(DefaultSeqVarPredictor):
                     self.prediction_ps1pm5.PM5
                     and var_data.prot_pos < 1183
                     and self.undergo_nmd(
-                        var_data.tx_pos_utr, var_data.hgnc_id, var_data.strand, var_data.exons
+                        var_data.tx_pos_utr,
+                        var_data.hgnc_id,
+                        var_data.strand,
+                        var_data.exons,
                     )
                 ):
                     self.comment_ps1pm5 += (
@@ -219,10 +223,10 @@ class HBOPCPredictor(DefaultSeqVarPredictor):
             pred, comment = self.verify_pm4bp3(seqvar, var_data)
             if pred:
                 pm4 = (
-                    AutoACMGPrediction.Met
+                    AutoACMGPrediction.Applicable
                     if pred.PM4
                     else (
-                        AutoACMGPrediction.NotMet
+                        AutoACMGPrediction.NotApplicable
                         if pred.PM4 is False
                         else AutoACMGPrediction.Failed
                     )
@@ -292,7 +296,9 @@ class HBOPCPredictor(DefaultSeqVarPredictor):
             ),
             AutoACMGCriteria(
                 name="BP1",
-                prediction=AutoACMGPrediction.Met if bp1 else AutoACMGPrediction.NotMet,
+                prediction=(
+                    AutoACMGPrediction.Applicable if bp1 else AutoACMGPrediction.NotApplicable
+                ),
                 strength=AutoACMGStrength.PathogenicSupporting,
                 summary=comment,
             ),

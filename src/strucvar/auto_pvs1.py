@@ -76,7 +76,9 @@ class StrucVarHelper(AutoACMGHelper):
             InvalidAPIResposeError: If the API response is invalid or cannot be processed.
         """
         logger.debug(
-            "Counting pathogenic variants from position {} to {}.", strucvar.start, strucvar.stop
+            "Counting pathogenic variants from position {} to {}.",
+            strucvar.start,
+            strucvar.stop,
         )
         if strucvar.stop < strucvar.start:
             raise AlgorithmError("End position is less than the start position.")
@@ -127,7 +129,11 @@ class StrucVarHelper(AutoACMGHelper):
             AlgorithmError: If the end position is less than the start position.
             InvalidAPIResposeError: If the API response is invalid or cannot be processed.
         """
-        logger.debug("Counting LoF variants from position {} to {}.", strucvar.start, strucvar.stop)
+        logger.debug(
+            "Counting LoF variants from position {} to {}.",
+            strucvar.start,
+            strucvar.stop,
+        )
         if strucvar.stop < strucvar.start:
             raise AlgorithmError("End position is less than the start position.")
 
@@ -160,7 +166,11 @@ class StrucVarHelper(AutoACMGHelper):
             )
 
     def _calc_cds(
-        self, exons: List[Exon], strand: GenomicStrand, start_codon: int, stop_codon: int
+        self,
+        exons: List[Exon],
+        strand: GenomicStrand,
+        start_codon: int,
+        stop_codon: int,
     ) -> List[Exon]:
         """
         Remove UTRs from exons.
@@ -302,7 +312,8 @@ class StrucVarHelper(AutoACMGHelper):
         affected_exons = [
             exon
             for exon in exons
-            if (
+            if
+            (
                 # The deletion affects the whole exon
                 (strucvar.start <= exon.altStartI and strucvar.stop >= exon.altEndI)
                 # The deletion starts within the exon
@@ -762,7 +773,7 @@ class AutoPVS1(StrucVarHelper):
         return AutoACMGCriteria(
             name="PVS1",
             prediction=(
-                AutoACMGPrediction.Met
+                AutoACMGPrediction.Applicable
                 if pred
                 in [
                     PVS1Prediction.PVS1,
@@ -770,7 +781,7 @@ class AutoPVS1(StrucVarHelper):
                     PVS1Prediction.PVS1_Moderate,
                     PVS1Prediction.PVS1_Supporting,
                 ]
-                else AutoACMGPrediction.NotMet
+                else AutoACMGPrediction.NotApplicable
             ),
             strength=evidence_strength_mapping[pred],
             summary=comment,

@@ -1,6 +1,6 @@
 """Annonars API client."""
 
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 import httpx
 from loguru import logger

@@ -39,7 +39,7 @@ def test_in_repeat_region_true(mock_tabix_open, auto_pm4bp3, seqvar):
     mock_tabix_open.return_value = mock_tabix
 
     result = auto_pm4bp3._in_repeat_region(seqvar)
-    assert result == True
+    assert result is True
 
 
 @patch("src.seqvar.auto_pm4_bp3.tabix.open")
@@ -49,7 +49,7 @@ def test_in_repeat_region_false(mock_tabix_open, auto_pm4bp3, seqvar):
     mock_tabix_open.return_value = mock_tabix
 
     result = auto_pm4bp3._in_repeat_region(seqvar)
-    assert result == False
+    assert result is False
 
 
 @patch("src.seqvar.auto_pm4_bp3.tabix.open")
@@ -73,19 +73,23 @@ def var_data_is_stop_loss():
 
 def test_is_stop_loss_cadd_true(var_data_is_stop_loss):
     var_data_is_stop_loss.consequence.cadd = "some_effect stop_loss other_effect"
-    assert AutoPM4BP3._is_stop_loss(var_data_is_stop_loss) == True
+    assert AutoPM4BP3._is_stop_loss(var_data_is_stop_loss) is True
 
 
 def test_is_stop_loss_mehari_true(var_data_is_stop_loss):
     var_data_is_stop_loss.consequence.cadd = "some_effect other_effect"
-    var_data_is_stop_loss.consequence.mehari = ["some_effect", "stop_loss", "other_effect"]
-    assert AutoPM4BP3._is_stop_loss(var_data_is_stop_loss) == True
+    var_data_is_stop_loss.consequence.mehari = [
+        "some_effect",
+        "stop_loss",
+        "other_effect",
+    ]
+    assert AutoPM4BP3._is_stop_loss(var_data_is_stop_loss) is True
 
 
 def test_is_stop_loss_false(var_data_is_stop_loss):
     var_data_is_stop_loss.consequence.cadd = "some_effect other_effect"
     var_data_is_stop_loss.consequence.mehari = ["some_effect", "other_effect"]
-    assert AutoPM4BP3._is_stop_loss(var_data_is_stop_loss) == False
+    assert AutoPM4BP3._is_stop_loss(var_data_is_stop_loss) is False
 
 
 # ============== _is_inframe_delins =================
@@ -100,12 +104,12 @@ def var_data_is_inframe_delins():
 
 def test_inframe_deletion_cadd_true(var_data_is_inframe_delins):
     var_data_is_inframe_delins.consequence.cadd = "some_effect inframe_deletion other_effect"
-    assert AutoPM4BP3.is_inframe_delins(var_data_is_inframe_delins) == True
+    assert AutoPM4BP3.is_inframe_delins(var_data_is_inframe_delins) is True
 
 
 def test_inframe_insertion_cadd_true(var_data_is_inframe_delins):
     var_data_is_inframe_delins.consequence.cadd = "inframe_insertion some_effect other_effect"
-    assert AutoPM4BP3.is_inframe_delins(var_data_is_inframe_delins) == True
+    assert AutoPM4BP3.is_inframe_delins(var_data_is_inframe_delins) is True
 
 
 def test_inframe_deletion_mehari_true(var_data_is_inframe_delins):
@@ -115,7 +119,7 @@ def test_inframe_deletion_mehari_true(var_data_is_inframe_delins):
         "inframe_deletion",
         "other_effect",
     ]
-    assert AutoPM4BP3.is_inframe_delins(var_data_is_inframe_delins) == True
+    assert AutoPM4BP3.is_inframe_delins(var_data_is_inframe_delins) is True
 
 
 def test_inframe_insertion_mehari_true(var_data_is_inframe_delins):
@@ -125,13 +129,13 @@ def test_inframe_insertion_mehari_true(var_data_is_inframe_delins):
         "inframe_insertion",
         "other_effect",
     ]
-    assert AutoPM4BP3.is_inframe_delins(var_data_is_inframe_delins) == True
+    assert AutoPM4BP3.is_inframe_delins(var_data_is_inframe_delins) is True
 
 
 def test_inframe_delins_false(var_data_is_inframe_delins):
     var_data_is_inframe_delins.consequence.cadd = "some_effect other_effect"
     var_data_is_inframe_delins.consequence.mehari = ["some_effect", "other_effect"]
-    assert AutoPM4BP3.is_inframe_delins(var_data_is_inframe_delins) == False
+    assert AutoPM4BP3.is_inframe_delins(var_data_is_inframe_delins) is False
 
 
 # ================== _bp3_not_applicable ==================
@@ -162,8 +166,8 @@ def test_bp3_applicable_nuclear_dna(auto_pm4bp3, seqvar, auto_acmg_data):
 @patch.object(AutoPM4BP3, "_is_stop_loss", return_value=True)
 def test_stop_loss_variant(mock_is_stop_loss, auto_pm4bp3, seqvar, var_data):
     prediction, comment = auto_pm4bp3.verify_pm4bp3(seqvar, var_data)
-    assert prediction.PM4 == True
-    assert prediction.BP3 == False
+    assert prediction.PM4 is True
+    assert prediction.BP3 is False
     assert "stop-loss" in comment
 
 
@@ -171,11 +175,16 @@ def test_stop_loss_variant(mock_is_stop_loss, auto_pm4bp3, seqvar, var_data):
 @patch.object(AutoPM4BP3, "is_inframe_delins", return_value=True)
 @patch.object(AutoPM4BP3, "_in_repeat_region", return_value=False)
 def test_inframe_delins_outside_repeat(
-    mock_in_repeat_region, mock_is_inframe_delins, mock_is_stop_loss, auto_pm4bp3, seqvar, var_data
+    mock_in_repeat_region,
+    mock_is_inframe_delins,
+    mock_is_stop_loss,
+    auto_pm4bp3,
+    seqvar,
+    var_data,
 ):
     prediction, comment = auto_pm4bp3.verify_pm4bp3(seqvar, var_data)
-    assert prediction.PM4 == True
-    assert prediction.BP3 == False
+    assert prediction.PM4 is True
+    assert prediction.BP3 is False
     assert "not in a repeat region" in comment
 
 
@@ -183,11 +192,16 @@ def test_inframe_delins_outside_repeat(
 @patch.object(AutoPM4BP3, "is_inframe_delins", return_value=True)
 @patch.object(AutoPM4BP3, "_in_repeat_region", return_value=True)
 def test_inframe_delins_inside_repeat(
-    mock_in_repeat_region, mock_is_inframe_delins, mock_is_stop_loss, auto_pm4bp3, seqvar, var_data
+    mock_in_repeat_region,
+    mock_is_inframe_delins,
+    mock_is_stop_loss,
+    auto_pm4bp3,
+    seqvar,
+    var_data,
 ):
     prediction, comment = auto_pm4bp3.verify_pm4bp3(seqvar, var_data)
-    assert prediction.PM4 == False
-    assert prediction.BP3 == True
+    assert prediction.PM4 is False
+    assert prediction.BP3 is True
     assert "in a repeat region" in comment
 
 
@@ -197,8 +211,8 @@ def test_variant_not_meeting_criteria(
     mock_is_inframe_delins, mock_is_stop_loss, auto_pm4bp3, seqvar, var_data
 ):
     prediction, comment = auto_pm4bp3.verify_pm4bp3(seqvar, var_data)
-    assert prediction.PM4 == False
-    assert prediction.BP3 == False
+    assert prediction.PM4 is False
+    assert prediction.BP3 is False
     assert "not met" in comment
 
 
@@ -227,12 +241,12 @@ def test_predict_pm4bp3_success(mock_verify, auto_pm4bp3, seqvar, var_data):
     pm4_criteria, bp3_criteria = auto_pm4bp3.predict_pm4bp3(seqvar, var_data)
 
     assert pm4_criteria.name == "PM4"
-    assert pm4_criteria.prediction == AutoACMGPrediction.Met
+    assert pm4_criteria.prediction == AutoACMGPrediction.Applicable
     assert pm4_criteria.strength == AutoACMGStrength.PathogenicModerate
     assert "Verification successful." in pm4_criteria.summary
 
     assert bp3_criteria.name == "BP3"
-    assert bp3_criteria.prediction == AutoACMGPrediction.NotMet
+    assert bp3_criteria.prediction == AutoACMGPrediction.NotApplicable
     assert bp3_criteria.strength == AutoACMGStrength.BenignSupporting
     assert "Verification successful." in bp3_criteria.summary
 

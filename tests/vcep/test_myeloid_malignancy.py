@@ -12,8 +12,7 @@ from src.defs.auto_acmg import (
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
-from src.vcep.monogenic_diabetes import MonogenicDiabetesPredictor
-from src.vcep.myeloid_malignancy import MyeloidMalignancyPredictor
+from src.vcep import MyeloidMalignancyPredictor
 
 
 @pytest.fixture
@@ -153,7 +152,9 @@ def test_predict_pm1_moderate_criteria_runx1(myeloid_malignancy_predictor, auto_
     )
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.Met, "PM1 should be met for critical residues."
+    assert (
+        result.prediction == AutoACMGPrediction.Applicable
+    ), "PM1 should be met for critical residues."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
     ), "The strength should be PathogenicModerate."
@@ -171,7 +172,9 @@ def test_predict_pm1_supporting_criteria_runx1(myeloid_malignancy_predictor, aut
     )
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.Met, "PM1 should be met for supporting residues."
+    assert (
+        result.prediction == AutoACMGPrediction.Applicable
+    ), "PM1 should be met for supporting residues."
     assert (
         result.strength == AutoACMGStrength.PathogenicSupporting
     ), "The strength should be PathogenicSupporting."
@@ -190,7 +193,7 @@ def test_predict_pm1_not_met(myeloid_malignancy_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met for non-critical residues."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -208,7 +211,7 @@ def test_predict_pm1_fallback_to_default(
     auto_acmg_data.hgnc_id = "HGNC:9999"  # Gene not in the PM1_CLUSTER
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default PM1 prediction fallback.",
     )
@@ -218,7 +221,7 @@ def test_predict_pm1_fallback_to_default(
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met in the default fallback."
     assert (
         "Default PM1 prediction fallback." in result.summary
@@ -234,7 +237,11 @@ def test_bs2_not_applicable(myeloid_malignancy_predictor, auto_acmg_data):
 @patch.object(MyeloidMalignancyPredictor, "_get_af", return_value=0.1)
 @patch.object(MyeloidMalignancyPredictor, "_ba1_exception", return_value=False)
 def test_verify_pm2ba1bs1bs2(
-    mock_get_af, mock_ba1_exception, myeloid_malignancy_predictor, auto_acmg_data, seqvar
+    mock_get_af,
+    mock_ba1_exception,
+    myeloid_malignancy_predictor,
+    auto_acmg_data,
+    seqvar,
 ):
     # Setup: Adjusting the thresholds to test under different conditions
     auto_acmg_data.thresholds.ba1_benign = 0.05
@@ -334,7 +341,7 @@ def test_predict_bp7_fallback_to_default(
     # Set the mock return value for the superclass's predict_bp7 method
     mock_super_predict_bp7.return_value = AutoACMGCriteria(
         name="BP7",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.BenignSupporting,
         summary="Default BP7 prediction fallback.",
     )
@@ -346,7 +353,9 @@ def test_predict_bp7_fallback_to_default(
 
     # Verify the result and ensure the superclass method was called
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.NotMet, "BP7 should return NotMet as mocked."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
     assert (
         result.strength == AutoACMGStrength.BenignSupporting
     ), "The strength should be BenignSupporting."
@@ -463,7 +472,6 @@ def test_verify_pp3bp4_spliceai_thresholds(myeloid_malignancy_predictor, auto_ac
         patch.object(MyeloidMalignancyPredictor, "_is_benign_score", return_value=False),
         patch.object(MyeloidMalignancyPredictor, "_affect_spliceAI", return_value=False),
     ):
-
         myeloid_malignancy_predictor.verify_pp3bp4(
             myeloid_malignancy_predictor.seqvar, auto_acmg_data
         )

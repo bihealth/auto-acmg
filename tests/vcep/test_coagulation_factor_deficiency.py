@@ -20,7 +20,11 @@ from src.vcep import CoagulationFactorDeficiencyPredictor
 @pytest.fixture
 def seqvar():
     return SeqVar(
-        genome_release=GenomeRelease.GRCh37, chrom="X", pos=100000, delete="A", insert="T"
+        genome_release=GenomeRelease.GRCh37,
+        chrom="X",
+        pos=100000,
+        delete="A",
+        insert="T",
     )
 
 
@@ -74,7 +78,9 @@ def test_predict_pm1_strong_criteria(coagulation_predictor, auto_acmg_data):
     auto_acmg_data.prot_pos = 391  # Within the strong criteria for F8
     result = coagulation_predictor.predict_pm1(coagulation_predictor.seqvar, auto_acmg_data)
 
-    assert result.prediction == AutoACMGPrediction.Met, "PM1 should be met at the Strong level."
+    assert (
+        result.prediction == AutoACMGPrediction.Applicable
+    ), "PM1 should be met at the Strong level."
     assert (
         result.strength == AutoACMGStrength.PathogenicStrong
     ), "The strength should be PathogenicStrong."
@@ -89,7 +95,7 @@ def test_predict_pm1_moderate_criteria_residues(coagulation_predictor, auto_acmg
     result = coagulation_predictor.predict_pm1(coagulation_predictor.seqvar, auto_acmg_data)
 
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met at the Moderate level for residues."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -105,7 +111,7 @@ def test_predict_pm1_moderate_criteria_regions(coagulation_predictor, auto_acmg_
     result = coagulation_predictor.predict_pm1(coagulation_predictor.seqvar, auto_acmg_data)
 
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met at the Moderate level for regions."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -130,7 +136,7 @@ def test_predict_pm1_moderate_criteria_exons(coagulation_predictor, auto_acmg_da
     result = coagulation_predictor.predict_pm1(coagulation_predictor.seqvar, auto_acmg_data)
 
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met at the Moderate level for exons."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -146,7 +152,7 @@ def test_predict_pm1_no_criteria_met(coagulation_predictor, auto_acmg_data):
     result = coagulation_predictor.predict_pm1(coagulation_predictor.seqvar, auto_acmg_data)
 
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met when no criteria are matched."
     assert (
         "Variant does not meet the PM1 criteria" in result.summary
@@ -169,7 +175,7 @@ def test_predict_pm1_invalid_strand(coagulation_predictor, auto_acmg_data):
 @pytest.mark.skip(reason="Idk why this test is failing")
 def test_absent_in_males(coagulation_predictor, auto_acmg_data):
     assert (
-        coagulation_predictor._absent_in_males(auto_acmg_data) == True
+        coagulation_predictor._absent_in_males(auto_acmg_data) is True
     ), "Should return True when AC is 0 in males"
 
 
@@ -181,7 +187,7 @@ def test_absent_in_males(coagulation_predictor, auto_acmg_data):
 @pytest.mark.skip(reason="Idk why this test is failing")
 def test_not_absent_in_males(coagulation_predictor, auto_acmg_data):
     assert (
-        coagulation_predictor._absent_in_males(auto_acmg_data) == False
+        coagulation_predictor._absent_in_males(auto_acmg_data) is False
     ), "Should return False when AC is not 0 in males"
 
 
@@ -200,9 +206,9 @@ def test_verify_pm2ba1bs1bs2_pm2(
 ):
     result, comment = coagulation_predictor.verify_pm2ba1bs1bs2(seqvar, auto_acmg_data)
 
-    assert result.PM2 == True, "PM2 should be met when the variant is absent in males"
-    assert result.BA1 == False, "BA1 should not be met with low AF"
-    assert result.BS1 == False, "BS1 should not be met with low AF"
+    assert result.PM2 is True, "PM2 should be met when the variant is absent in males"
+    assert result.BA1 is False, "BA1 should not be met with low AF"
+    assert result.BS1 is False, "BS1 should not be met with low AF"
     assert comment == "The variant is absent in males: PM2 is met. ", "Comment should note PM2 met"
 
     # Test with different gene settings
@@ -228,9 +234,9 @@ def test_verify_pm2ba1bs1bs2_ba1(
 ):
     result, comment = coagulation_predictor.verify_pm2ba1bs1bs2(seqvar, auto_acmg_data)
 
-    assert result.PM2 == False, "PM2 should not be met when the variant present in males"
-    assert result.BA1 == True, "BA1 should be met with high AF"
-    assert result.BS1 == False, "BS1 should not be met with high BA1 met"
+    assert result.PM2 is False, "PM2 should not be met when the variant present in males"
+    assert result.BA1 is True, "BA1 should be met with high AF"
+    assert result.BS1 is False, "BS1 should not be met with high BA1 met"
 
 
 def test_bp3_not_applicable(coagulation_predictor, seqvar, auto_acmg_data):
@@ -308,8 +314,8 @@ def test_verify_pp3bp4_splicing_f8(mock_affect_spliceAI, coagulation_predictor, 
         coagulation_predictor.seqvar, auto_acmg_data
     )
 
-    assert prediction.PP3 == True
-    assert prediction.BP4 == False
+    assert prediction.PP3 is True
+    assert prediction.BP4 is False
 
 
 @patch.object(CoagulationFactorDeficiencyPredictor, "_affect_spliceAI")
@@ -321,8 +327,8 @@ def test_verify_pp3bp4_splicing_f9(mock_affect_spliceAI, coagulation_predictor, 
         coagulation_predictor.seqvar, auto_acmg_data
     )
 
-    assert prediction.PP3 == True
-    assert prediction.BP4 == False
+    assert prediction.PP3 is True
+    assert prediction.BP4 is False
 
 
 @patch.object(CoagulationFactorDeficiencyPredictor, "_affect_spliceAI")
@@ -337,8 +343,8 @@ def test_verify_pp3bp4_no_splicing_effect(
         coagulation_predictor.seqvar, auto_acmg_data
     )
 
-    assert prediction.PP3 == False
-    assert prediction.BP4 == True
+    assert prediction.PP3 is False
+    assert prediction.BP4 is True
 
 
 @pytest.mark.skip(reason="Fix it")
@@ -468,7 +474,7 @@ def test_predict_bp7_fallback_to_default(
     # Set the mock return value for the superclass's predict_bp7 method
     mock_super_predict_bp7.return_value = AutoACMGCriteria(
         name="BP7",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.BenignSupporting,
         summary="Default BP7 prediction fallback.",
     )
@@ -478,7 +484,9 @@ def test_predict_bp7_fallback_to_default(
 
     # Verify the result and ensure the superclass method was called
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.NotMet, "BP7 should return NotMet as mocked."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
     assert (
         result.strength == AutoACMGStrength.BenignSupporting
     ), "The strength should be BenignSupporting."

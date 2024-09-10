@@ -58,7 +58,7 @@ class FamilialHypercholesterolemiaPredictor(DefaultSeqVarPredictor):
             )
             return AutoACMGCriteria(
                 name="PM1",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicModerate,
                 summary=comment,
             )
@@ -66,10 +66,10 @@ class FamilialHypercholesterolemiaPredictor(DefaultSeqVarPredictor):
         # Check if the variant in the 4th exon
         affected_exon = self._get_affected_exon(var_data, seqvar)
         if affected_exon == 4:
-            comment = f"Variant affects the 4th exon in LDLR. PM1 is met."
+            comment = "Variant affects the 4th exon in LDLR. PM1 is met."
             return AutoACMGCriteria(
                 name="PM1",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicModerate,
                 summary=comment,
             )
@@ -77,9 +77,9 @@ class FamilialHypercholesterolemiaPredictor(DefaultSeqVarPredictor):
         # If no criteria match
         return AutoACMGCriteria(
             name="PM1",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.PathogenicModerate,
-            summary=f"Variant does not meet the PM1 criteria for LDLR.",
+            summary="Variant does not meet the PM1 criteria for LDLR.",
         )
 
     def predict_pm2ba1bs1bs2(

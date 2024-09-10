@@ -11,13 +11,17 @@ from src.defs.auto_acmg import (
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
-from src.vcep.vhl import VHLPredictor
+from src.vcep import VHLPredictor
 
 
 @pytest.fixture
 def seqvar():
     return SeqVar(
-        genome_release=GenomeRelease.GRCh37, chrom="3", pos=10191539, delete="C", insert="T"
+        genome_release=GenomeRelease.GRCh37,
+        chrom="3",
+        pos=10191539,
+        delete="C",
+        insert="T",
     )
 
 
@@ -40,7 +44,7 @@ def test_predict_pm1_in_moderate_residue(vhl_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for critical residue variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -58,7 +62,7 @@ def test_predict_pm1_not_met(vhl_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met for non-critical residue variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -74,7 +78,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, vhl_predictor, auto_a
     auto_acmg_data.hgnc_id = "HGNC:9999"  # Gene not in the VHL VCEP
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default fallback for PM1.",
     )
@@ -82,7 +86,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, vhl_predictor, auto_a
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met in the default fallback."
     assert (
         "Default fallback for PM1." in result.summary
@@ -164,7 +168,11 @@ def test_in_gxeex_repeat_region_false(vhl_predictor, auto_acmg_data):
 @patch.object(VHLPredictor, "_in_vhl_important_domain", return_value=True)
 @patch.object(VHLPredictor, "_in_gxeex_repeat_region", return_value=False)
 def test_verify_pm4bp3_in_important_domain(
-    mock_in_vhl_important_domain, mock_in_gxeex_repeat_region, vhl_predictor, seqvar, auto_acmg_data
+    mock_in_vhl_important_domain,
+    mock_in_gxeex_repeat_region,
+    vhl_predictor,
+    seqvar,
+    auto_acmg_data,
 ):
     """Test verify_pm4bp3 when the variant is an in-frame deletion in an important domain."""
     auto_acmg_data.consequence.cadd = "inframe_deletion"
@@ -182,7 +190,11 @@ def test_verify_pm4bp3_in_important_domain(
 @patch.object(VHLPredictor, "_in_vhl_important_domain", return_value=False)
 @patch.object(VHLPredictor, "_in_gxeex_repeat_region", return_value=True)
 def test_verify_pm4bp3_in_repeat_region(
-    mock_in_vhl_important_domain, mock_in_gxeex_repeat_region, vhl_predictor, seqvar, auto_acmg_data
+    mock_in_vhl_important_domain,
+    mock_in_gxeex_repeat_region,
+    vhl_predictor,
+    seqvar,
+    auto_acmg_data,
 ):
     """Test verify_pm4bp3 when the variant is in the GXEEX repeat region."""
     auto_acmg_data.consequence.cadd = "inframe_deletion"
@@ -202,7 +214,11 @@ def test_verify_pm4bp3_in_repeat_region(
 @patch.object(VHLPredictor, "_in_vhl_important_domain", return_value=False)
 @patch.object(VHLPredictor, "_in_gxeex_repeat_region", return_value=False)
 def test_verify_pm4bp3_neither_domain_nor_repeat(
-    mock_in_vhl_important_domain, mock_in_gxeex_repeat_region, vhl_predictor, seqvar, auto_acmg_data
+    mock_in_vhl_important_domain,
+    mock_in_gxeex_repeat_region,
+    vhl_predictor,
+    seqvar,
+    auto_acmg_data,
 ):
     """Test verify_pm4bp3 when the variant is neither in an important domain nor in the GXEEX repeat region."""
     auto_acmg_data.consequence.cadd = "inframe_deletion"
@@ -270,7 +286,7 @@ def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, vhl_predictor, 
     # Set the mock return value for the superclass's predict_bp7 method
     mock_super_predict_bp7.return_value = AutoACMGCriteria(
         name="BP7",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.BenignSupporting,
         summary="Default BP7 prediction fallback.",
     )
@@ -280,7 +296,9 @@ def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, vhl_predictor, 
 
     # Verify the result and ensure the superclass method was called
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.NotMet, "BP7 should return NotMet as mocked."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
     assert (
         result.strength == AutoACMGStrength.BenignSupporting
     ), "The strength should be BenignSupporting."
@@ -316,7 +334,10 @@ def test_verify_pp3bp4_prediction_logic(
     """Test the prediction logic for PP3 and BP4."""
     mock_is_pathogenic_score.return_value = True
     mock_is_benign_score.return_value = False
-    mock_affect_spliceAI.side_effect = [True, False]  # First call True, second call False
+    mock_affect_spliceAI.side_effect = [
+        True,
+        False,
+    ]  # First call True, second call False
 
     prediction, comment = vhl_predictor.verify_pp3bp4(vhl_predictor.seqvar, auto_acmg_data)
 
@@ -389,7 +410,6 @@ def test_verify_pp3bp4_spliceai_thresholds(vhl_predictor, auto_acmg_data):
         patch.object(VHLPredictor, "_is_benign_score", return_value=False),
         patch.object(VHLPredictor, "_affect_spliceAI", return_value=False),
     ):
-
         vhl_predictor.verify_pp3bp4(vhl_predictor.seqvar, auto_acmg_data)
 
         # Check that thresholds were adjusted for BP4

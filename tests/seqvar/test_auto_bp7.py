@@ -414,7 +414,9 @@ def test_verify_bp7_conserved_splicing(
 
 
 @patch.object(
-    AutoBP7, "_is_conserved", side_effect=AutoAcmgBaseException("Error calculating conservation")
+    AutoBP7,
+    "_is_conserved",
+    side_effect=AutoAcmgBaseException("Error calculating conservation"),
 )
 def test_verify_bp7_exception(mock_conserved, auto_bp7, seqvar, var_data_verify):
     """Test error handling when an exception occurs during the prediction process."""
@@ -446,7 +448,7 @@ def test_predict_bp7_met(mock_verify, auto_bp7, seqvar, bp7_result_met):
     """Test predict_bp7 where BP7 criterion is met."""
     mock_verify.return_value = bp7_result_met
     result = auto_bp7.predict_bp7(seqvar, MagicMock())
-    assert result.prediction == AutoACMGPrediction.Met
+    assert result.prediction == AutoACMGPrediction.Applicable
     assert result.strength == AutoACMGStrength.BenignSupporting
     assert "Criterion met." in result.summary
 
@@ -456,7 +458,7 @@ def test_predict_bp7_not_met(mock_verify, auto_bp7, seqvar, bp7_result_not_met):
     """Test predict_bp7 where BP7 criterion is not met."""
     mock_verify.return_value = bp7_result_not_met
     result = auto_bp7.predict_bp7(seqvar, MagicMock())
-    assert result.prediction == AutoACMGPrediction.NotMet
+    assert result.prediction == AutoACMGPrediction.NotApplicable
     assert result.strength == AutoACMGStrength.BenignSupporting
     assert "Criterion not met." in result.summary
 

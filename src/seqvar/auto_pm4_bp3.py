@@ -143,7 +143,7 @@ class AutoPM4BP3(AutoACMGHelper):
                 self.prediction_pm4bp3.BP3 = False
             # In-frame deletions/insertions
             elif self.is_inframe_delins(var_data):
-                self.comment_pm4bp3 = f"Variant consequence is in-frame deletion/insertion. "
+                self.comment_pm4bp3 = "Variant consequence is in-frame deletion/insertion. "
                 if not self._in_repeat_region(seqvar):
                     self.comment_pm4bp3 += (
                         "Variant is not in a repeat region or a conserved domain. PM4 is met."
@@ -180,14 +180,22 @@ class AutoPM4BP3(AutoACMGHelper):
         pred, comment = self.verify_pm4bp3(seqvar, var_data)
         if pred:
             pm4_pred = (
-                AutoACMGPrediction.Met
+                AutoACMGPrediction.Applicable
                 if pred.PM4
-                else (AutoACMGPrediction.NotMet if pred.PM4 is False else AutoACMGPrediction.Failed)
+                else (
+                    AutoACMGPrediction.NotApplicable
+                    if pred.PM4 is False
+                    else AutoACMGPrediction.Failed
+                )
             )
             bp3_pred = (
-                AutoACMGPrediction.Met
+                AutoACMGPrediction.Applicable
                 if pred.BP3
-                else (AutoACMGPrediction.NotMet if pred.BP3 is False else AutoACMGPrediction.Failed)
+                else (
+                    AutoACMGPrediction.NotApplicable
+                    if pred.BP3 is False
+                    else AutoACMGPrediction.Failed
+                )
             )
             pm4_strength = pred.PM4_strength
             bp3_strength = pred.BP3_strength

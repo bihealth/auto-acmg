@@ -3,7 +3,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.api.annonars import AnnonarsClient
-from src.api.mehari import MehariClient
 from src.defs.annonars_range import AnnonarsRangeResponse
 from src.defs.auto_acmg import AutoACMGPrediction, AutoACMGStrength, GenomicStrand
 from src.defs.auto_pvs1 import (
@@ -17,7 +16,7 @@ from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import Exon, GeneTranscripts, TranscriptsSeqVar
 from src.defs.seqvar import SeqVar
 from src.seqvar.auto_pvs1 import AutoPVS1, SeqVarPVS1Helper
-from src.utils import SeqVarTranscriptsHelper, SplicingPrediction
+from src.utils import SeqVarTranscriptsHelper
 from tests.utils import get_json_object
 
 
@@ -55,7 +54,13 @@ class MockExon:
 #: Mock the CdsInfo class
 class MockCdsInfo:
     def __init__(
-        self, start_codon, stop_codon, cds_start, cds_end, exons, cds_strand=GenomicStrand.Plus
+        self,
+        start_codon,
+        stop_codon,
+        cds_start,
+        cds_end,
+        exons,
+        cds_strand=GenomicStrand.Plus,
     ):
         self.start_codon = start_codon
         self.stop_codon = stop_codon
@@ -80,13 +85,21 @@ class MockCdsInfo:
         (100, [MockExon(0, 100, 0, 100)], GenomicStrand.Plus, (100, 100)),
         (
             150,
-            [MockExon(0, 100, 0, 100), MockExon(100, 200, 100, 200), MockExon(200, 300, 200, 300)],
+            [
+                MockExon(0, 100, 0, 100),
+                MockExon(100, 200, 100, 200),
+                MockExon(200, 300, 200, 300),
+            ],
             GenomicStrand.Plus,
             (150, 300),
         ),
         (
             150,
-            [MockExon(0, 100, 0, 100), MockExon(100, 200, 100, 200), MockExon(200, 300, 200, 300)],
+            [
+                MockExon(0, 100, 0, 100),
+                MockExon(100, 200, 100, 200),
+                MockExon(200, 300, 200, 300),
+            ],
             GenomicStrand.Plus,
             (150, 300),
         ),
@@ -235,10 +248,18 @@ def test_count_lof_vars(annonars_range_response, expected_result, seqvar):
             "NM_000001",
             {
                 "NM_000001": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                    start_codon=100,
+                    stop_codon=1000,
+                    cds_start=100,
+                    cds_end=1000,
+                    exons=[],
                 ),
                 "NM_000002": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                    start_codon=100,
+                    stop_codon=1000,
+                    cds_start=100,
+                    cds_end=1000,
+                    exons=[],
                 ),
             },
             None,
@@ -248,10 +269,18 @@ def test_count_lof_vars(annonars_range_response, expected_result, seqvar):
             "NM_000001",
             {
                 "NM_000001": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                    start_codon=100,
+                    stop_codon=1000,
+                    cds_start=100,
+                    cds_end=1000,
+                    exons=[],
                 ),
                 "NM_000002": MockCdsInfo(
-                    start_codon=150, stop_codon=1000, cds_start=150, cds_end=1000, exons=[]
+                    start_codon=150,
+                    stop_codon=1000,
+                    cds_start=150,
+                    cds_end=1000,
+                    exons=[],
                 ),
             },
             150,
@@ -261,13 +290,25 @@ def test_count_lof_vars(annonars_range_response, expected_result, seqvar):
             "NM_000001",
             {
                 "NM_000001": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                    start_codon=100,
+                    stop_codon=1000,
+                    cds_start=100,
+                    cds_end=1000,
+                    exons=[],
                 ),
                 "NM_000002": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                    start_codon=100,
+                    stop_codon=1000,
+                    cds_start=100,
+                    cds_end=1000,
+                    exons=[],
                 ),
                 "NM_000003": MockCdsInfo(
-                    start_codon=200, stop_codon=1000, cds_start=200, cds_end=1000, exons=[]
+                    start_codon=200,
+                    stop_codon=1000,
+                    cds_start=200,
+                    cds_end=1000,
+                    exons=[],
                 ),
             },
             200,
@@ -277,13 +318,25 @@ def test_count_lof_vars(annonars_range_response, expected_result, seqvar):
             "NM_000001",
             {
                 "NM_000001": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                    start_codon=100,
+                    stop_codon=1000,
+                    cds_start=100,
+                    cds_end=1000,
+                    exons=[],
                 ),
                 "NM_000002": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                    start_codon=100,
+                    stop_codon=1000,
+                    cds_start=100,
+                    cds_end=1000,
+                    exons=[],
                 ),
                 "NM_000003": MockCdsInfo(
-                    start_codon=100, stop_codon=2000, cds_start=100, cds_end=1000, exons=[]
+                    start_codon=100,
+                    stop_codon=2000,
+                    cds_start=100,
+                    cds_end=1000,
+                    exons=[],
                 ),
             },
             None,
@@ -427,11 +480,26 @@ def test_in_bio_relevant_tsx(transcript_tags, expected_result):
 @pytest.mark.parametrize(
     "pathogenic_variants, total_variants, strand, expected_result",
     [
-        (6, 100, GenomicStrand.Plus, True),  # Test pathogenic variants exceed the threshold
-        (3, 100, GenomicStrand.Plus, False),  # Test pathogenic variants do not exceed the threshold
+        (
+            6,
+            100,
+            GenomicStrand.Plus,
+            True,
+        ),  # Test pathogenic variants exceed the threshold
+        (
+            3,
+            100,
+            GenomicStrand.Plus,
+            False,
+        ),  # Test pathogenic variants do not exceed the threshold
         (0, 0, GenomicStrand.Plus, False),  # Test no variants are found
         (0, 100, GenomicStrand.Plus, False),  # Test no pathogenic variants are found
-        (100, 0, GenomicStrand.Plus, False),  # Test more pathogenic variants than total variants
+        (
+            100,
+            0,
+            GenomicStrand.Plus,
+            False,
+        ),  # Test more pathogenic variants than total variants
     ],
 )
 def test_crit4prot_func(
@@ -540,8 +608,14 @@ def helper():
 @pytest.mark.skip(reason="Patching is not working properly")
 @patch("src.seqvar.auto_pvs1.SeqVarPVS1Helper._skipping_exon_pos", return_value=(90, 111))
 @patch("src.seqvar.auto_pvs1.SplicingPrediction.get_sequence", return_value="ATGC" * 10)
-@patch("src.seqvar.auto_pvs1.SplicingPrediction.determine_splice_type", return_value="donor")
-@patch("src.seqvar.auto_pvs1.SplicingPrediction.get_cryptic_ss", return_value=[(95, "GT", 5)])
+@patch(
+    "src.seqvar.auto_pvs1.SplicingPrediction.determine_splice_type",
+    return_value="donor",
+)
+@patch(
+    "src.seqvar.auto_pvs1.SplicingPrediction.get_cryptic_ss",
+    return_value=[(95, "GT", 5)],
+)
 def test_exon_skip_or_cryptic_ss_disrupt_exon_skipping(
     mock_skipping_exon_pos, helper, seqvar_ss, exons, consequences
 ):
@@ -559,8 +633,14 @@ def test_exon_skip_or_cryptic_ss_disrupt_exon_skipping(
 @pytest.mark.skip(reason="Patching is not working properly")
 @patch("src.seqvar.auto_pvs1.SeqVarPVS1Helper._skipping_exon_pos", return_value=(90, 110))
 @patch("src.seqvar.auto_pvs1.SplicingPrediction.get_sequence", return_value="ATGC" * 10)
-@patch("src.seqvar.auto_pvs1.SplicingPrediction.determine_splice_type", return_value="donor")
-@patch("src.seqvar.auto_pvs1.SplicingPrediction.get_cryptic_ss", return_value=[(95, "GT", 5)])
+@patch(
+    "src.seqvar.auto_pvs1.SplicingPrediction.determine_splice_type",
+    return_value="donor",
+)
+@patch(
+    "src.seqvar.auto_pvs1.SplicingPrediction.get_cryptic_ss",
+    return_value=[(95, "GT", 5)],
+)
 def test_exon_skip_or_cryptic_ss_disrupt_cryptic_splice_site_disruption(
     mock_get_sequence,
     mock_determine_splice_type,
@@ -582,7 +662,10 @@ def test_exon_skip_or_cryptic_ss_disrupt_cryptic_splice_site_disruption(
 @pytest.mark.skip(reason="Patching is not working properly")
 @patch("src.seqvar.auto_pvs1.SeqVarPVS1Helper._skipping_exon_pos", return_value=(90, 110))
 @patch("src.seqvar.auto_pvs1.SplicingPrediction.get_sequence", return_value="ATGC" * 10)
-@patch("src.seqvar.auto_pvs1.SplicingPrediction.determine_splice_type", return_value="donor")
+@patch(
+    "src.seqvar.auto_pvs1.SplicingPrediction.determine_splice_type",
+    return_value="donor",
+)
 @patch("src.seqvar.auto_pvs1.SplicingPrediction.get_cryptic_ss", return_value=[])
 def test_exon_skip_or_cryptic_ss_disrupt_preserve_reading_frame(
     mock_get_sequence,
@@ -618,10 +701,18 @@ def test_exon_skip_or_cryptic_ss_disrupt_missing_strand(helper, seqvar_ss, exons
             "NM_000001",
             {
                 "NM_000001": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                    start_codon=100,
+                    stop_codon=1000,
+                    cds_start=100,
+                    cds_end=1000,
+                    exons=[],
                 ),
                 "NM_000002": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                    start_codon=100,
+                    stop_codon=1000,
+                    cds_start=100,
+                    cds_end=1000,
+                    exons=[],
                 ),
             },
             False,
@@ -631,10 +722,18 @@ def test_exon_skip_or_cryptic_ss_disrupt_missing_strand(helper, seqvar_ss, exons
             "NM_000001",
             {
                 "NM_000001": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                    start_codon=100,
+                    stop_codon=1000,
+                    cds_start=100,
+                    cds_end=1000,
+                    exons=[],
                 ),
                 "NM_000002": MockCdsInfo(
-                    start_codon=150, stop_codon=1000, cds_start=150, cds_end=1000, exons=[]
+                    start_codon=150,
+                    stop_codon=1000,
+                    cds_start=150,
+                    cds_end=1000,
+                    exons=[],
                 ),
             },
             True,
@@ -644,13 +743,25 @@ def test_exon_skip_or_cryptic_ss_disrupt_missing_strand(helper, seqvar_ss, exons
             "NM_000001",
             {
                 "NM_000001": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                    start_codon=100,
+                    stop_codon=1000,
+                    cds_start=100,
+                    cds_end=1000,
+                    exons=[],
                 ),
                 "NM_000002": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                    start_codon=100,
+                    stop_codon=1000,
+                    cds_start=100,
+                    cds_end=1000,
+                    exons=[],
                 ),
                 "NM_000003": MockCdsInfo(
-                    start_codon=200, stop_codon=1000, cds_start=200, cds_end=1000, exons=[]
+                    start_codon=200,
+                    stop_codon=1000,
+                    cds_start=200,
+                    cds_end=1000,
+                    exons=[],
                 ),
             },
             True,
@@ -660,13 +771,25 @@ def test_exon_skip_or_cryptic_ss_disrupt_missing_strand(helper, seqvar_ss, exons
             "NM_000001",
             {
                 "NM_000001": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                    start_codon=100,
+                    stop_codon=1000,
+                    cds_start=100,
+                    cds_end=1000,
+                    exons=[],
                 ),
                 "NM_000002": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                    start_codon=100,
+                    stop_codon=1000,
+                    cds_start=100,
+                    cds_end=1000,
+                    exons=[],
                 ),
                 "NM_000003": MockCdsInfo(
-                    start_codon=100, stop_codon=2000, cds_start=100, cds_end=1000, exons=[]
+                    start_codon=100,
+                    stop_codon=2000,
+                    cds_start=100,
+                    cds_end=1000,
+                    exons=[],
                 ),
             },
             False,
@@ -689,10 +812,18 @@ def test_alt_start_cdn(hgvs, cds_info, expected_result):
             "NM_000001",
             {
                 "NM_000001": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                    start_codon=100,
+                    stop_codon=1000,
+                    cds_start=100,
+                    cds_end=1000,
+                    exons=[],
                 ),
                 "NM_000002": MockCdsInfo(
-                    start_codon=150, stop_codon=1000, cds_start=150, cds_end=1000, exons=[]
+                    start_codon=150,
+                    stop_codon=1000,
+                    cds_start=150,
+                    cds_end=1000,
+                    exons=[],
                 ),
             },
             True,
@@ -704,10 +835,18 @@ def test_alt_start_cdn(hgvs, cds_info, expected_result):
             "NM_000001",
             {
                 "NM_000001": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                    start_codon=100,
+                    stop_codon=1000,
+                    cds_start=100,
+                    cds_end=1000,
+                    exons=[],
                 ),
                 "NM_000002": MockCdsInfo(
-                    start_codon=150, stop_codon=1000, cds_start=150, cds_end=1000, exons=[]
+                    start_codon=150,
+                    stop_codon=1000,
+                    cds_start=150,
+                    cds_end=1000,
+                    exons=[],
                 ),
             },
             False,
@@ -719,10 +858,18 @@ def test_alt_start_cdn(hgvs, cds_info, expected_result):
             "NM_000001",
             {
                 "NM_000001": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                    start_codon=100,
+                    stop_codon=1000,
+                    cds_start=100,
+                    cds_end=1000,
+                    exons=[],
                 ),
                 "NM_000002": MockCdsInfo(
-                    start_codon=150, stop_codon=1000, cds_start=150, cds_end=1000, exons=[]
+                    start_codon=150,
+                    stop_codon=1000,
+                    cds_start=150,
+                    cds_end=1000,
+                    exons=[],
                 ),
             },
             True,
@@ -734,10 +881,18 @@ def test_alt_start_cdn(hgvs, cds_info, expected_result):
             "NM_000001",
             {
                 "NM_000001": MockCdsInfo(
-                    start_codon=100, stop_codon=1000, cds_start=100, cds_end=1000, exons=[]
+                    start_codon=100,
+                    stop_codon=1000,
+                    cds_start=100,
+                    cds_end=1000,
+                    exons=[],
                 ),
                 "NM_000002": MockCdsInfo(
-                    start_codon=150, stop_codon=1000, cds_start=150, cds_end=1000, exons=[]
+                    start_codon=150,
+                    stop_codon=1000,
+                    cds_start=150,
+                    cds_end=1000,
+                    exons=[],
                 ),
             },
             False,
@@ -745,7 +900,14 @@ def test_alt_start_cdn(hgvs, cds_info, expected_result):
     ],
 )
 def test_up_pathogenic_vars(
-    seqvar, exons, strand, pathogenic_variants, hgvs, cds_info, expected_result, monkeypatch
+    seqvar,
+    exons,
+    strand,
+    pathogenic_variants,
+    hgvs,
+    cds_info,
+    expected_result,
+    monkeypatch,
 ):
     """Test the _up_pathogenic_vars method."""
     # Mocking _count_pathogenic_vars to return a controlled number of pathogenic variants
@@ -840,7 +1002,9 @@ def test_convert_consequence_mapped_mehari_priority(auto_pvs1, var_data):
 @patch.object(AutoPVS1, "lof_freq_in_pop", return_value=False)
 @patch.object(AutoPVS1, "lof_rm_gt_10pct_of_prot", return_value=False)
 @patch.object(
-    AutoPVS1, "_convert_consequence", return_value=SeqVarPVS1Consequence.NonsenseFrameshift
+    AutoPVS1,
+    "_convert_consequence",
+    return_value=SeqVarPVS1Consequence.NonsenseFrameshift,
 )
 def test_verify_pvs1_nonsense_frameshift(
     mock_convert_consequence,
@@ -922,7 +1086,7 @@ def test_predict_pvs1_met(mock_verify_pvs1, auto_pvs1, seqvar, var_data):
     result = auto_pvs1.predict_pvs1(seqvar, var_data)
 
     assert result.name == "PVS1", "Criteria name should be PVS1."
-    assert result.prediction == AutoACMGPrediction.Met, "Prediction should be Met."
+    assert result.prediction == AutoACMGPrediction.Applicable, "Prediction should be Met."
     assert (
         result.strength == AutoACMGStrength.PathogenicVeryStrong
     ), "Strength should be Very Strong."
@@ -942,7 +1106,7 @@ def test_predict_pvs1_not_met(mock_verify_pvs1, auto_pvs1, seqvar, var_data):
     result = auto_pvs1.predict_pvs1(seqvar, var_data)
 
     assert result.name == "PVS1", "Criteria name should be PVS1."
-    assert result.prediction == AutoACMGPrediction.NotMet, "Prediction should be Not Met."
+    assert result.prediction == AutoACMGPrediction.NotApplicable, "Prediction should be Not Met."
     assert (
         result.strength == AutoACMGStrength.PathogenicVeryStrong
     ), "Strength should be Very Strong."
@@ -962,7 +1126,7 @@ def test_predict_pvs1_strong(mock_verify_pvs1, auto_pvs1, seqvar, var_data):
     result = auto_pvs1.predict_pvs1(seqvar, var_data)
 
     assert result.name == "PVS1", "Criteria name should be PVS1."
-    assert result.prediction == AutoACMGPrediction.Met, "Prediction should be Met."
+    assert result.prediction == AutoACMGPrediction.Applicable, "Prediction should be Met."
     assert result.strength == AutoACMGStrength.PathogenicStrong, "Strength should be Strong."
     assert (
         "PVS1 strong criteria met." in result.summary
@@ -982,7 +1146,7 @@ def test_predict_pvs1_moderate(mock_verify_pvs1, auto_pvs1, seqvar, var_data):
     result = auto_pvs1.predict_pvs1(seqvar, var_data)
 
     assert result.name == "PVS1", "Criteria name should be PVS1."
-    assert result.prediction == AutoACMGPrediction.Met, "Prediction should be Met."
+    assert result.prediction == AutoACMGPrediction.Applicable, "Prediction should be Met."
     assert result.strength == AutoACMGStrength.PathogenicModerate, "Strength should be Moderate."
     assert (
         "PVS1 moderate criteria met." in result.summary
@@ -1002,7 +1166,7 @@ def test_predict_pvs1_supporting(mock_verify_pvs1, auto_pvs1, seqvar, var_data):
     result = auto_pvs1.predict_pvs1(seqvar, var_data)
 
     assert result.name == "PVS1", "Criteria name should be PVS1."
-    assert result.prediction == AutoACMGPrediction.Met, "Prediction should be Met."
+    assert result.prediction == AutoACMGPrediction.Applicable, "Prediction should be Met."
     assert (
         result.strength == AutoACMGStrength.PathogenicSupporting
     ), "Strength should be Supporting."

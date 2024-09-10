@@ -12,7 +12,7 @@ from src.defs.auto_acmg import (
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
-from src.vcep.pulmonary_hypertension import PulmonaryHypertensionPredictor
+from src.vcep import PulmonaryHypertensionPredictor
 
 
 @pytest.fixture
@@ -40,7 +40,9 @@ def test_predict_pm1_strong_criteria(pulmonary_hypertension_predictor, auto_acmg
     )
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.Met, "PM1 should be met at the Strong level."
+    assert (
+        result.prediction == AutoACMGPrediction.Applicable
+    ), "PM1 should be met at the Strong level."
     assert (
         result.strength == AutoACMGStrength.PathogenicStrong
     ), "The strength should be PathogenicStrong."
@@ -58,7 +60,9 @@ def test_predict_pm1_moderate_criteria(pulmonary_hypertension_predictor, auto_ac
     )
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.Met, "PM1 should be met at the Moderate level."
+    assert (
+        result.prediction == AutoACMGPrediction.Applicable
+    ), "PM1 should be met at the Moderate level."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
     ), "The strength should be PathogenicModerate."
@@ -77,7 +81,7 @@ def test_predict_pm1_non_critical_residue(pulmonary_hypertension_predictor, auto
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met for non-critical residues."
     assert (
         result.strength == AutoACMGStrength.PathogenicSupporting
@@ -95,7 +99,7 @@ def test_predict_pm1_fallback_to_default(
     auto_acmg_data.hgnc_id = "HGNC:9999"  # Gene not in the BMPR2 VCEP
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default PM1 prediction fallback.",
     )
@@ -105,7 +109,7 @@ def test_predict_pm1_fallback_to_default(
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met in the default fallback."
     assert (
         "Default PM1 prediction fallback." in result.summary
@@ -238,7 +242,10 @@ def test_verify_pp3bp4_prediction_logic(
     """Test the prediction logic for PP3 and BP4."""
     mock_is_pathogenic_score.return_value = True
     mock_is_benign_score.return_value = False
-    mock_affect_spliceAI.side_effect = [True, False]  # First call True, second call False
+    mock_affect_spliceAI.side_effect = [
+        True,
+        False,
+    ]  # First call True, second call False
 
     prediction, comment = pulmonary_hypertension_predictor.verify_pp3bp4(
         pulmonary_hypertension_predictor.seqvar, auto_acmg_data
@@ -251,11 +258,35 @@ def test_verify_pp3bp4_prediction_logic(
 @pytest.mark.parametrize(
     "revel_score, cadd_score, spliceAI_scores, expected_pp3, expected_bp4",
     [
-        (0.8, 25, [0.3, 0.3, 0.3, 0.3], True, False),  # High REVEL and CADD scores, high SpliceAI
-        (0.2, 10, [0.05, 0.05, 0.05, 0.05], False, True),  # Low REVEL and CADD scores, low SpliceAI
+        (
+            0.8,
+            25,
+            [0.3, 0.3, 0.3, 0.3],
+            True,
+            False,
+        ),  # High REVEL and CADD scores, high SpliceAI
+        (
+            0.2,
+            10,
+            [0.05, 0.05, 0.05, 0.05],
+            False,
+            True,
+        ),  # Low REVEL and CADD scores, low SpliceAI
         (0.5, 20, [0.15, 0.15, 0.15, 0.15], False, False),  # Intermediate scores
-        (0.8, 15, [0.05, 0.05, 0.05, 0.05], True, False),  # High REVEL, low CADD and SpliceAI
-        (0.2, 25, [0.3, 0.3, 0.3, 0.3], True, False),  # Low REVEL, high CADD and SpliceAI
+        (
+            0.8,
+            15,
+            [0.05, 0.05, 0.05, 0.05],
+            True,
+            False,
+        ),  # High REVEL, low CADD and SpliceAI
+        (
+            0.2,
+            25,
+            [0.3, 0.3, 0.3, 0.3],
+            True,
+            False,
+        ),  # Low REVEL, high CADD and SpliceAI
     ],
 )
 def test_verify_pp3bp4_various_scenarios(
@@ -320,7 +351,6 @@ def test_verify_pp3bp4_spliceai_thresholds(pulmonary_hypertension_predictor, aut
         patch.object(PulmonaryHypertensionPredictor, "_is_benign_score", return_value=False),
         patch.object(PulmonaryHypertensionPredictor, "_affect_spliceAI", return_value=False),
     ):
-
         pulmonary_hypertension_predictor.verify_pp3bp4(
             pulmonary_hypertension_predictor.seqvar, auto_acmg_data
         )

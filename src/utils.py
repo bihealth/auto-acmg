@@ -186,7 +186,11 @@ class SplicingPrediction:
                 maxentscore_alt = maxent.score3(altseq, matrix=self.matrix3)
 
         maxent_foldchange = maxentscore_alt / maxentscore_ref
-        return round(maxentscore_ref, 2), round(maxentscore_alt, 2), round(maxent_foldchange, 2)
+        return (
+            round(maxentscore_ref, 2),
+            round(maxentscore_alt, 2),
+            round(maxent_foldchange, 2),
+        )
 
     @staticmethod
     def determine_splice_type(consequences: List[str]) -> SpliceType:
@@ -282,7 +286,6 @@ class SplicingPrediction:
         splice_context = self.get_sequence(pos, pos + 9)
         if self.strand == GenomicStrand.Minus:
             splice_context = self.reverse_complement(splice_context)
-        altseq = self._generate_alt_sequence(splice_context, pos)
         maxentscore = maxent.score5(splice_context, matrix=self.matrix5)
 
         if (
@@ -303,7 +306,6 @@ class SplicingPrediction:
         splice_context = self.get_sequence(pos, pos + 23)
         if self.strand == GenomicStrand.Minus:
             splice_context = self.reverse_complement(splice_context)
-        altseq = self._generate_alt_sequence(splice_context, pos)
         maxentscore = maxent.score3(splice_context, matrix=self.matrix3)
 
         if (
@@ -406,7 +408,9 @@ class SeqVarTranscriptsHelper:
             raise AlgorithmError("Failed to get transcripts for the sequence variant.") from e
 
     @staticmethod
-    def _get_consequence(seqvar_transcript: TranscriptSeqvar | None) -> SeqVarPVS1Consequence:
+    def _get_consequence(
+        seqvar_transcript: TranscriptSeqvar | None,
+    ) -> SeqVarPVS1Consequence:
         """Get the consequence of the sequence variant.
 
         Args:

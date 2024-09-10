@@ -205,9 +205,13 @@ class AutoPM1(AutoACMGHelper):
         pred, comment = self.verify_pm1(seqvar, var_data)
         if pred:
             pm1_pred = (
-                AutoACMGPrediction.Met
+                AutoACMGPrediction.Applicable
                 if pred.PM1
-                else (AutoACMGPrediction.NotMet if pred.PM1 is False else AutoACMGPrediction.Failed)
+                else (
+                    AutoACMGPrediction.NotApplicable
+                    if pred.PM1 is False
+                    else AutoACMGPrediction.Failed
+                )
             )
             pm1_strength = pred.PM1_strength
         else:

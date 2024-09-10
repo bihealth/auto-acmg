@@ -13,7 +13,7 @@ from src.defs.exceptions import MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.default_predictor import DefaultSeqVarPredictor
-from src.vcep.scid import SCIDPredictor
+from src.vcep import SCIDPredictor
 
 
 @pytest.fixture
@@ -40,7 +40,7 @@ def test_predict_pm1_in_moderate_domain(scid_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for critical domain variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicModerate
@@ -58,7 +58,7 @@ def test_predict_pm1_in_supporting_domain(scid_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for supporting domain variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicSupporting
@@ -76,7 +76,7 @@ def test_predict_pm1_strong_residue(scid_predictor, auto_acmg_data):
 
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.Met
+        result.prediction == AutoACMGPrediction.Applicable
     ), "PM1 should be met for strong residue variants."
     assert (
         result.strength == AutoACMGStrength.PathogenicStrong
@@ -104,7 +104,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, scid_predictor, auto_
     auto_acmg_data.hgnc_id = "HGNC:9999"  # Gene not in the SCID VCEP
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default fallback for PM1.",
     )
@@ -112,7 +112,7 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, scid_predictor, auto_
     result = scid_predictor.predict_pm1(scid_predictor.seqvar, auto_acmg_data)
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
     assert (
-        result.prediction == AutoACMGPrediction.NotMet
+        result.prediction == AutoACMGPrediction.NotApplicable
     ), "PM1 should not be met in the default fallback."
     assert (
         "Default fallback for PM1." in result.summary
@@ -139,7 +139,7 @@ def test_check_zyg_homozygous_positive(
     auto_acmg_data,
 ):
     scid_predictor.comment_pm2ba1bs1bs2 = ""
-    assert scid_predictor._check_zyg(seqvar, auto_acmg_data) == True
+    assert scid_predictor._check_zyg(seqvar, auto_acmg_data) is True
     assert (
         "The variant is in a recessive (homozygous) disorder."
         in scid_predictor.comment_pm2ba1bs1bs2
@@ -166,7 +166,7 @@ def test_check_zyg_homozygous_negative(
     auto_acmg_data,
 ):
     scid_predictor.comment_pm2ba1bs1bs2 = ""
-    assert scid_predictor._check_zyg(seqvar, auto_acmg_data) == False
+    assert scid_predictor._check_zyg(seqvar, auto_acmg_data) is False
 
 
 @patch.object(
@@ -317,7 +317,7 @@ def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, scid_predictor,
     # Set the mock return value for the superclass's predict_bp7 method
     mock_super_predict_bp7.return_value = AutoACMGCriteria(
         name="BP7",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.BenignSupporting,
         summary="Default BP7 prediction fallback.",
     )
@@ -327,7 +327,9 @@ def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, scid_predictor,
 
     # Verify the result and ensure the superclass method was called
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.NotMet, "BP7 should return NotMet as mocked."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
     assert (
         result.strength == AutoACMGStrength.BenignSupporting
     ), "The strength should be BenignSupporting."
@@ -375,7 +377,10 @@ def test_verify_pp3bp4_prediction_logic_foxn1(
     auto_acmg_data.hgnc_id = "HGNC:12765"  # FOXN1 gene
     mock_is_pathogenic_score.return_value = True
     mock_is_benign_score.return_value = False
-    mock_affect_spliceAI.side_effect = [True, False]  # First call True, second call False
+    mock_affect_spliceAI.side_effect = [
+        True,
+        False,
+    ]  # First call True, second call False
 
     prediction, comment = scid_predictor.verify_pp3bp4(scid_predictor.seqvar, auto_acmg_data)
 
@@ -414,9 +419,27 @@ def test_verify_pp3bp4_prediction_logic_non_foxn1(
             False,
             True,
         ),  # FOXN1, Low REVEL score, low SpliceAI
-        ("HGNC:12765", 0.5, [0.15, 0.15, 0.15, 0.15], False, False),  # FOXN1, Intermediate scores
-        ("HGNC:1234", 0.2, [0.3, 0.3, 0.3, 0.3], True, False),  # Non-FOXN1, high SpliceAI
-        ("HGNC:1234", 0.2, [0.1, 0.1, 0.1, 0.1], False, False),  # Non-FOXN1, low SpliceAI
+        (
+            "HGNC:12765",
+            0.5,
+            [0.15, 0.15, 0.15, 0.15],
+            False,
+            False,
+        ),  # FOXN1, Intermediate scores
+        (
+            "HGNC:1234",
+            0.2,
+            [0.3, 0.3, 0.3, 0.3],
+            True,
+            False,
+        ),  # Non-FOXN1, high SpliceAI
+        (
+            "HGNC:1234",
+            0.2,
+            [0.1, 0.1, 0.1, 0.1],
+            False,
+            False,
+        ),  # Non-FOXN1, low SpliceAI
     ],
 )
 def test_verify_pp3bp4_various_scenarios(
@@ -478,7 +501,6 @@ def test_verify_pp3bp4_spliceai_thresholds(scid_predictor, auto_acmg_data):
         patch.object(SCIDPredictor, "_is_benign_score", return_value=False),
         patch.object(SCIDPredictor, "_affect_spliceAI", return_value=False),
     ):
-
         scid_predictor.verify_pp3bp4(scid_predictor.seqvar, auto_acmg_data)
 
         # Check that thresholds were adjusted for BP4

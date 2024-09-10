@@ -6,8 +6,7 @@ import pytest
 
 from src.auto_acmg import VCEP_MAPPING, AutoACMG
 from src.core.config import Config
-from src.defs.annonars_variant import AnnonarsVariantResponse
-from src.defs.auto_acmg import AutoACMGCriteria, AutoACMGPrediction, AutoACMGSeqVarResult
+from src.defs.auto_acmg import AutoACMGPrediction, AutoACMGSeqVarResult
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.auto_pm4_bp3 import AutoPM4BP3
@@ -28,17 +27,17 @@ from src.seqvar.auto_pm4_bp3 import AutoPM4BP3
         (
             "NM_000277.2(PAH):c.1092_1094del",
             GenomeRelease.GRCh37,
-            (AutoACMGPrediction.Met, AutoACMGPrediction.NotApplicable),
+            (AutoACMGPrediction.Applicable, AutoACMGPrediction.NotApplicable),
         ),
         (
             "NM_000277.2(PAH):c.1092_1106del",
             GenomeRelease.GRCh37,
-            (AutoACMGPrediction.Met, AutoACMGPrediction.NotApplicable),
+            (AutoACMGPrediction.Applicable, AutoACMGPrediction.NotApplicable),
         ),
         (
             "NM_000277.1(PAH):c.208_210delTCT",
             GenomeRelease.GRCh37,
-            (AutoACMGPrediction.Met, AutoACMGPrediction.NotApplicable),
+            (AutoACMGPrediction.Applicable, AutoACMGPrediction.NotApplicable),
         ),
         # ("NM_005249.4(FOXG1):c.209_232del24", GenomeRelease.GRCh37, (False, True)),
         # ("NM_005249.5(FOXG1):c.209_235del", GenomeRelease.GRCh37, (False, True)),

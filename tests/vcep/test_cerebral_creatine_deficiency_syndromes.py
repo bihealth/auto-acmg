@@ -101,7 +101,7 @@ def test_predict_pm1_fallback_to_default(
     """Test fallback to the default PM1 prediction method (if implemented)."""
     mock_predict_pm1.return_value = AutoACMGCriteria(
         name="PM1",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.PathogenicModerate,
         summary="Default PM1 prediction fallback.",
     )
@@ -134,7 +134,7 @@ def test_check_zyg_homozygous_positive(
     auto_acmg_data,
 ):
     cerebral_creatine_predictor.comment_pm2ba1bs1bs2 = ""
-    assert cerebral_creatine_predictor._check_zyg(seqvar, auto_acmg_data) == True
+    assert cerebral_creatine_predictor._check_zyg(seqvar, auto_acmg_data) is True
     assert (
         "The variant is in a recessive (homozygous) disorder."
         in cerebral_creatine_predictor.comment_pm2ba1bs1bs2
@@ -161,7 +161,7 @@ def test_check_zyg_homozygous_negative(
     auto_acmg_data,
 ):
     cerebral_creatine_predictor.comment_pm2ba1bs1bs2 = ""
-    assert cerebral_creatine_predictor._check_zyg(seqvar, auto_acmg_data) == False
+    assert cerebral_creatine_predictor._check_zyg(seqvar, auto_acmg_data) is False
 
 
 @patch.object(
@@ -329,7 +329,7 @@ def test_predict_pp2bp1(cerebral_creatine_predictor, seqvar, auto_acmg_data):
     [
         # (0.8, AutoACMGPrediction.Met, AutoACMGPrediction.NotMet),
         # (0.5, AutoACMGPrediction.NotMet, AutoACMGPrediction.NotMet),
-        (0.1, AutoACMGPrediction.NotMet, AutoACMGPrediction.Met),
+        (0.1, AutoACMGPrediction.NotApplicable, AutoACMGPrediction.Applicable),
     ],
 )
 def test_predict_pp3bp4_revel_scenarios(
@@ -352,7 +352,10 @@ def test_predict_pp3bp4_revel_scenarios(
 @patch.object(CerebralCreatineDeficiencySyndromesPredictor, "_is_inframe_indel")
 @patch.object(CerebralCreatineDeficiencySyndromesPredictor, "_affect_spliceAI")
 def test_predict_pp3bp4_inframe_indel(
-    mock_affect_spliceAI, mock_is_inframe_indel, cerebral_creatine_predictor, auto_acmg_data
+    mock_affect_spliceAI,
+    mock_is_inframe_indel,
+    cerebral_creatine_predictor,
+    auto_acmg_data,
 ):
     mock_is_inframe_indel.return_value = True
     mock_affect_spliceAI.return_value = False
@@ -363,7 +366,7 @@ def test_predict_pp3bp4_inframe_indel(
         cerebral_creatine_predictor.seqvar, auto_acmg_data
     )
 
-    assert pp3.prediction == AutoACMGPrediction.Met
+    assert pp3.prediction == AutoACMGPrediction.Applicable
     assert "In-frame indel predicted deleterious by PROVEAN and MutationTaster." in pp3.summary
 
 
@@ -375,7 +378,7 @@ def test_predict_pp3bp4_splicing(mock_affect_spliceAI, cerebral_creatine_predict
         cerebral_creatine_predictor.seqvar, auto_acmg_data
     )
 
-    assert pp3.prediction == AutoACMGPrediction.Met
+    assert pp3.prediction == AutoACMGPrediction.Applicable
     assert "Splicing predictions indicate an impact, meeting PP3." in pp3.summary
 
 
@@ -383,18 +386,22 @@ def test_predict_pp3bp4_no_criteria_met(cerebral_creatine_predictor, auto_acmg_d
     auto_acmg_data.scores.dbnsfp.revel = 0.5
     with (
         patch.object(
-            CerebralCreatineDeficiencySyndromesPredictor, "_is_inframe_indel", return_value=False
+            CerebralCreatineDeficiencySyndromesPredictor,
+            "_is_inframe_indel",
+            return_value=False,
         ),
         patch.object(
-            CerebralCreatineDeficiencySyndromesPredictor, "_affect_spliceAI", return_value=False
+            CerebralCreatineDeficiencySyndromesPredictor,
+            "_affect_spliceAI",
+            return_value=False,
         ),
     ):
         pp3, bp4 = cerebral_creatine_predictor.predict_pp3bp4(
             cerebral_creatine_predictor.seqvar, auto_acmg_data
         )
 
-    assert pp3.prediction == AutoACMGPrediction.NotMet
-    assert bp4.prediction == AutoACMGPrediction.Met
+    assert pp3.prediction == AutoACMGPrediction.NotApplicable
+    assert bp4.prediction == AutoACMGPrediction.Applicable
     assert "No significant splicing impact predicted, meeting BP4." in bp4.summary
 
 
@@ -410,7 +417,10 @@ def test_predict_pp3bp4_strength(cerebral_creatine_predictor, auto_acmg_data):
 @patch.object(CerebralCreatineDeficiencySyndromesPredictor, "_is_inframe_indel")
 @patch.object(CerebralCreatineDeficiencySyndromesPredictor, "_affect_spliceAI")
 def test_predict_pp3bp4_method_calls(
-    mock_affect_spliceAI, mock_is_inframe_indel, cerebral_creatine_predictor, auto_acmg_data
+    mock_affect_spliceAI,
+    mock_is_inframe_indel,
+    cerebral_creatine_predictor,
+    auto_acmg_data,
 ):
     mock_is_inframe_indel.return_value = False
     mock_affect_spliceAI.return_value = True
@@ -425,20 +435,24 @@ def test_predict_pp3bp4_multiple_criteria(cerebral_creatine_predictor, auto_acmg
     auto_acmg_data.scores.dbnsfp.revel = 0.8
     with (
         patch.object(
-            CerebralCreatineDeficiencySyndromesPredictor, "_is_inframe_indel", return_value=True
+            CerebralCreatineDeficiencySyndromesPredictor,
+            "_is_inframe_indel",
+            return_value=True,
         ),
         patch.object(
-            CerebralCreatineDeficiencySyndromesPredictor, "_affect_spliceAI", return_value=True
+            CerebralCreatineDeficiencySyndromesPredictor,
+            "_affect_spliceAI",
+            return_value=True,
         ),
     ):
         pp3, bp4 = cerebral_creatine_predictor.predict_pp3bp4(
             cerebral_creatine_predictor.seqvar, auto_acmg_data
         )
 
-    assert pp3.prediction == AutoACMGPrediction.Met
+    assert pp3.prediction == AutoACMGPrediction.Applicable
     assert "REVEL score 0.8 >= 0.75, meeting PP3." in pp3.summary
     assert "Splicing predictions indicate an impact, meeting PP3." in pp3.summary
-    assert bp4.prediction == AutoACMGPrediction.NotMet
+    assert bp4.prediction == AutoACMGPrediction.NotApplicable
 
 
 def test_predict_bp7_threshold_adjustment(cerebral_creatine_predictor, auto_acmg_data):
@@ -473,7 +487,7 @@ def test_predict_bp7_fallback_to_default(
     # Set the mock return value for the superclass's predict_bp7 method
     mock_super_predict_bp7.return_value = AutoACMGCriteria(
         name="BP7",
-        prediction=AutoACMGPrediction.NotMet,
+        prediction=AutoACMGPrediction.NotApplicable,
         strength=AutoACMGStrength.BenignSupporting,
         summary="Default BP7 prediction fallback.",
     )
@@ -485,7 +499,9 @@ def test_predict_bp7_fallback_to_default(
 
     # Verify the result and ensure the superclass method was called
     assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert result.prediction == AutoACMGPrediction.NotMet, "BP7 should return NotMet as mocked."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
     assert (
         result.strength == AutoACMGStrength.BenignSupporting
     ), "The strength should be BenignSupporting."

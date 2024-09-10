@@ -52,7 +52,6 @@ PM1_CLUSTER = {
 
 
 class MyeloidMalignancyPredictor(DefaultSeqVarPredictor):
-
     def _is_allowed_nonsense(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the variant is a nonsense/frameshift variant and is downstream of c.98.
@@ -143,7 +142,7 @@ class MyeloidMalignancyPredictor(DefaultSeqVarPredictor):
             )
             return AutoACMGCriteria(
                 name="PM1",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicModerate,
                 summary=comment,
             )
@@ -156,14 +155,14 @@ class MyeloidMalignancyPredictor(DefaultSeqVarPredictor):
             )
             return AutoACMGCriteria(
                 name="PM1",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicSupporting,
                 summary=comment,
             )
 
         return AutoACMGCriteria(
             name="PM1",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.PathogenicModerate,
             summary="Variant does not meet the PM1 criteria for RUNX1.",
         )

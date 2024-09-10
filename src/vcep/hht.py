@@ -84,7 +84,7 @@ class HHTPredictor(DefaultSeqVarPredictor):
             )
             return AutoACMGCriteria(
                 name="PM1",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicModerate,
                 summary=comment,
             )
@@ -92,7 +92,7 @@ class HHTPredictor(DefaultSeqVarPredictor):
         # If no criteria match
         return AutoACMGCriteria(
             name="PM1",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.PathogenicModerate,
             summary=f"Variant does not meet the PM1 criteria for {var_data.hgnc_id}.",
         )

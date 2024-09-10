@@ -90,7 +90,7 @@ class FBN1Predictor(DefaultSeqVarPredictor):
             )
             return AutoACMGCriteria(
                 name="PM1",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicStrong,
                 summary=comment,
             )
@@ -103,7 +103,7 @@ class FBN1Predictor(DefaultSeqVarPredictor):
             )
             return AutoACMGCriteria(
                 name="PM1",
-                prediction=AutoACMGPrediction.Met,
+                prediction=AutoACMGPrediction.Applicable,
                 strength=AutoACMGStrength.PathogenicModerate,
                 summary=comment,
             )
@@ -111,9 +111,9 @@ class FBN1Predictor(DefaultSeqVarPredictor):
         # If no criteria match
         return AutoACMGCriteria(
             name="PM1",
-            prediction=AutoACMGPrediction.NotMet,
+            prediction=AutoACMGPrediction.NotApplicable,
             strength=AutoACMGStrength.PathogenicModerate,
-            summary=f"Variant does not meet the PM1 criteria for FBN1.",
+            summary="Variant does not meet the PM1 criteria for FBN1.",
         )
 
     def _bs2_not_applicable(self, var_data: AutoACMGSeqVarData) -> bool:
@@ -144,9 +144,9 @@ class FBN1Predictor(DefaultSeqVarPredictor):
         pred, comment = self.verify_pp2bp1(seqvar, var_data)
         if pred:
             pp2_pred = (
-                AutoACMGPrediction.Met
+                AutoACMGPrediction.Applicable
                 if pred.PP2
-                else (AutoACMGPrediction.NotMet if pred.PP2 is False else AutoACMGPrediction.Failed)
+                else (AutoACMGPrediction.NotApplicable if pred.PP2 is False else AutoACMGPrediction.Failed)
             )
             pp2_strength = pred.PP2_strength
         else:

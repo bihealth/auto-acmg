@@ -14,7 +14,6 @@ from src.defs.auto_acmg import (
 from src.defs.auto_pvs1 import PVS1Prediction, PVS1PredictionStrucVarPath
 from src.defs.exceptions import AlgorithmError, InvalidAPIResposeError, MissingDataError
 from src.defs.genome_builds import GenomeRelease
-from src.defs.mehari import Exon
 from src.defs.strucvar import StrucVar, StrucVarType
 from src.strucvar.auto_pvs1 import AutoPVS1, StrucVarHelper
 
@@ -145,7 +144,9 @@ def test_count_pathogenic_vars_valid_range(strucvar_helper, strucvar, monkeypatc
         ),
     ]
     monkeypatch.setattr(
-        strucvar_helper.annonars_client, "get_variant_from_range", lambda x, y, z: mock_response
+        strucvar_helper.annonars_client,
+        "get_variant_from_range",
+        lambda x, y, z: mock_response,
     )
 
     pathogenic, total = strucvar_helper._count_pathogenic_vars(strucvar)
@@ -174,10 +175,12 @@ def test_count_lof_vars_successful(mock_get_variant_from_range, strucvar_helper,
     mock_response = MagicMock()
     mock_response.gnomad_genomes = [
         MagicMock(
-            vep=[MagicMock(consequence="Nonsense")], alleleCounts=[MagicMock(afPopmax=0.002)]
+            vep=[MagicMock(consequence="Nonsense")],
+            alleleCounts=[MagicMock(afPopmax=0.002)],
         ),
         MagicMock(
-            vep=[MagicMock(consequence="Frameshift")], alleleCounts=[MagicMock(afPopmax=0.0005)]
+            vep=[MagicMock(consequence="Frameshift")],
+            alleleCounts=[MagicMock(afPopmax=0.0005)],
         ),
     ]
     mock_get_variant_from_range.return_value = mock_response
@@ -217,11 +220,17 @@ def test_count_lof_vars_api_failure(mock_get_variant_from_range, strucvar_helper
     [
         # Basic functionality: proper removal of UTRs
         (
-            [MagicMock(altStartI=100, altEndI=200), MagicMock(altStartI=300, altEndI=400)],
+            [
+                MagicMock(altStartI=100, altEndI=200),
+                MagicMock(altStartI=300, altEndI=400),
+            ],
             GenomicStrand.Plus,
             50,
             50,
-            [MagicMock(altStartI=150, altEndI=200), MagicMock(altStartI=300, altEndI=350)],
+            [
+                MagicMock(altStartI=150, altEndI=200),
+                MagicMock(altStartI=300, altEndI=350),
+            ],
         ),
         # Edge cases: start or stop codon at the boundary
         (
@@ -235,11 +244,17 @@ def test_count_lof_vars_api_failure(mock_get_variant_from_range, strucvar_helper
         ),
         # Multiple exons with varying UTR positions
         (
-            [MagicMock(altStartI=100, altEndI=150), MagicMock(altStartI=200, altEndI=250)],
+            [
+                MagicMock(altStartI=100, altEndI=150),
+                MagicMock(altStartI=200, altEndI=250),
+            ],
             GenomicStrand.Plus,
             25,
             25,
-            [MagicMock(altStartI=125, altEndI=150), MagicMock(altStartI=200, altEndI=225)],
+            [
+                MagicMock(altStartI=125, altEndI=150),
+                MagicMock(altStartI=200, altEndI=225),
+            ],
         ),
         # No UTRs
         (
@@ -259,7 +274,10 @@ def test_count_lof_vars_api_failure(mock_get_variant_from_range, strucvar_helper
             GenomicStrand.Plus,
             75,
             0,
-            [MagicMock(altStartI=224, altEndI=250), MagicMock(altStartI=300, altEndI=350)],
+            [
+                MagicMock(altStartI=224, altEndI=250),
+                MagicMock(altStartI=300, altEndI=350),
+            ],
         ),
         # Multiple exons deletion from the end
         (
@@ -271,15 +289,24 @@ def test_count_lof_vars_api_failure(mock_get_variant_from_range, strucvar_helper
             GenomicStrand.Plus,
             0,
             75,
-            [MagicMock(altStartI=100, altEndI=150), MagicMock(altStartI=200, altEndI=226)],
+            [
+                MagicMock(altStartI=100, altEndI=150),
+                MagicMock(altStartI=200, altEndI=226),
+            ],
         ),
         # Standard functionality: removing UTRs from the end of one exon and start of another
         (
-            [MagicMock(altStartI=100, altEndI=200), MagicMock(altStartI=300, altEndI=400)],
+            [
+                MagicMock(altStartI=100, altEndI=200),
+                MagicMock(altStartI=300, altEndI=400),
+            ],
             GenomicStrand.Minus,
             50,
             50,
-            [MagicMock(altStartI=150, altEndI=200), MagicMock(altStartI=300, altEndI=350)],
+            [
+                MagicMock(altStartI=150, altEndI=200),
+                MagicMock(altStartI=300, altEndI=350),
+            ],
         ),
         # Boundary conditions: start or stop codon at the boundary
         (
@@ -291,11 +318,17 @@ def test_count_lof_vars_api_failure(mock_get_variant_from_range, strucvar_helper
         ),
         # Multiple exons with varying UTR removal
         (
-            [MagicMock(altStartI=100, altEndI=150), MagicMock(altStartI=200, altEndI=250)],
+            [
+                MagicMock(altStartI=100, altEndI=150),
+                MagicMock(altStartI=200, altEndI=250),
+            ],
             GenomicStrand.Minus,
             25,
             25,
-            [MagicMock(altStartI=125, altEndI=150), MagicMock(altStartI=200, altEndI=225)],
+            [
+                MagicMock(altStartI=125, altEndI=150),
+                MagicMock(altStartI=200, altEndI=225),
+            ],
         ),
         # Complete removal of UTRs results in no exon left
         (
@@ -323,7 +356,10 @@ def test_count_lof_vars_api_failure(mock_get_variant_from_range, strucvar_helper
             GenomicStrand.Minus,
             75,
             0,
-            [MagicMock(altStartI=100, altEndI=150), MagicMock(altStartI=200, altEndI=226)],
+            [
+                MagicMock(altStartI=100, altEndI=150),
+                MagicMock(altStartI=200, altEndI=226),
+            ],
         ),
         # Multiple exons deletion from the end
         (
@@ -335,7 +371,10 @@ def test_count_lof_vars_api_failure(mock_get_variant_from_range, strucvar_helper
             GenomicStrand.Minus,
             0,
             75,
-            [MagicMock(altStartI=224, altEndI=250), MagicMock(altStartI=300, altEndI=350)],
+            [
+                MagicMock(altStartI=224, altEndI=250),
+                MagicMock(altStartI=300, altEndI=350),
+            ],
         ),
     ],
 )
@@ -462,7 +501,10 @@ def test_del_disrupt_rf_partial_exon_deletion_plus_strand(strucvar_helper, struc
 
 def test_del_disrupt_rf_partial_exon_deletion_minus_strand(strucvar_helper, strucvar):
     """Test if del_disrupt_rf correctly identifies a partial exon deletion on minus strand."""
-    exons = [MagicMock(altStartI=100, altEndI=200), MagicMock(altStartI=250, altEndI=300)]
+    exons = [
+        MagicMock(altStartI=100, altEndI=200),
+        MagicMock(altStartI=250, altEndI=300),
+    ]
 
     # Deletion of 3 bases at the start of the exon
     strucvar.start = 100
@@ -586,7 +628,10 @@ def test_undergo_nmd_missing_exons(strucvar_helper, strucvar):
 
 def test_undergo_nmd_missing_strand(strucvar_helper, strucvar):
     """Test if undergo_nmd raises an error when strand is missing."""
-    exons = [MagicMock(altStartI=100, altEndI=200), MagicMock(altStartI=300, altEndI=400)]
+    exons = [
+        MagicMock(altStartI=100, altEndI=200),
+        MagicMock(altStartI=300, altEndI=400),
+    ]
     with pytest.raises(MissingDataError):
         strucvar_helper.undergo_nmd(strucvar, exons, GenomicStrand.NotSet)
 
@@ -635,7 +680,11 @@ def test_in_bio_relevant_tsx_case_sensitivity(strucvar_helper):
 
 def test_in_bio_relevant_tsx_multiple_mane_select(strucvar_helper):
     """Test if in_bio_relevant_tsx correctly handles multiple ManeSelect tags."""
-    transcript_tags = ["TRANSCRIPT_TAG_MANE_SELECT", "BasicTag", "TRANSCRIPT_TAG_MANE_SELECT"]
+    transcript_tags = [
+        "TRANSCRIPT_TAG_MANE_SELECT",
+        "BasicTag",
+        "TRANSCRIPT_TAG_MANE_SELECT",
+    ]
     assert (
         strucvar_helper.in_bio_relevant_tsx(transcript_tags) is True
     ), "Transcript with multiple Mane tags should be identified as biologically relevant"
@@ -655,7 +704,12 @@ def test_in_bio_relevant_tsx_multiple_mane_select(strucvar_helper):
     ],
 )
 def test_crit4prot_func(
-    strucvar_helper, strucvar, pathogenic_variants, total_variants, expected_result, monkeypatch
+    strucvar_helper,
+    strucvar,
+    pathogenic_variants,
+    total_variants,
+    expected_result,
+    monkeypatch,
 ):
     """Test the crit4prot_func method."""
     mock_count_pathogenic = MagicMock(return_value=(pathogenic_variants, total_variants))
@@ -773,7 +827,10 @@ def strucvar_dup():
 @pytest.fixture
 def var_data():
     data = AutoACMGStrucVarData()
-    data.exons = [MagicMock(altStartI=50, altEndI=150), MagicMock(altStartI=160, altEndI=210)]
+    data.exons = [
+        MagicMock(altStartI=50, altEndI=150),
+        MagicMock(altStartI=160, altEndI=210),
+    ]
     return data
 
 
@@ -790,7 +847,7 @@ def test_predict_pvs1(mock_verify_pvs1, auto_pvs1, strucvar_del, var_data):
     """Test the predict_pvs1 method for structural variants."""
     criteria = auto_pvs1.predict_pvs1(strucvar_del, var_data)
     assert isinstance(criteria, AutoACMGCriteria), "Should return an instance of AutoACMGCriteria"
-    assert criteria.prediction == AutoACMGPrediction.Met, "Prediction should be Met"
+    assert criteria.prediction == AutoACMGPrediction.Applicable, "Prediction should be Met"
     assert (
         criteria.strength == AutoACMGStrength.PathogenicVeryStrong
     ), "Strength should be Very Strong"

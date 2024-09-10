@@ -55,7 +55,12 @@ def test_predict(
     mock_predict_pvs1.return_value = MagicMock()
     mock_predict_ps1pm5.return_value = (MagicMock(), MagicMock())
     mock_predict_pm1.return_value = MagicMock()
-    mock_predict_pm2ba1bs1bs2.return_value = (MagicMock(), MagicMock(), MagicMock(), MagicMock())
+    mock_predict_pm2ba1bs1bs2.return_value = (
+        MagicMock(),
+        MagicMock(),
+        MagicMock(),
+        MagicMock(),
+    )
     mock_predict_pm4bp3.return_value = (MagicMock(), MagicMock())
     mock_predict_pp2bp1.return_value = (MagicMock(), MagicMock())
     mock_predict_pp3bp4.return_value = (MagicMock(), MagicMock())
