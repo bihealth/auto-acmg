@@ -32,6 +32,9 @@ def auto_acmg_data():
     return AutoACMGSeqVarData()
 
 
+# ------------- PM1 -------------
+
+
 def test_predict_pm1_acvrl1_moderate(hht_predictor, auto_acmg_data):
     """Test when PM1 is met at the Moderate level for a variant in ACVRL1."""
     auto_acmg_data.hgnc_id = "HGNC:175"  # ACVRL1 gene
@@ -135,6 +138,9 @@ def test_predict_pm1_edge_case_end_boundary_eng(hht_predictor, auto_acmg_data):
     ), "The summary should indicate the critical region."
 
 
+# ------------- PM2, BA1, BS1, BS2 -------------
+
+
 def test_bs2_not_applicable(hht_predictor, auto_acmg_data):
     """Test when BS2 is not applicable for ACVRL1 and ENG."""
     result = hht_predictor._bs2_not_applicable(auto_acmg_data)
@@ -173,10 +179,16 @@ def test_predict_pm2ba1bs1bs2(mock_super_method, hht_predictor, auto_acmg_data, 
     ), "Unexpected criteria names returned"
 
 
+# -------------- PM4 & BP3 --------------
+
+
 def test_bp3_not_applicable(hht_predictor, seqvar, auto_acmg_data):
     """Test BP3 is not applicable for ACADVL as overridden."""
     result = hht_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
     assert result is True, "BP3 should always be not applicable"
+
+
+# -------------- PP2 & BP1 --------------
 
 
 def test_predict_pp2bp1(hht_predictor, seqvar, auto_acmg_data):
@@ -206,6 +218,9 @@ def test_predict_pp2bp1(hht_predictor, seqvar, auto_acmg_data):
     assert (
         bp1_result.summary == "BP1 is not applicable for the gene."
     ), "The summary should indicate BP1 is not applicable."
+
+
+# -------------- PP3 & BP4 --------------
 
 
 def test_verify_pp3bp4_revel_thresholds(hht_predictor, auto_acmg_data):

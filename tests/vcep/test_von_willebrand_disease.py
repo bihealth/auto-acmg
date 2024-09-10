@@ -36,6 +36,9 @@ def auto_acmg_data():
     return AutoACMGSeqVarData()
 
 
+# ---------------- PVS1 ----------------
+
+
 def test_predict_pvs1_not_applicable(vwf_predictor, seqvar, auto_acmg_data):
     result = vwf_predictor.predict_pvs1(seqvar, auto_acmg_data)
 
@@ -44,6 +47,9 @@ def test_predict_pvs1_not_applicable(vwf_predictor, seqvar, auto_acmg_data):
     assert result.prediction == AutoACMGPrediction.NotApplicable
     assert result.strength == AutoACMGStrength.PathogenicVeryStrong
     assert result.summary == "PVS1 is not applicable for the gene."
+
+
+# ---------------- PM1 ----------------
 
 
 def test_predict_pm1_not_applicable(vwf_predictor, auto_acmg_data):
@@ -61,6 +67,9 @@ def test_predict_pm1_not_applicable(vwf_predictor, auto_acmg_data):
     assert (
         "PM1 is not applicable for" in result.summary
     ), "The summary should indicate PM1 is not applicable."
+
+
+# ----------------- PM2, BA1, BS1, BS2 -----------------
 
 
 def test_bs2_not_applicable(vwf_predictor, auto_acmg_data):
@@ -101,10 +110,16 @@ def test_predict_pm2ba1bs1bs2(mock_super_method, vwf_predictor, auto_acmg_data, 
     ), "Unexpected criteria names returned"
 
 
+# ---------------- PM4 & BP3 ----------------
+
+
 def test_bp3_not_applicable(vwf_predictor, seqvar, auto_acmg_data):
     """Test BP3 is not applicable for ACADVL as overridden."""
     result = vwf_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
     assert result is True, "BP3 should always be not applicable"
+
+
+# ----------------- PP2 & BP1 -----------------
 
 
 def test_predict_pp2bp1(vwf_predictor, seqvar, auto_acmg_data):
@@ -134,6 +149,9 @@ def test_predict_pp2bp1(vwf_predictor, seqvar, auto_acmg_data):
     assert (
         bp1_result.summary == "BP1 is not applicable for the gene."
     ), "The summary should indicate BP1 is not applicable."
+
+
+# ----------------- PP3 & BP4 -----------------
 
 
 def test_verify_pp3bp4_thresholds(vwf_predictor, auto_acmg_data):

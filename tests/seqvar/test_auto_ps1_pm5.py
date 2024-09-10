@@ -387,17 +387,15 @@ def test_verify_ps1pm5_not_missense(
         auto_ps1pm5.verify_ps1pm5(seqvar, var_data_not_missense_verify)
 
 
-@pytest.mark.skip(reason="Don't know what's wrong with this test...")
 @patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._is_missense", return_value=True)
 @patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._parse_HGVSp", return_value=None)
 def test_verify_ps1pm5_no_valid_aa_change(
     mock_parse_HGVSp, mock_is_missense, auto_ps1pm5, seqvar, var_data_missense
 ):
-    with pytest.raises(
-        AlgorithmError,
-        match="No valid primary amino acid change for PS1/PM5 prediction.",
-    ):
-        auto_ps1pm5.verify_ps1pm5(seqvar, var_data_missense)
+    prediction, comment = auto_ps1pm5.verify_ps1pm5(seqvar, var_data_missense)
+    assert prediction is None
+    assert "Error occurred during PS1/PM5 prediction. " in comment
+    assert "No valid primary amino acid change" in comment
 
 
 @patch("src.seqvar.auto_ps1_pm5.AutoPS1PM5._is_missense", return_value=True)

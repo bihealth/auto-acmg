@@ -30,6 +30,9 @@ def auto_acmg_data():
     return AutoACMGSeqVarData()
 
 
+# ----------------- PVS1 -----------------
+
+
 @patch.object(
     DefaultSeqVarPredictor,
     "predict_pvs1",
@@ -79,6 +82,9 @@ def test_predict_pvs1_calls_superclass_when_not_specific_gene(
     assert result.prediction == AutoACMGPrediction.Applicable
     assert result.strength == AutoACMGStrength.PathogenicVeryStrong
     assert result.summary == "Superclass default behavior."
+
+
+# ----------------- PM1 -----------------
 
 
 def test_predict_pm1_in_critical_domain(congenital_myopathies_predictor, auto_acmg_data):
@@ -193,6 +199,9 @@ def test_predict_pm1_edge_case_end_boundary(congenital_myopathies_predictor, aut
     ), "The summary should indicate the critical domain."
 
 
+# ------------- PM2, BA1, BS1, BS2 -------------
+
+
 @patch.object(
     DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
@@ -241,10 +250,16 @@ def test_predict_pm2ba1bs1bs2_with_varied_thresholds(
     mock_super_method.reset_mock()
 
 
+# ---------------- PM4 & BP3 ----------------
+
+
 def test_bp3_not_applicable(congenital_myopathies_predictor, seqvar, auto_acmg_data):
     """Test BP3 is not applicable for ACADVL as overridden."""
     result = congenital_myopathies_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
     assert result is True, "BP3 should always be not applicable"
+
+
+# ---------------- PP2 & BP1 ----------------
 
 
 def test_predict_pp2bp1_missense(congenital_myopathies_predictor, seqvar, auto_acmg_data):
@@ -301,6 +316,9 @@ def test_predict_pp2bp1_not_missense(congenital_myopathies_predictor, seqvar, au
         bp1_result.prediction == AutoACMGPrediction.NotApplicable
     ), "BP1 should be NotApplicable for this gene."
     assert "BP1 is not applicable for the gene." in bp1_result.summary
+
+
+# ---------------- PP3 & BP4 ----------------
 
 
 def test_verify_pp3bp4_revel_thresholds(congenital_myopathies_predictor, auto_acmg_data):

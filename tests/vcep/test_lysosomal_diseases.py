@@ -30,6 +30,9 @@ def auto_acmg_data():
     return AutoACMGSeqVarData()
 
 
+# ------------- PM1 -------------
+
+
 def test_predict_pm1_met_for_critical_residue(lysosomal_diseases_predictor, auto_acmg_data):
     """Test when the variant falls within the critical residues for GAA."""
     auto_acmg_data.prot_pos = 282  # Critical residue for GAA
@@ -95,6 +98,9 @@ def test_predict_pm1_fallback_to_default(
     ), "The summary should indicate the default fallback."
 
 
+# ------------ PM2, BA1, BS1, BS2 ------------
+
+
 @patch.object(
     DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
@@ -127,6 +133,9 @@ def test_predict_pm2ba1bs1bs2(
     assert all(
         c.name in ["PM2", "BA1", "BS1", "BS2"] for c in result
     ), "Unexpected criteria names returned"
+
+
+# ------------ PM4 & BP3 ------------
 
 
 def test_bp3_not_applicable(lysosomal_diseases_predictor, seqvar, auto_acmg_data):
@@ -162,6 +171,9 @@ def test_predict_pp2bp1(lysosomal_diseases_predictor, seqvar, auto_acmg_data):
     assert (
         bp1_result.summary == "BP1 is not applicable for the gene."
     ), "The summary should indicate BP1 is not applicable."
+
+
+# ------------ PP3 & BP4 ------------
 
 
 def test_verify_pp3bp4_thresholds(lysosomal_diseases_predictor, auto_acmg_data):

@@ -31,6 +31,9 @@ def auto_acmg_data():
     return AutoACMGSeqVarData()
 
 
+# ----------------- PS1 & PM5 -----------------
+
+
 @patch.object(DefaultSeqVarPredictor, "verify_ps1pm5")
 def test_verify_ps1pm5_overrides(
     mock_super_verify, insight_colorectal_cancer_predictor, seqvar, auto_acmg_data
@@ -193,6 +196,9 @@ def auto_acmg_data_apc():
     return data
 
 
+# ----------------- PM1 -------------------
+
+
 def test_predict_pm1_not_applicable_apc(insight_colorectal_cancer_predictor, auto_acmg_data):
     """Test when PM1 is not applicable for APC."""
     auto_acmg_data.hgnc_id = "HGNC:583"  # APC gene
@@ -313,6 +319,9 @@ def test_predict_pm1_fallback_to_default(
     ), "The summary should indicate the default fallback."
 
 
+# ----------------- PM2, BA1, BS1, BS2 -------------------
+
+
 @patch.object(
     DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
@@ -359,6 +368,9 @@ def test_predict_pm2ba1bs1bs2_specific_genes(
     mock_super_method.reset_mock()
 
 
+# ----------------- PM4 & BP3 -------------------
+
+
 def test_predict_pm4bp3_not_applicable(insight_colorectal_cancer_predictor, seqvar, auto_acmg_data):
     """Test that PM4 and BP3 are marked as Not Applicable for the brain malformations VCEP."""
     pm4_result, bp3_result = insight_colorectal_cancer_predictor.predict_pm4bp3(
@@ -388,6 +400,9 @@ def test_predict_pm4bp3_not_applicable(insight_colorectal_cancer_predictor, seqv
     assert (
         "BP3 is not applicable" in bp3_result.summary
     ), "The summary should indicate BP3 is not applicable."
+
+
+# ----------------- PP2 & BP1 -------------------
 
 
 @patch.object(InsightColorectalCancerPredictor, "_is_missense")
@@ -438,58 +453,7 @@ def test_predict_pp2bp1_apc_missense_low_benign_ratio(
     ), "BP1 summary should confirm criteria not met due to benign ratio."
 
 
-def test_predict_bp7_threshold_adjustment(insight_colorectal_cancer_predictor, auto_acmg_data):
-    """Test that the BP7 donor and acceptor thresholds are correctly adjusted."""
-    auto_acmg_data.thresholds.bp7_donor = 1  # Initial donor threshold value
-    auto_acmg_data.thresholds.bp7_acceptor = 2  # Initial acceptor threshold value
-
-    # Call predict_bp7 method
-    result = insight_colorectal_cancer_predictor.predict_bp7(
-        insight_colorectal_cancer_predictor.seqvar, auto_acmg_data
-    )
-
-    # Check that the thresholds were adjusted
-    assert (
-        auto_acmg_data.thresholds.bp7_donor == 7
-    ), "The BP7 donor threshold should be adjusted to 7."
-    assert (
-        auto_acmg_data.thresholds.bp7_acceptor == 21
-    ), "The BP7 acceptor threshold should be adjusted to 4."
-
-    # Check that the superclass's predict_bp7 method was called and returned a result
-    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-
-
-@patch.object(DefaultSeqVarPredictor, "predict_bp7")
-def test_predict_bp7_fallback_to_default(
-    mock_super_predict_bp7, insight_colorectal_cancer_predictor, auto_acmg_data
-):
-    """Test fallback to default BP7 prediction after threshold adjustment."""
-    # Set the mock return value for the superclass's predict_bp7 method
-    mock_super_predict_bp7.return_value = AutoACMGCriteria(
-        name="BP7",
-        prediction=AutoACMGPrediction.NotApplicable,
-        strength=AutoACMGStrength.BenignSupporting,
-        summary="Default BP7 prediction fallback.",
-    )
-
-    # Call predict_bp7 method
-    result = insight_colorectal_cancer_predictor.predict_bp7(
-        insight_colorectal_cancer_predictor.seqvar, auto_acmg_data
-    )
-
-    # Verify the result and ensure the superclass method was called
-    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert (
-        result.prediction == AutoACMGPrediction.NotApplicable
-    ), "BP7 should return NotMet as mocked."
-    assert (
-        result.strength == AutoACMGStrength.BenignSupporting
-    ), "The strength should be BenignSupporting."
-    assert (
-        "Default BP7 prediction fallback." in result.summary
-    ), "The summary should indicate the fallback."
-    assert mock_super_predict_bp7.called, "super().predict_bp7 should have been called."
+# ----------------- PP3 & BP4 -------------------
 
 
 def test_verify_pp3bp4_thresholds(insight_colorectal_cancer_predictor, auto_acmg_data):
@@ -596,3 +560,60 @@ def test_verify_pp3bp4_error_handling(insight_colorectal_cancer_predictor, auto_
         assert prediction is None
         assert "An error occurred during prediction" in comment
         assert "Test error" in comment
+
+
+# ----------------- BP7 -------------------
+
+
+def test_predict_bp7_threshold_adjustment(insight_colorectal_cancer_predictor, auto_acmg_data):
+    """Test that the BP7 donor and acceptor thresholds are correctly adjusted."""
+    auto_acmg_data.thresholds.bp7_donor = 1  # Initial donor threshold value
+    auto_acmg_data.thresholds.bp7_acceptor = 2  # Initial acceptor threshold value
+
+    # Call predict_bp7 method
+    result = insight_colorectal_cancer_predictor.predict_bp7(
+        insight_colorectal_cancer_predictor.seqvar, auto_acmg_data
+    )
+
+    # Check that the thresholds were adjusted
+    assert (
+        auto_acmg_data.thresholds.bp7_donor == 7
+    ), "The BP7 donor threshold should be adjusted to 7."
+    assert (
+        auto_acmg_data.thresholds.bp7_acceptor == 21
+    ), "The BP7 acceptor threshold should be adjusted to 4."
+
+    # Check that the superclass's predict_bp7 method was called and returned a result
+    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
+
+
+@patch.object(DefaultSeqVarPredictor, "predict_bp7")
+def test_predict_bp7_fallback_to_default(
+    mock_super_predict_bp7, insight_colorectal_cancer_predictor, auto_acmg_data
+):
+    """Test fallback to default BP7 prediction after threshold adjustment."""
+    # Set the mock return value for the superclass's predict_bp7 method
+    mock_super_predict_bp7.return_value = AutoACMGCriteria(
+        name="BP7",
+        prediction=AutoACMGPrediction.NotApplicable,
+        strength=AutoACMGStrength.BenignSupporting,
+        summary="Default BP7 prediction fallback.",
+    )
+
+    # Call predict_bp7 method
+    result = insight_colorectal_cancer_predictor.predict_bp7(
+        insight_colorectal_cancer_predictor.seqvar, auto_acmg_data
+    )
+
+    # Verify the result and ensure the superclass method was called
+    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
+    assert (
+        result.strength == AutoACMGStrength.BenignSupporting
+    ), "The strength should be BenignSupporting."
+    assert (
+        "Default BP7 prediction fallback." in result.summary
+    ), "The summary should indicate the fallback."
+    assert mock_super_predict_bp7.called, "super().predict_bp7 should have been called."

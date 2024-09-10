@@ -20,6 +20,8 @@ example_seqvar = SeqVar(
     user_repr="1:1000A>T",
 )
 
+# -------- _get_variant_from_range & get_variant_from_range ---------
+
 
 @pytest.mark.asyncio
 async def test_get_variant_from_range_success(httpx_mock: HTTPXMock):
@@ -139,6 +141,9 @@ async def test_get_variant_from_large_range_failure(httpx_mock: HTTPXMock):
         client.get_variant_from_range(example_seqvar, start, stop)
 
 
+# -------- get_variant_info ---------
+
+
 @pytest.mark.asyncio
 async def test_get_variant_info_success(httpx_mock: HTTPXMock):
     """Test get_variant_info method with a successful response."""
@@ -183,6 +188,9 @@ async def test_get_variant_info_500(httpx_mock: HTTPXMock):
     client = AnnonarsClient(api_base_url="https://example.com/annonars")
     with pytest.raises(AnnonarsException):
         client.get_variant_info(example_seqvar)
+
+
+# -------- get_gene_info ---------
 
 
 @pytest.mark.asyncio

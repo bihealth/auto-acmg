@@ -35,6 +35,9 @@ def auto_acmg_data():
     return AutoACMGSeqVarData()
 
 
+# ----------- PS1 & PM5 --------------
+
+
 @patch.object(DefaultSeqVarPredictor, "verify_ps1pm5")
 def test_verify_ps1pm5_overrides(
     mock_verify_ps1pm5, cerebral_creatine_predictor, seqvar, auto_acmg_data
@@ -58,6 +61,9 @@ def test_verify_ps1pm5_overrides(
 
     assert not prediction.PS1, "PS1 should be marked as not applicable due to splicing effect."
     assert not prediction.PM5, "PM5 should be marked as not applicable due to splicing effect."
+
+
+# ----------- PM1 --------------
 
 
 def test_predict_pm1_not_applicable(cerebral_creatine_predictor, auto_acmg_data):
@@ -112,6 +118,9 @@ def test_predict_pm1_fallback_to_default(
     # In this specific case, the fallback should never happen since PM1 is always not applicable,
     # but this test ensures that if something changes, the fallback works correctly.
     assert result.prediction == AutoACMGPrediction.NotApplicable, "PM1 should remain NotApplicable."
+
+
+# ----------- PM2, BA1, BS1, BS2 --------------
 
 
 @patch.object(
@@ -289,10 +298,16 @@ def test_predict_pm2ba1bs1bs2_slc6a8(
     ), "Unexpected criteria names returned"
 
 
+# ----------- PM4 & BP3 --------------
+
+
 def test_bp3_not_applicable(cerebral_creatine_predictor, seqvar, auto_acmg_data):
     """Test BP3 is not applicable for ACADVL as overridden."""
     result = cerebral_creatine_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
     assert result is True, "BP3 should always be not applicable"
+
+
+# ----------- PP2 & BP1 --------------
 
 
 def test_predict_pp2bp1(cerebral_creatine_predictor, seqvar, auto_acmg_data):
@@ -322,6 +337,9 @@ def test_predict_pp2bp1(cerebral_creatine_predictor, seqvar, auto_acmg_data):
     assert (
         bp1_result.summary == "BP1 is not applicable for the gene."
     ), "The summary should indicate BP1 is not applicable."
+
+
+# ----------- PP3 & BP4 --------------
 
 
 @pytest.mark.parametrize(
@@ -453,6 +471,9 @@ def test_predict_pp3bp4_multiple_criteria(cerebral_creatine_predictor, auto_acmg
     assert "REVEL score 0.8 >= 0.75, meeting PP3." in pp3.summary
     assert "Splicing predictions indicate an impact, meeting PP3." in pp3.summary
     assert bp4.prediction == AutoACMGPrediction.NotApplicable
+
+
+# ----------- BP7 --------------
 
 
 def test_predict_bp7_threshold_adjustment(cerebral_creatine_predictor, auto_acmg_data):

@@ -30,6 +30,9 @@ def auto_acmg_data():
     return AutoACMGSeqVarData()
 
 
+# ----------------- PM1 -----------------
+
+
 @patch.object(
     DefaultSeqVarPredictor,
     "predict_pvs1",
@@ -163,6 +166,9 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, rasopathy_predictor, 
     ), "The summary should indicate the default fallback."
 
 
+# -------------- PM2, BA1, BS1, BS2 --------------
+
+
 @patch.object(RASopathyPredictor, "_get_af", return_value=0.1)
 @patch.object(RASopathyPredictor, "_ba1_exception", return_value=False)
 def test_verify_pm2ba1bs1bs2(
@@ -188,10 +194,16 @@ def test_verify_pm2ba1bs1bs2(
     ), "BS1 threshold should be adjusted to 0.00025"
 
 
+# -------------- PM4 & BP3 --------------
+
+
 def test_bp3_not_applicable(rasopathy_predictor, seqvar, auto_acmg_data):
     """Test BP3 is not applicable for ACADVL as overridden."""
     result = rasopathy_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
     assert result is True, "BP3 should always be not applicable"
+
+
+# -------------- PP2 & BP1 --------------
 
 
 @patch.object(RASopathyPredictor, "_is_missense")
@@ -212,6 +224,9 @@ def test_predict_pp2bp1_ptpn11_missense(
     assert (
         bp1.prediction == AutoACMGPrediction.NotApplicable
     ), "BP1 should be NotApplicable for PTPN11."
+
+
+# -------------- PP3 & BP4 --------------
 
 
 @patch.object(RASopathyPredictor, "_is_missense")

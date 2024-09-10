@@ -16,7 +16,7 @@ from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import Exon, GeneTranscripts, TranscriptsSeqVar
 from src.defs.seqvar import SeqVar
 from src.seqvar.auto_pvs1 import AutoPVS1, SeqVarPVS1Helper
-from src.utils import SeqVarTranscriptsHelper
+from src.utils import SeqVarTranscriptsHelper, SplicingPrediction
 from tests.utils import get_json_object
 
 
@@ -71,6 +71,9 @@ class MockCdsInfo:
 
 
 # === SeqVarPVS1Helper ===
+
+
+# --------- _calc_alt_reg ---------
 
 
 @pytest.mark.parametrize(
@@ -153,6 +156,9 @@ def test_calc_alt_reg_real_data(gene_transcripts_file, transcript_id, var_pos, e
     assert end_pos == expected_result[1]
 
 
+# --------- _count_pathogenic_vars ---------
+
+
 @pytest.mark.parametrize(
     "annonars_range_response, expected_result",
     [
@@ -170,6 +176,9 @@ def test_count_pathogenic_vars(annonars_range_response, expected_result, seqvar)
         assert result == expected_result
 
 
+# --------- _find_aff_exon_pos ---------
+
+
 @pytest.mark.parametrize(
     "var_pos,exons,expected_result",
     [
@@ -182,6 +191,9 @@ def test_find_aff_exon_pos(var_pos, exons, expected_result):
     """Test the _find_aff_exon_pos method."""
     result = SeqVarPVS1Helper()._find_aff_exon_pos(var_pos, exons)
     assert result == expected_result
+
+
+# --------- _get_conseq ---------
 
 
 @pytest.mark.parametrize(
@@ -223,6 +235,9 @@ def test_get_conseq(value, expected_result):
     assert result == expected_result
 
 
+# --------- _count_lof_vars ---------
+
+
 @pytest.mark.parametrize(
     "annonars_range_response, expected_result",
     [
@@ -238,6 +253,9 @@ def test_count_lof_vars(annonars_range_response, expected_result, seqvar):
         )
         result = SeqVarPVS1Helper()._count_lof_vars(seqvar, 1, 1000)  # Real range is mocked
         assert result == expected_result
+
+
+# --------- _closest_alt_start_cdn ---------
 
 
 @pytest.mark.parametrize(
@@ -367,6 +385,9 @@ def test_closest_alt_start_cdn_invalid():
         SeqVarPVS1Helper()._closest_alt_start_cdn(cds_info, hgvs)  # type: ignore
 
 
+# --------- _skipping_exon_pos ---------
+
+
 @pytest.mark.parametrize(
     "seqvar, exons, expected_result",
     [
@@ -404,6 +425,9 @@ def test_skipping_exon_pos_invalid():
     exons = [MockExon(100, 200, 100, 200)]
     with pytest.raises(AlgorithmError):
         SeqVarPVS1Helper()._skipping_exon_pos(seqvar, exons)  # type: ignore
+
+
+# ---------- undergo_nmd -----------
 
 
 @pytest.mark.parametrize(
@@ -459,6 +483,9 @@ def test_undergo_nmd(gene_transcripts_file, transcript_id, hgnc_id, var_pos, exp
     assert result == expected_result
 
 
+# ------------ in_bio_relevant_tx ------------
+
+
 @pytest.mark.parametrize(
     "transcript_tags,expected_result",
     [
@@ -475,6 +502,9 @@ def test_in_bio_relevant_tsx(transcript_tags, expected_result):
     """Test the _in_bio_relevant_tsx method."""
     result = SeqVarPVS1Helper().in_bio_relevant_tx(transcript_tags)
     assert result == expected_result, f"Failed for transcript_tags: {transcript_tags}"
+
+
+# ------------ crit4prot_func ------------
 
 
 @pytest.mark.parametrize(
@@ -519,6 +549,9 @@ def test_crit4prot_func(
     assert result == expected_result
 
 
+# ------------ lof_freq_in_pop ------------
+
+
 @pytest.mark.parametrize(
     "frequent_lof_variants, lof_variants, strand, expected_result",
     [
@@ -561,6 +594,9 @@ def test_lof_freq_in_pop(
     assert result == expected_result
 
 
+# ------------ lof_rm_gt_10pct_of_prot ------------
+
+
 @pytest.mark.parametrize(
     "prot_pos, prot_length, expected_result",
     [
@@ -582,7 +618,7 @@ def test_lof_rm_gt_10pct_of_prot(prot_pos, prot_length, expected_result):
     assert result == expected_result
 
 
-# ============== exon_skip_or_cryptic_ss_disrupt ==============
+# ------------ exon_skip_or_cryptic_ss_disrupt ------------
 
 
 @pytest.fixture
@@ -605,19 +641,19 @@ def helper():
     return SeqVarPVS1Helper()
 
 
-@pytest.mark.skip(reason="Patching is not working properly")
-@patch("src.seqvar.auto_pvs1.SeqVarPVS1Helper._skipping_exon_pos", return_value=(90, 111))
-@patch("src.seqvar.auto_pvs1.SplicingPrediction.get_sequence", return_value="ATGC" * 10)
-@patch(
-    "src.seqvar.auto_pvs1.SplicingPrediction.determine_splice_type",
-    return_value="donor",
-)
-@patch(
-    "src.seqvar.auto_pvs1.SplicingPrediction.get_cryptic_ss",
-    return_value=[(95, "GT", 5)],
-)
+@patch.object(SeqVarPVS1Helper, "_skipping_exon_pos", return_value=(90, 111))
+@patch.object(SplicingPrediction, "get_sequence", return_value="ATGC" * 10)
+@patch.object(SplicingPrediction, "determine_splice_type", return_value="donor")
+@patch.object(SplicingPrediction, "get_cryptic_ss", return_value=[(95, "GT", 5)])
 def test_exon_skip_or_cryptic_ss_disrupt_exon_skipping(
-    mock_skipping_exon_pos, helper, seqvar_ss, exons, consequences
+    mock_skipping_exon_pos,
+    mock_get_sequence,
+    mock_determine_splice_type,
+    mock_get_cryptic_ss,
+    helper,
+    seqvar_ss,
+    exons,
+    consequences,
 ):
     """Test when the exon length is not a multiple of 3, predicting exon skipping."""
     result = helper.exon_skip_or_cryptic_ss_disrupt(
@@ -630,22 +666,17 @@ def test_exon_skip_or_cryptic_ss_disrupt_exon_skipping(
     )
 
 
-@pytest.mark.skip(reason="Patching is not working properly")
-@patch("src.seqvar.auto_pvs1.SeqVarPVS1Helper._skipping_exon_pos", return_value=(90, 110))
-@patch("src.seqvar.auto_pvs1.SplicingPrediction.get_sequence", return_value="ATGC" * 10)
-@patch(
-    "src.seqvar.auto_pvs1.SplicingPrediction.determine_splice_type",
-    return_value="donor",
-)
-@patch(
-    "src.seqvar.auto_pvs1.SplicingPrediction.get_cryptic_ss",
-    return_value=[(95, "GT", 5)],
-)
+@patch.object(SeqVarPVS1Helper, "_skipping_exon_pos", return_value=(90, 110))
+@patch.object(SplicingPrediction, "__init__", return_value=None)
+@patch.object(SplicingPrediction, "get_sequence", return_value="ATGC" * 10)
+@patch.object(SplicingPrediction, "determine_splice_type", return_value="donor")
+@patch.object(SplicingPrediction, "get_cryptic_ss", return_value=[(95, "GT", 5)])
 def test_exon_skip_or_cryptic_ss_disrupt_cryptic_splice_site_disruption(
+    mock_skipping_exon_pos,
+    mock_init,
     mock_get_sequence,
     mock_determine_splice_type,
     mock_get_cryptic_ss,
-    mock_skipping_exon_pos,
     helper,
     seqvar_ss,
     exons,
@@ -659,25 +690,26 @@ def test_exon_skip_or_cryptic_ss_disrupt_cryptic_splice_site_disruption(
     assert "Cryptic splice site disruption predicted." in helper.comment_pvs1
 
 
-@pytest.mark.skip(reason="Patching is not working properly")
-@patch("src.seqvar.auto_pvs1.SeqVarPVS1Helper._skipping_exon_pos", return_value=(90, 110))
-@patch("src.seqvar.auto_pvs1.SplicingPrediction.get_sequence", return_value="ATGC" * 10)
-@patch(
-    "src.seqvar.auto_pvs1.SplicingPrediction.determine_splice_type",
-    return_value="donor",
-)
-@patch("src.seqvar.auto_pvs1.SplicingPrediction.get_cryptic_ss", return_value=[])
+@patch.object(SeqVarPVS1Helper, "_skipping_exon_pos", return_value=(90, 110))
+@patch.object(SplicingPrediction, "__init__", return_value=None)
+@patch.object(SplicingPrediction, "get_sequence", return_value="ATGC" * 10)
+@patch.object(SplicingPrediction, "determine_splice_type", return_value="donor")
+@patch.object(SplicingPrediction, "get_cryptic_ss", return_value=[])
 def test_exon_skip_or_cryptic_ss_disrupt_preserve_reading_frame(
+    mock_skipping_exon_pos,
+    mock_init,
     mock_get_sequence,
     mock_determine_splice_type,
     mock_get_cryptic_ss,
-    mock_skipping_exon_pos,
     helper,
     seqvar_ss,
     exons,
     consequences,
 ):
-    """Test when there is no cryptic splice site and exon length is a multiple of 3, preserving the reading frame."""
+    """
+    Test when there is no cryptic splice site and exon length is a multiple of 3, preserving the
+    reading frame.
+    """
     result = helper.exon_skip_or_cryptic_ss_disrupt(
         seqvar_ss, exons, consequences, GenomicStrand.Plus
     )
@@ -691,6 +723,9 @@ def test_exon_skip_or_cryptic_ss_disrupt_missing_strand(helper, seqvar_ss, exons
     """Test when the strand is not set, raising MissingDataError."""
     with pytest.raises(MissingDataError):
         helper.exon_skip_or_cryptic_ss_disrupt(seqvar_ss, exons, consequences, GenomicStrand.NotSet)
+
+
+# ------------ alt_start_cdn ------------
 
 
 @pytest.mark.parametrize(
@@ -800,6 +835,9 @@ def test_alt_start_cdn(hgvs, cds_info, expected_result):
     """Test the _alt_start_cdn method."""
     result = SeqVarPVS1Helper().alt_start_cdn(cds_info, hgvs)
     assert result == expected_result
+
+
+# ------------ up_pathogenic_vars ------------
 
 
 @pytest.mark.parametrize(
@@ -946,6 +984,9 @@ def var_data():
     )
 
 
+# ---------- _convert_consequence ----------
+
+
 def test_convert_consequence_mapped_mehari(auto_pvs1, var_data):
     """Test _convert_consequence when a Mehari consequence is mapped."""
     var_data.consequence.mehari = ["nonsense"]
@@ -994,6 +1035,9 @@ def test_convert_consequence_mapped_mehari_priority(auto_pvs1, var_data):
     assert (
         result == SeqVarPVS1Consequence.NonsenseFrameshift
     ), "The Mehari consequence should take priority if present."
+
+
+# ---------- verify_pvs1 ----------
 
 
 @patch.object(AutoPVS1, "undergo_nmd", return_value=True)
@@ -1072,6 +1116,9 @@ def test_verify_pvs1_unsupported_consequence(
     assert prediction == PVS1Prediction.UnsupportedConsequence, "Expected UnsupportedConsequence."
     assert path == PVS1PredictionSeqVarPath.NotSet, "Expected NotSet prediction path."
     assert "PVS1 criteria cannot be applied" in comment
+
+
+# ---------- predict_pvs1 ----------
 
 
 @patch.object(AutoPVS1, "verify_pvs1")

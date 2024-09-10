@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from src.api.annonars import AnnonarsClient
 from src.defs.auto_acmg import PP2BP1, AutoACMGPrediction, AutoACMGStrength
 from src.defs.exceptions import AlgorithmError, InvalidAPIResposeError
 from src.defs.genome_builds import GenomeRelease
@@ -22,22 +23,25 @@ def auto_pp2bp1():
 # ============= _get_missense_vars ==================
 
 
-@pytest.mark.skip(reason="Annonars is not mocked properly")
-@patch("src.utils.AutoACMGHelper.annonars_client.get_variant_from_range")
-def test_get_missense_vars_success(mock_get_variant, auto_pp2bp1, seqvar):
+@patch.object(AnnonarsClient, "get_variant_from_range")
+def test_get_missense_vars_success(mock_get_variant_from_range, auto_pp2bp1, seqvar):
     # Setup the mock response with pathogenic and benign variants
     pathogenic_variant = MagicMock()
     pathogenic_variant.records = [
         MagicMock(
-            classifications=MagicMock(germlineClassification=MagicMock(description="Pathogenic"))
+            classifications=MagicMock(germlineClassification=MagicMock(description="Pathogenic")),
+            variationType="VARIATION_TYPE_SNV",
         )
     ]
     benign_variant = MagicMock()
     benign_variant.records = [
-        MagicMock(classifications=MagicMock(germlineClassification=MagicMock(description="Benign")))
+        MagicMock(
+            classifications=MagicMock(germlineClassification=MagicMock(description="Benign")),
+            variationType="VARIATION_TYPE_SNV",
+        )
     ]
     response = MagicMock(clinvar=[pathogenic_variant, benign_variant])
-    mock_get_variant.return_value = response
+    mock_get_variant_from_range.return_value = response
 
     pathogenic, benign, total = auto_pp2bp1._get_missense_vars(seqvar, 100, 200)
 
@@ -46,11 +50,10 @@ def test_get_missense_vars_success(mock_get_variant, auto_pp2bp1, seqvar):
     assert total == 2
 
 
-@pytest.mark.skip(reason="Annonars is not mocked properly")
-@patch("src.utils.AutoACMGHelper.annonars_client.get_variant_from_range")
-def test_get_missense_vars_empty_response(mock_get_variant, auto_pp2bp1, seqvar):
+@patch.object(AnnonarsClient, "get_variant_from_range")
+def test_get_missense_vars_empty_response(mock_get_variant_from_range, auto_pp2bp1, seqvar):
     # Setup the mock to return an empty response
-    mock_get_variant.return_value = MagicMock(clinvar=[])
+    mock_get_variant_from_range.return_value = MagicMock(clinvar=[])
 
     with pytest.raises(InvalidAPIResposeError):
         auto_pp2bp1._get_missense_vars(seqvar, 100, 200)

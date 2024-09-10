@@ -31,6 +31,9 @@ def auto_acmg_data():
     return AutoACMGSeqVarData()
 
 
+# ---------------- PS1 & PM5 ----------------
+
+
 def test_is_allowed_nonsense_true(myeloid_malignancy_predictor, auto_acmg_data):
     """Test _is_allowed_nonsense method when the variant is an allowed nonsense mutation."""
     auto_acmg_data.consequence = MagicMock(cadd="nonsense", mehari=["nonsense_variant"])
@@ -143,6 +146,9 @@ def test_verify_ps1pm5_exception_handling(
     assert "Test exception" in str(exc_info.value), "Should raise the original exception"
 
 
+# ---------------- PM1 ----------------
+
+
 def test_predict_pm1_moderate_criteria_runx1(myeloid_malignancy_predictor, auto_acmg_data):
     """Test when variant falls within a moderate level residue for RUNX1."""
     auto_acmg_data.hgnc_id = "HGNC:10471"  # RUNX1 gene
@@ -228,6 +234,9 @@ def test_predict_pm1_fallback_to_default(
     ), "The summary should indicate the default fallback."
 
 
+# --------------- PM2, BA1, BS1, BS2 ---------------
+
+
 def test_bs2_not_applicable(myeloid_malignancy_predictor, auto_acmg_data):
     """Test BS2 is not applicable for Myeloid Malignancy."""
     result = myeloid_malignancy_predictor._bs2_not_applicable(auto_acmg_data)
@@ -263,10 +272,16 @@ def test_verify_pm2ba1bs1bs2(
     ), "BS1 threshold should be adjusted to 0.00015"
 
 
+# --------------- PM4 & BP3 ---------------
+
+
 def test_bp3_not_applicable(myeloid_malignancy_predictor, seqvar, auto_acmg_data):
     """Test BP3 is not applicable for ACADVL as overridden."""
     result = myeloid_malignancy_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
     assert result is True, "BP3 should always be not applicable"
+
+
+# --------------- PP2 & BP1 ---------------
 
 
 def test_predict_pp2bp1(myeloid_malignancy_predictor, seqvar, auto_acmg_data):
@@ -298,71 +313,7 @@ def test_predict_pp2bp1(myeloid_malignancy_predictor, seqvar, auto_acmg_data):
     ), "The summary should indicate BP1 is not applicable."
 
 
-def test_predict_bp7_threshold_adjustment(myeloid_malignancy_predictor, auto_acmg_data):
-    """Test that the BP7 thresholds are correctly adjusted for Myeloid Malignancy."""
-    # Initial threshold values
-    auto_acmg_data.thresholds.spliceAI_acceptor_gain = 0.1
-    auto_acmg_data.thresholds.spliceAI_acceptor_loss = 0.1
-    auto_acmg_data.thresholds.spliceAI_donor_gain = 0.1
-    auto_acmg_data.thresholds.spliceAI_donor_loss = 0.1
-    auto_acmg_data.thresholds.phyloP100 = 1.0
-
-    # Call predict_bp7 method
-    result = myeloid_malignancy_predictor.predict_bp7(
-        myeloid_malignancy_predictor.seqvar, auto_acmg_data
-    )
-
-    # Check that the thresholds were adjusted
-    assert (
-        auto_acmg_data.thresholds.spliceAI_acceptor_gain == 0.2
-    ), "The spliceAI acceptor gain threshold should be adjusted to 0.2."
-    assert (
-        auto_acmg_data.thresholds.spliceAI_acceptor_loss == 0.2
-    ), "The spliceAI acceptor loss threshold should be adjusted to 0.2."
-    assert (
-        auto_acmg_data.thresholds.spliceAI_donor_gain == 0.2
-    ), "The spliceAI donor gain threshold should be adjusted to 0.2."
-    assert (
-        auto_acmg_data.thresholds.spliceAI_donor_loss == 0.2
-    ), "The spliceAI donor loss threshold should be adjusted to 0.2."
-    assert (
-        auto_acmg_data.thresholds.phyloP100 == 2.0
-    ), "The phyloP100 threshold should be adjusted to 2.0."
-
-    # Check that the superclass's predict_bp7 method was called and returned a result
-    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-
-
-@patch.object(MyeloidMalignancyPredictor, "predict_bp7", autospec=True)
-def test_predict_bp7_fallback_to_default(
-    mock_super_predict_bp7, myeloid_malignancy_predictor, auto_acmg_data
-):
-    """Test fallback to default BP7 prediction after threshold adjustment."""
-    # Set the mock return value for the superclass's predict_bp7 method
-    mock_super_predict_bp7.return_value = AutoACMGCriteria(
-        name="BP7",
-        prediction=AutoACMGPrediction.NotApplicable,
-        strength=AutoACMGStrength.BenignSupporting,
-        summary="Default BP7 prediction fallback.",
-    )
-
-    # Call predict_bp7 method
-    result = myeloid_malignancy_predictor.predict_bp7(
-        myeloid_malignancy_predictor.seqvar, auto_acmg_data
-    )
-
-    # Verify the result and ensure the superclass method was called
-    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
-    assert (
-        result.prediction == AutoACMGPrediction.NotApplicable
-    ), "BP7 should return NotMet as mocked."
-    assert (
-        result.strength == AutoACMGStrength.BenignSupporting
-    ), "The strength should be BenignSupporting."
-    assert (
-        "Default BP7 prediction fallback." in result.summary
-    ), "The summary should indicate the fallback."
-    assert mock_super_predict_bp7.called, "super().predict_bp7 should have been called."
+# -------------- PP3 & BP4 ---------------
 
 
 def test_verify_pp3bp4_thresholds(myeloid_malignancy_predictor, auto_acmg_data):
@@ -481,3 +432,73 @@ def test_verify_pp3bp4_spliceai_thresholds(myeloid_malignancy_predictor, auto_ac
         assert auto_acmg_data.thresholds.spliceAI_acceptor_loss == 0.1
         assert auto_acmg_data.thresholds.spliceAI_donor_gain == 0.1
         assert auto_acmg_data.thresholds.spliceAI_donor_loss == 0.1
+
+
+# --------------- BP7 ---------------
+
+
+def test_predict_bp7_threshold_adjustment(myeloid_malignancy_predictor, auto_acmg_data):
+    """Test that the BP7 thresholds are correctly adjusted for Myeloid Malignancy."""
+    # Initial threshold values
+    auto_acmg_data.thresholds.spliceAI_acceptor_gain = 0.1
+    auto_acmg_data.thresholds.spliceAI_acceptor_loss = 0.1
+    auto_acmg_data.thresholds.spliceAI_donor_gain = 0.1
+    auto_acmg_data.thresholds.spliceAI_donor_loss = 0.1
+    auto_acmg_data.thresholds.phyloP100 = 1.0
+
+    # Call predict_bp7 method
+    result = myeloid_malignancy_predictor.predict_bp7(
+        myeloid_malignancy_predictor.seqvar, auto_acmg_data
+    )
+
+    # Check that the thresholds were adjusted
+    assert (
+        auto_acmg_data.thresholds.spliceAI_acceptor_gain == 0.2
+    ), "The spliceAI acceptor gain threshold should be adjusted to 0.2."
+    assert (
+        auto_acmg_data.thresholds.spliceAI_acceptor_loss == 0.2
+    ), "The spliceAI acceptor loss threshold should be adjusted to 0.2."
+    assert (
+        auto_acmg_data.thresholds.spliceAI_donor_gain == 0.2
+    ), "The spliceAI donor gain threshold should be adjusted to 0.2."
+    assert (
+        auto_acmg_data.thresholds.spliceAI_donor_loss == 0.2
+    ), "The spliceAI donor loss threshold should be adjusted to 0.2."
+    assert (
+        auto_acmg_data.thresholds.phyloP100 == 2.0
+    ), "The phyloP100 threshold should be adjusted to 2.0."
+
+    # Check that the superclass's predict_bp7 method was called and returned a result
+    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
+
+
+@patch.object(MyeloidMalignancyPredictor, "predict_bp7", autospec=True)
+def test_predict_bp7_fallback_to_default(
+    mock_super_predict_bp7, myeloid_malignancy_predictor, auto_acmg_data
+):
+    """Test fallback to default BP7 prediction after threshold adjustment."""
+    # Set the mock return value for the superclass's predict_bp7 method
+    mock_super_predict_bp7.return_value = AutoACMGCriteria(
+        name="BP7",
+        prediction=AutoACMGPrediction.NotApplicable,
+        strength=AutoACMGStrength.BenignSupporting,
+        summary="Default BP7 prediction fallback.",
+    )
+
+    # Call predict_bp7 method
+    result = myeloid_malignancy_predictor.predict_bp7(
+        myeloid_malignancy_predictor.seqvar, auto_acmg_data
+    )
+
+    # Verify the result and ensure the superclass method was called
+    assert isinstance(result, AutoACMGCriteria), "The result should be of type AutoACMGCriteria."
+    assert (
+        result.prediction == AutoACMGPrediction.NotApplicable
+    ), "BP7 should return NotMet as mocked."
+    assert (
+        result.strength == AutoACMGStrength.BenignSupporting
+    ), "The strength should be BenignSupporting."
+    assert (
+        "Default BP7 prediction fallback." in result.summary
+    ), "The summary should indicate the fallback."
+    assert mock_super_predict_bp7.called, "super().predict_bp7 should have been called."

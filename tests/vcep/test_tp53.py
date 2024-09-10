@@ -37,6 +37,9 @@ def auto_acmg_data():
     return AutoACMGSeqVarData()
 
 
+# ----------------- PS1 & PM5 -----------------
+
+
 @patch.object(DefaultSeqVarPredictor, "verify_ps1pm5")
 def test_verify_ps1pm5_overrides(mock_super_verify, tp53_predictor, seqvar, auto_acmg_data):
     """Test that the overridden verify_ps1pm5 method in TP53Predictor works correctly."""
@@ -185,6 +188,9 @@ def test_verify_ps1pm5_exception_handling(
     assert "Test exception" in str(exc_info.value), "Should raise the original exception"
 
 
+# ----------------- PM1 -----------------
+
+
 def test_predict_pm1_in_moderate_residue(tp53_predictor, auto_acmg_data):
     """Test when the variant affects a critical residue in TP53."""
     auto_acmg_data.hgnc_id = "HGNC:11998"  # TP53 gene
@@ -245,6 +251,9 @@ def test_predict_pm1_fallback_to_default(mock_predict_pm1, tp53_predictor, auto_
     ), "The summary should indicate the fallback."
 
 
+# ----------------- PM2, BA1, BS1, BS2 -----------------
+
+
 @patch.object(
     DefaultSeqVarPredictor,
     "predict_pm2ba1bs1bs2",
@@ -277,6 +286,9 @@ def test_predict_pm2ba1bs1bs2(mock_super_method, tp53_predictor, auto_acmg_data,
     ), "Unexpected criteria names returned"
 
 
+# ----------------- PM4 & BP3 -----------------
+
+
 def test_predict_pm4bp3_tp53(tp53_predictor, seqvar, auto_acmg_data):
     """Test the predict_pm4bp3 method for TP53 VCEP."""
     # Call the method under test
@@ -305,6 +317,9 @@ def test_predict_pm4bp3_tp53(tp53_predictor, seqvar, auto_acmg_data):
     ), "The summary should indicate BP3 is not applicable for TP53."
 
 
+# ----------------- PP2 & BP1 -----------------
+
+
 def test_predict_pp2bp1(tp53_predictor, seqvar, auto_acmg_data):
     """Test predict_pp2bp1 for TP53."""
     # Call the method under test
@@ -331,6 +346,9 @@ def test_predict_pp2bp1(tp53_predictor, seqvar, auto_acmg_data):
     assert (
         bp1_result.summary == "BP1 is not applicable for the gene."
     ), "The summary should indicate BP1 is not applicable."
+
+
+# ----------------- BP7 -----------------
 
 
 def test_predict_bp7_threshold_adjustment(tp53_predictor, auto_acmg_data):
@@ -379,6 +397,9 @@ def test_predict_bp7_fallback_to_default(mock_super_predict_bp7, tp53_predictor,
         "Default BP7 prediction fallback." in result.summary
     ), "The summary should indicate the fallback."
     assert mock_super_predict_bp7.called, "super().predict_bp7 should have been called."
+
+
+# ----------------- PP3 & BP4 -----------------
 
 
 def test_verify_pp3bp4_thresholds(tp53_predictor, auto_acmg_data):

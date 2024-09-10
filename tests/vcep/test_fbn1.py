@@ -31,6 +31,9 @@ def auto_acmg_data():
     return AutoACMGSeqVarData()
 
 
+# ------------- PS1 & PM5 -------------
+
+
 @patch.object(DefaultSeqVarPredictor, "verify_ps1pm5")
 def test_verify_ps1pm5_overrides(mock_super_verify, fbn1_predictor, seqvar, auto_acmg_data):
     """Test that the overridden verify_ps1pm5 method in FBN1Predictor works correctly."""
@@ -122,6 +125,9 @@ def test_verify_ps1pm5_non_missense(mock_super_verify, fbn1_predictor, seqvar, a
 
     # Ensure that the mock of the superclass method is called to simulate the inherited behavior
     mock_super_verify.assert_called_once_with(seqvar, auto_acmg_data)
+
+
+# ------------- PM1 -------------
 
 
 def test_predict_pm1_strong_residue(fbn1_predictor, auto_acmg_data):
@@ -230,6 +236,9 @@ def test_predict_pm1_edge_case_moderate_boundary(fbn1_predictor, auto_acmg_data)
     ), "The summary should indicate the moderate critical residue."
 
 
+# ------------- PM2, BA1, BS1, BS2 -------------
+
+
 def test_bs2_not_applicable(fbn1_predictor, auto_acmg_data):
     """Test BS2 is not applicable for FBN1 as overridden."""
     result = fbn1_predictor._bs2_not_applicable(auto_acmg_data)
@@ -268,10 +277,16 @@ def test_predict_pm2ba1bs1bs2(mock_super_method, fbn1_predictor, auto_acmg_data,
     ), "Unexpected criteria names returned"
 
 
+# ------------- PM4 & BP3 -------------
+
+
 def test_bp3_not_applicable(fbn1_predictor, seqvar, auto_acmg_data):
     """Test BP3 is not applicable for ACADVL as overridden."""
     result = fbn1_predictor._bp3_not_applicable(seqvar, auto_acmg_data)
     assert result is True, "BP3 should always be not applicable"
+
+
+# ------------- PP2 & BP1 -------------
 
 
 @patch.object(FBN1Predictor, "verify_pp2bp1")
@@ -323,6 +338,9 @@ def test_predict_pp2bp1_exception_handling(mock_verify, fbn1_predictor, seqvar, 
     with pytest.raises(Exception) as exc_info:
         pp2, bp1 = fbn1_predictor.predict_pp2bp1(seqvar, auto_acmg_data)
     assert "Internal error" in str(exc_info.value), "Should raise an internal error exception."
+
+
+# ------------- PP3 & BP4 -------------
 
 
 def test_predict_pp3bp4_revel_strategy(fbn1_predictor, auto_acmg_data):
