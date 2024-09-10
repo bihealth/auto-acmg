@@ -667,14 +667,16 @@ def test_exon_skip_or_cryptic_ss_disrupt_exon_skipping(
 
 
 @patch.object(SeqVarPVS1Helper, "_skipping_exon_pos", return_value=(90, 110))
+@patch.object(SplicingPrediction, "__init__", return_value=None)
 @patch.object(SplicingPrediction, "get_sequence", return_value="ATGC" * 10)
 @patch.object(SplicingPrediction, "determine_splice_type", return_value="donor")
 @patch.object(SplicingPrediction, "get_cryptic_ss", return_value=[(95, "GT", 5)])
 def test_exon_skip_or_cryptic_ss_disrupt_cryptic_splice_site_disruption(
+    mock_skipping_exon_pos,
+    mock_init,
     mock_get_sequence,
     mock_determine_splice_type,
     mock_get_cryptic_ss,
-    mock_skipping_exon_pos,
     helper,
     seqvar_ss,
     exons,
@@ -689,14 +691,16 @@ def test_exon_skip_or_cryptic_ss_disrupt_cryptic_splice_site_disruption(
 
 
 @patch.object(SeqVarPVS1Helper, "_skipping_exon_pos", return_value=(90, 110))
+@patch.object(SplicingPrediction, "__init__", return_value=None)
 @patch.object(SplicingPrediction, "get_sequence", return_value="ATGC" * 10)
 @patch.object(SplicingPrediction, "determine_splice_type", return_value="donor")
 @patch.object(SplicingPrediction, "get_cryptic_ss", return_value=[])
 def test_exon_skip_or_cryptic_ss_disrupt_preserve_reading_frame(
+    mock_skipping_exon_pos,
+    mock_init,
     mock_get_sequence,
     mock_determine_splice_type,
     mock_get_cryptic_ss,
-    mock_skipping_exon_pos,
     helper,
     seqvar_ss,
     exons,
