@@ -34,14 +34,15 @@ class StrucVarHelper(AutoACMGHelper):
 
     def _minimal_deletion(self, strucvar: StrucVar, exons: List[Exon]) -> bool:
         """
-        Check if the variant is a minimal deletion.
+        Check if the variant is a minimal deletion. A minimal deletion affects at least one full
+        exon.
 
         Args:
             strucvar: The structural variant.
             exons: The exons of the gene.
 
         Returns:
-            True if the deletion affects at least one full exon, False otherwise.
+            bool: True if the deletion affects at least one full exon, False otherwise.
 
         Raises:
             AlgorithmError: If the variant is not a deletion.
@@ -64,7 +65,8 @@ class StrucVarHelper(AutoACMGHelper):
 
         The method retrieves variants from the range defined by the structural variant's start and
         stop positions and iterates through the ClinVar data of each variant to count the number of
-        pathogenic variants and the total number of variants.
+        pathogenic variants and the total number of variants. The method considers a variant
+        pathogenic if its classification is "Pathogenic" or "Likely pathogenic".
 
         Args:
             strucvar: The structural variant being analyzed.
@@ -252,14 +254,16 @@ class StrucVarHelper(AutoACMGHelper):
 
     def full_gene_del(self, strucvar: StrucVar, exons: List[Exon]) -> bool:
         """
-        Check if the variant is a full gene deletion.
+        Check if the variant is a full gene deletion. The deletion affects the whole gene if the
+        start position of the deletion is less than or equal to the start of the first exon and the
+        stop position of the deletion is greater than or equal to the end of the last exon.
 
         Args:
             strucvar: The structural variant.
             exons: The exons of the gene.
 
         Returns:
-            True if the variant is a full gene deletion, False otherwise.
+            bool: True if the variant is a full gene deletion, False otherwise.
 
         Raises:
             MissingDataError: If exons are not available.
@@ -429,15 +433,14 @@ class StrucVarHelper(AutoACMGHelper):
 
     def in_bio_relevant_tsx(self, transcript_tags: List[str]) -> bool:
         """
-        Check if the deletion is in a biologically relevant transcript.
-
-        Check if the transcript has a MANE Select tag.
+        Check if the deletion is in a biologically relevant transcript. Check if the transcript has
+        a MANE Select tag.
 
         Args:
             transcript_tags: The tags of the transcript.
 
         Returns:
-            True if the deletion is in a biologically relevant transcript, False otherwise.
+            bool: True if the deletion is in a biologically relevant transcript, False otherwise.
         """
         logger.info("Checking if the deletion is in a biologically relevant transcript.")
         self.comment_pvs1 += f"Transcript tags: {', '.join(transcript_tags)}."
@@ -451,6 +454,15 @@ class StrucVarHelper(AutoACMGHelper):
         variant, then counting the number of pathogenic variants in that region, by iterating
         through the clinvar data of each variant. Consider the region critical if the frequency of
         pathogenic variants exceeds 5%.
+
+        Args:
+            strucvar: The structural variant being analyzed.
+
+        Returns:
+            bool: True if the deletion is critical for protein function, False otherwise.
+
+        Raises:
+            AlgorithmError: If the API response is invalid or cannot be processed.
         """
         logger.debug("Checking if the deletion is critical for protein function.")
 
@@ -506,7 +518,7 @@ class StrucVarHelper(AutoACMGHelper):
             bool: True if the LoF variant frequency is greater than 10%, False otherwise.
 
         Raises:
-            InvalidAPIResponseError: If the API response is invalid or cannot be processed.
+            AlgoritmError: If the API response is invalid or cannot be processed.
         """
         logger.debug(
             "Checking if LoF variants are frequent in the general population for "
@@ -563,6 +575,9 @@ class StrucVarHelper(AutoACMGHelper):
 
         Returns:
             bool: True if the deletion removes more than 10% of the protein, False otherwise.
+
+        Raises:
+            AlgorithmError: If the total CDS length is zero.
         """
         total_cds_length = 0
         deleted_length = 0
@@ -625,7 +640,15 @@ class AutoPVS1(StrucVarHelper):
     ) -> Tuple[PVS1Prediction, PVS1PredictionStrucVarPath, str]:
         """Make the PVS1 prediction.
 
-        The prediction is based on the PVS1 criteria for structural variants.
+        The prediction is based on the PVS1 decision tree for structural variants.
+
+        Args:
+            strucvar: The structural variant.
+            var_data: The variant information.
+
+        Returns:
+            Tuple[PVS1Prediction, PVS1PredictionStrucVarPath, str]: The prediction, prediction path,
+            and the comment.
         """
         if strucvar.sv_type == StrucVarType.DEL:
             self.comment_pvs1 = "Analysing the deletion variant. => "
@@ -759,7 +782,7 @@ class AutoPVS1(StrucVarHelper):
         return self.prediction, self.prediction_path, self.comment_pvs1
 
     def predict_pvs1(self, strucvar: StrucVar, var_data: AutoACMGStrucVarData) -> AutoACMGCriteria:
-        """Predict the PVS1 criteria for structural variants."""
+        """Predict the PVS1 criteria."""
         pred, path, comment = self.verify_pvs1(strucvar, var_data)
         evidence_strength_mapping: Dict[PVS1Prediction, AutoACMGStrength] = {
             PVS1Prediction.PVS1: AutoACMGStrength.PathogenicVeryStrong,

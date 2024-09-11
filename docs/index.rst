@@ -51,6 +51,7 @@ works internally.
    acmg_seqvars_criteria
    acmg_seqvar_implementation
    acmg_strucvar_implementation
+   benchmarking
 
 .. toctree::
     :maxdepth: 2

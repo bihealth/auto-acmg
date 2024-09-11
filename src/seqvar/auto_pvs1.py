@@ -776,8 +776,12 @@ class AutoPVS1(SeqVarPVS1Helper):
     ) -> Tuple[PVS1Prediction, PVS1PredictionSeqVarPath, str]:
         """Make the PVS1 prediction.
 
-        The prediction is based on the PVS1 criteria for sequence variants. The prediction
+        The prediction is based on the PVS1 decision tree for sequence variants. The prediction
         and prediction path is stored in the prediction and prediction_path attributes.
+
+        Args:
+            seqvar: The sequence variant being analyzed.
+            var_data: The data of the sequence variant.
 
         Returns:
             Tuple[PVS1Prediction, PVS1PredictionSeqVarPath, str]: The prediction, prediction path,
@@ -919,15 +923,7 @@ class AutoPVS1(SeqVarPVS1Helper):
         return self.prediction, self.prediction_path, self.comment_pvs1
 
     def predict_pvs1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> AutoACMGCriteria:
-        """Predict the PVS1 criteria for the sequence variant.
-
-        Args:
-            seqvar: The sequence variant being analyzed.
-
-        Returns:
-            Tuple[PVS1Prediction, PVS1PredictionSeqVarPath, str]: The prediction, prediction path,
-                and the comment.
-        """
+        """Predict the PVS1 criteria."""
         logger.info("Predict PVS1")
         pred, path, comment = self.verify_pvs1(seqvar, var_data)
         evidence_strength_mapping: Dict[PVS1Prediction, AutoACMGStrength] = {

@@ -21,7 +21,7 @@ from src.utils import AutoACMGHelper
 
 
 class AutoPM4BP3(AutoACMGHelper):
-    """Predicts PM4 and BP3 criteria for sequence variants."""
+    """Class for PM4 and BP3 prediction."""
 
     def __init__(self):
         super().__init__()
@@ -30,13 +30,12 @@ class AutoPM4BP3(AutoACMGHelper):
         #: Comment to store the prediction explanation.
         self.comment_pm4bp3: str = ""
 
-    @staticmethod
-    def _in_repeat_region(seqvar: SeqVar) -> bool:
+    def _in_repeat_region(self, seqvar: SeqVar) -> bool:
         """
         Check if the variant is in a repeat region using the RepeatMasker track.
 
         Args:
-            seqvar (SeqVar): Sequence variant.
+            seqvar: Sequence variant.
 
         Returns:
             bool: True if the variant is in a repeat region, False otherwise.
@@ -60,13 +59,12 @@ class AutoPM4BP3(AutoACMGHelper):
         except tabix.TabixError as e:
             raise AlgorithmError("Failed to check if the variant is in a repeat region.") from e
 
-    @staticmethod
-    def _is_stop_loss(var_data: AutoACMGSeqVarData) -> bool:
+    def _is_stop_loss(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the variant's consequence is a stop-loss.
 
         Args:
-            var_data (AutoACMGData): The variant information.
+            var_data: The variant information.
 
         Returns:
             bool: True if the variant is a stop-loss variant, False otherwise.
@@ -77,13 +75,12 @@ class AutoPM4BP3(AutoACMGHelper):
             return True
         return False
 
-    @staticmethod
-    def is_inframe_delins(var_data: AutoACMGSeqVarData) -> bool:
+    def is_inframe_delins(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the variant's consequence is an in-frame deletion/insertion.
 
         Args:
-            var_data (AutoACMGData): The variant information.
+            var_data: The variant information.
 
         Returns:
             bool: True if the variant is an in-frame deletion/insertion, False otherwise.
@@ -103,7 +100,8 @@ class AutoPM4BP3(AutoACMGHelper):
         Check if BP3 is not applicable for the variant.
 
         Args:
-            var_data (AutoACMGData): The variant information.
+            seqvar: Sequence variant.
+            var_data: The variant information.
 
         Returns:
             bool: True if BP3 is not applicable, False otherwise.
@@ -130,8 +128,12 @@ class AutoPM4BP3(AutoACMGHelper):
             or stop-loss variants.
             BP3: In-frame deletions/insertions in a repetitive region without a known function.
 
+        Args:
+            seqvar: Sequence variant.
+            var_data: The variant information
+
         Returns:
-            PM4BP3: PM4 and BP3 prediction.
+            Tuple[Optional[PM4BP3], str]: Prediction result and comment.
         """
         self.prediction_pm4bp3 = PM4BP3()
         self.comment_pm4bp3 = ""
@@ -171,11 +173,7 @@ class AutoPM4BP3(AutoACMGHelper):
     def predict_pm4bp3(
         self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Predict PM4 and BP3 criteria for the provided sequence variant.
-
-        Returns:
-            AutoACMGCriteria: PM4 and BP3 prediction.
-        """
+        """Predict PM4 and BP3 criteria."""
         logger.info("Predict PM4 and BP3")
         pred, comment = self.verify_pm4bp3(seqvar, var_data)
         if pred:

@@ -40,11 +40,25 @@ VCEP-Specific Overrides
 Each VCEP-specific predictor may override certain logic or thresholds of the Default Predictor:
 
 - **Threshold Adjustments**: Some VCEP implementations may just adjust thresholds for criteria like
-  PP3 or BP4 and don't override the prediction logic.
+    PP3 or BP4 and don't override the prediction logic.
 
 - **Prediction Logic Changes**: Other VCEPs may override the entire logic for certain criteria. This
-  can include changing how predictions are made based on the variant's effects on protein function,
-  splicing, or other molecular mechanisms.
+    can include changing how predictions are made based on the variant's effects on protein function,
+    splicing, or other molecular mechanisms.
+
+
+.. note::
+    For the **RYR1 gene**, there are two VCEPs: *Congenital Myopathies VCEP* and
+    *Malignant Hyperthermia Susceptibility*. In AutoACMG, we only consider the
+    **Malignant Hyperthermia Susceptibility VCEP** for RYR1 and avoid the Congenital Myopathies
+    VCEP. For more details on the VCEP implementations, please refer to the source code in the
+    ``src/vcep`` directory of our GitHub repository.
+
+.. note::
+    For **von Willebrand Disease**, there are two different rulesets. We implement the combination
+    of both rulesets. For more details on the VCEP implementations, please refer to the source code
+    in the ``src/vcep`` directory of our GitHub repository.
+
 
 For a detailed overview of how specific VCEP predictors modify or extend the default behavior, you
 can review the source code on the GitHub repository under ``src/vcep`` and for the details refer to

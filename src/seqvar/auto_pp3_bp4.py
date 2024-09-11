@@ -17,7 +17,7 @@ from src.utils import AutoACMGHelper
 
 
 class AutoPP3BP4(AutoACMGHelper):
-    """Class for automatic PP3 and BP4 prediction."""
+    """Class for PP3 and BP4 prediction."""
 
     def __init__(self):
         super().__init__()
@@ -31,7 +31,7 @@ class AutoPP3BP4(AutoACMGHelper):
         Check if the variant's consequence is a splice related.
 
         Args:
-            var_data (AutoACMGSeqVarData): The variant information.
+            var_data: The variant information.
 
         Returns:
             bool: True if the variant is a splice variant, False otherwise.
@@ -45,8 +45,10 @@ class AutoPP3BP4(AutoACMGHelper):
     def _is_inframe_indel(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the variant's consequence is an inframe indel.
+
         Args:
-            var_data (AutoACMGSeqVarData): The variant information.
+            var_data: The variant information.
+
         Returns:
             bool: True if the variant is an inframe indel, False otherwise.
         """
@@ -59,8 +61,10 @@ class AutoPP3BP4(AutoACMGHelper):
     def _is_missense_variant(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the variant's consequence is a missense variant.
+
         Args:
-            var_data (AutoACMGSeqVarData): The variant information.
+            var_data: The variant information.
+
         Returns:
             bool: True if the variant is a missense variant, False otherwise.
         """
@@ -73,8 +77,10 @@ class AutoPP3BP4(AutoACMGHelper):
     def _is_synonymous_variant(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the variant's consequence is a synonymous variant.
+
         Args:
-            var_data (AutoACMGSeqVarData): The variant information.
+            var_data: The variant information.
+
         Returns:
             bool: True if the variant is a synonymous variant, False otherwise.
         """
@@ -87,8 +93,10 @@ class AutoPP3BP4(AutoACMGHelper):
     def _is_intron_variant(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the variant's consequence is an intron variant.
+
         Args:
-            var_data (AutoACMGSeqVarData): The variant information.
+            var_data: The variant information.
+
         Returns:
             bool: True if the variant is an intron variant, False otherwise.
         """
@@ -101,8 +109,10 @@ class AutoPP3BP4(AutoACMGHelper):
     def _is_utr_variant(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the variant's consequence is an UTR variant.
+
         Args:
-            var_data (AutoACMGSeqVarData): The variant information.
+            var_data: The variant information.
+
         Returns:
             bool: True if the variant is an UTR variant, False otherwise.
         """
@@ -119,11 +129,15 @@ class AutoPP3BP4(AutoACMGHelper):
     ) -> bool:
         """
         Check if any of the specified scores meet their corresponding threshold.
+
         Args:
-            var_data (AutoACMGSeqVarData): Variant data containing scores and thresholds.
-            score_threshold_pairs (Tuple[str, float]): Pairs of score attributes and their corresponding pathogenic thresholds.
+            var_data: Variant data containing scores and thresholds.
+            score_threshold_pairs: Pairs of score attributes and their corresponding pathogenic
+            thresholds.
+
         Returns:
-            bool: True if any of the specified scores meet their corresponding threshold, False otherwise.
+            bool: True if any of the specified scores meet their corresponding threshold, False
+            otherwise.
         """
         for score_attr, threshold in score_threshold_pairs:
             score_value = getattr(var_data.scores.dbnsfp, score_attr, None)
@@ -136,11 +150,15 @@ class AutoPP3BP4(AutoACMGHelper):
     ) -> bool:
         """
         Check if any of the specified scores meet their corresponding threshold.
+
         Args:
-            var_data (AutoACMGSeqVarData): Variant data containing scores and thresholds.
-            score_threshold_pairs (Tuple[str, float]): Pairs of score attributes and their corresponding benign thresholds.
+            var_data: Variant data containing scores and thresholds.
+            score_threshold_pairs: Pairs of score attributes and their corresponding benign
+            thresholds.
+
         Returns:
-            bool: True if any of the specified scores meet their corresponding threshold, False otherwise.
+            bool: True if any of the specified scores meet their corresponding threshold, False
+            otherwise.
         """
         for score_attr, threshold in score_threshold_pairs:
             score_value = getattr(var_data.scores.dbnsfp, score_attr, None)
@@ -151,10 +169,13 @@ class AutoPP3BP4(AutoACMGHelper):
     def _affect_spliceAI(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Predict splice site alterations using SpliceAI.
-        If any of SpliceAI scores are greater than specific thresholds, the variant is considered a
-        splice site alteration. The thresholds are defined in the variant data thresholds.
+
+        If any of SpliceAI scores are greater than specific thresholds, the variant is considered to
+        affect splicing.
+
         Args:
             var_data: The data containing variant scores and thresholds.
+
         Returns:
             bool: True if the variant is a splice site alteration, False otherwise.
         """
@@ -173,14 +194,16 @@ class AutoPP3BP4(AutoACMGHelper):
         """
         Check if the variant is pathogenic based on splicing scores.
 
+        Checks if the Ada and RF scores are greater than the thresholds.
+
         Args:
-            variant_info (VariantResult): Variant information.
+            var_data: The variant information.
 
         Returns:
             bool: True if the variant is pathogenic, False otherwise.
 
         Raises:
-            MissingDataError: If the variant information is missing.
+            MissingDataError: If the Ada and RF scores are missing.
         """
         ada = var_data.scores.dbscsnv.ada or var_data.scores.cadd.ada
         rf = var_data.scores.dbscsnv.rf or var_data.scores.cadd.rf
@@ -198,14 +221,16 @@ class AutoPP3BP4(AutoACMGHelper):
         """
         Check if the variant is benign based on splicing scores.
 
+        Checks if the Ada and RF scores are less than the thresholds.
+
         Args:
-            variant_info (VariantResult): Variant information.
+            var_data: The variant information.
 
         Returns:
             bool: True if the variant is benign, False otherwise.
 
         Raises:
-            MissingDataError: If the variant information is missing.
+            MissingDataError: If the Ada and RF scores are missing.
         """
         ada = var_data.scores.dbscsnv.ada or var_data.scores.cadd.ada
         rf = var_data.scores.dbscsnv.rf or var_data.scores.cadd.rf
@@ -222,7 +247,26 @@ class AutoPP3BP4(AutoACMGHelper):
     def verify_pp3bp4(
         self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[Optional[PP3BP4], str]:
-        """Predict PP3 and BP4 criteria."""
+        """
+        Predict PP3 and BP4 criteria.
+
+        The method checks the variant's pathogenicity based on the provided scores and thresholds.
+        First of all it checks the pathogenic and benign scores against the thresholds if the
+        default strategy is used. Otherwise, it checks the pathogenic and benign scores against the
+        specified thresholds and then checks the splicing scores. If the variant is a splice site
+        alteration or has the pathogenic score, the variant is considered pathogenic. If the variant
+        doesn't affect splicing and has the benign score, the variant is considered benign.
+
+        Note:
+            The non-default assesment strategy is used for some VCEPs.
+
+        Args:
+            seqvar: Sequence variant.
+            var_data: The variant information.
+
+        Returns:
+            Tuple[Optional[PP3BP4], str]: The prediction result and the comment.
+        """
         self.prediction_pp3bp4 = PP3BP4()
         self.comment_pp3bp4 = ""
         try:

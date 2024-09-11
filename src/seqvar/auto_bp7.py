@@ -27,13 +27,12 @@ class AutoBP7(AutoACMGHelper):
         #: Comment to store the prediction explanation.
         self.comment_bp7: str = ""
 
-    @staticmethod
-    def _spliceai_impact(var_data: AutoACMGSeqVarData) -> bool:
+    def _spliceai_impact(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Predict splice site alterations using SpliceAI.
 
-        If any of SpliceAI scores are greater than specific thresholds, the variant is considered a
-        splice site alteration. The thresholds are defined in the variant data thresholds.
+        If any of SpliceAI scores are greater than specific thresholds, the variant is predicted
+        to affect splicing.
 
         Args:
             var_data: The data containing variant scores and thresholds.
@@ -71,8 +70,7 @@ class AutoBP7(AutoACMGHelper):
             return True
         return False
 
-    @staticmethod
-    def _is_synonymous(var_data: AutoACMGSeqVarData) -> bool:
+    def _is_synonymous(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Predict if the variant is synonymous.
 
@@ -91,8 +89,7 @@ class AutoBP7(AutoACMGHelper):
             return True
         return False
 
-    @staticmethod
-    def _is_intronic(var_data: AutoACMGSeqVarData) -> bool:
+    def _is_intronic(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Predict if the variant is intronic.
 
@@ -169,7 +166,8 @@ class AutoBP7(AutoACMGHelper):
         """
         Help function to check if the variant is an exception.
 
-        Per default there are no exceptions for BP7.
+        Per default there are no exceptions for BP7. This function can be overridden in the special
+        VCEP implementations.
 
         Args:
             seqvar: The sequence variant.
@@ -181,7 +179,26 @@ class AutoBP7(AutoACMGHelper):
         return False
 
     def verify_bp7(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> Tuple[Optional[BP7], str]:
-        """Predict BP7 criterion."""
+        """
+        Predict BP7 criterion.
+
+        Predict if the variant meets the BP7 criterion by:
+        - Checking if the variant is in the mitochondrial genome. If so, BP7 is not met.
+        - Checking if the variant is synonymous and not conserved and not predicted to affect
+        splicing or intronic variant that does not affect canonical splice site and also not
+        conserved and not predicted to affect splicing. If so, BP7 is met.
+
+        Note:
+            Some VCEP implementations might have exceptions for BP7. In that case, the prediction
+            avoids the default checks and returns that BP7 is not met.
+
+        Args:
+            seqvar: The sequence variant.
+            var_data: The variant data.
+
+        Returns:
+            Tuple[Optional[BP7], str]: The prediction and the comment.
+        """
         self.prediction_bp7 = BP7()
         self.comment_bp7 = ""
         try:

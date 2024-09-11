@@ -22,7 +22,7 @@ from src.utils import AutoACMGHelper
 
 
 class AutoPM1(AutoACMGHelper):
-    """Class for automatic PM1 prediction."""
+    """Class for PM1 prediction."""
 
     def __init__(self):
         super().__init__()
@@ -31,13 +31,12 @@ class AutoPM1(AutoACMGHelper):
         #: comment_pm1 to store the prediction explanation.
         self.comment_pm1: str = ""
 
-    @staticmethod
-    def _get_affected_exon(var_data: AutoACMGSeqVarData, seqvar: SeqVar) -> int:
+    def _get_affected_exon(self, var_data: AutoACMGSeqVarData, seqvar: SeqVar) -> int:
         """
         Get the affected exon number for the variant.
 
-        Go through all exons and count them before the variant position.
-        Pay attention to the strand of the gene.
+        Go through all exons and count them before the variant position. The method also considers
+        the strand of the gene.
 
         Args:
             var_data: AutoACMGData object
@@ -45,6 +44,9 @@ class AutoPM1(AutoACMGHelper):
 
         Returns:
             int: Affected exon number
+
+        Raises:
+            AlgorithmError: If the strand is invalid.
         """
         exon_number = 0
         if var_data.strand == GenomicStrand.Plus:
@@ -74,7 +76,11 @@ class AutoPM1(AutoACMGHelper):
         Counts pathogenic and benign variants in the specified range.
 
         The method retrieves variants from the specified range and iterates through the ClinVar data
-        of each variant to count the number of pathogenic and benign variants.
+        of each variant to count the number of pathogenic and benign SNVs.
+
+        Note:
+            The method considers "Pathogenic" and "Likely pathogenic" as pathogenic and "Benign"
+            and "Likely benign" as benign.
 
         Args:
             seqvar: The sequence variant being analyzed.
@@ -123,8 +129,7 @@ class AutoPM1(AutoACMGHelper):
         else:
             raise InvalidAPIResposeError("Failed to get variant from range. No ClinVar data.")
 
-    @staticmethod
-    def _get_uniprot_domain(seqvar: SeqVar) -> Optional[Tuple[int, int]]:
+    def _get_uniprot_domain(self, seqvar: SeqVar) -> Optional[Tuple[int, int]]:
         """
         Retrieve the UniProt domain for the variant and return the start and end positions if found
         or None otherwise.
@@ -135,21 +140,49 @@ class AutoPM1(AutoACMGHelper):
         Returns:
             Optional[Tuple[int, int]]: The start and end positions of the UniProt domain if found,
             None otherwise.
+
+        Raises:
+            AlgorithmError: If tabix fails to query the UniProt file.
         """
-        # Find path to the lib file
-        if seqvar.genome_release == GenomeRelease.GRCh37:
-            path = os.path.join(settings.PATH_TO_ROOT, "lib", "uniprot", "grch37", "uniprot.bed.gz")
-        else:
-            path = os.path.join(settings.PATH_TO_ROOT, "lib", "uniprot", "grch38", "uniprot.bed.gz")
-        tb = tabix.open(path)
-        records = tb.query(f"chr{seqvar.chrom}", seqvar.pos - 1, seqvar.pos)
-        # Return the first record
-        for record in records:
-            return int(record[1]), int(record[2])
-        return None
+        try:
+            # Find path to the lib file
+            if seqvar.genome_release == GenomeRelease.GRCh37:
+                path = os.path.join(
+                    settings.PATH_TO_ROOT, "lib", "uniprot", "grch37", "uniprot.bed.gz"
+                )
+            else:
+                path = os.path.join(
+                    settings.PATH_TO_ROOT, "lib", "uniprot", "grch38", "uniprot.bed.gz"
+                )
+            tb = tabix.open(path)
+            records = tb.query(f"chr{seqvar.chrom}", seqvar.pos - 1, seqvar.pos)
+            # Return the first record
+            for record in records:
+                return int(record[1]), int(record[2])
+            return None
+        except tabix.TabixError as e:
+            raise AlgorithmError("Failed to check if the variant is in a UniProt domain.") from e
 
     def verify_pm1(self, seqvar: SeqVar, var_data: AutoACMGSeqVarData) -> Tuple[Optional[PM1], str]:
-        """Predict PM1 criteria."""
+        """
+        Predict PM1 criteria.
+
+        The method verifies the PM1 criteria for the variant. It first checks if the variant is in
+        the mitochondrial genome. If so, it returns PM1 as not met. Otherwise, it counts the number
+        of pathogenic and benign variants in the range of 25 bases before and after the variant
+        position. If the number of pathogenic variants is greater than or equal to the threshold,
+        it returns PM1 as met. Otherwise, it retrieves the UniProt domain for the variant and
+        counts the number of pathogenic and benign variants in the domain. If the number of
+        pathogenic variants is greater than or equal to 1/4 of the domain length, it returns PM1 as
+        met. Otherwise, it returns PM1 as not met.
+
+        Args:
+            seqvar: The sequence variant being analyzed.
+            var_data: AutoACMGData object
+
+        Returns:
+            Tuple[Optional[PM1], str]: The prediction result and the explanation
+        """
         self.prediction_pm1 = PM1()
         self.comment_pm1 = ""
         if seqvar.chrom == "MT":

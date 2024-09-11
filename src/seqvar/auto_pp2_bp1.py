@@ -17,7 +17,7 @@ from src.utils import AutoACMGHelper
 
 
 class AutoPP2BP1(AutoACMGHelper):
-    """Class for automatic PP2 and BP1 prediction."""
+    """Class for PP2 and BP1 prediction."""
 
     def __init__(self):
         super().__init__()
@@ -87,13 +87,12 @@ class AutoPP2BP1(AutoACMGHelper):
         else:
             raise InvalidAPIResposeError("Failed to get variant from range. No ClinVar data.")
 
-    @staticmethod
-    def _is_missense(var_data: AutoACMGSeqVarData) -> bool:
+    def _is_missense(self, var_data: AutoACMGSeqVarData) -> bool:
         """
         Check if the variant is a missense variant.
 
         Args:
-            var_data (AutoACMGData): The variant information.
+            var_data: The variant information.
 
         Returns:
             bool: True if the variant is a missense variant, False otherwise.
@@ -107,8 +106,21 @@ class AutoPP2BP1(AutoACMGHelper):
     def verify_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[Optional[PP2BP1], str]:
-        """Predict PP2 and BP1 criteria.
-        Use Z-score if available, otherwise count missense variants and calculate ratios.
+        """
+        Predict PP2 and BP1 criteria.
+
+        The method verifies the PP2 and BP1 criteria for the provided sequence variant. It checks
+        if the variant is a missense variant and assigns PP2 and BP1 based on the missense Z-score.
+        If the Z-score is not available, the method counts the pathogenic and benign missense
+        variants in the range of the variant and assigns PP2 and BP1 based on the ratio of
+        pathogenic and benign variants.
+
+        Args:
+            seqvar: The sequence variant being analyzed.
+            var_data: The variant information.
+
+        Returns:
+            Tuple[Optional[PP2BP1], str]: The prediction result and the explanation.
         """
         self.prediction_pp2bp1 = PP2BP1()
         self.comment_pp2bp1 = ""
@@ -193,11 +205,7 @@ class AutoPP2BP1(AutoACMGHelper):
     def predict_pp2bp1(
         self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """Predict PP2 and BP1 criteria for the provided sequence variant.
-
-        Returns:
-            AutoACMGCriteria: PP2 and BP1 prediction.
-        """
+        """Predict PP2 and BP1 criteria,"""
         logger.info("Predict PP2 and BP1")
         pred, comment = self.verify_pp2bp1(seqvar, var_data)
         if pred:

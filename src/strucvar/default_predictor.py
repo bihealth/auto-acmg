@@ -23,6 +23,7 @@ class DefaultStrucVarPredictor(AutoPVS1):
         self.result = result
 
     def predict(self) -> Optional[AutoACMGStrucVarResult]:
+        """Predict ACMG criteria for the structural variant."""
         # Currently only PVS1 prediction
         logger.warning("Currently only PVS1 prediction is implemented.")
 

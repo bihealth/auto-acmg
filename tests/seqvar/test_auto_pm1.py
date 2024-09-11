@@ -198,18 +198,14 @@ def test_get_uniprot_domain_none_found(mock_tabix, auto_pm1, seqvar):
     assert domain is None, "Should return None when no domain is found"
 
 
-@patch("src.seqvar.auto_pm1.tabix")
-def test_get_uniprot_domain_exception(mock_tabix, auto_pm1, seqvar):
+@patch("src.seqvar.auto_pm1.tabix.open")
+def test_get_uniprot_domain_exception(mock_tabix_open, auto_pm1, seqvar):
     """Test handling exceptions when querying UniProt domains."""
-    # Setting up the mock to raise an exception
-    mock_open = mock_tabix.open.return_value
-    mock_open.query.side_effect = tabix.TabixError("Test error")
+    mock_tabix_open.side_effect = tabix.TabixError("Test error")
 
-    with pytest.raises(tabix.TabixError) as excinfo:
+    with pytest.raises(AlgorithmError) as excinfo:
         auto_pm1._get_uniprot_domain(seqvar)
-    assert "Test error" in str(
-        excinfo.value
-    ), "Should raise an AlgorithmError with appropriate message"
+    assert "Failed to check if the variant is in a UniProt domain." in str(excinfo.value)
 
 
 # ============== verify_pm1 ==============
