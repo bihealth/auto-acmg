@@ -180,7 +180,7 @@ def auto_acmg_data_nonsynonymous():
 
 def test_is_synonymous_mehari(auto_acmg_data_synonymous_mehari):
     """Test when the variant is predicted as synonymous based on Mehari consequence."""
-    result = AutoBP7._is_synonymous(auto_acmg_data_synonymous_mehari)
+    result = AutoBP7()._is_synonymous(auto_acmg_data_synonymous_mehari)
     assert (
         result is True
     ), "The variant should be identified as synonymous based on Mehari consequence."
@@ -188,7 +188,7 @@ def test_is_synonymous_mehari(auto_acmg_data_synonymous_mehari):
 
 def test_is_synonymous_cadd(auto_acmg_data_synonymous_cadd):
     """Test when the variant is predicted as synonymous based on CADD consequence."""
-    result = AutoBP7._is_synonymous(auto_acmg_data_synonymous_cadd)
+    result = AutoBP7()._is_synonymous(auto_acmg_data_synonymous_cadd)
     assert (
         result is True
     ), "The variant should be identified as synonymous based on CADD consequence."
@@ -196,7 +196,7 @@ def test_is_synonymous_cadd(auto_acmg_data_synonymous_cadd):
 
 def test_is_nonsynonymous(auto_acmg_data_nonsynonymous):
     """Test when the variant is not synonymous based on both Mehari and CADD consequences."""
-    result = AutoBP7._is_synonymous(auto_acmg_data_nonsynonymous)
+    result = AutoBP7()._is_synonymous(auto_acmg_data_nonsynonymous)
     assert (
         result is False
     ), "The variant should not be identified as synonymous when neither Mehari nor CADD indicate it."
@@ -247,7 +247,7 @@ def auto_acmg_data_non_intronic():
 
 def test_is_intronic_mehari(auto_acmg_data_intronic_mehari):
     """Test when the variant is predicted as intronic based on Mehari consequence."""
-    result = AutoBP7._is_intronic(auto_acmg_data_intronic_mehari)
+    result = AutoBP7()._is_intronic(auto_acmg_data_intronic_mehari)
     assert (
         result is True
     ), "The variant should be identified as intronic based on Mehari consequence."
@@ -255,13 +255,13 @@ def test_is_intronic_mehari(auto_acmg_data_intronic_mehari):
 
 def test_is_intronic_cadd(auto_acmg_data_intronic_cadd):
     """Test when the variant is predicted as intronic based on CADD consequence."""
-    result = AutoBP7._is_intronic(auto_acmg_data_intronic_cadd)
+    result = AutoBP7()._is_intronic(auto_acmg_data_intronic_cadd)
     assert result is True, "The variant should be identified as intronic based on CADD consequence."
 
 
 def test_is_intronic_splice_cadd(auto_acmg_data_intronic_splice_cadd):
     """Test when the variant is predicted as intronic based on splice-related CADD consequence."""
-    result = AutoBP7._is_intronic(auto_acmg_data_intronic_splice_cadd)
+    result = AutoBP7()._is_intronic(auto_acmg_data_intronic_splice_cadd)
     assert (
         result is True
     ), "The variant should be identified as intronic based on CADD splice consequence."
@@ -269,7 +269,7 @@ def test_is_intronic_splice_cadd(auto_acmg_data_intronic_splice_cadd):
 
 def test_is_non_intronic(auto_acmg_data_non_intronic):
     """Test when the variant is not intronic based on both Mehari and CADD consequences."""
-    result = AutoBP7._is_intronic(auto_acmg_data_non_intronic)
+    result = AutoBP7()._is_intronic(auto_acmg_data_non_intronic)
     assert (
         result is False
     ), "The variant should not be identified as intronic when neither Mehari nor CADD indicate it."

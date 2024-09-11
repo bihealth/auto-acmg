@@ -63,6 +63,7 @@ class DefaultSeqVarPredictor(
         self.result = result
 
     def predict(self) -> Optional[AutoACMGSeqVarResult]:
+        """Predict ACMG criteria for the sequence variant."""
         # PP5 and BP6 criteria are depricated
         logger.warning("Note, that PP5 and BP6 criteria are depricated and not predicted.")
         # Not implemented criteria

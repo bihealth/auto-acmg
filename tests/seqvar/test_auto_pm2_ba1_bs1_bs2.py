@@ -392,12 +392,12 @@ def seqvar_not_in_exception():
 
 def test_ba1_exception_true(seqvar_in_exception):
     """Test that _ba1_exception returns True for a variant in the exception list."""
-    assert AutoPM2BA1BS1BS2._ba1_exception(seqvar_in_exception) is True
+    assert AutoPM2BA1BS1BS2()._ba1_exception(seqvar_in_exception) is True
 
 
 def test_ba1_exception_false(seqvar_not_in_exception):
     """Test that _ba1_exception returns False for a variant not in the exception list."""
-    assert AutoPM2BA1BS1BS2._ba1_exception(seqvar_not_in_exception) is False
+    assert AutoPM2BA1BS1BS2()._ba1_exception(seqvar_not_in_exception) is False
 
 
 # =========== _bs2_not_applicable ==============

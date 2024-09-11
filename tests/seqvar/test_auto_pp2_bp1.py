@@ -105,17 +105,17 @@ def mock_var_data_non_missense():
 
 def test_is_missense_true_from_cadd(var_data_missense):
     # Using the var_data_missense fixture to test missense detection from 'cadd'
-    assert AutoPP2BP1._is_missense(var_data_missense) is True
+    assert AutoPP2BP1()._is_missense(var_data_missense) is True
 
 
 def test_is_missense_true_from_mehari(var_data_missense):
     # Using the var_data_missense fixture to test missense detection from 'mehari'
-    assert AutoPP2BP1._is_missense(var_data_missense) is True
+    assert AutoPP2BP1()._is_missense(var_data_missense) is True
 
 
 def test_is_missense_false(var_data_non_missense):
     # Using the var_data_non_missense fixture to confirm no false positives for missense detection
-    assert AutoPP2BP1._is_missense(var_data_non_missense) is False
+    assert AutoPP2BP1()._is_missense(var_data_non_missense) is False
 
 
 # =============== verify_pp2bp1 ==================

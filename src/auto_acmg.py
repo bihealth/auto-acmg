@@ -233,7 +233,7 @@ class AutoACMG:
         maximum value that is not empty ("."). If the value is already numeric, we return it as is.
 
         Args:
-            score_value (Optional[Union[str, float, int]]): Score value to convert.
+            score_value: Score value to convert.
 
         Returns:
             Optional[float]: Converted score value.
@@ -258,11 +258,8 @@ class AutoACMG:
         attempts to resolve it as a structural variant.
 
         Returns:
-            SeqVar or None: The resolved variant object or None if resolution fails.
-
-        Raises:
-            Exception: Specific exceptions are caught and logged, but generic exceptions may be
-            raised if both resolutions fail.
+            Union[SeqVar, StrucVar, None]: The resolved variant, or None if it could not be
+            resolved.
         """
         logger.debug("Resolving variant: {}", self.variant_name)
         try:
@@ -287,7 +284,14 @@ class AutoACMG:
             return None
 
     def parse_seqvar_data(self, seqvar: SeqVar) -> AutoACMGSeqVarResult:
-        """Parses the data for the prediction."""
+        """Parses the data for the prediction.
+
+        Args:
+            seqvar: The sequence variant to parse the data for.
+
+        Returns:
+            AutoACMGSeqVarResult: The parsed sequence variant data.
+        """
         # Mehari data
         ts_helper = SeqVarTranscriptsHelper(seqvar)
         ts_helper.initialize()
@@ -406,7 +410,14 @@ class AutoACMG:
         return self.seqvar_result
 
     def parse_strucvar_data(self, strucvar: StrucVar) -> AutoACMGStrucVarResult:
-        """Parse the data for the prediction."""
+        """Parse the data for the prediction.
+
+        Args:
+            strucvar: The structural variant to parse the data for.
+
+        Returns:
+            AutoACMGStrucVarResult: The parsed structural variant data.
+        """
         # Mehari data
         ts_helper = StrucVarTranscriptsHelper(strucvar)
         ts_helper.initialize()

@@ -9,7 +9,7 @@ from src.core.config import settings
 
 
 class Cache:
-    """Cache class to store the results of the Annonars API calls."""
+    """Cache class to store the results of the API calls."""
 
     def __init__(self):
         """Set up the cache directory and settings."""

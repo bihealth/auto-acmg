@@ -73,7 +73,7 @@ def var_data_is_stop_loss():
 
 def test_is_stop_loss_cadd_true(var_data_is_stop_loss):
     var_data_is_stop_loss.consequence.cadd = "some_effect stop_loss other_effect"
-    assert AutoPM4BP3._is_stop_loss(var_data_is_stop_loss) is True
+    assert AutoPM4BP3()._is_stop_loss(var_data_is_stop_loss) is True
 
 
 def test_is_stop_loss_mehari_true(var_data_is_stop_loss):
@@ -83,13 +83,13 @@ def test_is_stop_loss_mehari_true(var_data_is_stop_loss):
         "stop_loss",
         "other_effect",
     ]
-    assert AutoPM4BP3._is_stop_loss(var_data_is_stop_loss) is True
+    assert AutoPM4BP3()._is_stop_loss(var_data_is_stop_loss) is True
 
 
 def test_is_stop_loss_false(var_data_is_stop_loss):
     var_data_is_stop_loss.consequence.cadd = "some_effect other_effect"
     var_data_is_stop_loss.consequence.mehari = ["some_effect", "other_effect"]
-    assert AutoPM4BP3._is_stop_loss(var_data_is_stop_loss) is False
+    assert AutoPM4BP3()._is_stop_loss(var_data_is_stop_loss) is False
 
 
 # ============== _is_inframe_delins =================
@@ -104,12 +104,12 @@ def var_data_is_inframe_delins():
 
 def test_inframe_deletion_cadd_true(var_data_is_inframe_delins):
     var_data_is_inframe_delins.consequence.cadd = "some_effect inframe_deletion other_effect"
-    assert AutoPM4BP3.is_inframe_delins(var_data_is_inframe_delins) is True
+    assert AutoPM4BP3().is_inframe_delins(var_data_is_inframe_delins) is True
 
 
 def test_inframe_insertion_cadd_true(var_data_is_inframe_delins):
     var_data_is_inframe_delins.consequence.cadd = "inframe_insertion some_effect other_effect"
-    assert AutoPM4BP3.is_inframe_delins(var_data_is_inframe_delins) is True
+    assert AutoPM4BP3().is_inframe_delins(var_data_is_inframe_delins) is True
 
 
 def test_inframe_deletion_mehari_true(var_data_is_inframe_delins):
@@ -119,7 +119,7 @@ def test_inframe_deletion_mehari_true(var_data_is_inframe_delins):
         "inframe_deletion",
         "other_effect",
     ]
-    assert AutoPM4BP3.is_inframe_delins(var_data_is_inframe_delins) is True
+    assert AutoPM4BP3().is_inframe_delins(var_data_is_inframe_delins) is True
 
 
 def test_inframe_insertion_mehari_true(var_data_is_inframe_delins):
@@ -129,13 +129,13 @@ def test_inframe_insertion_mehari_true(var_data_is_inframe_delins):
         "inframe_insertion",
         "other_effect",
     ]
-    assert AutoPM4BP3.is_inframe_delins(var_data_is_inframe_delins) is True
+    assert AutoPM4BP3().is_inframe_delins(var_data_is_inframe_delins) is True
 
 
 def test_inframe_delins_false(var_data_is_inframe_delins):
     var_data_is_inframe_delins.consequence.cadd = "some_effect other_effect"
     var_data_is_inframe_delins.consequence.mehari = ["some_effect", "other_effect"]
-    assert AutoPM4BP3.is_inframe_delins(var_data_is_inframe_delins) is False
+    assert AutoPM4BP3().is_inframe_delins(var_data_is_inframe_delins) is False
 
 
 # ================== _bp3_not_applicable ==================

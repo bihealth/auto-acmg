@@ -21,7 +21,7 @@ from src.utils import AutoACMGHelper, SeqVarTranscriptsHelper
 
 
 class AutoPM2BA1BS1BS2(AutoACMGHelper):
-    """Predicts PM2, BA1, BS1, BS2 criteria for sequence variants."""
+    """Class for PM2, BA1, BS1, BS2 prediction."""
 
     def __init__(self):
         super().__init__()
@@ -35,10 +35,11 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
         Get the allele frequency information for the control population.
 
         Args:
-            gnoma_exomes: The gnomad exomes data.
+            var_data: The variant data.
 
         Returns:
-            The allele frequency for the control population. None if no data found.
+            Optional[AlleleCount]: The allele frequency for the control population. None if no data
+            found.
         """
         if not var_data.gnomad_exomes or not var_data.gnomad_exomes.alleleCounts:
             return None
@@ -49,13 +50,15 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
 
     def _get_any_af(self, var_data: AutoACMGSeqVarData) -> Optional[AlleleCount]:
         """
-        Get the highest allele frequency information for any population.
+        Get the highest allele frequency information for any population. The control group has
+        priority.
 
         Args:
-            gnoma_exomes: The gnomad exomes data.
+            var_data: The variant data.
 
         Returns:
-            The highest allele frequency for any population. None if no data found.
+            Optional[AlleleCount]: The highest allele frequency for any population. None if no data
+            found.
         """
         if not var_data.gnomad_exomes or not var_data.gnomad_exomes.alleleCounts:
             return None
@@ -90,7 +93,7 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
             variant_data: The variant data.
 
         Returns:
-            The allele frequency. None if no controls data
+            Optional[float]: The allele frequency. None if no controls data
         """
         controls_af = self._get_control_af(var_data)
         any_af = self._get_any_af(var_data)
@@ -110,7 +113,7 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
             variant_data: The variant data.
 
         Returns:
-            The allele frequency. None if no controls data
+            Optional[float]: The allele frequency. None if no controls data
         """
         if not var_data.gnomad_mtdna or not var_data.gnomad_mtdna.afHet:
             raise MissingDataError("No allele frequency found in mitochondrial gnomad data.")
@@ -122,16 +125,14 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
         Get the allele condition for the sequence variant.
 
         Get the Clingen dosage for the gene from the gene transcript data (mehari).
-        If the Clingen dosage is unknown, try Decipher and Domino data.
-        We use the following thresholds:
-        - Decipher: pHi >= 0.9 for dominant
-        - Domino: score > 0.5934 for dominant, score < 0.3422 for recessive
+        If the Clingen dosage is unknown, try Decipher and Domino scores. Compare the scores to
+        specific thresholds to determine the allele condition.
 
         Args:
             seqvar: The sequence variant.
 
         Returns:
-            The allele condition.
+            AlleleCOndition: The allele condition.
         """
         # Fetch transcript data
         seqvar_transcript_helper = SeqVarTranscriptsHelper(seqvar, config=self.config)
@@ -206,8 +207,8 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
             variant_data: The variant data.
 
         Returns:
-            True if the variant is recessive (homozygous), dominant (heterozygous), or X-linked
-            (hemizygous) disorder.
+            bool: True if the variant is recessive (homozygous), dominant (heterozygous), or
+            X-linked (hemizygous) disorder.
         """
         if seqvar.chrom.startswith("M"):
             self.comment_pm2ba1bs1bs2 += (
@@ -297,18 +298,16 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
                     return True
         return False
 
-    @staticmethod
-    def _ba1_exception(seqvar: SeqVar) -> bool:
+    def _ba1_exception(self, seqvar: SeqVar) -> bool:
         """
-        Check the exception for BA1 criteria.
-
-        If the variant in the exception list, return True.
+        Check the exception for BA1 criteria, specified by VCEP modification. If the variant in the
+        exception list, return True.
 
         Args:
             seqvar: The sequence variant.
 
         Returns:
-            True if the variant is in exception list.
+            bool: True if the variant is in exception list.
         """
         if seqvar in BA1_ESCEPTION_LIST:
             return True
@@ -318,13 +317,14 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
         """
         Check if the BS2 criteria is not applicable.
 
-        Per default, the BS2 criteria is applicable.
+        Per default, the BS2 criteria is applicable. Only some specific VCEP modifications can
+        exclude the BS2 criteria.
 
         Args:
             seqvar: The sequence variant.
 
         Returns:
-            True if the BS2 criteria is not applicable.
+            bool: True if the BS2 criteria is not applicable.
         """
         return False
 
@@ -335,6 +335,10 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
     ) -> Tuple[Optional[PM2BA1BS1BS2], str]:
         """
         Predicts the PM2, BA1, BS1, BS2 criteria for the sequence variant.
+
+        Predict criteria by checking the allele frequency data and comparing it to the thresholds.
+        Assign PM2, BA1 and BS1 criteria based on the allele frequency data. For BS2 criteria,
+        check zygosity of the variant.
 
         Note:
             Rules:
@@ -348,8 +352,12 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
             (heterozygous), or X-linked (hemizygous) disorder, with full penetrance expected at an
             early age.
 
+        Args:
+            seqvar: The sequence variant.
+            var_data: The variant data.
+
         Returns:
-            BA1BS1BS2PM2: The prediction result.
+            Tuple[Optional[PM2BA1BS1BS2], str]: The prediction result and the explanation.
         """
         self.prediction_pm2ba1bs1bs2 = PM2BA1BS1BS2()
         self.comment_pm2ba1bs1bs2 = ""
@@ -409,16 +417,7 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
     def predict_pm2ba1bs1bs2(
         self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria, AutoACMGCriteria]:
-        """
-        Predicts the PM2, BA1, BS1, BS2 criteria for the sequence variant.
-
-        Args:
-            seqvar: The sequence variant.
-            var_data: The variant data.
-
-        Returns:
-            The prediction result.
-        """
+        """Predict PM2, BA1, BS1, BS2 criteria."""
         logger.info("Predict PM2, BA1, BS1, BS2")
         pred, comment = self.verify_pm2ba1bs1bs2(seqvar, var_data)
         if pred:

@@ -26,7 +26,7 @@ REGEX_HGVSP = re.compile(r"p\.(\D+)(\d+)(\D+)")
 
 
 class AutoPS1PM5(AutoACMGHelper):
-    """Predicts PS1 and PM5 criteria for sequence variants."""
+    """Class for PS1 and PM5 prediction."""
 
     def __init__(self):
         super().__init__()
@@ -38,8 +38,12 @@ class AutoPS1PM5(AutoACMGHelper):
     def _get_var_info(self, seqvar: SeqVar) -> Optional[AnnonarsVariantResponse]:
         """Get variant information from Annonars.
 
+        Args:
+            seqvar: The sequence variant.
+
         Returns:
-            AnnonarsVariantResponse: Annonars response.
+            Optional[AnnonarsVariantResponse]: Annonars response if the variant is found, None
+            otherwise.
         """
         try:
             return self.annonars_client.get_variant_info(seqvar)
@@ -50,10 +54,10 @@ class AutoPS1PM5(AutoACMGHelper):
         """Parse the pHGVSp from VEP into its components.
 
         Args:
-            pHGVSp (str): The protein change in HGVS format.
+            pHGVSp: The protein change in HGVS format.
 
         Returns:
-            AminoAcid: The new amino acid if the pHGVSp is valid, None otherwise.
+            Optional[AminoAcid]: The amino acid change if the pHGVSp is valid, None otherwise.
         """
         try:
             # If multiple pHGVSp values are present, take the first one
@@ -72,7 +76,7 @@ class AutoPS1PM5(AutoACMGHelper):
         """Check if the variant is pathogenic based on ClinVar data.
 
         Args:
-            variant_info (dict): Annonars variant information
+            variant_info: Annonars variant information
 
         Returns:
             bool: True if the variant is pathogenic
@@ -92,7 +96,7 @@ class AutoPS1PM5(AutoACMGHelper):
         Check if the variant's consequence is missense.
 
         Args:
-            var_data (AutoACMGData): The variant information.
+            var_data: The variant information.
 
         Returns:
             bool: True if the variant is a missense variant, False otherwise.
@@ -108,7 +112,7 @@ class AutoPS1PM5(AutoACMGHelper):
         Check if the variant is a splice-affecting variant.
 
         Args:
-            var_data (AutoACMGSeqVarData): The variant information.
+            var_data: The variant information.
 
         Returns:
             bool: True if the variant is a splice-affecting variant, False otherwise.
@@ -121,10 +125,11 @@ class AutoPS1PM5(AutoACMGHelper):
 
     def _affect_splicing(self, var_data: AutoACMGSeqVarData) -> bool:
         """
-        Check if the variant affects splicing.
+        Check if the variant affects splicing. If any of spliceAI scores are above the threshold,
+        the variant is considered to affect splicing.
 
         Args:
-            var_data (AutoACMGSeqVarData): The variant information.
+            var_data: The variant information.
 
         Returns:
             bool: True if the variant affects splicing, False otherwise.
@@ -229,12 +234,7 @@ class AutoPS1PM5(AutoACMGHelper):
     def predict_ps1pm5(
         self, seqvar: SeqVar, var_data: AutoACMGSeqVarData
     ) -> Tuple[AutoACMGCriteria, AutoACMGCriteria]:
-        """
-        Predicts the criteria PS1 and PM5 for the provided sequence variant.
-
-        Returns:
-            Tuple[AutoACMGCriteria, AutoACMGCriteria]: PS1 and PM5 prediction.
-        """
+        """Predict PS1 and PM5 criteria."""
         logger.info("Predict PS1 and PM5")
         pred, comment = self.verify_ps1pm5(seqvar, var_data)
         if pred:
