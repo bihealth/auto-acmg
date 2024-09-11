@@ -3,6 +3,14 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.api.annonars import AnnonarsClient
+from src.defs.annonars_gene import (
+    AnnonarsGeneResponse,
+    Clingen,
+    DecipherHi,
+    Domino,
+    GeneInfo,
+    Genes,
+)
 from src.defs.auto_acmg import (
     AlleleCondition,
     AutoACMGPrediction,
@@ -10,10 +18,11 @@ from src.defs.auto_acmg import (
     AutoACMGSeqVarTresholds,
     AutoACMGStrength,
 )
-from src.defs.exceptions import MissingDataError
+from src.defs.exceptions import AlgorithmError, MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.auto_pm2_ba1_bs1_bs2 import AutoPM2BA1BS1BS2
+from src.utils import SeqVarTranscriptsHelper
 
 
 @pytest.fixture
@@ -217,117 +226,110 @@ def test_get_m_af_missing_mtdna_data(
 
 
 @pytest.fixture
-def seqvar_allele():
-    return MagicMock(chrom="1", pos=100, delete="A", insert="T")
-
-
-@pytest.fixture
-def gene_transcript_data():
-    return MagicMock(geneId="GENE123")
-
-
-@pytest.fixture
-def gene_info_with_clingen():
-    gene_info = MagicMock()
-    gene_info.genes.root.get.return_value = {
-        "clingen": MagicMock(
-            haploinsufficiencyScore="CLINGEN_DOSAGE_SCORE_SUFFICIENT_EVIDENCE_AVAILABLE"
+def gene_info():
+    # Base mock structure for gene information responses
+    return {
+        "Gene123": GeneInfo(
+            clingen=Clingen(
+                haploinsufficiencyScore=None  # No score set initially
+            ),
+            domino=Domino(score=None),  # No score set initially
+            decipherHi=DecipherHi(pHi=None),  # No score set initially
         )
     }
-    return gene_info
 
 
-@pytest.fixture
-def gene_info_without_clingen():
-    gene_info = MagicMock()
-    gene_info.genes.root.get.return_value = None
-    return gene_info
-
-
-@pytest.fixture
-def gene_info_with_decipher_high_pHi():
-    gene_info = MagicMock()
-    gene_info.genes.root.get.return_value = {"decipherHi": MagicMock(pHi=0.95)}
-    return gene_info
-
-
-@pytest.fixture
-def gene_info_with_domino_high_score():
-    gene_info = MagicMock()
-    gene_info.genes.root.get.return_value = {"domino": MagicMock(score=0.6)}
-    return gene_info
-
-
-@pytest.mark.skip(reason="Annonars is not mocked properly")
+@patch.object(SeqVarTranscriptsHelper, "initialize")
+@patch.object(SeqVarTranscriptsHelper, "get_ts_info")
 @patch.object(AnnonarsClient, "get_gene_info")
-@patch("src.utils.SeqVarTranscriptsHelper")
-def test_get_allele_cond_with_clingen(
-    mock_get_gene_info,
-    mock_transcripts_helper,
-    auto_pm2ba1bs1bs2,
-    seqvar_allele,
-    gene_transcript_data,
-    gene_info_with_clingen,
+def test_get_allele_cond_clingen_dosage(
+    mock_get_gene_info, mock_get_ts_info, mock_initialize, auto_pm2ba1bs1bs2, seqvar, gene_info
 ):
-    """Test allele condition retrieval with Clingen data."""
-    mock_transcripts_helper.return_value.get_ts_info.return_value = (
-        None,
-        gene_transcript_data,
-        None,
-        None,
-        None,
-    )
-    mock_get_gene_info.return_value = gene_info_with_clingen
-    condition = auto_pm2ba1bs1bs2._get_allele_cond(seqvar_allele)
-    assert condition.name == AlleleCondition.Dominant.name
+    # Modify gene_info for the test case to simulate dominant condition
+    gene_info[
+        "Gene123"
+    ].clingen.haploinsufficiencyScore = "CLINGEN_DOSAGE_SCORE_SUFFICIENT_EVIDENCE_AVAILABLE"
+    mock_get_gene_info.return_value = AnnonarsGeneResponse(genes=Genes(root=gene_info))
+
+    mock_get_ts_info.return_value = (None, MagicMock(geneId="Gene123"), None, None, None)
+    mock_initialize.return_value = None
+
+    result = auto_pm2ba1bs1bs2._get_allele_cond(seqvar)
+    assert result == AlleleCondition.Dominant
 
 
-@pytest.mark.skip(reason="Annonars is not mocked properly")
+@patch.object(SeqVarTranscriptsHelper, "initialize")
+@patch.object(SeqVarTranscriptsHelper, "get_ts_info")
 @patch.object(AnnonarsClient, "get_gene_info")
-@patch("src.utils.SeqVarTranscriptsHelper")
-def test_get_allele_cond_with_decipher_high_pHi(
+def test_get_allele_cond_domino_data(
+    mock_get_gene_info, mock_get_ts_info, mock_initialize, auto_pm2ba1bs1bs2, seqvar, gene_info
+):
+    # Modify gene_info for the test case to simulate Domino data
+    gene_info["Gene123"].domino.score = 0.6
+    mock_get_gene_info.return_value = AnnonarsGeneResponse(genes=Genes(root=gene_info))
+
+    mock_get_ts_info.return_value = (None, MagicMock(geneId="Gene123"), None, None, None)
+    mock_initialize.return_value = None
+
+    result = auto_pm2ba1bs1bs2._get_allele_cond(seqvar)
+    assert result == AlleleCondition.Dominant
+
+
+@pytest.mark.parametrize(
+    "clingen_score, domino_score, decipher_score, expected_condition",
+    [
+        (
+            "CLINGEN_DOSAGE_SCORE_SUFFICIENT_EVIDENCE_AVAILABLE",
+            None,
+            None,
+            AlleleCondition.Dominant,
+        ),
+        ("CLINGEN_DOSAGE_SCORE_RECESSIVE", None, None, AlleleCondition.Recessive),
+        ("CLINGEN_DOSAGE_SCORE_NO_EVIDENCE_AVAILABLE", 0.6, None, AlleleCondition.Dominant),
+        (None, 0.1, None, AlleleCondition.Recessive),
+        (None, None, 0.95, AlleleCondition.Dominant),
+        (None, None, 0.85, AlleleCondition.Unknown),
+    ],
+)
+@patch.object(SeqVarTranscriptsHelper, "initialize")
+@patch.object(SeqVarTranscriptsHelper, "get_ts_info")
+@patch.object(AnnonarsClient, "get_gene_info")
+def test_get_allele_cond_various_conditions(
     mock_get_gene_info,
-    mock_transcripts_helper,
+    mock_get_ts_info,
+    mock_initialize,
     auto_pm2ba1bs1bs2,
-    seqvar_allele,
-    gene_transcript_data,
-    gene_info_with_decipher_high_pHi,
+    seqvar,
+    clingen_score,
+    domino_score,
+    decipher_score,
+    expected_condition,
+    gene_info,
 ):
-    """Test allele condition retrieval with high Decipher pHi."""
-    mock_transcripts_helper.return_value.get_ts_info.return_value = (
-        None,
-        gene_transcript_data,
-        None,
-        None,
-        None,
-    )
-    mock_get_gene_info.return_value = gene_info_with_decipher_high_pHi
-    condition = auto_pm2ba1bs1bs2._get_allele_cond(seqvar_allele)
-    assert condition == AlleleCondition.Dominant
+    # Modify gene_info based on parameters
+    if clingen_score:
+        gene_info["Gene123"].clingen.haploinsufficiencyScore = clingen_score
+    if domino_score is not None:
+        gene_info["Gene123"].domino.score = domino_score
+    if decipher_score is not None:
+        gene_info["Gene123"].decipherHi.pHi = decipher_score
+
+    mock_get_gene_info.return_value = AnnonarsGeneResponse(genes=Genes(root=gene_info))
+    mock_get_ts_info.return_value = (None, MagicMock(geneId="Gene123"), None, None, None)
+    mock_initialize.return_value = None
+
+    result = auto_pm2ba1bs1bs2._get_allele_cond(seqvar)
+    assert result == expected_condition
 
 
-@pytest.mark.skip(reason="Annonars is not mocked properly")
 @patch("src.utils.SeqVarTranscriptsHelper")
-@patch("src.api.annonars.AnnonarsClient.get_gene_info")
-def test_get_allele_cond_with_domino_high_score(
-    mock_annonars_client,
-    mock_transcripts_helper,
-    auto_pm2ba1bs1bs2,
-    seqvar_allele,
-    gene_transcript_data,
-    gene_info_with_domino_high_score,
-):
-    """Test allele condition retrieval with high Domino score."""
-    mock_transcripts_helper.return_value.get_ts_info.return_value = (
-        None,
-        gene_transcript_data,
-        None,
-        None,
-        None,
-    )
-    mock_annonars_client.get_gene_info.return_value = gene_info_with_domino_high_score
-    condition = auto_pm2ba1bs1bs2._get_allele_cond(seqvar_allele)
-    assert condition == AlleleCondition.Dominant
+def test_get_allele_cond_no_gene_found(mock_seqvar_transcripts_helper, auto_pm2ba1bs1bs2, seqvar):
+    mock_helper_instance = mock_seqvar_transcripts_helper.return_value
+    mock_helper_instance.initialize.return_value = None
+    mock_helper_instance.get_ts_info.return_value = (None, None, None, None, None)
+
+    with pytest.raises(AlgorithmError, match="No gene found for the transcript."):
+        auto_pm2ba1bs1bs2._get_allele_cond(seqvar)
 
 
 # ========== _check_zyg ===========
@@ -336,31 +338,6 @@ def test_get_allele_cond_with_domino_high_score(
 @pytest.fixture
 def seqvar_mitochondrial_zyg():
     return MagicMock(chrom="M", pos=100, delete="A", insert="T")
-
-
-@pytest.fixture
-def seqvar_x_zyg():
-    return MagicMock(chrom="X", pos=100, delete="A", insert="T")
-
-
-@pytest.fixture
-def seqvar_autosomal_zyg():
-    return MagicMock(chrom="1", pos=100, delete="A", insert="T")
-
-
-@pytest.fixture
-def gnomad_exomes_zyg():
-    # Define specific attributes directly with integer values.
-    controls_af = MagicMock(ac=100, nhomalt=2, cohort="controls")
-    any_af = MagicMock(ac=150, nhomalt=5)
-    by_sex = MagicMock(
-        xx=MagicMock(ac=100, nhomalt=1),  # Define ac and nhomalt explicitly
-        xy=MagicMock(ac=80, nhomalt=0),  # Define ac and nhomalt explicitly
-        overall=MagicMock(
-            ac=180, nhomalt=3
-        ),  # Define ac and nhomalt explicitly for autosomal example
-    )
-    return MagicMock(alleleCounts=[controls_af, any_af], bySex=by_sex)
 
 
 @patch(
@@ -381,51 +358,6 @@ def test_check_zyg_mitochondrial(
     assert not result
     assert (
         "Mitochondrial variants are not considered for BS2 criteria."
-        in auto_pm2ba1bs1bs2.comment_pm2ba1bs1bs2
-    )
-
-
-@pytest.mark.skip(reason="To fix")
-@patch.object(AutoPM2BA1BS1BS2, "_get_allele_cond", return_value=AlleleCondition.Dominant)
-@patch.object(AutoPM2BA1BS1BS2, "_get_control_af")
-@patch.object(AutoPM2BA1BS1BS2, "_get_any_af")
-def test_check_zyg_x_dominant(
-    mock_get_any_af,
-    mock_get_control_af,
-    mock_get_allele_cond,
-    auto_pm2ba1bs1bs2,
-    seqvar_x_zyg,
-    gnomad_exomes_zyg,
-):
-    """Test X-linked dominant allele condition."""
-    mock_get_control_af.return_value = gnomad_exomes_zyg.bySex.xx
-    mock_get_any_af.return_value = gnomad_exomes_zyg.bySex.xy
-    result = auto_pm2ba1bs1bs2._check_zyg(seqvar_x_zyg, gnomad_exomes_zyg)
-    assert result
-    assert (
-        "The variant is in a dominant X-linked disorder." in auto_pm2ba1bs1bs2.comment_pm2ba1bs1bs2
-    )
-
-
-@pytest.mark.skip(reason="To fix")
-@patch.object(AutoPM2BA1BS1BS2, "_get_allele_cond", return_value=AlleleCondition.Recessive)
-@patch.object(AutoPM2BA1BS1BS2, "_get_control_af")
-@patch.object(AutoPM2BA1BS1BS2, "_get_any_af")
-def test_check_zyg_autosomal_recessive(
-    mock_get_any_af,
-    mock_get_control_af,
-    mock_get_allele_cond,
-    auto_pm2ba1bs1bs2,
-    seqvar_autosomal_zyg,
-    gnomad_exomes_zyg,
-):
-    """Test autosomal recessive allele condition."""
-    mock_get_control_af.return_value = gnomad_exomes_zyg.bySex.overall
-    mock_get_any_af.return_value = gnomad_exomes_zyg.bySex.overall
-    result = auto_pm2ba1bs1bs2._check_zyg(seqvar_autosomal_zyg, gnomad_exomes_zyg)
-    assert result
-    assert (
-        "The variant is in a recessive (homozygous) disorder."
         in auto_pm2ba1bs1bs2.comment_pm2ba1bs1bs2
     )
 
@@ -480,50 +412,33 @@ def test_bs2_not_applicable(auto_pm2ba1bs1bs2, var_data):
 
 
 @pytest.fixture
-def seqvar_verify():
-    return SeqVar(genome_release=GenomeRelease.GRCh37, chrom="1", pos=100, delete="A", insert="T")
+def seqvar_mt():
+    return SeqVar(genome_release=GenomeRelease.GRCh38, chrom="MT", pos=1000, delete="A", insert="G")
 
 
-@pytest.fixture
-def var_data_verify(mock_thresholds):
-    return MagicMock(gnomad_mtdna=None, gnomad_exomes=None, thresholds=mock_thresholds)
-
-
-@pytest.fixture
-def mock_thresholds():
-    return MagicMock(ba1_benign=0.05, bs1_benign=0.01, pm2_pathogenic=0.005)
-
-
-@pytest.mark.skip(reason="To fix")
-@patch.object(AutoPM2BA1BS1BS2, "_get_af", return_value=None)
-def test_no_allele_frequency_data_found(
-    mock_get_af, auto_pm2ba1bs1bs2, seqvar_verify, var_data_verify
+@patch.object(AutoPM2BA1BS1BS2, "_get_af", return_value=0.0001)
+@patch.object(AutoPM2BA1BS1BS2, "_ba1_exception", return_value=False)
+@patch.object(AutoPM2BA1BS1BS2, "_bs2_not_applicable", return_value=False)
+@patch.object(AutoPM2BA1BS1BS2, "_check_zyg", return_value=True)
+def test_verify_pm2ba1bs1bs2(
+    mock_get_af,
+    mock_ba1_exception,
+    mock_bs2_na,
+    mock_check_zyg,
+    auto_pm2ba1bs1bs2,
+    seqvar,
+    var_data,
 ):
-    prediction, comment = auto_pm2ba1bs1bs2.verify_pm2ba1bs1bs2(seqvar_verify, var_data_verify)
-    assert "No allele frequency data found" in comment
-    assert prediction is None
+    result, comment = auto_pm2ba1bs1bs2.verify_pm2ba1bs1bs2(seqvar, var_data)
+    assert result.PM2 is True
+    assert "PM2 is met" in comment
 
 
-@pytest.mark.skip(reason="To fix")
-@patch.object(AutoPM2BA1BS1BS2, "_ba1_exception", return_value=True)
-@patch.object(AutoPM2BA1BS1BS2, "_get_af", return_value=0.06)
-def test_variant_in_ba1_exception_list(
-    mock_get_af, mock_ba1_exception, auto_pm2ba1bs1bs2, seqvar_verify, var_data_verify
-):
-    prediction, comment = auto_pm2ba1bs1bs2.verify_pm2ba1bs1bs2(seqvar_verify, var_data_verify)
-    assert "The variant is in the exception list for BA1 criteria" in comment
-    assert not prediction.BA1 and not prediction.BS1
-
-
-@pytest.mark.skip(reason="To fix")
-@pytest.mark.parametrize(
-    "af,expected", [(0.06, True), (0.02, False), (0.01, False), (0.004, False)]
-)
-@patch.object(AutoPM2BA1BS1BS2, "_get_af")
-def test_ba1_criteria(mock_get_af, af, expected, auto_pm2ba1bs1bs2, seqvar_verify, var_data_verify):
-    mock_get_af.return_value = af
-    prediction, comment = auto_pm2ba1bs1bs2.verify_pm2ba1bs1bs2(seqvar_verify, var_data_verify)
-    assert prediction.BA1 is expected
+@patch.object(AutoPM2BA1BS1BS2, "_get_m_af", return_value=0.00002)
+def test_verify_pm2ba1bs1bs2_mitochondrial(mock_get_m_af, auto_pm2ba1bs1bs2, seqvar_mt, var_data):
+    result, comment = auto_pm2ba1bs1bs2.verify_pm2ba1bs1bs2(seqvar_mt, var_data)
+    assert result.PM2 is True
+    assert "Allele frequency <= 0.002%: PM2 is met" in comment
 
 
 # =========== predict_pm2ba1bs1bs2 ==============
