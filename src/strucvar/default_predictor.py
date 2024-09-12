@@ -2,7 +2,7 @@ from typing import Optional
 
 from loguru import logger
 
-from src.api.annonars import AnnonarsClient
+from src.api.reev.annonars import AnnonarsClient
 from src.core.config import Config
 from src.defs.auto_acmg import AutoACMGStrucVarResult
 from src.defs.strucvar import StrucVar

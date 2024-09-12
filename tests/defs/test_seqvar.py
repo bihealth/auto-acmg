@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.api.dotty import DottyClient
+from src.api.reev.dotty import DottyClient
 from src.defs.dotty import DottySpdiResponse
 from src.defs.exceptions import InvalidPos, ParseError
 from src.defs.genome_builds import GenomeRelease

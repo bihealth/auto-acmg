@@ -123,6 +123,82 @@ def test_convert_score_val(mock_convert_score_val, auto_acmg: AutoACMG):
     assert result == 0.5, "Should return the maximum score value."
 
 
+# ------------------- _parse_seqvar_data -------------------
+
+
+@patch("src.auto_acmg.SeqVarTranscriptsHelper.initialize")
+@patch("src.auto_acmg.AutoACMG._get_variant_info", return_value=None)
+def test_parse_seqvar_data_variant_info_failure(
+    mock_get_variant_info, mock_initialize, auto_acmg: AutoACMG, seqvar: SeqVar
+):
+    """Test parse_data method when getting variant information fails."""
+    with pytest.raises(Exception):
+        auto_acmg._parse_seqvar_data(seqvar)
+
+
+# ------------------- _parse_strucvar_data -------------------
+
+
+@patch("src.auto_acmg.StrucVarTranscriptsHelper.get_ts_info")
+@patch("src.auto_acmg.StrucVarTranscriptsHelper.initialize")
+def test_parse_strucvar_data(
+    mock_initialize,
+    mock_get_ts_info,
+    auto_acmg: AutoACMG,
+    strucvar: StrucVar,
+    mock_strucvar_transcript: MagicMock,
+    mock_gene_transcript: MagicMock,
+):
+    """Test the parse_strucvar_data method of AutoACMG."""
+    # Setup
+    mock_get_ts_info.return_value = (
+        mock_strucvar_transcript,
+        mock_gene_transcript,
+        [mock_strucvar_transcript],
+        [mock_gene_transcript],
+    )
+
+    # Execute
+    result = auto_acmg._parse_strucvar_data(strucvar)
+
+    # Assert
+    assert isinstance(result, AutoACMGStrucVarResult)
+    assert result.data.hgnc_id == "HGNC:1234"
+    assert result.data.gene_symbol == "GENE"
+    assert result.data.transcript_id == "ENST00000367770"
+    assert result.data.transcript_tags == ["MANE"]
+    assert result.data.strand == GenomicStrand.Plus
+    assert result.data.exons == [(100, 200), (300, 400)]
+
+    # Verify method calls
+    mock_initialize.assert_called_once()
+    mock_get_ts_info.assert_called_once()
+
+
+@patch("src.auto_acmg.StrucVarTranscriptsHelper.get_ts_info")
+@patch("src.auto_acmg.StrucVarTranscriptsHelper.initialize")
+def test_parse_strucvar_data_missing_transcript(
+    mock_initialize,
+    mock_get_ts_info,
+    auto_acmg: AutoACMG,
+    strucvar: StrucVar,
+):
+    """Test parse_strucvar_data method when transcript information is missing."""
+    # Setup
+    mock_get_ts_info.return_value = (None, None, [], [])
+
+    # Execute and Assert
+    with pytest.raises(AutoAcmgBaseException, match="Transcript information is missing."):
+        auto_acmg._parse_strucvar_data(strucvar)
+
+    # Verify method calls
+    mock_initialize.assert_called_once()
+    mock_get_ts_info.assert_called_once()
+
+
+# ------------------- _select_predictor -------------------
+
+
 # ------------------- resolve_variant -------------------
 
 
@@ -154,79 +230,6 @@ def test_resolve_strucvar_successful(
     mock_resolve_strucvar.return_value = strucvar
     result = auto_acmg.resolve_variant()
     assert result == strucvar, "Should return the resolved structural variant."
-
-
-# ------------------- parse_seqvar_data -------------------
-
-
-@patch("src.auto_acmg.SeqVarTranscriptsHelper.initialize")
-@patch("src.auto_acmg.AutoACMG._get_variant_info", return_value=None)
-def test_parse_seqvar_data_variant_info_failure(
-    mock_get_variant_info, mock_initialize, auto_acmg: AutoACMG, seqvar: SeqVar
-):
-    """Test parse_data method when getting variant information fails."""
-    with pytest.raises(Exception):
-        auto_acmg.parse_seqvar_data(seqvar)
-
-
-# ------------------- parse_strucvar_data -------------------
-
-
-@patch("src.auto_acmg.StrucVarTranscriptsHelper.get_ts_info")
-@patch("src.auto_acmg.StrucVarTranscriptsHelper.initialize")
-def test_parse_strucvar_data(
-    mock_initialize,
-    mock_get_ts_info,
-    auto_acmg: AutoACMG,
-    strucvar: StrucVar,
-    mock_strucvar_transcript: MagicMock,
-    mock_gene_transcript: MagicMock,
-):
-    """Test the parse_strucvar_data method of AutoACMG."""
-    # Setup
-    mock_get_ts_info.return_value = (
-        mock_strucvar_transcript,
-        mock_gene_transcript,
-        [mock_strucvar_transcript],
-        [mock_gene_transcript],
-    )
-
-    # Execute
-    result = auto_acmg.parse_strucvar_data(strucvar)
-
-    # Assert
-    assert isinstance(result, AutoACMGStrucVarResult)
-    assert result.data.hgnc_id == "HGNC:1234"
-    assert result.data.gene_symbol == "GENE"
-    assert result.data.transcript_id == "ENST00000367770"
-    assert result.data.transcript_tags == ["MANE"]
-    assert result.data.strand == GenomicStrand.Plus
-    assert result.data.exons == [(100, 200), (300, 400)]
-
-    # Verify method calls
-    mock_initialize.assert_called_once()
-    mock_get_ts_info.assert_called_once()
-
-
-@patch("src.auto_acmg.StrucVarTranscriptsHelper.get_ts_info")
-@patch("src.auto_acmg.StrucVarTranscriptsHelper.initialize")
-def test_parse_strucvar_data_missing_transcript(
-    mock_initialize,
-    mock_get_ts_info,
-    auto_acmg: AutoACMG,
-    strucvar: StrucVar,
-):
-    """Test parse_strucvar_data method when transcript information is missing."""
-    # Setup
-    mock_get_ts_info.return_value = (None, None, [], [])
-
-    # Execute and Assert
-    with pytest.raises(AutoAcmgBaseException, match="Transcript information is missing."):
-        auto_acmg.parse_strucvar_data(strucvar)
-
-    # Verify method calls
-    mock_initialize.assert_called_once()
-    mock_get_ts_info.assert_called_once()
 
 
 # --------------- predict ---------------

@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.api.mehari import MehariClient
+from src.api.reev.mehari import MehariClient
 from src.defs.auto_acmg import GenomicStrand, SpliceType
 from src.defs.auto_pvs1 import SeqVarPVS1Consequence
 from src.defs.exceptions import AlgorithmError

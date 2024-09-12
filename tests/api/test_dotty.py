@@ -1,7 +1,7 @@
 import pytest
 from pytest_httpx import HTTPXMock
 
-from src.api.dotty import DottyClient
+from src.api.reev.dotty import DottyClient
 from src.defs.dotty import DottySpdiResponse
 from src.defs.genome_builds import GenomeRelease
 from tests.utils import get_json_object

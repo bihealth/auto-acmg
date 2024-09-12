@@ -55,7 +55,7 @@ def test_pm4_bp3(
     seqvar = auto_acmg.resolve_variant()
     assert isinstance(seqvar, SeqVar)
     # Then, setup the data
-    auto_acmg_result = auto_acmg.parse_seqvar_data(seqvar)
+    auto_acmg_result = auto_acmg._parse_seqvar_data(seqvar)
     assert isinstance(auto_acmg_result, AutoACMGSeqVarResult)
     # Then, predict PM4 and BP3
     if auto_acmg_result.data.hgnc_id in VCEP_MAPPING:

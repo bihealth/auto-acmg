@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.api.annonars import AnnonarsClient
+from src.api.reev.annonars import AnnonarsClient
 from src.defs.auto_acmg import (
     AutoACMGCriteria,
     AutoACMGPrediction,

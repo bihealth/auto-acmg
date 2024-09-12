@@ -1,7 +1,7 @@
 import pytest
 from pytest_httpx import HTTPXMock
 
-from src.api.mehari import MehariClient
+from src.api.reev.mehari import MehariClient
 from src.defs.exceptions import MehariException
 from src.defs.genome_builds import GenomeRelease
 from src.defs.mehari import GeneTranscripts, TranscriptsSeqVar, TranscriptsStrucVar

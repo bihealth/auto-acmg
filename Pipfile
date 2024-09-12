@@ -15,6 +15,8 @@ seqrepo = "*"
 pytabix = "*"
 httpx = "*"
 yoyo-migrations = "*"
+fastapi = "*"
+uvicorn = "*"
 
 [dev-packages]
 mypy = "*"

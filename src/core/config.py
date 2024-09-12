@@ -27,6 +27,9 @@ class Settings(BaseSettings):
 
     # === API settings ===
 
+    #: AutoACMG API prefix
+    API_V1_STR: str = "/api/v1"
+
     #: Base URL to reev
     API_REEV_URL: str = ""
 

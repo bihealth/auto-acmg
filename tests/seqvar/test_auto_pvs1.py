@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.api.annonars import AnnonarsClient
+from src.api.reev.annonars import AnnonarsClient
 from src.defs.annonars_range import AnnonarsRangeResponse
 from src.defs.auto_acmg import AutoACMGPrediction, AutoACMGStrength, GenomicStrand
 from src.defs.auto_pvs1 import (

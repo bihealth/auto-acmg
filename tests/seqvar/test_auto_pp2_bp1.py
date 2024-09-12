@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.api.annonars import AnnonarsClient
+from src.api.reev.annonars import AnnonarsClient
 from src.defs.auto_acmg import PP2BP1, AutoACMGPrediction, AutoACMGStrength
 from src.defs.exceptions import AlgorithmError, InvalidAPIResposeError
 from src.defs.genome_builds import GenomeRelease

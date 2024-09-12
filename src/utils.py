@@ -7,8 +7,8 @@ from loguru import logger
 
 from lib.maxentpy import maxent
 from lib.maxentpy.maxent import load_matrix3, load_matrix5
-from src.api.annonars import AnnonarsClient
-from src.api.mehari import MehariClient
+from src.api.reev.annonars import AnnonarsClient
+from src.api.reev.mehari import MehariClient
 from src.core.config import Config
 from src.defs.auto_acmg import GenomicStrand, SpliceType, TranscriptInfo
 from src.defs.auto_pvs1 import SeqvarConsequenceMapping, SeqVarPVS1Consequence

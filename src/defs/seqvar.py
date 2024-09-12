@@ -5,7 +5,7 @@ from typing import Optional
 
 from pydantic import BaseModel, field_validator
 
-from src.api.dotty import DottyClient
+from src.api.reev.dotty import DottyClient
 from src.core.config import Config
 from src.defs.exceptions import AutoAcmgBaseException, InvalidPos, ParseError
 from src.defs.genome_builds import (

@@ -4,7 +4,7 @@ from typing import Optional, Type, Union
 
 from loguru import logger
 
-from src.api.annonars import AnnonarsClient
+from src.api.reev.annonars import AnnonarsClient
 from src.core.config import Config
 from src.defs.annonars_variant import VariantResult
 from src.defs.auto_acmg import AutoACMGSeqVarResult, AutoACMGStrucVarResult, CdsInfo, GenomicStrand
@@ -251,39 +251,7 @@ class AutoACMG:
         except ValueError as e:
             raise AlgorithmError("Failed to convert score value to float.") from e
 
-    def resolve_variant(self) -> Union[SeqVar, StrucVar, None]:
-        """Attempts to resolve the specified variant as either a sequence or structural variant.
-
-        This method first tries to resolve the variant as a sequence variant. If it fails, it then
-        attempts to resolve it as a structural variant.
-
-        Returns:
-            Union[SeqVar, StrucVar, None]: The resolved variant, or None if it could not be
-            resolved.
-        """
-        logger.debug("Resolving variant: {}", self.variant_name)
-        try:
-            seqvar_resolver = SeqVarResolver(config=self.config)
-            seqvar: SeqVar = seqvar_resolver.resolve_seqvar(self.variant_name, self.genome_release)
-            logger.debug("Resolved sequence variant: {}", seqvar)
-            return seqvar
-        except ParseError:
-            logger.debug("Failed to resolve sequence variant.")
-            try:
-                logger.debug("Trying to resolve structural variant.")
-                strucvar_resolver = StrucVarResolver(config=self.config)
-                strucvar: StrucVar = strucvar_resolver.resolve_strucvar(
-                    self.variant_name, self.genome_release
-                )
-                return strucvar
-            except ParseError:
-                logger.debug("Failed to resolve the structure variant")
-                return None
-        except AutoAcmgBaseException as e:
-            logger.error("An unexpected error occurred: {}", e)
-            return None
-
-    def parse_seqvar_data(self, seqvar: SeqVar) -> AutoACMGSeqVarResult:
+    def _parse_seqvar_data(self, seqvar: SeqVar) -> AutoACMGSeqVarResult:
         """Parses the data for the prediction.
 
         Args:
@@ -409,7 +377,7 @@ class AutoACMG:
             self.seqvar_result.data.scores.misZ = gnomad_constraints.misZ
         return self.seqvar_result
 
-    def parse_strucvar_data(self, strucvar: StrucVar) -> AutoACMGStrucVarResult:
+    def _parse_strucvar_data(self, strucvar: StrucVar) -> AutoACMGStrucVarResult:
         """Parse the data for the prediction.
 
         Args:
@@ -440,7 +408,7 @@ class AutoACMG:
 
         return self.strucvar_result
 
-    def select_predictor(self, hgnc_id: str) -> Type[DefaultSeqVarPredictor]:
+    def _select_predictor(self, hgnc_id: str) -> Type[DefaultSeqVarPredictor]:
         """Selects the predictor for the specified gene.
 
         Args:
@@ -452,6 +420,38 @@ class AutoACMG:
         if hgnc_id in VCEP_MAPPING:
             return VCEP_MAPPING[hgnc_id]
         return DefaultSeqVarPredictor
+
+    def resolve_variant(self) -> Union[SeqVar, StrucVar, None]:
+        """Attempts to resolve the specified variant as either a sequence or structural variant.
+
+        This method first tries to resolve the variant as a sequence variant. If it fails, it then
+        attempts to resolve it as a structural variant.
+
+        Returns:
+            Union[SeqVar, StrucVar, None]: The resolved variant, or None if it could not be
+            resolved.
+        """
+        logger.debug("Resolving variant: {}", self.variant_name)
+        try:
+            seqvar_resolver = SeqVarResolver(config=self.config)
+            seqvar: SeqVar = seqvar_resolver.resolve_seqvar(self.variant_name, self.genome_release)
+            logger.debug("Resolved sequence variant: {}", seqvar)
+            return seqvar
+        except ParseError:
+            logger.debug("Failed to resolve sequence variant.")
+            try:
+                logger.debug("Trying to resolve structural variant.")
+                strucvar_resolver = StrucVarResolver(config=self.config)
+                strucvar: StrucVar = strucvar_resolver.resolve_strucvar(
+                    self.variant_name, self.genome_release
+                )
+                return strucvar
+            except ParseError:
+                logger.debug("Failed to resolve the structure variant")
+                return None
+        except AutoAcmgBaseException as e:
+            logger.error("An unexpected error occurred: {}", e)
+            return None
 
     def predict(self) -> Union[AutoACMGSeqVarResult, AutoACMGStrucVarResult, None]:
         """
@@ -485,10 +485,10 @@ class AutoACMG:
                 logger.error("Failed to resolve the sequence variant.")
                 return None
             # ====== Setup the data ======
-            self.parse_seqvar_data(self.seqvar)
+            self._parse_seqvar_data(self.seqvar)
 
             # ====== Predict ======
-            predictor_class = self.select_predictor(self.seqvar_result.data.hgnc_id)
+            predictor_class = self._select_predictor(self.seqvar_result.data.hgnc_id)
             predictor = predictor_class(self.seqvar, self.seqvar_result, self.config)
             seqvar_prediction = predictor.predict()
             # logger.info("Prediction: {}", seqvar_prediction)
@@ -499,7 +499,7 @@ class AutoACMG:
                 logger.error("Failed to resolve the structural variant.")
                 return None
             # ====== Setup the data ======
-            self.parse_strucvar_data(self.strucvar)
+            self._parse_strucvar_data(self.strucvar)
 
             # ====== Predict ======
             sp = DefaultStrucVarPredictor(self.strucvar, self.strucvar_result, self.config)
