@@ -186,7 +186,7 @@ def test_resolve_seqvar_success(mock_to_spdi, seqvar_resolver, dotty_response_su
     assert variant.insert == "GA"
 
 
-@patch("src.api.dotty.DottyClient.to_spdi")
+@patch("src.api.reev.dotty.DottyClient.to_spdi")
 def test_resolve_seqvar_failure(mock_to_spdi, seqvar_resolver, dotty_response_failure):
     """Test resolve_seqvar method handling an invalid response from dotty_client.to_spdi."""
     mock_to_spdi.return_value = dotty_response_failure

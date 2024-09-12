@@ -239,7 +239,7 @@ def test_resolve_strucvar_successful(
 @patch("src.auto_acmg.SeqVarResolver.resolve_seqvar")
 @patch("src.auto_acmg.SeqVarTranscriptsHelper.initialize")
 @patch("src.auto_acmg.AutoACMG._get_variant_info")
-@patch("src.auto_acmg.AutoACMG.parse_seqvar_data")
+@patch("src.auto_acmg.AutoACMG._parse_seqvar_data")
 @patch("src.auto_acmg.DefaultSeqVarPredictor.predict")
 def test_predict_seqvar(
     mock_predict,
@@ -273,7 +273,7 @@ def test_predict_seqvar(
 
 
 @patch("src.auto_acmg.DefaultStrucVarPredictor.predict")
-@patch("src.auto_acmg.AutoACMG.parse_strucvar_data")
+@patch("src.auto_acmg.AutoACMG._parse_strucvar_data")
 @patch("src.auto_acmg.StrucVarResolver.resolve_strucvar")
 def test_predict_strucvar(
     mock_resolve_strucvar,
