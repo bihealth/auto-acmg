@@ -8,6 +8,7 @@ from src.defs.exceptions import AutoAcmgBaseException, ParseError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.defs.strucvar import StrucVar, StrucVarType
+from src.seqvar.default_predictor import DefaultSeqVarPredictor
 
 
 @pytest.fixture
@@ -197,6 +198,31 @@ def test_parse_strucvar_data_missing_transcript(
 
 
 # ------------------- _select_predictor -------------------
+
+
+def test_select_predictor_known_gene(auto_acmg):
+    # Test with a known gene ID that maps to a specific predictor
+    hgnc_id = "HGNC:92"  # Corresponds to ACADVLPredictor
+    predictor = auto_acmg._select_predictor(hgnc_id)
+    assert predictor.__name__ == "ACADVLPredictor", "Should return ACADVLPredictor for HGNC:92"
+
+
+def test_select_predictor_unknown_gene(auto_acmg):
+    # Test with an unknown gene ID
+    hgnc_id = "HGNC:unknown"
+    predictor = auto_acmg._select_predictor(hgnc_id)
+    assert (
+        predictor == DefaultSeqVarPredictor
+    ), "Should return DefaultSeqVarPredictor for unknown HGNC IDs"
+
+
+def test_select_predictor_none(auto_acmg):
+    # Optional: Test with None as input
+    hgnc_id = None
+    predictor = auto_acmg._select_predictor(hgnc_id)
+    assert (
+        predictor == DefaultSeqVarPredictor
+    ), "Should return DefaultSeqVarPredictor for None input"
 
 
 # ------------------- resolve_variant -------------------

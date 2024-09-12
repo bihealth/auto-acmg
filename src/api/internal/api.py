@@ -7,6 +7,7 @@ from src.defs.api import (
     ApiAutoACMGSeqVarResult,
     SeqVarPredictionResponse,
     StrucVarPredictionResponse,
+    VariantResolveResponse,
 )
 from src.defs.auto_acmg import AutoACMGSeqVarResult, AutoACMGStrucVarResult
 from src.defs.exceptions import AutoAcmgBaseException
@@ -15,7 +16,29 @@ from src.defs.genome_builds import GenomeRelease
 router = APIRouter()
 
 
-@router.post("/predict/seqvar", response_model=SeqVarPredictionResponse)
+@router.get("/resolve", response_model=VariantResolveResponse)
+async def resolve_variant(
+    variant_name: str = Query(..., description="The name or identifier of the variant"),
+    genome_release: str = Query(default="GRCh38", description="The genome release version"),
+):
+    try:
+        genome_release_enum = GenomeRelease.from_string(genome_release)
+        if not genome_release_enum:
+            raise HTTPException(status_code=400, detail="Invalid genome release")
+
+        # Try to resolve as a sequence variant first
+        auto_acmg = AutoACMG(variant_name, genome_release_enum)
+        resolved_variant = auto_acmg.resolve_variant()
+        if resolved_variant is None:
+            raise HTTPException(status_code=400, detail="Failed to resolve the variant")
+        return VariantResolveResponse(
+            variant_type="sequence variant", resolved_variant=resolved_variant
+        )
+    except AutoAcmgBaseException as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/predict/seqvar", response_model=SeqVarPredictionResponse)
 async def predict_seqvar(
     variant_name: str = Query(..., description="The name or identifier of the sequence variant"),
     genome_release: str = Query(default="GRCh38", description="The genome release version"),
@@ -49,7 +72,7 @@ async def predict_seqvar(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/predict/strucvar", response_model=StrucVarPredictionResponse)
+@router.get("/predict/strucvar", response_model=StrucVarPredictionResponse)
 async def predict_strucvar(
     variant_name: str = Query(..., description="The name or identifier of the structural variant"),
     genome_release: str = Query(default="GRCh38", description="The genome release version"),

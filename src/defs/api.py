@@ -1,6 +1,6 @@
 """API response models for AutoACMG."""
 
-from typing import List
+from typing import List, Union
 
 from pydantic import BaseModel, Field
 
@@ -11,9 +11,10 @@ from src.defs.auto_acmg import (
     AutoACMGSeqVarTresholds,
     AutoACMGStrucVarResult,
     GenomicStrand,
-    SeqVar,
 )
 from src.defs.mehari import Exon
+from src.defs.seqvar import SeqVar
+from src.defs.strucvar import StrucVar
 
 
 class ApiAutoACMGSeqVarData(BaseModel):
@@ -62,3 +63,8 @@ class StrucVarPredictionResponse(BaseModel):
     prediction: AutoACMGStrucVarResult = Field(
         ..., description="The prediction result for the structural variant"
     )
+
+
+class VariantResolveResponse(BaseModel):
+    variant_type: str = Field(..., description="The type of the variant (sequence or structural)")
+    resolved_variant: Union[SeqVar, StrucVar] = Field(..., description="The resolved variant")
