@@ -17,6 +17,7 @@ httpx = "*"
 yoyo-migrations = "*"
 fastapi = "*"
 uvicorn = "*"
+pytest-mock = "*"
 
 [dev-packages]
 mypy = "*"

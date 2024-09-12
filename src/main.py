@@ -24,4 +24,4 @@ async def favicon():
     return FileResponse(pathlib.Path(__file__).parent / "assets/favicon.ico")
 
 
-app.include_router(internal_router, prefix=f"{settings.API_V1_STR}/internal")
+app.include_router(internal_router, prefix=f"{settings.API_V1_STR}")

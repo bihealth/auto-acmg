@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "1369bc48cb566895914da087c1ccee248e366cf07574de5d6a53201562e070f8"
+            "sha256": "5e564e74ec0c1035af5c8733e75fd7ad0c0780db87f9eff92b24b15ff9a5182c"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -266,6 +266,14 @@
             "markers": "python_version >= '3.8'",
             "version": "==8.5.0"
         },
+        "iniconfig": {
+            "hashes": [
+                "sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3",
+                "sha256:b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374"
+            ],
+            "markers": "python_version >= '3.7'",
+            "version": "==2.0.0"
+        },
         "ipython": {
             "hashes": [
                 "sha256:0b99a2dc9f15fd68692e898e5568725c6d49c527d36a9fb5960ffbdeaa82ff7e",
@@ -409,6 +417,14 @@
             ],
             "markers": "sys_platform != 'win32' and sys_platform != 'emscripten'",
             "version": "==4.9.0"
+        },
+        "pluggy": {
+            "hashes": [
+                "sha256:2cffa88e94fdc978c4c574f15f9e59b7f4201d439195c3715ca9e2486f1d0cf1",
+                "sha256:44e1ad92c8ca002de6377e165f3e0f1be63266ab4d554740532335b9d75ea669"
+            ],
+            "markers": "python_version >= '3.8'",
+            "version": "==1.5.0"
         },
         "prompt-toolkit": {
             "hashes": [
@@ -605,6 +621,23 @@
             "index": "pypi",
             "version": "==0.1"
         },
+        "pytest": {
+            "hashes": [
+                "sha256:70b98107bd648308a7952b06e6ca9a50bc660be218d53c257cc1fc94fda10181",
+                "sha256:a6853c7375b2663155079443d2e45de913a911a11d669df02a50814944db57b2"
+            ],
+            "markers": "python_version >= '3.8'",
+            "version": "==8.3.3"
+        },
+        "pytest-mock": {
+            "hashes": [
+                "sha256:0b72c38033392a5f4621342fe11e9219ac11ec9d375f8e2a0c164539e0d70f6f",
+                "sha256:2719255a1efeceadbc056d6bf3df3d1c5015530fb40cf347c0f9afac88410bd0"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.8'",
+            "version": "==3.14.0"
+        },
         "python-dotenv": {
             "hashes": [
                 "sha256:e324ee90a023d808f1959c46bcbc04446a10ced277783dc6ee09987c37ec10ca",
@@ -735,7 +768,7 @@
                 "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d",
                 "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8"
             ],
-            "markers": "python_version >= '3.8'",
+            "markers": "python_version < '3.13'",
             "version": "==4.12.2"
         },
         "urllib3": {
@@ -2725,7 +2758,6 @@
                 "sha256:70b98107bd648308a7952b06e6ca9a50bc660be218d53c257cc1fc94fda10181",
                 "sha256:a6853c7375b2663155079443d2e45de913a911a11d669df02a50814944db57b2"
             ],
-            "index": "pypi",
             "markers": "python_version >= '3.8'",
             "version": "==8.3.3"
         },
@@ -3290,12 +3322,12 @@
         },
         "sphinxcontrib-bibtex": {
             "hashes": [
-                "sha256:10d45ebbb19207c5665396c9446f8012a79b8a538cb729f895b5910ab2d0b2da",
-                "sha256:f487af694336f28bfb7d6a17070953a7d264bec43000a2379724274f5f8d70ae"
+                "sha256:7c790347ef1cb0edf30de55fc324d9782d085e89c52c2b8faafa082e08e23946",
+                "sha256:ff016b738fcc867df0f75c29e139b3b2158d26a2c802db27963cb128be3b75fb"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.7'",
-            "version": "==2.6.2"
+            "version": "==2.6.3"
         },
         "sphinxcontrib-devhelp": {
             "hashes": [
@@ -3429,7 +3461,7 @@
                 "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d",
                 "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8"
             ],
-            "markers": "python_version >= '3.8'",
+            "markers": "python_version < '3.13'",
             "version": "==4.12.2"
         },
         "tzdata": {
