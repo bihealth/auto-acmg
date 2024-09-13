@@ -1,7 +1,7 @@
 import pytest
 from pytest_httpx import HTTPXMock
 
-from src.api.annonars import AnnonarsClient
+from src.api.reev.annonars import AnnonarsClient
 from src.defs.annonars_gene import AnnonarsGeneResponse
 from src.defs.annonars_range import AnnonarsCustomRangeResult, AnnonarsRangeResponse
 from src.defs.annonars_variant import AnnonarsVariantResponse

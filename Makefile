@@ -11,7 +11,8 @@ help:
 	@echo "  format          Format source code"
 	@echo "  lint            Run lint checks"
 	@echo "  example_run     Run example"
-	@echo "  run			 Run the application"
+	@echo "  run			 Run the CLI application"
+	@echo "  serve		 Run the API application"
 	@echo "  test-remote     Run remote tests"
 	@echo "  test            Run tests"
 	@echo "  test-all        Run all tests"
@@ -90,6 +91,10 @@ ifdef GR
 else
 	pipenv run python -m src.cli "$(VAR)"
 endif
+
+.PHONY: serve
+serve:
+	pipenv run uvicorn src.main:app --host 0.0.0.0 --port 8080 --reload --workers 8
 
 .PHONY: test-remote
 test-remote:
