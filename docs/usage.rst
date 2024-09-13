@@ -261,3 +261,57 @@ For prediction path:
 
 
 
+API Endpoints
+-------------
+
+The API provides several endpoints for interacting with the AutoACMG system:
+
+1. **Resolve Variant**
+   Endpoint to resolve a variant based on its name and optionally specify the genome release.
+
+   - **URL**: ``/api/v1/resolve``
+   - **Method**: ``GET``
+   - **Parameters**:
+     - ``variant_name`` (required): The name or identifier of the variant.
+     - ``genome_release`` (optional): The genome release version, defaults to ``GRCh38``.
+   - **Success Response**: A JSON object containing resolved variant details.
+
+   Example call:
+
+   .. code-block:: none
+
+       GET /api/v1/resolve?variant_name=chr1:228282272:G:A&genome_release=GRCh38
+
+2. **Predict Sequence Variant**
+   Endpoint to predict annotations for a sequence variant.
+
+   - **URL**: ``/api/v1/predict/seqvar``
+   - **Method**: ``GET``
+   - **Parameters**:
+     - ``variant_name`` (required): The name or identifier of the sequence variant.
+   - **Success Response**: A JSON object containing prediction results.
+
+   Example call:
+
+   .. code-block:: none
+
+       GET /api/v1/predict/seqvar?variant_name=chr1:228282272:G:A
+
+3. **Predict Structural Variant**
+   Endpoint to predict annotations for a structural variant.
+
+   - **URL**: ``/api/v1/predict/strucvar``
+   - **Method**: ``GET``
+   - **Parameters**:
+     - ``variant_name`` (required): The name or identifier of the structural variant.
+     - ``duplication_tandem`` (optional): Specifies if the duplication is in tandem.
+   - **Success Response**: A JSON object containing structural variant prediction results.
+
+   Example call:
+
+   .. code-block:: none
+
+       GET /api/v1/predict/strucvar?variant_name=chr1:228282272:dup:Tandem
+
+For more details on the API endpoints and their usage, refer to the OpenAPI documentation accessible
+at the URL: ``http://localhost:8000/api/v1/docs``.
