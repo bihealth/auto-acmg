@@ -1,8 +1,8 @@
 .. _internal_api:
 
-======================
-Internal API Reference
-======================
+==================
+REEV API Reference
+==================
 
 This section contains the API reference, which we use for data retrieval.
 
@@ -10,7 +10,7 @@ This section contains the API reference, which we use for data retrieval.
 Annonars
 --------
 
-.. automodule:: src.api.annonars
+.. automodule:: src.api.reev.annonars
     :members:
     :inherited-members:
     :undoc-members:
@@ -21,7 +21,7 @@ Annonars
 Dotty
 -----
 
-.. automodule:: src.api.dotty
+.. automodule:: src.api.reev.dotty
     :members:
     :inherited-members:
     :undoc-members:
@@ -32,9 +32,23 @@ Dotty
 Mehari
 ------
 
-.. automodule:: src.api.mehari
+.. automodule:: src.api.reev.mehari
     :members:
     :inherited-members:
     :undoc-members:
     :show-inheritance:
     :private-members:
+
+=============
+API Endpoints
+=============
+
+The AutoACMG also provides several endpoints for interacting with the system:
+
+.. automodule:: src.api.internal.api
+    :members:
+    :inherited-members:
+    :undoc-members:
+    :show-inheritance:
+    :private-members:
+
