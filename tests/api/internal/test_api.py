@@ -1,7 +1,12 @@
+from unittest.mock import patch
+
 import pytest
 from fastapi.testclient import TestClient
 
+from src.auto_acmg import AutoACMG
 from src.core.config import settings
+from src.defs.auto_acmg import AutoACMGSeqVarResult, AutoACMGStrucVarResult
+from tests.utils import get_json_object
 
 # ------------------- resolve_variant -------------------
 
@@ -45,34 +50,28 @@ async def test_resolve_variant_not_found(client: TestClient):
 # ------------------- predict_seqvar -------------------
 
 
-@pytest.mark.skip(reason="Need to mock the AutoACMG.predict method")
 @pytest.mark.asyncio
-async def test_predict_seqvar_valid_data(client: TestClient, mocker):
-    """Test predicting a sequence variant with valid data."""
-    # Arrange:
-    mock_predict = mocker.patch("src.auto_acmg.AutoACMG.predict")
-    mock_predict.return_value = {
-        "seqvar": "chr1:123456:G:A",
-        "data": {"some": "data"},
-        "criteria": {"PVS1": "Present"},
-    }
-
-    # Act:
-    response = client.get(
-        f"{settings.API_V1_STR}/predict/seqvar",
-        params={"variant_name": "chr1:123456:G:A", "genome_release": "GRCh38"},
+async def test_predict_seqvar_success(client: TestClient):
+    """Test predicting a sequence variant successfully."""
+    # Arrange
+    variant_name = "chr1:228282272:G:A"
+    mock_response = AutoACMGSeqVarResult.model_validate(
+        get_json_object("var_data/example_seqvar_pred.json")
     )
 
-    # Assert:
+    # Act
+    with patch.object(AutoACMG, "predict", return_value=mock_response):
+        response = client.get(
+            f"{settings.API_V1_STR}/predict/seqvar",
+            params={"variant_name": variant_name},
+        )
+
+    # Assert
     assert response.status_code == 200
-    assert response.json() == {
-        "prediction": {
-            "seqvar": "chr1:123456:G:A",
-            "data": {"some": "data"},
-            "criteria": {"PVS1": "Present"},
-        }
-    }
-    mock_predict.assert_called_once_with("chr1:123456:G:A", "GRCh38")
+    result = response.json()
+    assert "seqvar" in result["prediction"]
+    assert result["prediction"]["seqvar"]["user_repr"] == variant_name
+    assert "criteria" in result["prediction"]
 
 
 @pytest.mark.asyncio
@@ -125,3 +124,85 @@ async def test_predict_seqvar_structural_variant(client: TestClient):
     # assert:
     assert response.status_code == 400
     assert "No valid sequence variant prediction was made" in response.json()["detail"]
+
+
+# ------------------- predict_strucvar -------------------
+
+
+@pytest.mark.asyncio
+async def test_predict_strucvar_success(client: TestClient):
+    """Test predicting a structural variant successfully."""
+    # Arrange
+    variant_name = "DEL:chr17:41176312:41277500"
+    mock_response = AutoACMGStrucVarResult.model_validate(
+        get_json_object("var_data/example_strucvar_pred.json")
+    )
+
+    # Act
+    with patch.object(AutoACMG, "predict", return_value=mock_response):
+        response = client.get(
+            f"{settings.API_V1_STR}/predict/strucvar",
+            params={"variant_name": variant_name},
+        )
+
+    # Assert
+    assert response.status_code == 200
+    result = response.json()
+    assert "strucvar" in result["prediction"]
+    assert result["prediction"]["strucvar"]["user_repr"] == variant_name
+    assert "criteria" in result["prediction"]
+
+
+@pytest.mark.asyncio
+async def test_predict_strucvar_invalid_genome_release(client: TestClient):
+    """Test predicting a structural variant with an invalid genome release."""
+    # Act
+    response = client.get(
+        f"{settings.API_V1_STR}/predict/strucvar",
+        params={"variant_name": "chr1:g.1000000_2000000del", "genome_release": "InvalidRelease"},
+    )
+    # Assert
+    assert response.status_code == 400
+    assert "Invalid genome release" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_predict_strucvar_invalid_variant(client: TestClient):
+    """Test predicting an invalid structural variant."""
+    # Act
+    response = client.get(
+        f"{settings.API_V1_STR}/predict/strucvar",
+        params={"variant_name": "invalid_variant", "genome_release": "GRCh38"},
+    )
+    # Assert
+    assert response.status_code == 400
+    assert "No valid structural variant prediction was made" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_predict_strucvar_missing_variant_name(client: TestClient):
+    """Test predicting a structural variant without providing a variant name."""
+    # Act
+    response = client.get(
+        f"{settings.API_V1_STR}/predict/strucvar",
+        params={"genome_release": "GRCh38"},
+    )
+    # Assert
+    assert response.status_code == 422  # Unprocessable Entity
+    assert "variant_name" in response.json()["detail"][0]["loc"]
+
+
+@pytest.mark.asyncio
+async def test_predict_strucvar_sequence_variant(client: TestClient):
+    """Test predicting a sequence variant using the structural variant endpoint."""
+    # Act
+    response = client.get(
+        f"{settings.API_V1_STR}/predict/strucvar",
+        params={"variant_name": "chr1:228282272:G:A", "genome_release": "GRCh38"},
+    )
+    # Assert
+    assert response.status_code == 400
+    assert "No valid structural variant prediction was made" in response.json()["detail"]
+
+
+# ... existing tests ...
