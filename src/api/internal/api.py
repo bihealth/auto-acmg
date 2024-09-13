@@ -61,6 +61,7 @@ async def predict_seqvar(
             )
 
         # Convert AutoACMGSeqVarResult to ApiAutoACMGSeqVarResult
+        # Ignore exons, cds_info and gnomad data
         api_prediction = ApiAutoACMGSeqVarResult(
             seqvar=prediction.seqvar,
             data=ApiAutoACMGSeqVarData(**prediction.data.model_dump()),

@@ -12,7 +12,6 @@ from src.defs.auto_acmg import (
     AutoACMGStrucVarResult,
     GenomicStrand,
 )
-from src.defs.mehari import Exon
 from src.defs.seqvar import SeqVar
 from src.defs.strucvar import StrucVar
 
@@ -37,7 +36,6 @@ class ApiAutoACMGSeqVarData(BaseModel):
     cds_start: int = Field(..., description="The CDS start position of the sequence variant")
     cds_end: int = Field(..., description="The CDS end position of the sequence variant")
     strand: GenomicStrand = Field(..., description="The strand of the sequence variant")
-    exons: List[Exon] = Field(..., description="The exons of the sequence variant")
     scores: AutoACMGSeqVarScores = Field(..., description="The scores of the sequence variant")
     thresholds: AutoACMGSeqVarTresholds = Field(
         ..., description="The thresholds of the sequence variant"

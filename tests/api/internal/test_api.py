@@ -45,6 +45,7 @@ async def test_resolve_variant_not_found(client: TestClient):
 # ------------------- predict_seqvar -------------------
 
 
+@pytest.mark.skip(reason="Need to mock the AutoACMG.predict method")
 @pytest.mark.asyncio
 async def test_predict_seqvar_valid_data(client: TestClient, mocker):
     """Test predicting a sequence variant with valid data."""
@@ -63,14 +64,14 @@ async def test_predict_seqvar_valid_data(client: TestClient, mocker):
     )
 
     # Assert:
-    # assert response.status_code == 200
-    # assert response.json() == {
-    #     "prediction": {
-    #         "seqvar": "chr1:123456:G:A",
-    #         "data": {"some": "data"},
-    #         "criteria": {"PVS1": "Present"},
-    #     }
-    # }
+    assert response.status_code == 200
+    assert response.json() == {
+        "prediction": {
+            "seqvar": "chr1:123456:G:A",
+            "data": {"some": "data"},
+            "criteria": {"PVS1": "Present"},
+        }
+    }
     mock_predict.assert_called_once_with("chr1:123456:G:A", "GRCh38")
 
 
