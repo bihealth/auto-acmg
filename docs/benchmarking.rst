@@ -26,6 +26,26 @@ dataset.
 3. Computing statistical metrics such as kappa scores, F1 score, precision, and recall to evaluate
 the performance.
 
+How to Run the Benchmarking Script
+----------------------------------
+
+To run the benchmarking script, you'll need a development environment set up with the required
+dependencies. Follow the guide in the `Development Environment Setup <dev_quickstart>`_ section to
+set up the environment. Then run the following command:
+
+.. code-block:: bash
+
+    make bench
+
+This command will execute the benchmarking script and generate a `stats.csv` file in the `src/bench`
+directory. The file contains the statistical metrics computed during the benchmarking process. To
+analyze the results, you can use the `results_analysis.ipynb` Jupyter notebook provided in the
+`src/bench` directory. To run the notebook, just execute the following command:
+
+.. code-block:: bash
+
+    make jupyterlab
+
 Results
 -------
 
