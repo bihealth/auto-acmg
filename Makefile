@@ -12,7 +12,8 @@ help:
 	@echo "  lint            Run lint checks"
 	@echo "  example_run     Run example"
 	@echo "  run			 Run the CLI application"
-	@echo "  serve		 Run the API application"
+	@echo "  serve		     Run the API application"
+	@echo "  bench           Run the benchmark"
 	@echo "  test-remote     Run remote tests"
 	@echo "  test            Run tests"
 	@echo "  test-all        Run all tests"
@@ -95,6 +96,10 @@ endif
 .PHONY: serve
 serve:
 	pipenv run uvicorn src.main:app --host 0.0.0.0 --port 8080 --reload --workers 8
+
+.PHONY: bench
+bench:
+	pipenv run python -m src.bench.comparison_v4
 
 .PHONY: test-remote
 test-remote:
