@@ -20,10 +20,50 @@ containing the Dockerfile. Use the following command to build the image:
 This command builds the Docker image with the tag ``auto-acmg``. You can replace ``auto-acmg`` with
 any other tag suitable for your deployment or versioning schema.
 
+Setting Up Volumes
+------------------
+
+The AutoACMG Docker container requires access to SeqRepo data directories for sequence information.
+You must set up volumes that the Docker container can use to access this data without needing to
+copy it into the container directly. Here's how you set up these volumes:
+
+1. **SeqRepo Data Volume:** This volume stores the SeqRepo datasets.
+2. **Custom Project Data Volume:** This volume stores the custom project seqrepo data.
+
+Ensure these directories exist on your host and are populated with the necessary data:
+
+.. code-block:: bash
+
+    mkdir -p /usr/local/share/seqrepo
+    chown -R root:root /usr/local/share/seqrepo
+
+.. code-block:: bash
+
+    pipenv run seqrepo init -i auto-acmg
+
+.. code-block:: bash
+
+    pipenv run seqrepo fetch-load -i auto-acmg -n RefSeq NC_000001.10 NC_000002.11 NC_000003.11 \
+        NC_000004.11 NC_000005.9 NC_000006.11 NC_000007.13 NC_000008.10 NC_000009.11 NC_000010.10 \
+        NC_000011.9 NC_000012.11 NC_000013.10 NC_000014.8 NC_000015.9 NC_000016.9 NC_000017.10 \
+        NC_000018.9 NC_000019.9 NC_000020.10 NC_000021.8 NC_000022.10 NC_000023.10 NC_000024.9 \
+        NC_012920.1 NC_000001.11 NC_000002.12 NC_000003.12 NC_000004.12 NC_000005.10 NC_000006.12 \
+        NC_000007.14 NC_000008.11 NC_000009.12 NC_000010.11 NC_000011.10 NC_000012.12 NC_000013.11 \
+        NC_000014.9 NC_000015.10 NC_000016.10 NC_000017.11 NC_000018.10 NC_000019.10 NC_000020.11 \
+        NC_000021.9 NC_000022.11 NC_000023.11 NC_000024.10 NC_012920.1
+
+.. note::
+
+    The paths used in this example are for demonstration purposes! You should adjust the paths
+    to match your actual directory structure and ensure that the directories have the correct
+    permissions for Docker to access them. The ``/usr/local/share/seqrepo`` directory is the default
+    location for Linux systems. The ``/home/auto-acmg/seqrepo/master`` directory is an example of
+    a custom project data directory.
+
 Running the Docker Image
 ------------------------
 
-Once the Docker image is built, you can run it using the following command:
+Once the Docker image is built, you can run it using the following command to include the volumes:
 
 .. code-block:: bash
 
