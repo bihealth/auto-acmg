@@ -20,245 +20,105 @@ containing the Dockerfile. Use the following command to build the image:
 This command builds the Docker image with the tag ``auto-acmg``. You can replace ``auto-acmg`` with
 any other tag suitable for your deployment or versioning schema.
 
-Running the Docker Image
-------------------------
+Setting Up Volumes
+------------------
 
-Once the Docker image is built, you can run it using the following command:
+The AutoACMG Docker container requires access to SeqRepo data directories for sequence information.
+You must set up volumes that the Docker container can use to access this data without needing to
+copy it into the container directly. Here's how you set up these volumes:
+
+1. **SeqRepo Data Volume:** This volume stores the SeqRepo datasets.
+2. **Custom Project Data Volume:** This volume stores the custom project seqrepo data.
+
+Ensure these directories exist on your host and are populated with the necessary data:
 
 .. code-block:: bash
 
-    make run VAR=<variant_name> GR=<genome_release>
+    mkdir -p /usr/local/share/seqrepo
+    chown -R root:root /usr/local/share/seqrepo
 
-Where:
-- ``<variant_name>`` is the name of the variant you want to analyze.
-- ``<genome_release>`` is the genome release you want to use.
+.. code-block:: bash
 
-Alternatively you can use it inline:
+    pipenv run seqrepo init -i auto-acmg
 
-.. code-block:: python
+.. code-block:: bash
 
-    from src.auto_acmg import AutoACMG
+    pipenv run seqrepo fetch-load -i auto-acmg -n RefSeq NC_000001.10 NC_000002.11 NC_000003.11 \
+        NC_000004.11 NC_000005.9 NC_000006.11 NC_000007.13 NC_000008.10 NC_000009.11 NC_000010.10 \
+        NC_000011.9 NC_000012.11 NC_000013.10 NC_000014.8 NC_000015.9 NC_000016.9 NC_000017.10 \
+        NC_000018.9 NC_000019.9 NC_000020.10 NC_000021.8 NC_000022.10 NC_000023.10 NC_000024.9 \
+        NC_012920.1 NC_000001.11 NC_000002.12 NC_000003.12 NC_000004.12 NC_000005.10 NC_000006.12 \
+        NC_000007.14 NC_000008.11 NC_000009.12 NC_000010.11 NC_000011.10 NC_000012.12 NC_000013.11 \
+        NC_000014.9 NC_000015.10 NC_000016.10 NC_000017.11 NC_000018.10 NC_000019.10 NC_000020.11 \
+        NC_000021.9 NC_000022.11 NC_000023.11 NC_000024.10 NC_012920.1
 
-    autoacmg = AutoACMG(variant_name, genome_release)
-    prediction = autoacmg.predict()
+.. note::
 
-Note that the ``predict`` method will return a dictionary with the prediction.
-This dictionary contains all ACMG criteria with their:
-- ``name``: the name of the ACMG criteria.
-- ``prediction``: the prediction of the ACMG criteria.
-- ``summary``: the details of the prediction.
-- ``description``: the description of the ACMG criteria.
+    The paths used in this example are for demonstration purposes! You should adjust the paths
+    to match your actual directory structure and ensure that the directories have the correct
+    permissions for Docker to access them. The ``/usr/local/share/seqrepo`` directory is the default
+    location for Linux systems. The ``/home/auto-acmg/seqrepo/master`` directory is an example of
+    a custom project data directory.
 
-The valid values for the ``prediction`` are:
-- ``NotSet``: the ACMG criteria was not set (also due to errors).
-- ``Positive``: the ACMG criteria is positive.
-- ``Negative``: the ACMG criteria is negative.
-- ``NotAutomated``: the ACMG criteria is not automated (e.g. due to the need of manual curation).
-- ``NotApplicable``: the ACMG criteria is not applicable.
-- ``Depricated``: the ACMG criteria is depricated (e.g. PP5 or BP6).
+Running the Docker Image
+------------------------
 
-The evidence level and the prediction path for the PVS1 ACMG criteria is returned at the summary
-field in regards to "PVS1 Paper". The values represent the following:
+Once the Docker image is built, you can run it using the following command to include the volumes:
 
-For evidence level:
-- ``NotSet``: the evidence level was not set (also due to errors).
-- ``PVS1``: the strongest evidence level.
-- ``PVS1_Strong``: the strong evidence level.
-- ``PVS1_Moderate``: the moderate evidence level.
-- ``PVS1_Supporting``: the supporting evidence level.
-- ``NotPVS1``: the evidence level is not PVS1.
-- ``UnsupportedConsequence``: PVS1 is not applicable due to unsupported consequence.
+.. code-block:: bash
 
-For prediction path:
+    docker run -d -p 8000:8000 --env-file .env.dev auto-acmg
 
-.. code-block:: python
+Here, ``-d`` runs the container in detached mode (in the background), ``-p 8000:8000`` maps port
+8000 of the container to port 8000 on the host, making the application accessible via
+``localhost:8000``. The ``--env-file .env.dev`` option tells Docker to use the environment variables d
+efined in the ``.env.dev`` file. Replace ``.env.dev`` with the path to your actual environment
+file if different.
 
-    #: Mapping of PVS1 prediction path to description for sequence variant
-    PVS1PredictionPathMapping: Dict[
-        Union[PVS1PredictionSeqVarPath, PVS1PredictionStrucVarPath], str
-    ] = {
-        PVS1PredictionSeqVarPath.NotSet: "Not Set",
-        PVS1PredictionSeqVarPath.PTEN: "Special guideline for PTEN -> Predicted to undergo NMD",
-        PVS1PredictionSeqVarPath.NF1: (
-            "Predicted to undergo NMD -> Exon is present in biologically-relevant transcript(s)"
-        ),
-        PVS1PredictionSeqVarPath.NF2: (
-            "Predicted to undergo NMD -> Exon is absent from biologically-relevant transcript(s)"
-        ),
-        PVS1PredictionSeqVarPath.NF3: (
-            "Not predicted to undergo NMD -> "
-            "Truncated/altered region is critical to protein function"
-        ),
-        PVS1PredictionSeqVarPath.NF4: (
-            "Not predicted to undergo NMD -> "
-            "Role of region in protein function is unknown -> "
-            "LoF variants in this exon are frequent in the general population and/or "
-            "exon is absent from biologically-relevant transcript(s)"
-        ),
-        PVS1PredictionSeqVarPath.NF5: (
-            "Not predicted to undergo NMD -> "
-            "Role of region in protein function is unknown -> "
-            "LoF variants in this exon are not frequent in the general population and "
-            "exon is present in biologically-relevant transcript(s) -> "
-            "Variant removes >10% of protein"
-        ),
-        PVS1PredictionSeqVarPath.NF6: (
-            "Not predicted to undergo NMD -> "
-            "Role of region in protein function is unknown -> "
-            "LoF variants in this exon are not frequent in the general population and "
-            "exon is present in biologically-relevant transcript(s) -> "
-            "Variant removes <10% of protein"
-        ),
-        PVS1PredictionSeqVarPath.SS1: (
-            "Exon skipping or use of a cryptic slice site disrupts reading frame and "
-            "is predicted to undergo NMD -> "
-            "Exon is present in biologically-relevant transcript(s)"
-        ),
-        PVS1PredictionSeqVarPath.SS2: (
-            "Exon skipping or use of a cryptic slice site disrupts reading frame and "
-            "is predicted to undergo NMD -> "
-            "Exon is absent from biologically-relevant transcript(s)"
-        ),
-        PVS1PredictionSeqVarPath.SS3: (
-            "Exon skipping or use of a cryptic slice site disrupts reading frame and "
-            "is not predicted to undergo NMD -> "
-            "Truncated/altered region is critical to protein function"
-        ),
-        PVS1PredictionSeqVarPath.SS4: (
-            "Exon skipping or use of a cryptic slice site disrupts reading frame and "
-            "is not predicted to undergo NMD -> "
-            "Role of region in protein function is unknown -> "
-            "LoF variants in this exon are frequent in the general population and/or "
-            "exon is absent from biologically-relevant transcript(s)"
-        ),
-        PVS1PredictionSeqVarPath.SS5: (
-            "Exon skipping or use of a cryptic slice site disrupts reading frame and "
-            "is not predicted to undergo NMD -> "
-            "Role of region in protein function is unknown -> "
-            "LoF variants in this exon are not frequent in the general population and "
-            "exon is present in biologically-relevant transcript(s) -> "
-            "Variant removes >10% of protein"
-        ),
-        PVS1PredictionSeqVarPath.SS6: (
-            "Exon skipping or use of a cryptic slice site disrupts reading frame and "
-            "is not predicted to undergo NMD -> "
-            "Role of region in protein function is unknown -> "
-            "LoF variants in this exon are not frequent in the general population and "
-            "exon is present in biologically-relevant transcript(s) -> "
-            "Variant removes <10% of protein"
-        ),
-        PVS1PredictionSeqVarPath.SS7: (
-            "Exon skipping or use of a cryptic slice site preserves reading frame -> "
-            "Role of region in protein function is unknown -> "
-            "LoF variants in this exon are frequent in the general population and/or "
-            "exon is absent from biologically-relevant transcript(s)"
-        ),
-        PVS1PredictionSeqVarPath.SS8: (
-            "Exon skipping or use of a cryptic slice site preserves reading frame -> "
-            "Role of region in protein function is unknown -> "
-            "LoF variants in this exon are not frequent in the general population and "
-            "exon is present in biologically-relevant transcript(s) -> "
-            "Variant removes >10% of protein"
-        ),
-        PVS1PredictionSeqVarPath.SS9: (
-            "Exon skipping or use of a cryptic slice site preserves reading frame -> "
-            "Role of region in protein function is unknown -> "
-            "LoF variants in this exon are not frequent in the general population and "
-            "exon is present in biologically-relevant transcript(s) -> "
-            "Variant removes <10% of protein"
-        ),
-        PVS1PredictionSeqVarPath.SS10: (
-            "Exon skipping or use of a cryptic slice site preserves reading frame -> "
-            "Truncated/altered region is critical to protein function"
-        ),
-        PVS1PredictionSeqVarPath.IC1: (
-            "No known alternative start codon in other transcripts -> "
-            ">=1 pathogenic variant(s) upstream of closest potential in-frame start codon"
-        ),
-        PVS1PredictionSeqVarPath.IC2: (
-            "No known alternative start codon in other transcripts -> "
-            "No pathogenic variant(s) upstream of closest potential in-frame start codon"
-        ),
-        PVS1PredictionSeqVarPath.IC3: "Different functional transcript uses alternative start codon",
-        PVS1PredictionStrucVarPath.NotSet: "Not Set",
-        PVS1PredictionStrucVarPath.DEL1: "Full gene deletion",
-        PVS1PredictionStrucVarPath.DEL2: (
-            "Single to multi exon deletion disrupts reading frame and "
-            "is predicted to undergo NMD -> "
-            "Exon is present in biologically-relevant transcript(s)"
-        ),
-        PVS1PredictionStrucVarPath.DEL3: (
-            "Single to multi exon deletion disrupts reading frame and "
-            "is predicted to undergo NMD -> "
-            "Exon is absent from biologically-relevant transcript(s)"
-        ),
-        PVS1PredictionStrucVarPath.DEL4: (
-            "Single to multi exon deletion disrupts reading frame and "
-            "is not predicted to undergo NMD -> "
-            "Truncated/altered region is critical to protein function"
-        ),
-        PVS1PredictionStrucVarPath.DEL5_1: (
-            "Single to multi exon deletion disrupts reading frame and "
-            "is not predicted to undergo NMD -> "
-            "Role of region in protein function is unknown -> "
-            "LoF variants in this exon are frequent in the general population and/or "
-            "exon is absent from biologically-relevant transcript(s)"
-        ),
-        PVS1PredictionStrucVarPath.DEL6_1: (
-            "Single to multi exon deletion disrupts reading frame and "
-            "is not predicted to undergo NMD -> "
-            "Role of region in protein function is unknown -> "
-            "LoF variants in this exon are not frequent in the general population and "
-            "exon is present in biologically-relevant transcript(s) -> "
-            "Variant removes >10% of protein"
-        ),
-        PVS1PredictionStrucVarPath.DEL7_1: (
-            "Single to multi exon deletion disrupts reading frame and "
-            "is not predicted to undergo NMD -> "
-            "Role of region in protein function is unknown -> "
-            "LoF variants in this exon are not frequent in the general population and "
-            "exon is present in biologically-relevant transcript(s) -> "
-            "Variant removes <10% of protein"
-        ),
-        PVS1PredictionStrucVarPath.DEL5_2: (
-            "Single to multi exon deletion preserves reading frame -> "
-            "Role of region in protein function is unknown -> "
-            "LoF variants in this exon are frequent in the general population and/or "
-            "exon is absent from biologically-relevant transcript(s)"
-        ),
-        PVS1PredictionStrucVarPath.DEL6_2: (
-            "Single to multi exon deletion preserves reading frame -> "
-            "Role of region in protein function is unknown -> "
-            "LoF variants in this exon are not frequent in the general population and "
-            "exon is present in biologically-relevant transcript(s) -> "
-            "Variant removes >10% of protein"
-        ),
-        PVS1PredictionStrucVarPath.DEL7_2: (
-            "Single to multi exon deletion preserves reading frame -> "
-            "Role of region in protein function is unknown -> "
-            "LoF variants in this exon are not frequent in the general population and "
-            "exon is present in biologically-relevant transcript(s) -> "
-            "Variant removes <10% of protein"
-        ),
-        PVS1PredictionStrucVarPath.DEL8: (
-            "Single to multi exon deletion preserves reading frame -> "
-            "Truncated/altered region is critical to protein function"
-        ),
-        PVS1PredictionStrucVarPath.DUP1: (
-            "Proven in tandem -> " "Reading frame disrupted and NMD predicted to occur"
-        ),
-        PVS1PredictionStrucVarPath.DUP2_1: (
-            "Proven in tandem -> " "No or unknown impact on reading frame and NMD"
-        ),
-        PVS1PredictionStrucVarPath.DUP2_2: (
-            "Presumed in tandem -> " "No or unknown impact on reading frame and NMD"
-        ),
-        PVS1PredictionStrucVarPath.DUP3: (
-            "Proven in tandem -> " "Reading frame presumed disrupted and NMD predicted to occur"
-        ),
-        PVS1PredictionStrucVarPath.DUP4: "Proven not in tandem",
-    }
+.. note::
 
+    You have to configure the environment file before running the Docker container. See the next
+    section for details.
+
+Configuring the Environment File
+--------------------------------
+
+The application can be configured using environment variables. An example configuration file named
+``.env.dev`` might look like this:
+
+.. code-block:: none
+
+    API_V1_STR=/api/v1
+    DATABASE_URL=postgres://user:password@localhost/dbname
+    SECRET_KEY=your_secret_key
+
+Adjust the values according to your environment. Here are brief descriptions of the variables:
+
+- ``API_V1_STR``: Base path for API endpoints.
+- ``USE_CACHE``: Enable or disable caching of API responses.
+- ``API_REEV_URL``: URL of the REEV API.
+- ``SEQREPO_DATA_DIR``: Path to the SeqRepo data directory.
+
+To pass this configuration to the Docker container, ensure the ``.env.dev`` file is located where
+you run the ``docker run`` command or specify the correct path to the file using the ``--env-file``
+option.
+
+.. note::
+
+    The ``.env.dev`` file has example values for demonstration purposes. You will probably need to
+    adjust SEQREPO_DATA_DIR to point to the correct location on your system.
+
+Accessing the OpenAPI Documentation
+------------------------------------
+
+Once the application is running, you can access the OpenAPI documentation by navigating to:
+
+.. code-block:: none
+
+    http://localhost:8000/api/v1/docs
+
+This URL provides interactive API documentation automatically generated from your OpenAPI specs. It
+allows you to try out API calls directly from the browser.
 
 
 API Endpoints
