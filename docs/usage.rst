@@ -67,18 +67,23 @@ Once the Docker image is built, you can run it using the following command to in
 
 .. code-block:: bash
 
-    docker run -d -p 8000:8000 --env-file .env.dev auto-acmg
+    docker run -d -p 8000:8000 --env-file .env \
+    -v /usr/local/share/seqrepo:/usr/local/share/seqrepo \
+    -v /home/auto-acmg/seqrepo/master:/home/auto-acmg/seqrepo/master \
+    auto-acmg
 
-Here, ``-d`` runs the container in detached mode (in the background), ``-p 8000:8000`` maps port
-8000 of the container to port 8000 on the host, making the application accessible via
-``localhost:8000``. The ``--env-file .env.dev`` option tells Docker to use the environment variables d
-efined in the ``.env.dev`` file. Replace ``.env.dev`` with the path to your actual environment
-file if different.
+This command runs the container in detached mode (in the background), maps port 8000 of the
+container to port 8000 on the host, making the application accessible via ``localhost:8000``.
+The ``--env-file .env`` option tells Docker to use the environment variables defined in the
+``.env`` file. Replace ``.env`` with the path to your actual environment file if different.
+The ``-v`` flags map the local directories to their respective directories within the container,
+ensuring that SeqRepo data is accessible.
 
 .. note::
 
-    You have to configure the environment file before running the Docker container. See the next
-    section for details.
+    You must configure the environment file before running the Docker container and ensure that
+    the directories used for volumes are properly set up and have the correct permissions for
+    Docker to access them. See the configuration details in the sections below.
 
 Configuring the Environment File
 --------------------------------
@@ -86,18 +91,21 @@ Configuring the Environment File
 The application can be configured using environment variables. An example configuration file named
 ``.env.dev`` might look like this:
 
-.. code-block:: none
-
-    API_V1_STR=/api/v1
-    DATABASE_URL=postgres://user:password@localhost/dbname
-    SECRET_KEY=your_secret_key
-
-Adjust the values according to your environment. Here are brief descriptions of the variables:
-
-- ``API_V1_STR``: Base path for API endpoints.
+Adjust the values according to your environment. Here are brief descriptions of the variables. Note
+that not all variables are required for the application to run. More info below.:
+- ``DEBUG``: Enable or disable debug mode.
 - ``USE_CACHE``: Enable or disable caching of API responses.
+- ``CACHE_DIR``: Path to the cache directory.
+- ``API_V1_STR``: Base path for API endpoints.
 - ``API_REEV_URL``: URL of the REEV API.
-- ``SEQREPO_DATA_DIR``: Path to the SeqRepo data directory.
+- ``SEQREPO_DATA_DIR``: Path to the project-specific SeqRepo data directory.
+- ``GENEBE_API_KEY``: API key for the GeneBE service. You'll need it for running the benchmarks.
+- ``GENEBE_USERNAME``: Username for the GeneBE service. You'll need it for running the benchmarks.
+You will most likely need to set the following variables:
+
+- ``DEBUG``: Set to ``1`` to enable debug mode.
+- ``USE_CACHE``: Set to ``1`` to enable caching. This is recommended only for development.
+- ``SEQREPO_DATA_DIR``: Set to the path of the custom project SeqRepo data directory.
 
 To pass this configuration to the Docker container, ensure the ``.env.dev`` file is located where
 you run the ``docker run`` command or specify the correct path to the file using the ``--env-file``
@@ -105,8 +113,8 @@ option.
 
 .. note::
 
-    The ``.env.dev`` file has example values for demonstration purposes. You will probably need to
-    adjust SEQREPO_DATA_DIR to point to the correct location on your system.
+    Ensure that the environment variables are correctly set up and that the paths are valid and
+    accessible by the Docker container.
 
 Accessing the OpenAPI Documentation
 ------------------------------------
