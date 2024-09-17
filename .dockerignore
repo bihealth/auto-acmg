@@ -2,9 +2,6 @@
 .ipynb_checkpoints
 .vscode
 .idea
-.git
-.gitignore
-.gitattributes
 .mypy_cache
 .pytest_cache
 __pycache__
@@ -15,16 +12,10 @@ cache/**
 src/bench/tmp/*.csv
 *.~lock.*
 .DS_Store
-*.json
-*.so
-*.log
-temp/
 tmp/
 docs/
 *.md
 build/
-*.egg-info
-*.egg
 tests/
 *.pyc
 *.env
