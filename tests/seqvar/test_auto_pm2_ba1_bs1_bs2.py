@@ -19,9 +19,11 @@ from src.defs.auto_acmg import (
     AutoACMGStrength,
 )
 from src.defs.exceptions import AlgorithmError, MissingDataError
+from src.defs.exceptions import AlgorithmError, MissingDataError
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
 from src.seqvar.auto_pm2_ba1_bs1_bs2 import AutoPM2BA1BS1BS2
+from src.utils import SeqVarTranscriptsHelper
 from src.utils import SeqVarTranscriptsHelper
 
 
@@ -260,7 +262,73 @@ def test_get_allele_cond_clingen_dosage(
 
 @patch.object(SeqVarTranscriptsHelper, "initialize")
 @patch.object(SeqVarTranscriptsHelper, "get_ts_info")
+def gene_info():
+    # Base mock structure for gene information responses
+    return {
+        "Gene123": GeneInfo(
+            clingen=Clingen(
+                haploinsufficiencyScore=None  # No score set initially
+            ),
+            domino=Domino(score=None),  # No score set initially
+            decipherHi=DecipherHi(pHi=None),  # No score set initially
+        )
+    }
+
+
+@patch.object(SeqVarTranscriptsHelper, "initialize")
+@patch.object(SeqVarTranscriptsHelper, "get_ts_info")
 @patch.object(AnnonarsClient, "get_gene_info")
+def test_get_allele_cond_clingen_dosage(
+    mock_get_gene_info, mock_get_ts_info, mock_initialize, auto_pm2ba1bs1bs2, seqvar, gene_info
+):
+    # Modify gene_info for the test case to simulate dominant condition
+    gene_info[
+        "Gene123"
+    ].clingen.haploinsufficiencyScore = "CLINGEN_DOSAGE_SCORE_SUFFICIENT_EVIDENCE_AVAILABLE"
+    mock_get_gene_info.return_value = AnnonarsGeneResponse(genes=Genes(root=gene_info))
+
+    mock_get_ts_info.return_value = (None, MagicMock(geneId="Gene123"), None, None, None)
+    mock_initialize.return_value = None
+
+    result = auto_pm2ba1bs1bs2._get_allele_cond(seqvar)
+    assert result == AlleleCondition.Dominant
+
+
+@patch.object(SeqVarTranscriptsHelper, "initialize")
+@patch.object(SeqVarTranscriptsHelper, "get_ts_info")
+@patch.object(AnnonarsClient, "get_gene_info")
+def test_get_allele_cond_domino_data(
+    mock_get_gene_info, mock_get_ts_info, mock_initialize, auto_pm2ba1bs1bs2, seqvar, gene_info
+):
+    # Modify gene_info for the test case to simulate Domino data
+    gene_info["Gene123"].domino.score = 0.6
+    mock_get_gene_info.return_value = AnnonarsGeneResponse(genes=Genes(root=gene_info))
+
+    mock_get_ts_info.return_value = (None, MagicMock(geneId="Gene123"), None, None, None)
+    mock_initialize.return_value = None
+
+    result = auto_pm2ba1bs1bs2._get_allele_cond(seqvar)
+    assert result == AlleleCondition.Dominant
+
+
+@pytest.mark.parametrize(
+    "clingen_score, domino_score, decipher_score, expected_condition",
+    [
+        (
+            "CLINGEN_DOSAGE_SCORE_SUFFICIENT_EVIDENCE_AVAILABLE",
+            None,
+            None,
+            AlleleCondition.Dominant,
+        ),
+        ("CLINGEN_DOSAGE_SCORE_RECESSIVE", None, None, AlleleCondition.Recessive),
+        ("CLINGEN_DOSAGE_SCORE_NO_EVIDENCE_AVAILABLE", 0.6, None, AlleleCondition.Dominant),
+        (None, 0.1, None, AlleleCondition.Recessive),
+        (None, None, 0.95, AlleleCondition.Dominant),
+        (None, None, 0.85, AlleleCondition.Unknown),
+    ],
+)
+@patch.object(SeqVarTranscriptsHelper, "initialize")
+@patch.object(SeqVarTranscriptsHelper, "get_ts_info")
 def test_get_allele_cond_domino_data(
     mock_get_gene_info, mock_get_ts_info, mock_initialize, auto_pm2ba1bs1bs2, seqvar, gene_info
 ):
@@ -295,7 +363,10 @@ def test_get_allele_cond_domino_data(
 @patch.object(SeqVarTranscriptsHelper, "get_ts_info")
 @patch.object(AnnonarsClient, "get_gene_info")
 def test_get_allele_cond_various_conditions(
+def test_get_allele_cond_various_conditions(
     mock_get_gene_info,
+    mock_get_ts_info,
+    mock_initialize,
     mock_get_ts_info,
     mock_initialize,
     auto_pm2ba1bs1bs2,
@@ -320,9 +391,37 @@ def test_get_allele_cond_various_conditions(
 
     result = auto_pm2ba1bs1bs2._get_allele_cond(seqvar)
     assert result == expected_condition
+    seqvar,
+    clingen_score,
+    domino_score,
+    decipher_score,
+    expected_condition,
+    gene_info,
+):
+    # Modify gene_info based on parameters
+    if clingen_score:
+        gene_info["Gene123"].clingen.haploinsufficiencyScore = clingen_score
+    if domino_score is not None:
+        gene_info["Gene123"].domino.score = domino_score
+    if decipher_score is not None:
+        gene_info["Gene123"].decipherHi.pHi = decipher_score
+
+    mock_get_gene_info.return_value = AnnonarsGeneResponse(genes=Genes(root=gene_info))
+    mock_get_ts_info.return_value = (None, MagicMock(geneId="Gene123"), None, None, None)
+    mock_initialize.return_value = None
+
+    result = auto_pm2ba1bs1bs2._get_allele_cond(seqvar)
+    assert result == expected_condition
 
 
 @patch("src.utils.SeqVarTranscriptsHelper")
+def test_get_allele_cond_no_gene_found(mock_seqvar_transcripts_helper, auto_pm2ba1bs1bs2, seqvar):
+    mock_helper_instance = mock_seqvar_transcripts_helper.return_value
+    mock_helper_instance.initialize.return_value = None
+    mock_helper_instance.get_ts_info.return_value = (None, None, None, None, None)
+
+    with pytest.raises(AlgorithmError, match="No gene found for the transcript."):
+        auto_pm2ba1bs1bs2._get_allele_cond(seqvar)
 def test_get_allele_cond_no_gene_found(mock_seqvar_transcripts_helper, auto_pm2ba1bs1bs2, seqvar):
     mock_helper_instance = mock_seqvar_transcripts_helper.return_value
     mock_helper_instance.initialize.return_value = None
@@ -414,6 +513,8 @@ def test_bs2_not_applicable(auto_pm2ba1bs1bs2, var_data):
 @pytest.fixture
 def seqvar_mt():
     return SeqVar(genome_release=GenomeRelease.GRCh38, chrom="MT", pos=1000, delete="A", insert="G")
+def seqvar_mt():
+    return SeqVar(genome_release=GenomeRelease.GRCh38, chrom="MT", pos=1000, delete="A", insert="G")
 
 
 @patch.object(AutoPM2BA1BS1BS2, "_get_af", return_value=0.0001)
@@ -428,7 +529,29 @@ def test_verify_pm2ba1bs1bs2(
     auto_pm2ba1bs1bs2,
     seqvar,
     var_data,
+@patch.object(AutoPM2BA1BS1BS2, "_get_af", return_value=0.0001)
+@patch.object(AutoPM2BA1BS1BS2, "_ba1_exception", return_value=False)
+@patch.object(AutoPM2BA1BS1BS2, "_bs2_not_applicable", return_value=False)
+@patch.object(AutoPM2BA1BS1BS2, "_check_zyg", return_value=True)
+def test_verify_pm2ba1bs1bs2(
+    mock_get_af,
+    mock_ba1_exception,
+    mock_bs2_na,
+    mock_check_zyg,
+    auto_pm2ba1bs1bs2,
+    seqvar,
+    var_data,
 ):
+    result, comment = auto_pm2ba1bs1bs2.verify_pm2ba1bs1bs2(seqvar, var_data)
+    assert result.PM2 is True
+    assert "PM2 is met" in comment
+
+
+@patch.object(AutoPM2BA1BS1BS2, "_get_m_af", return_value=0.00002)
+def test_verify_pm2ba1bs1bs2_mitochondrial(mock_get_m_af, auto_pm2ba1bs1bs2, seqvar_mt, var_data):
+    result, comment = auto_pm2ba1bs1bs2.verify_pm2ba1bs1bs2(seqvar_mt, var_data)
+    assert result.PM2 is True
+    assert "Allele frequency <= 0.002%: PM2 is met" in comment
     result, comment = auto_pm2ba1bs1bs2.verify_pm2ba1bs1bs2(seqvar, var_data)
     assert result.PM2 is True
     assert "PM2 is met" in comment
