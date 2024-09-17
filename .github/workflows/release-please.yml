@@ -1,31 +1,17 @@
 name: Release
 
 on:
-  push:
-    branches:
-      - main
+  release:
+    types: [created]
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  release-please:
-    runs-on: ubuntu-latest
-    outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      release_name: ${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }}
-    steps:
-      - name: Create GitHub release
-        id: release
-        uses: GoogleCloudPlatform/release-please-action@v4
-        with:
-          token: ${{ secrets.BOT_TOKEN }}
 
   Container-Release:
-    needs: release-please
     runs-on: ubuntu-latest
-    if: ${{ needs.release-please.outputs.release_created }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -47,9 +33,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
-            type=semver,pattern={{version}},value=${{ needs.release-please.outputs.release_name }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ needs.release-please.outputs.release_name }}
-            type=semver,pattern={{major}},value=${{ needs.release-please.outputs.release_name }}
+            type=ref,event=branch
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
