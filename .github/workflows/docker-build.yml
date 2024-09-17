@@ -14,7 +14,7 @@ name: Docker Build
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: auto-acmg
+  IMAGE_NAME: auto_acmg
 
 jobs:
   Image-Build-Push:
