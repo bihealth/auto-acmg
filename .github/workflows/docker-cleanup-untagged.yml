@@ -13,6 +13,6 @@ jobs:
       - uses: bots-house/ghcr-delete-image-action@v1.1.0
         with:
           owner: bihealth
-          name: auto-acmg
+          name: auto_acmg
           token: ${{ secrets.GITHUB_TOKEN }}
           untagged-keep-latest: 3
