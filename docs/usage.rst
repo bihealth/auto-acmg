@@ -67,13 +67,13 @@ Once the Docker image is built, you can run it using the following command to in
 
 .. code-block:: bash
 
-    docker run -d -p 8000:8000 --env-file .env \
+    docker run -d -p 8080:8080 --env-file .env \
     -v /usr/local/share/seqrepo:/usr/local/share/seqrepo \
     -v /home/auto-acmg/seqrepo/master:/home/auto-acmg/seqrepo/master \
     auto-acmg
 
-This command runs the container in detached mode (in the background), maps port 8000 of the
-container to port 8000 on the host, making the application accessible via ``localhost:8000``.
+This command runs the container in detached mode (in the background), maps port 8080 of the
+container to port 8080 on the host, making the application accessible via ``localhost:8080``.
 The ``--env-file .env`` option tells Docker to use the environment variables defined in the
 ``.env`` file. Replace ``.env`` with the path to your actual environment file if different.
 The ``-v`` flags map the local directories to their respective directories within the container,
@@ -123,7 +123,7 @@ Once the application is running, you can access the OpenAPI documentation by nav
 
 .. code-block:: none
 
-    http://localhost:8000/api/v1/docs
+    http://localhost:8080/api/v1/docs
 
 This URL provides interactive API documentation automatically generated from your OpenAPI specs. It
 allows you to try out API calls directly from the browser.
@@ -182,4 +182,4 @@ The API provides several endpoints for interacting with the AutoACMG system:
        GET /api/v1/predict/strucvar?variant_name=chr1:228282272:dup:Tandem
 
 For more details on the API endpoints and their usage, refer to the OpenAPI documentation accessible
-at the URL: ``http://localhost:8000/api/v1/docs``.
+at the URL: ``http://localhost:8080/api/v1/docs``.

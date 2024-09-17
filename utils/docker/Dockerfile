@@ -44,6 +44,6 @@ VOLUME /home/auto-acmg/seqrepo/master
 
 COPY . /auto-acmg
 
-CMD ["pipenv", "run", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["pipenv", "run", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8080"]
 
-EXPOSE 8000
+EXPOSE 8080
