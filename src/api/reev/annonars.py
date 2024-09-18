@@ -16,7 +16,7 @@ from src.defs.seqvar import SeqVar
 from src.defs.strucvar import StrucVar
 
 #: Annonars API base URL
-ANNONARS_API_BASE_URL = f"{settings.API_REEV_URL}/annonars"
+ANNONARS_API_BASE_URL = settings.AUTO_ACMG_API_ANNONARS_URL or f"{settings.API_REEV_URL}/annonars"
 
 
 class AnnonarsClient:

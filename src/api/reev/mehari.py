@@ -15,7 +15,7 @@ from src.defs.seqvar import SeqVar
 from src.defs.strucvar import StrucVar
 
 #: Mehari API base URL
-MEHARI_API_BASE_URL = f"{settings.API_REEV_URL}/mehari"
+MEHARI_API_BASE_URL = settings.AUTO_ACMG_API_MEHARI_URL or f"{settings.API_REEV_URL}/mehari"
 
 
 class MehariClient:

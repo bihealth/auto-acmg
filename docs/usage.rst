@@ -71,7 +71,7 @@ them with the following command:
     tar -czvf seqrepo_master.tar.gz .dev/volumes/seqrepo/master --strip-components=1
 
 Finally, you should have the following directories structures in ``/usr/local/share/seqrepo`` (local):
-and SEQREPO_DATA_DIR (master):
+and AUTO_ACMG_SEQREPO_DATA_DIR (master):
 
 
 .. code-block:: bash
@@ -133,7 +133,7 @@ The application can be configured using environment variables. An example config
     API_REEV_URL=https://reev.cubi.bihealth.org/internal/proxy
     # Default path to seqrepo data for Docker. Change it to your local development path.
     # It can look like this: "/home/<username>/seqrepo/master"
-    SEQREPO_DATA_DIR=/home/gromdimon/Custom/seqrepo/master
+    AUTO_ACMG_SEQREPO_DATA_DIR=/home/gromdimon/Custom/seqrepo/master
 
 Adjust the values according to your environment. Here are brief descriptions of the variables. Note
 that not all variables are required for the application to run. More info below.:
@@ -143,7 +143,7 @@ that not all variables are required for the application to run. More info below.
 - ``CACHE_DIR``: Path to the cache directory.
 - ``API_V1_STR``: Base path for API endpoints.
 - ``API_REEV_URL``: URL of the REEV API.
-- ``SEQREPO_DATA_DIR``: Path to the project-specific SeqRepo data directory.
+- ``AUTO_ACMG_SEQREPO_DATA_DIR``: Path to the project-specific SeqRepo data directory.
 - ``GENEBE_API_KEY``: API key for the GeneBE service. You'll need it for running the benchmarks.
 - ``GENEBE_USERNAME``: Username for the GeneBE service. You'll need it for running the benchmarks.
 
@@ -151,7 +151,7 @@ You will most likely need to set the following variables:
 
 - ``DEBUG``: Set to ``1`` to enable debug mode.
 - ``USE_CACHE``: Set to ``1`` to enable caching. This is recommended only for development.
-- ``SEQREPO_DATA_DIR``: Set to the path of the custom project SeqRepo data directory.
+- ``AUTO_ACMG_SEQREPO_DATA_DIR``: Set to the path of the custom project SeqRepo data directory.
 
 To pass this configuration to the Docker container, ensure the ``.env`` file is located where
 you run the ``docker run`` command or specify the correct path to the file using the ``--env-file``
