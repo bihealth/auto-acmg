@@ -5,7 +5,7 @@ from typing import Optional, Type, Union
 from loguru import logger
 
 from src.api.reev.annonars import AnnonarsClient
-from src.core.config import Config
+from src.core.config import Config, settings
 from src.defs.annonars_variant import VariantResult
 from src.defs.auto_acmg import AutoACMGSeqVarResult, AutoACMGStrucVarResult, CdsInfo, GenomicStrand
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, ParseError
@@ -189,7 +189,12 @@ class AutoACMG:
             genome_release (Optional): The genome release version, such as GRCh38 or GRCh37.
         """
         #: Configuration to use.
-        self.config = config or Config()
+        self.config = config or Config(
+            api_base_url=settings.API_REEV_URL,
+            api_base_url_annonars=settings.AUTO_ACMG_API_ANNONARS_URL,
+            api_base_url_mehari=settings.AUTO_ACMG_API_MEHARI_URL,
+            api_base_url_dotty=settings.AUTO_ACMG_API_DOTTY_URL,
+        )
         #: Annonars client.
         self.annonars_client: AnnonarsClient = AnnonarsClient(
             api_base_url=self.config.api_base_url_annonars

@@ -46,6 +46,7 @@ class MehariClient:
             f"&alternative={seqvar.insert}"
         )
         logger.debug("GET request to: {}", url)
+        print("api_base_url", self.api_base_url)
 
         cached_response = self.cache.get(url)
         if cached_response:

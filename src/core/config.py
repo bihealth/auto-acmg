@@ -79,11 +79,11 @@ class Config(BaseModel):
     #: Base URL to (REEV) API.
     api_base_url: Optional[str] = None
     #: Base URL to annonars API.
-    api_base_url_annonars: Optional[str] = None
+    api_base_url_annonars: Optional[str] = settings.AUTO_ACMG_API_ANNONARS_URL or None
     #: Base URL to mehari API.
-    api_base_url_mehari: Optional[str] = None
+    api_base_url_mehari: Optional[str] = settings.AUTO_ACMG_API_MEHARI_URL or None
     #: Base URL to dotty API.
-    api_base_url_dotty: Optional[str] = None
+    api_base_url_dotty: Optional[str] = settings.AUTO_ACMG_API_DOTTY_URL or None
 
     #: Path to the seqrepo data directory.
     seqrepo_data_dir: Optional[str] = settings.AUTO_ACMG_SEQREPO_DATA_DIR
@@ -94,8 +94,13 @@ class Config(BaseModel):
         """If ``api_base_url`` is set, set the other API URLs."""
         if isinstance(data, dict):
             data["api_base_url"] = data.get("api_base_url", settings.API_REEV_URL)
-            for key in ("annonars", "mehari", "dotty"):
-                data[f"api_base_url_{key}"] = data.get(
-                    f"api_base_url_{key}", f"{data['api_base_url']}/{key}"
-                )
+            if (
+                not settings.AUTO_ACMG_API_ANNONARS_URL
+                and not settings.AUTO_ACMG_API_MEHARI_URL
+                and not settings.AUTO_ACMG_API_DOTTY_URL
+            ):
+                for key in ("annonars", "mehari", "dotty"):
+                    data[f"api_base_url_{key}"] = data.get(
+                        f"api_base_url_{key}", f"{data['api_base_url']}/{key}"
+                    )
         return data
