@@ -7,3 +7,4 @@ loguru
 pytabix
 seqrepo
 msgpack
+fastapi
