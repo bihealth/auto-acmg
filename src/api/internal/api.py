@@ -21,6 +21,15 @@ async def resolve_variant(
     variant_name: str = Query(..., description="The name or identifier of the variant"),
     genome_release: str = Query(default="GRCh38", description="The genome release version"),
 ):
+    """Resolve a variant to a sequence variant or structural variant.
+
+    Args:
+        variant_name (str): The name or identifier of the variant.
+        genome_release (str): The genome release version.
+
+    Returns:
+        VariantResolveResponse: The resolved variant.
+    """
     try:
         genome_release_enum = GenomeRelease.from_string(genome_release)
         if not genome_release_enum:
@@ -43,6 +52,15 @@ async def predict_seqvar(
     variant_name: str = Query(..., description="The name or identifier of the sequence variant"),
     genome_release: str = Query(default="GRCh38", description="The genome release version"),
 ):
+    """Predict the ACMG classification of a sequence variant.
+
+    Args:
+        variant_name (str): The name or identifier of the sequence variant.
+        genome_release (str): The genome release version.
+
+    Returns:
+        SeqVarPredictionResponse: The predicted ACMG classification.
+    """
     try:
         genome_release_enum = GenomeRelease.from_string(genome_release)
         if not genome_release_enum:
@@ -82,6 +100,16 @@ async def predict_strucvar(
         description="The duplication is in tandem and disrupts reading frame and undergoes NMD",
     ),
 ):
+    """Predict the ACMG classification of a structural variant.
+
+    Args:
+        variant_name (str): The name or identifier of the structural variant.
+        genome_release (str): The genome release version.
+        duplication_tandem (bool): The duplication is in tandem and disrupts reading frame and undergoes NMD.
+
+    Returns:
+        StrucVarPredictionResponse: The predicted ACMG classification.
+    """
     try:
         # Set default duplication tandem if provided
         settings.DUPLICATION_TANDEM = duplication_tandem

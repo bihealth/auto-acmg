@@ -1,11 +1,11 @@
 .. _auto_acmg_implementation:
 
 =============================
-Auto-ACMG Implementation
+AutoACMG Implementation
 =============================
 
 
-Auto-ACMG operates through a structured process to determine the most appropriate predictor based on
+AutoACMG operates through a structured process to determine the most appropriate predictor based on
 the type and context of the genetic variant being analyzed. This document describes the general
 workflow and the mechanisms behind the decisions that auto-acmg makes to predict the classification
 of genetic variants.
