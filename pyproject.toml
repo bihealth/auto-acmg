@@ -3,8 +3,8 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "auto-acmg"
-version = "0.1.0"
+name = "AutoACMG"
+version = "0.3.0"
 authors = [
   {name = "Dzmitry Hramyka", email = "dzmitry.hramyka@bih-charite.de"},
 ]
