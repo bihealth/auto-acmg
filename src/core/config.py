@@ -33,8 +33,20 @@ class Settings(BaseSettings):
     #: Base URL to reev
     API_REEV_URL: str = ""
 
+    # Keep this setting empty. It is used for the reev-docker-compose.
+    #: Base URL to annonars
+    AUTO_ACMG_API_ANNONARS_URL: str = ""
+
+    # Keep this setting empty. It is used for the reev-docker-compose.
+    #: Base URL to mehari
+    AUTO_ACMG_API_MEHARI_URL: str = ""
+
+    # Keep this setting empty. It is used for the reev-docker-compose.
+    #: Base URL to dotty
+    AUTO_ACMG_API_DOTTY_URL: str = ""
+
     #: Path to seqrepo data directory
-    SEQREPO_DATA_DIR: str = ""
+    AUTO_ACMG_SEQREPO_DATA_DIR: str = ""
 
     #: API key for genebe
     GENEBE_API_KEY: str = ""
@@ -74,7 +86,7 @@ class Config(BaseModel):
     api_base_url_dotty: Optional[str] = None
 
     #: Path to the seqrepo data directory.
-    seqrepo_data_dir: Optional[str] = settings.SEQREPO_DATA_DIR
+    seqrepo_data_dir: Optional[str] = settings.AUTO_ACMG_SEQREPO_DATA_DIR
 
     @model_validator(mode="before")
     @classmethod

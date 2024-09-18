@@ -12,7 +12,7 @@ from src.defs.dotty import DottySpdiResponse
 from src.defs.genome_builds import GenomeRelease
 
 #: Dotty API base URL
-DOTTI_API_BASE_URL = f"{settings.API_REEV_URL}/dotty"
+DOTTI_API_BASE_URL = settings.AUTO_ACMG_API_DOTTY_URL or f"{settings.API_REEV_URL}/dotty"
 
 
 class DottyClient:
