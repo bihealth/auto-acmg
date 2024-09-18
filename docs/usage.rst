@@ -60,6 +60,38 @@ Ensure these directories exist on your host and are populated with the necessary
     location for Linux systems. The ``/home/auto-acmg/seqrepo/master`` directory is an example of
     a custom project data directory.
 
+
+If the above doesn't work for you, you can try to download backups from the CUBI SharePoint. The
+backups are located in the folder ``/Documents/Coding and Engineering/AutoACMG``. Then unarchive
+them with the following command:
+
+.. code-block:: bash
+
+    tar -czvf seqrepo_local.tar.gz .dev/volumes/seqrepo/local --strip-components=1
+    tar -czvf seqrepo_master.tar.gz .dev/volumes/seqrepo/master --strip-components=1
+
+Finally, you should have the following directories structures in ``/usr/local/share/seqrepo`` (local):
+and SEQREPO_DATA_DIR (master):
+
+
+.. code-block:: bash
+
+    seqrepo
+    ├── master
+    │   ├── aliases.sqlite3
+    │   ├── sequences
+    │          └── db.sqlite3
+    │          └── 2024
+    │                └── 1224
+    │                └── ....
+    │
+    └── local
+        ├── master
+            ├── aliases.sqlite3
+            ├── sequences
+                └── db.sqlite3
+
+
 Running the Docker Image
 ------------------------
 
@@ -91,8 +123,21 @@ Configuring the Environment File
 The application can be configured using environment variables. An example configuration file named
 ``.env.dev`` might look like this:
 
+.. code-block:: none
+
+    # Disable debug mode per default
+    DEBUG=0
+    # Disable cache to avoid memory issues
+    USE_CACHE=0
+    # Use the REEV API. Change it if you have other instance of REEV.
+    API_REEV_URL=https://reev.cubi.bihealth.org/internal/proxy
+    # Default path to seqrepo data for Docker. Change it to your local development path.
+    # It can look like this: "/home/<username>/seqrepo/master"
+    SEQREPO_DATA_DIR=/home/gromdimon/Custom/seqrepo/master
+
 Adjust the values according to your environment. Here are brief descriptions of the variables. Note
 that not all variables are required for the application to run. More info below.:
+
 - ``DEBUG``: Enable or disable debug mode.
 - ``USE_CACHE``: Enable or disable caching of API responses.
 - ``CACHE_DIR``: Path to the cache directory.
@@ -101,13 +146,14 @@ that not all variables are required for the application to run. More info below.
 - ``SEQREPO_DATA_DIR``: Path to the project-specific SeqRepo data directory.
 - ``GENEBE_API_KEY``: API key for the GeneBE service. You'll need it for running the benchmarks.
 - ``GENEBE_USERNAME``: Username for the GeneBE service. You'll need it for running the benchmarks.
+
 You will most likely need to set the following variables:
 
 - ``DEBUG``: Set to ``1`` to enable debug mode.
 - ``USE_CACHE``: Set to ``1`` to enable caching. This is recommended only for development.
 - ``SEQREPO_DATA_DIR``: Set to the path of the custom project SeqRepo data directory.
 
-To pass this configuration to the Docker container, ensure the ``.env.dev`` file is located where
+To pass this configuration to the Docker container, ensure the ``.env`` file is located where
 you run the ``docker run`` command or specify the correct path to the file using the ``--env-file``
 option.
 
@@ -180,6 +226,7 @@ The API provides several endpoints for interacting with the AutoACMG system:
    .. code-block:: none
 
        GET /api/v1/predict/strucvar?variant_name=chr1:228282272:dup:Tandem
+
 
 For more details on the API endpoints and their usage, refer to the OpenAPI documentation accessible
 at the URL: ``http://localhost:8080/api/v1/docs``.

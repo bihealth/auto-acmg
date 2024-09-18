@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.abspath(".."))
 project = "auto-acmg"
 copyright = "2024, Dzmitry Hramyka"
 author = "Dzmitry Hramyka"
-release = "0.0.0"
+release = "0.3.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
