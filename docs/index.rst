@@ -1,8 +1,8 @@
 .. _index:
 
-=====================
-Welcome to auto-acmg
-=====================
+===================
+Welcome to AutoACMG
+===================
 
 Auto-acmg is a comprehensive software suite designed for the automatic prediction of ACMG (American
 College of Medical Genetics and Genomics) criteria for the evaluation of sequence variants and copy
