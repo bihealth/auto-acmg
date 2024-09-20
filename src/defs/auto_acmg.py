@@ -310,7 +310,7 @@ class AutoACMGPrediction(AutoAcmgBaseEnum):
     Applicable = "applicable"
     NotApplicable = "not_applicable"
     NotAutomated = "not_automated"
-    Depricated = "depricated"
+    Deprecated = "deprecated"
     Failed = "failed"
 
 
@@ -485,7 +485,7 @@ class AutoACMGCriteriaPred(AutoAcmgBaseModel):
     )
     pp5: AutoACMGCriteria = AutoACMGCriteria(
         name="PP5",
-        prediction=AutoACMGPrediction.Depricated,
+        prediction=AutoACMGPrediction.Deprecated,
         strength=AutoACMGStrength.PathogenicSupporting,
     )
     ba1: AutoACMGCriteria = AutoACMGCriteria(name="BA1", strength=AutoACMGStrength.BenignStandAlone)
@@ -516,7 +516,7 @@ class AutoACMGCriteriaPred(AutoAcmgBaseModel):
     )
     bp6: AutoACMGCriteria = AutoACMGCriteria(
         name="BP6",
-        prediction=AutoACMGPrediction.Depricated,
+        prediction=AutoACMGPrediction.Deprecated,
         strength=AutoACMGStrength.BenignSupporting,
     )
     bp7: AutoACMGCriteria = AutoACMGCriteria(name="BP7", strength=AutoACMGStrength.BenignSupporting)

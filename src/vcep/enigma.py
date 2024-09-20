@@ -215,7 +215,7 @@ class ENIGMAPredictor(DefaultSeqVarPredictor):
                 prediction=(
                     AutoACMGPrediction.Applicable if bp1 else AutoACMGPrediction.NotApplicable
                 ),
-                strength=AutoACMGStrength.PathogenicStrong,
+                strength=AutoACMGStrength.BenignSupporting,
                 summary=comment,
             ),
         )
