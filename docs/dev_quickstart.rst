@@ -124,7 +124,7 @@ Then you can initialize the SeqRepo instance:
 
 The following command downloads the reference sequences. Note, that it'll take some time.
 
-**Important**: There might be a bug in the SeqRepo that causes the download to fail (refer to the 
+**Important**: There might be a bug in the SeqRepo that causes the download to fail (refer to the
 `github issue <https://github.com/biocommons/biocommons.seqrepo/issues/166>`__). If this happens,
 modify the source code by running the following command:
 
@@ -167,15 +167,11 @@ SeqRepo instance you created in the previous step. It should look similar to thi
 Running the CLI
 ---------------
 
-After you have set up the SeqRepo and the `.env` file, you can run the CLI.
+After you have set up the SeqRepo and the `.env` file, you can serve the API.
 You can use the following commands:
 
 .. code-block:: bash
 
-    make run VAR="NM_000152.4:c.1A>G" GR="GRCh37"
+    make serve
 
-Also there's example for usage of CLI:
-
-.. code-block:: bash
-
-    make example_run
+Then go to the `http://0.0.0.0:8080/api/v1/docs` to see the API documentation.

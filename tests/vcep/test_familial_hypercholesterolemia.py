@@ -22,7 +22,7 @@ def seqvar():
 @pytest.fixture
 def familial_hypercholesterolemia_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return FamilialHypercholesterolemiaPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return FamilialHypercholesterolemiaPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

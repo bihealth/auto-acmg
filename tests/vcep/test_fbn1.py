@@ -23,7 +23,7 @@ def seqvar():
 @pytest.fixture
 def fbn1_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return FBN1Predictor(seqvar=seqvar, result=result, config=MagicMock())
+    return FBN1Predictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

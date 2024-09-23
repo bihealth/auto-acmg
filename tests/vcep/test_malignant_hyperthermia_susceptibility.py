@@ -21,7 +21,7 @@ def seqvar():
 @pytest.fixture
 def malignant_hyperthermia_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return MalignantHyperthermiaPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return MalignantHyperthermiaPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

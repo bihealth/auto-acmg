@@ -24,7 +24,7 @@ def seqvar():
 @pytest.fixture
 def hht_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return HHTPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return HHTPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

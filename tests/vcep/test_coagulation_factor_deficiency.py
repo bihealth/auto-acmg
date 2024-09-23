@@ -31,7 +31,7 @@ def seqvar():
 @pytest.fixture
 def coagulation_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return CoagulationFactorDeficiencyPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return CoagulationFactorDeficiencyPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

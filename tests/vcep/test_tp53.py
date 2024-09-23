@@ -29,7 +29,7 @@ def seqvar():
 @pytest.fixture
 def tp53_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return TP53Predictor(seqvar=seqvar, result=result, config=MagicMock())
+    return TP53Predictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

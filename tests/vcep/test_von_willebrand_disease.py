@@ -28,7 +28,7 @@ def seqvar():
 @pytest.fixture
 def vwf_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return VonWillebrandDiseasePredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return VonWillebrandDiseasePredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

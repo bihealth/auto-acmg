@@ -5,7 +5,6 @@ from typing import List, Tuple
 import pytest
 
 from src.auto_acmg import AutoACMG
-from src.core.config import Config
 from src.defs.auto_acmg import AutoACMGSeqVarResult
 from src.defs.genome_builds import GenomeRelease
 from src.defs.seqvar import SeqVar
@@ -29,10 +28,9 @@ def acmg_criteria_test_helper(
     genome_release: GenomeRelease,
     expected_prediction: List[str],
     comment: str,
-    config: Config,
 ):
     # First, resolve variant
-    auto_acmg = AutoACMG(variant_name, genome_release, config=config)
+    auto_acmg = AutoACMG(variant_name, genome_release)
     seqvar = auto_acmg.resolve_variant()
     assert isinstance(seqvar, SeqVar)
     # Then, predict ACMG criteria
@@ -52,10 +50,9 @@ def test_acmg_criteria_seqvar_csv(
     genome_release: GenomeRelease,
     expected_prediction: List[str],
     comment: str,
-    config: Config,
 ):
     """Test ACMG criteria predictions, variants read from CSV file."""
-    acmg_criteria_test_helper(variant_name, genome_release, expected_prediction, comment, config)
+    acmg_criteria_test_helper(variant_name, genome_release, expected_prediction, comment)
 
 
 @pytest.mark.default_cassette("e2e.yaml")
@@ -77,7 +74,6 @@ def test_acmg_criteria_seqvar_inline(
     genome_release: GenomeRelease,
     expected_prediction: str,
     comment: str,
-    config: Config,
 ):
     """Test ACMG criteria predictions, variants defined inline."""
-    acmg_criteria_test_helper(variant_name, genome_release, expected_prediction, comment, config)
+    acmg_criteria_test_helper(variant_name, genome_release, expected_prediction, comment)

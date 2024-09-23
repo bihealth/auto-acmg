@@ -22,7 +22,7 @@ def seqvar():
 @pytest.fixture
 def rasopathy_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return RASopathyPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return RASopathyPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

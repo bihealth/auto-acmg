@@ -23,7 +23,7 @@ def seqvar():
 @pytest.fixture
 def pulmonary_hypertension_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return PulmonaryHypertensionPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return PulmonaryHypertensionPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

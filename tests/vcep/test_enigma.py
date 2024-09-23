@@ -24,7 +24,7 @@ def seqvar():
 @pytest.fixture
 def enigma_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return ENIGMAPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return ENIGMAPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture
@@ -291,8 +291,8 @@ def test_predict_pp2bp1_missense_not_in_domain_not_splice_affecting(
         bp1.prediction == AutoACMGPrediction.Applicable
     ), "BP1 should be Met as the criteria are satisfied."
     assert (
-        bp1.strength == AutoACMGStrength.PathogenicStrong
-    ), "BP1 strength should be PathogenicStrong."
+        bp1.strength == AutoACMGStrength.BenignSupporting
+    ), "BP1 strength should be BenignSupporting."
     assert (
         "not in an important domain" in bp1.summary
     ), "The summary should indicate that the variant is not in an important domain."

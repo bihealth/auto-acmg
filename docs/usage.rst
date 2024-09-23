@@ -143,6 +143,9 @@ that not all variables are required for the application to run. More info below.
 - ``CACHE_DIR``: Path to the cache directory.
 - ``API_V1_STR``: Base path for API endpoints.
 - ``API_REEV_URL``: URL of the REEV API.
+- ``AUTO_ACMG_API_ANNONARS_URL``: URL of the Annonars API.
+- ``AUTO_ACMG_API_MEHARI_URL``: URL of the Mehari API.
+- ``AUTO_ACMG_API_DOTTY_URL``: URL of the Dotty API.
 - ``AUTO_ACMG_SEQREPO_DATA_DIR``: Path to the project-specific SeqRepo data directory.
 - ``GENEBE_API_KEY``: API key for the GeneBE service. You'll need it for running the benchmarks.
 - ``GENEBE_USERNAME``: Username for the GeneBE service. You'll need it for running the benchmarks.
@@ -160,7 +163,7 @@ option.
 .. note::
 
     Ensure that the environment variables are correctly set up and that the paths are valid and
-    accessible by the Docker container.
+    accessible by the Docker container. The example .env file is provided in .env.dev.
 
 Accessing the OpenAPI Documentation
 ------------------------------------

@@ -5,7 +5,7 @@ from typing import Optional, Type, Union
 from loguru import logger
 
 from src.api.reev.annonars import AnnonarsClient
-from src.core.config import Config, settings
+from src.core.config import settings
 from src.defs.annonars_variant import VariantResult
 from src.defs.auto_acmg import AutoACMGSeqVarResult, AutoACMGStrucVarResult, CdsInfo, GenomicStrand
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException, ParseError
@@ -179,8 +179,6 @@ class AutoACMG:
         self,
         variant_name: str,
         genome_release: GenomeRelease = GenomeRelease.GRCh38,
-        *,
-        config: Optional[Config] = None,
     ):
         """Initializes the AutoACMG with the specified variant and genome release.
 
@@ -188,16 +186,9 @@ class AutoACMG:
             variant_name: The name or identifier of the variant.
             genome_release (Optional): The genome release version, such as GRCh38 or GRCh37.
         """
-        #: Configuration to use.
-        self.config = config or Config(
-            api_base_url=settings.API_REEV_URL,
-            api_base_url_annonars=settings.AUTO_ACMG_API_ANNONARS_URL,
-            api_base_url_mehari=settings.AUTO_ACMG_API_MEHARI_URL,
-            api_base_url_dotty=settings.AUTO_ACMG_API_DOTTY_URL,
-        )
         #: Annonars client.
         self.annonars_client: AnnonarsClient = AnnonarsClient(
-            api_base_url=self.config.api_base_url_annonars
+            api_base_url=settings.AUTO_ACMG_API_ANNONARS_URL
         )
         #: The name or identifier of the variant.
         self.variant_name = variant_name
@@ -438,7 +429,7 @@ class AutoACMG:
         """
         logger.debug("Resolving variant: {}", self.variant_name)
         try:
-            seqvar_resolver = SeqVarResolver(config=self.config)
+            seqvar_resolver = SeqVarResolver()
             seqvar: SeqVar = seqvar_resolver.resolve_seqvar(self.variant_name, self.genome_release)
             logger.debug("Resolved sequence variant: {}", seqvar)
             return seqvar
@@ -446,7 +437,7 @@ class AutoACMG:
             logger.debug("Failed to resolve sequence variant.")
             try:
                 logger.debug("Trying to resolve structural variant.")
-                strucvar_resolver = StrucVarResolver(config=self.config)
+                strucvar_resolver = StrucVarResolver()
                 strucvar: StrucVar = strucvar_resolver.resolve_strucvar(
                     self.variant_name, self.genome_release
                 )
@@ -494,10 +485,10 @@ class AutoACMG:
 
             # ====== Predict ======
             predictor_class = self._select_predictor(self.seqvar_result.data.hgnc_id)
-            predictor = predictor_class(self.seqvar, self.seqvar_result, self.config)
+            predictor = predictor_class(self.seqvar, self.seqvar_result)
             seqvar_prediction = predictor.predict()
             # Debug
-            # logger.info("Prediction: {}", seqvar_prediction)
+            logger.info("Prediction: {}", seqvar_prediction)
             return seqvar_prediction
 
         elif isinstance(self.strucvar, StrucVar):
@@ -508,7 +499,7 @@ class AutoACMG:
             self._parse_strucvar_data(self.strucvar)
 
             # ====== Predict ======
-            sp = DefaultStrucVarPredictor(self.strucvar, self.strucvar_result, self.config)
+            sp = DefaultStrucVarPredictor(self.strucvar, self.strucvar_result)
             strucvar_prediction = sp.predict()
             # Debug
             # logger.info("Prediction: {}", strucvar_prediction)

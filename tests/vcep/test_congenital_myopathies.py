@@ -22,7 +22,7 @@ def seqvar():
 @pytest.fixture
 def congenital_myopathies_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return CongenitalMyopathiesPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return CongenitalMyopathiesPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

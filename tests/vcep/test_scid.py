@@ -24,7 +24,7 @@ def seqvar():
 @pytest.fixture
 def scid_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return SCIDPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return SCIDPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

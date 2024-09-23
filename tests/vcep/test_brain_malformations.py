@@ -27,7 +27,7 @@ def auto_acmg_data():
 @pytest.fixture
 def brain_malformations_predictor(seqvar, auto_acmg_data):
     result = MagicMock()  # Mocking the AutoACMGResult object, which will be passed along
-    return BrainMalformationsPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return BrainMalformationsPredictor(seqvar=seqvar, result=result)
 
 
 # ------- PVS1 -------

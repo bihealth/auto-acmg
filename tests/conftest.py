@@ -5,18 +5,14 @@ from typing import Iterator
 import pytest
 from fastapi.testclient import TestClient
 
-from src.core.config import Config
+from src.core.config import settings
 from src.main import app
 
-
-@pytest.fixture
-def api_base_url() -> str:
-    return "https://reev.cubi.bihealth.org/internal/proxy"
-
-
-@pytest.fixture
-def config(api_base_url: str) -> Config:
-    return Config(api_base_url=api_base_url)
+# Override settings for testing
+settings.API_REEV_URL = "https://reev.cubi.bihealth.org/internal/proxy"
+settings.AUTO_ACMG_API_ANNONARS_URL = settings.API_REEV_URL + "/annonars"
+settings.AUTO_ACMG_API_MEHARI_URL = settings.API_REEV_URL + "/mehari"
+settings.AUTO_ACMG_API_DOTTY_URL = settings.API_REEV_URL + "/dotty"
 
 
 @pytest.fixture(scope="module")

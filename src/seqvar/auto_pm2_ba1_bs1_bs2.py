@@ -135,7 +135,7 @@ class AutoPM2BA1BS1BS2(AutoACMGHelper):
             AlleleCOndition: The allele condition.
         """
         # Fetch transcript data
-        seqvar_transcript_helper = SeqVarTranscriptsHelper(seqvar, config=self.config)
+        seqvar_transcript_helper = SeqVarTranscriptsHelper(seqvar)
         seqvar_transcript_helper.initialize()
         (
             _,

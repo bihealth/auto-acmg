@@ -25,9 +25,7 @@ def seqvar():
 @pytest.fixture
 def cerebral_creatine_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return CerebralCreatineDeficiencySyndromesPredictor(
-        seqvar=seqvar, result=result, config=MagicMock()
-    )
+    return CerebralCreatineDeficiencySyndromesPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture
