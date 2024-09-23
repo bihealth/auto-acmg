@@ -22,7 +22,7 @@ def seqvar():
 @pytest.fixture
 def pten_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return PTENPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return PTENPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

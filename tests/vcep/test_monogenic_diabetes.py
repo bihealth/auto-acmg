@@ -22,7 +22,7 @@ def seqvar():
 @pytest.fixture
 def monogenic_diabetes_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return MonogenicDiabetesPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return MonogenicDiabetesPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

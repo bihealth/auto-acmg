@@ -6,7 +6,7 @@ from typing import Optional
 from pydantic import BaseModel, field_validator
 
 from src.api.reev.dotty import DottyClient
-from src.core.config import Config
+from src.core.config import settings
 from src.defs.exceptions import AutoAcmgBaseException, InvalidPos, ParseError
 from src.defs.genome_builds import (
     CHROM_LENGTHS_37,
@@ -97,9 +97,8 @@ class SeqVar(BaseModel):
 class SeqVarResolver:
     """The class to resolve sequence variants."""
 
-    def __init__(self, *, config: Optional[Config] = None):
-        self.config = config or Config()
-        self.dotty_client = DottyClient(api_base_url=self.config.api_base_url_dotty)
+    def __init__(self):
+        self.dotty_client = DottyClient(api_base_url=settings.AUTO_ACMG_API_DOTTY_URL)
 
     def _validate_seqvar(self, variant: SeqVar) -> SeqVar:
         """Validate the sequence variant position.

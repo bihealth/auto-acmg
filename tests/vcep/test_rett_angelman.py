@@ -21,7 +21,7 @@ def seqvar():
 @pytest.fixture
 def rett_angelman_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return RettAngelmanPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return RettAngelmanPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

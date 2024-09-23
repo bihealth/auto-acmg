@@ -27,7 +27,7 @@ def auto_acmg_data():
 @pytest.fixture
 def acadvl_predictor(seqvar, auto_acmg_data):
     result = MagicMock()  # Mocking the AutoACMGResult object, which will be passed along
-    return ACADVLPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return ACADVLPredictor(seqvar=seqvar, result=result)
 
 
 # ------ PM1 ------

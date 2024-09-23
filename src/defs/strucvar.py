@@ -6,7 +6,6 @@ from typing import Optional
 
 from pydantic import BaseModel, field_validator
 
-from src.core.config import Config
 from src.defs.core import AutoAcmgBaseEnum
 from src.defs.exceptions import InvalidPos, ParseError
 from src.defs.genome_builds import CHROM_LENGTHS_37, CHROM_LENGTHS_38, GenomeRelease
@@ -93,9 +92,6 @@ class StrucVar(BaseModel):
 
 class StrucVarResolver:
     """The class to resolve structural variant representations."""
-
-    def __init__(self, *, config: Optional[Config] = None):
-        self.config = config or Config()
 
     def _validate_strucvar(self, variant: StrucVar) -> StrucVar:
         """Validate the structural variant position.

@@ -25,7 +25,7 @@ def auto_acmg_data():
 
 @pytest.fixture
 def default_predictor(seqvar, auto_acmg_result):
-    return DefaultSeqVarPredictor(seqvar=seqvar, result=auto_acmg_result, config=MagicMock())
+    return DefaultSeqVarPredictor(seqvar=seqvar, result=auto_acmg_result)
 
 
 @patch("src.seqvar.default_predictor.DefaultSeqVarPredictor.predict_pvs1")

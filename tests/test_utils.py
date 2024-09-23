@@ -79,11 +79,11 @@ def exons_ss():
 
 
 @pytest.fixture
-def config_ss():
-    mock_config = MagicMock()
-    mock_config.api_base_url_annonars = "http://mock_api_base_url"
-    mock_config.seqrepo_data_dir = "/mock/seqrepo/data/dir"
-    return mock_config
+def settings_ss():
+    from src.core.config import settings
+
+    settings.AUTO_ACMG_API_ANNONARS_URL = "http://mock_api_base_url"
+    settings.AUTO_ACMG_SEQREPO_DATA_DIR = "/mock/seqrepo/data/dir"
 
 
 # Patching the external dependencies (SeqRepo, AnnonarsClient, load_matrix5, load_matrix3)
@@ -100,7 +100,7 @@ def test_splicing_prediction_init(
     mock_seqrepo,
     seqvar_ss,
     exons_ss,
-    config_ss,
+    settings_ss,
 ):
     """Test the initialization of SplicingPrediction class."""
     mock_annonars_client.return_value = MagicMock()
@@ -111,7 +111,6 @@ def test_splicing_prediction_init(
         strand=GenomicStrand.Plus,
         consequences=["splice_donor_variant"],
         exons=exons_ss,
-        config=config_ss,
     )
 
     # Asserts
@@ -123,7 +122,6 @@ def test_splicing_prediction_init(
     assert (
         splicing_prediction.splice_type == SpliceType.Donor
     ), "Splice type should be correctly determined."
-    assert splicing_prediction.config == config_ss, "Config should be initialized correctly."
     assert (
         splicing_prediction.annonars_client == mock_annonars_client.return_value
     ), "AnnonarsClient should be initialized correctly."
@@ -169,7 +167,7 @@ def test_splicing_prediction_splice_type(
     expected_splice_type,
     seqvar_ss,
     exons_ss,
-    config_ss,
+    settings_ss,
 ):
     """Test splice type determination during initialization."""
     splicing_prediction = SplicingPrediction(
@@ -177,7 +175,6 @@ def test_splicing_prediction_splice_type(
         strand=strand,
         consequences=["splice_donor_variant"],
         exons=exons_ss,
-        config=config_ss,
     )
 
     assert (
@@ -199,7 +196,7 @@ def test_initialize_maxentscore(
     mock_seqrepo,
     seqvar_ss,
     exons_ss,
-    config_ss,
+    settings_ss,
 ):
     """Test the _initialize_maxentscore method in SplicingPrediction."""
 
@@ -212,7 +209,6 @@ def test_initialize_maxentscore(
         strand=GenomicStrand.Plus,
         consequences=["splice_donor_variant"],
         exons=exons_ss,
-        config=config_ss,
     )
 
     # Call the _initialize_maxentscore method

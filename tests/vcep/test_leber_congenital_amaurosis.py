@@ -24,7 +24,7 @@ def seqvar():
 @pytest.fixture
 def leber_congenital_amaurosis_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return LeberCongenitalAmaurosisPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return LeberCongenitalAmaurosisPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

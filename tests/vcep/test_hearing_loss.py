@@ -23,7 +23,7 @@ def seqvar():
 @pytest.fixture
 def hearing_loss_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return HearingLossPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return HearingLossPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

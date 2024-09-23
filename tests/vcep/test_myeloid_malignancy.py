@@ -23,7 +23,7 @@ def seqvar():
 @pytest.fixture
 def myeloid_malignancy_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return MyeloidMalignancyPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return MyeloidMalignancyPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

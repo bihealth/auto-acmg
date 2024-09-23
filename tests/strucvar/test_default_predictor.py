@@ -2,7 +2,6 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.config import Config
 from src.defs.auto_acmg import AutoACMGStrucVarResult
 from src.defs.genome_builds import GenomeRelease
 from src.defs.strucvar import StrucVar, StrucVarType
@@ -27,8 +26,7 @@ def auto_acmg_result():
 
 @pytest.fixture
 def default_predictor(strucvar, auto_acmg_result):
-    config = Config(api_base_url="https://api.example.com")
-    return DefaultStrucVarPredictor(strucvar, auto_acmg_result, config)
+    return DefaultStrucVarPredictor(strucvar, auto_acmg_result)
 
 
 @patch.object(DefaultStrucVarPredictor, "predict_pvs1", return_value="PVS1 Not Applicable")

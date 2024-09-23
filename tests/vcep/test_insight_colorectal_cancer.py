@@ -23,7 +23,7 @@ def seqvar():
 @pytest.fixture
 def insight_colorectal_cancer_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return InsightColorectalCancerPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return InsightColorectalCancerPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

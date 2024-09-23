@@ -1,6 +1,6 @@
 """Utility functions for the AutoACMG and AutoPVS1."""
 
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 from biocommons.seqrepo import SeqRepo
 from loguru import logger
@@ -9,7 +9,7 @@ from lib.maxentpy import maxent
 from lib.maxentpy.maxent import load_matrix3, load_matrix5
 from src.api.reev.annonars import AnnonarsClient
 from src.api.reev.mehari import MehariClient
-from src.core.config import Config
+from src.core.config import settings
 from src.defs.auto_acmg import GenomicStrand, SpliceType, TranscriptInfo
 from src.defs.auto_pvs1 import SeqvarConsequenceMapping, SeqVarPVS1Consequence
 from src.defs.exceptions import AlgorithmError, AutoAcmgBaseException
@@ -22,11 +22,9 @@ from src.defs.strucvar import StrucVar
 class AutoACMGHelper:
     """Helper class for the AutoACMG algorithm."""
 
-    def __init__(self, *, config: Optional[Config] = None):
-        #: Configuration settings.
-        self.config: Config = config or Config()
+    def __init__(self):
         #: Annonars client for the API.
-        self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
+        self.annonars_client = AnnonarsClient(api_base_url=settings.AUTO_ACMG_API_ANNONARS_URL)
 
 
 class SplicingPrediction:
@@ -39,7 +37,6 @@ class SplicingPrediction:
         strand: GenomicStrand,
         consequences: List[str] = [],
         exons: List[Exon],
-        config: Optional[Config] = None,
     ):
         self.donor_threshold = 3
         self.acceptor_threshold = 3
@@ -48,9 +45,8 @@ class SplicingPrediction:
         self.strand = strand
         self.exons = exons
         self.splice_type = self.determine_splice_type(consequences)
-        self.config: Config = config or Config()
-        self.annonars_client = AnnonarsClient(api_base_url=self.config.api_base_url_annonars)
-        self.sr = SeqRepo(self.config.seqrepo_data_dir)
+        self.annonars_client = AnnonarsClient(api_base_url=settings.AUTO_ACMG_API_ANNONARS_URL)
+        self.sr = SeqRepo(settings.AUTO_ACMG_SEQREPO_DATA_DIR)
 
         self.maxentscore_ref = -1.00
         self.maxentscore_alt = -1.00
@@ -323,8 +319,7 @@ class SplicingPrediction:
 class SeqVarTranscriptsHelper:
     """Transcript information for a sequence variant."""
 
-    def __init__(self, seqvar: SeqVar, *, config: Optional[Config] = None):
-        self.config: Config = config or Config()
+    def __init__(self, seqvar: SeqVar):
         self.seqvar: SeqVar = seqvar
 
         # Attributes to be set
@@ -365,7 +360,7 @@ class SeqVarTranscriptsHelper:
         """Get all transcripts for the given sequence variant from Mehari."""
         try:
             # Get transcripts from Mehari
-            mehari_client = MehariClient(api_base_url=self.config.api_base_url_mehari)
+            mehari_client = MehariClient(api_base_url=settings.AUTO_ACMG_API_MEHARI_URL)
             response_seqvar = mehari_client.get_seqvar_transcripts(self.seqvar)
             if not response_seqvar:
                 self.seqvar_ts_info = []
@@ -490,8 +485,7 @@ class SeqVarTranscriptsHelper:
 class StrucVarTranscriptsHelper:
     """Transcript information for a structural variant."""
 
-    def __init__(self, strucvar: StrucVar, *, config: Optional[Config] = None):
-        self.config: Config = config or Config()
+    def __init__(self, strucvar: StrucVar):
         self.strucvar: StrucVar = strucvar
 
         # Attributes to be set
@@ -527,7 +521,7 @@ class StrucVarTranscriptsHelper:
         """Get all transcripts for the given structural variant from Mehari."""
         try:
             # Get transcripts from Mehari
-            mehari_client = MehariClient(api_base_url=self.config.api_base_url_mehari)
+            mehari_client = MehariClient(api_base_url=settings.AUTO_ACMG_API_MEHARI_URL)
             response_strucvar = mehari_client.get_strucvar_transcripts(self.strucvar)
             if not response_strucvar:
                 self.strucvar_ts_info = []

@@ -10,8 +10,6 @@ help:
 	@echo "  ci-docs-deps    Install all dependencies for docs in CI"
 	@echo "  format          Format source code"
 	@echo "  lint            Run lint checks"
-	@echo "  example_run     Run example"
-	@echo "  run			 Run the CLI application"
 	@echo "  serve		     Run the API application"
 	@echo "  bench           Run the benchmark"
 	@echo "  test-remote     Run remote tests"
@@ -46,14 +44,6 @@ format-ruff:
 format-isort:
 	pipenv run isort --profile=black --line-length 100 $(DIRS_PYTHON)
 
-# .PHONY: format-black
-# format-black:
-# 	pipenv run black --line-length 100 $(DIRS_PYTHON)
-
-# .PHONY: format-autoflake
-# format-autoflake:
-# 	pipenv run autoflake --remove-all-unused-imports -i -r $(DIRS_PYTHON)
-
 .PHONY: lint
 lint: \
 	lint-ruff \
@@ -68,30 +58,9 @@ lint-ruff:
 lint-isort:
 	pipenv run isort --profile=black --line-length 100 --check-only --diff $(DIRS_PYTHON)
 
-# .PHONY: lint-black
-# lint-black:
-# 	pipenv run black --check --line-length 100 --diff $(DIRS_PYTHON)
-
-# .PHONY: lint-flake8
-# flake8:
-# 	pipenv run flake8 --max-line-length 100 $(DIRS_PYTHON)
-
 .PHONY: lint-mypy
 lint-mypy:
 	pipenv run mypy --check-untyped-defs $(DIRS_PYTHON)
-
-#pipenv run python -m src.main 4-113568536-G-GA --genome_release hg19
-.PHONY: example_run
-example_run:
-	pipenv run python -m src.cli "4-113568536-G-GA" --genome-release hg19
-
-.PHONY: run
-run:
-ifdef GR
-	pipenv run python -m src.cli "$(VAR)" --genome-release $(GR)
-else
-	pipenv run python -m src.cli "$(VAR)"
-endif
 
 .PHONY: serve
 serve:

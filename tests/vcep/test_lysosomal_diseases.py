@@ -22,7 +22,7 @@ def seqvar():
 @pytest.fixture
 def lysosomal_diseases_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return LysosomalDiseasesPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return LysosomalDiseasesPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

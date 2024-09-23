@@ -24,7 +24,7 @@ def seqvar():
 @pytest.fixture
 def dicer1_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return DICER1Predictor(seqvar=seqvar, result=result, config=MagicMock())
+    return DICER1Predictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

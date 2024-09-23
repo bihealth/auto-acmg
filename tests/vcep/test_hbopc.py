@@ -23,7 +23,7 @@ def seqvar():
 @pytest.fixture
 def hbopc_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return HBOPCPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return HBOPCPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

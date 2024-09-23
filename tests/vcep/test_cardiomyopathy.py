@@ -22,7 +22,7 @@ def seqvar():
 @pytest.fixture
 def cardiomyopathy_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object, which will be passed along
-    return CardiomyopathyPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return CardiomyopathyPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

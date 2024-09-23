@@ -25,7 +25,7 @@ def seqvar():
 @pytest.fixture
 def pku_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return PKUPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return PKUPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

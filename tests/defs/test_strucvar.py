@@ -7,7 +7,7 @@ from src.defs.strucvar import StrucVar, StrucVarResolver, StrucVarType
 
 @pytest.fixture
 def strucvar_resolver():
-    return StrucVarResolver(config=None)
+    return StrucVarResolver()
 
 
 # ===== StrucVar tests =====

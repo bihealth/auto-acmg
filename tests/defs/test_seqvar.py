@@ -12,7 +12,7 @@ from tests.utils import get_json_object
 
 @pytest.fixture
 def seqvar_resolver():
-    return SeqVarResolver(config=None)
+    return SeqVarResolver()
 
 
 @pytest.fixture

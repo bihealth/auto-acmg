@@ -28,7 +28,7 @@ def seqvar():
 @pytest.fixture
 def vhl_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return VHLPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return VHLPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

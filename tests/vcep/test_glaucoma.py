@@ -25,7 +25,7 @@ def seqvar():
 @pytest.fixture
 def glaucoma_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return GlaucomaPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return GlaucomaPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

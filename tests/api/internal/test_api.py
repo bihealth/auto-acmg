@@ -56,7 +56,7 @@ async def test_predict_seqvar_success(client: TestClient):
     # Arrange
     variant_name = "chr1:228282272:G:A"
     mock_response = AutoACMGSeqVarResult.model_validate(
-        get_json_object("var_data/example_seqvar_pred.json")
+        get_json_object("var_data/example_seqvar_pred.json")["prediction"]
     )
 
     # Act
@@ -66,6 +66,7 @@ async def test_predict_seqvar_success(client: TestClient):
             params={"variant_name": variant_name},
         )
 
+    print(response.json())
     # Assert
     assert response.status_code == 200
     result = response.json()

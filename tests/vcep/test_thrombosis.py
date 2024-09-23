@@ -22,7 +22,7 @@ def seqvar():
 @pytest.fixture
 def thrombosis_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return ThrombosisPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return ThrombosisPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

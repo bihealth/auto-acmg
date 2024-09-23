@@ -22,7 +22,7 @@ def seqvar():
 @pytest.fixture
 def epilepsy_sodium_channel_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return EpilepsySodiumChannelPredictor(seqvar=seqvar, result=result, config=MagicMock())
+    return EpilepsySodiumChannelPredictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

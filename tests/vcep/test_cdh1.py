@@ -23,7 +23,7 @@ def seqvar():
 @pytest.fixture
 def cdh1_predictor(seqvar):
     result = MagicMock()  # Mocking the AutoACMGResult object
-    return CDH1Predictor(seqvar=seqvar, result=result, config=MagicMock())
+    return CDH1Predictor(seqvar=seqvar, result=result)
 
 
 @pytest.fixture

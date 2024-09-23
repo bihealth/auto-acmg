@@ -3,7 +3,7 @@ from typing import List, Optional
 from loguru import logger
 
 from src.api.reev.annonars import AnnonarsClient
-from src.core.config import Config
+from src.core.config import settings
 from src.defs.auto_acmg import AutoACMGSeqVarResult
 from src.defs.auto_pvs1 import PVS1Prediction
 from src.defs.seqvar import SeqVar
@@ -50,14 +50,12 @@ class DefaultSeqVarPredictor(
     AutoPP3BP4,
     AutoBP7,
 ):
-    def __init__(self, seqvar: SeqVar, result: AutoACMGSeqVarResult, config: Config):
-        #: Configuration to use.
-        self.config = config or Config()
+    def __init__(self, seqvar: SeqVar, result: AutoACMGSeqVarResult):
         #: Sequence variant to predict.
         self.seqvar = seqvar
         #: Annonars client.
         self.annonars_client: AnnonarsClient = AnnonarsClient(
-            api_base_url=self.config.api_base_url_annonars
+            api_base_url=settings.AUTO_ACMG_API_ANNONARS_URL
         )
         #: Prediction result.
         self.result = result
