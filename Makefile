@@ -132,3 +132,6 @@ jupyterlab:
 dump-openapi:
 	pipenv run python -c 'from src.utils import dump_openapi_yaml; dump_openapi_yaml("openapi.yaml")'
 
+.PHONY: ci-dump-openapi
+ci-dump-openapi:
+	pipenv run python -c 'from src.utils import dump_openapi_yaml; dump_openapi_yaml("tmp/openapi.yaml")'

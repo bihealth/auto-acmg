@@ -49,11 +49,11 @@ jobs:
           make deps
 
       - name: Dump OpenAPI Schema
-        run: make dump-openapi
+        run: make ci-dump-openapi
 
       - name: Check for OpenAPI schema changes
         run: |
-          diff openapi.yaml /tmp/openapi.yaml
+          diff openapi.yaml tmp/openapi.yaml
         shell: bash -euo pipefail {0}
 
   Unit-Test:
