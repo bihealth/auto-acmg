@@ -53,7 +53,7 @@ jobs:
 
       - name: Check for OpenAPI schema changes
         run: |
-          diff openapi.yaml tmp/openapi.yaml
+          diff openapi.yaml ci-openapi.yaml
         shell: bash -euo pipefail {0}
 
   Unit-Test:

@@ -134,4 +134,4 @@ dump-openapi:
 
 .PHONY: ci-dump-openapi
 ci-dump-openapi:
-	pipenv run python -c 'from src.utils import dump_openapi_yaml; dump_openapi_yaml("tmp/openapi.yaml")'
+	pipenv run python -c 'from src.utils import dump_openapi_yaml; dump_openapi_yaml("ci-openapi.yaml")'
