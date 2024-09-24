@@ -2,7 +2,9 @@
 
 from typing import Dict, List, Tuple, Union
 
+import yaml
 from biocommons.seqrepo import SeqRepo
+from fastapi import FastAPI
 from loguru import logger
 
 from lib.maxentpy import maxent
@@ -595,3 +597,9 @@ class StrucVarTranscriptsHelper:
                 return None
             max_length_transcript = max(lookup_group, key=lambda x: exon_lengths[x])
             return transcripts_mapping[max_length_transcript]
+
+
+def dump_openapi_yaml(app: FastAPI, path_out: str):
+    """Dump OpenAPI YAML file"""
+    with open(path_out, "wt") as f:
+        yaml.dump(app.openapi(), f)
