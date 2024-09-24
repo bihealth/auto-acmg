@@ -127,3 +127,11 @@ jupyterlab:
 		jupyter lab \
 			--ip=0.0.0.0 --allow-root --NotebookApp.custom_display_url=http://127.0.0.1:8888 \
 			tmp.ipynb
+
+.PHONY: dump-openapi
+dump-openapi:
+	pipenv run python -c 'from src.utils import dump_openapi_yaml; dump_openapi_yaml("openapi.yaml")'
+
+.PHONY: ci-dump-openapi
+ci-dump-openapi:
+	pipenv run python -c 'from src.utils import dump_openapi_yaml; dump_openapi_yaml("ci-openapi.yaml")'

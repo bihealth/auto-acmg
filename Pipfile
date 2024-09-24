@@ -18,6 +18,7 @@ yoyo-migrations = "*"
 fastapi = "*"
 uvicorn = "*"
 pytest-mock = "*"
+types-pyyaml = "*"
 
 [dev-packages]
 mypy = "*"
