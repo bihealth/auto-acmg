@@ -8,3 +8,4 @@ pytabix
 seqrepo
 msgpack
 fastapi
+PyYAML
