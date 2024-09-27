@@ -139,8 +139,8 @@ Adjust the values according to your environment. Here are brief descriptions of 
 that not all variables are required for the application to run. More info below.:
 
 - ``DEBUG``: Enable or disable debug mode.
-- ``USE_CACHE``: Enable or disable caching of API responses.
-- ``CACHE_DIR``: Path to the cache directory.
+- ``AUTO_ACMG_USE_CACHE``: Enable or disable caching of API responses.
+- ``AUTO_ACMG_CACHE_DIR``: Path to the cache directory.
 - ``API_V1_STR``: Base path for API endpoints.
 - ``API_REEV_URL``: URL of the REEV API.
 - ``AUTO_ACMG_API_ANNONARS_URL``: URL of the Annonars API.
@@ -153,7 +153,7 @@ that not all variables are required for the application to run. More info below.
 You will most likely need to set the following variables:
 
 - ``DEBUG``: Set to ``1`` to enable debug mode.
-- ``USE_CACHE``: Set to ``1`` to enable caching. This is recommended only for development.
+- ``AUTO_ACMG_USE_CACHE``: Set to ``1`` to enable caching. This is recommended only for development.
 - ``AUTO_ACMG_SEQREPO_DATA_DIR``: Set to the path of the custom project SeqRepo data directory.
 
 To pass this configuration to the Docker container, ensure the ``.env`` file is located where

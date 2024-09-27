@@ -116,8 +116,9 @@ Then you can initialize the SeqRepo instance:
 .. note::
 
     The ``-i auto-acmg`` flag is used to set the SeqRepo instance name to ``auto-acmg``.
-    If you want to use a different default seqrepo directory, you can set the ``SEQREPO_DIR``
-    environment variable or provide the ``-r`` flag to the ``seqrepo`` command.
+    If you want to use a different default seqrepo directory, you can set the
+    ``AUTO_ACMG_SEQREPO_DATA_DIR`` environment variable or provide the ``-r`` flag to the
+    ``seqrepo`` command.
 
 
 2. Download the reference genomes:
@@ -156,12 +157,12 @@ can be found in the `.env.dev` file. Copy the contents with the following comman
 
     cp .env.dev .env
 
-**Important**: You need to set the `SEQREPO_DIR` variable in the `.env` file to the path of the
-SeqRepo instance you created in the previous step. It should look similar to this:
+**Important**: You need to set the `AUTO_ACMG_SEQREPO_DATA_DIR` variable in the `.env` file to the
+path of the SeqRepo instance you created in the previous step. It should look similar to this:
 
 .. code-block:: bash
 
-    SEQREPO_DIR=/usr/local/share/seqrepo/auto-acmg
+    AUTO_ACMG_SEQREPO_DATA_DIR=/usr/local/share/seqrepo/auto-acmg
 
 ---------------
 Running the CLI
