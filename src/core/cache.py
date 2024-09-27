@@ -13,8 +13,8 @@ class Cache:
 
     def __init__(self):
         """Set up the cache directory and settings."""
-        self.use_cache = settings.USE_CACHE
-        self.cache_dir = settings.CACHE_DIR
+        self.use_cache = settings.AUTO_ACMG_USE_CACHE
+        self.cache_dir = settings.AUTO_ACMG_CACHE_DIR
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir)
 

@@ -17,9 +17,9 @@ class Settings(BaseSettings):
     #: Whether to enable debug mode
     DEBUG: bool = False
     #: Whether to use cache
-    USE_CACHE: bool = True
+    AUTO_ACMG_USE_CACHE: bool = False
     #: Path to the cache directory
-    CACHE_DIR: str = os.path.join(
+    AUTO_ACMG_CACHE_DIR: str = os.path.join(
         os.path.abspath(os.path.join(__file__, "..", "..", "..")), "cache"
     )
 
