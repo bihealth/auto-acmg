@@ -24,7 +24,7 @@ class Exon(BaseModel):
 
 class GenomeAlignment(BaseModel):
     genomeBuild: str
-    contig: str
+    contig: Optional[str] = None
     cdsStart: int
     cdsEnd: int
     strand: str
@@ -36,7 +36,7 @@ class TranscriptGene(BaseModel):
     geneSymbol: str
     geneId: str
     biotype: str
-    protein: str
+    protein: Optional[str] = None
     startCodon: int
     stopCodon: int
     genomeAlignments: List[GenomeAlignment]
